@@ -49,7 +49,6 @@ export function FormationCalendar() {
     return formations;
   }, [formations, filter]);
 
-  // Regroupement par mois/année
   const groups = useMemo(() => {
     const byMonth = new Map<
       string,
@@ -60,7 +59,7 @@ export function FormationCalendar() {
       if (!f.startDate) return;
       const d = new Date(f.startDate);
       const year = d.getFullYear();
-      const month = d.getMonth(); // 0-11
+      const month = d.getMonth();
       const key = `${year}-${month + 1}`.padStart(7, "0");
 
       const label = d.toLocaleDateString("fr-FR", {
@@ -80,24 +79,27 @@ export function FormationCalendar() {
   }, [filtered]);
 
   return (
-    <section className="mx-auto max-w-6xl px-4 py-10 md:px-6">
-      <header className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-        <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-            Calendrier des formations
-          </p>
-          <h1 className="text-xl md:text-2xl font-semibold text-slate-900">
-            Toutes les sessions BAFA Murathènes
-          </h1>
-          <p className="max-w-2xl text-sm text-slate-700">
-            Choisis la session qui colle à ton agenda : formation générale ou
-            approfondissement, au fil des saisons. Clique sur une formation pour
-            voir le détail, le programme et les options de transport.
-          </p>
-        </div>
+    <section className="pb-10">
+      {/* Texte centré au-dessus de l'image héro */}
+      <div className="mx-auto max-w-6xl px-4 pt-6  md:px-6">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-sky-700">
+          Calendrier des formations BAFA
+        </p>
+        <h1 className="mt-2 font-display text-2xl md:text-3xl font-semibold text-slate-900">
+          Toutes les sessions BAFA Murathènes
+        </h1>
+        <p className="mt-2 text-sm text-slate-700">
+          Formations générales et approfondissements au fil des saisons.
+          Choisis les dates qui collent à ton agenda, en plein cœur du Cantal.
+        </p>
+      </div>
 
+
+
+      {/* Contenu calendrier */}
+      <div className="mx-auto max-w-6xl px-4 pt-6 md:px-6 md:pt-8">
         {/* Filtres */}
-        <div className="mt-2 flex flex-wrap gap-2 text-xs">
+        <div className="mb-6 flex flex-wrap gap-2 text-[11px]">
           {(
             ["all", "formation_generale", "approfondissement"] as Filter[]
           ).map((fKey) => {
@@ -108,14 +110,20 @@ export function FormationCalendar() {
                 type="button"
                 onClick={() => setFilter(fKey)}
                 className={[
-                  "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 transition",
+                  "inline-flex cursor-pointer items-center gap-2 rounded-full px-3 py-1.5 transition shadow-sm",
                   active
-                    ? "border-sky-600 bg-sky-50 text-sky-900"
-                    : "border-slate-200 bg-white text-slate-600 hover:border-slate-300",
+                    ? "bg-sky-600 text-white shadow-sky-200/70"
+                    : "bg-white text-slate-700 border border-slate-200 hover:bg-sky-50 hover:border-sky-200",
                 ].join(" ")}
               >
                 {fKey !== "all" && (
-                  <span className="h-1.5 w-1.5 rounded-full bg-sky-500" />
+                  <span
+                    className={
+                      fKey === "formation_generale"
+                        ? "h-1.5 w-1.5 rounded-full bg-sky-500"
+                        : "h-1.5 w-1.5 rounded-full bg-amber-400"
+                    }
+                  />
                 )}
                 <span className="font-semibold tracking-[0.12em] uppercase">
                   {FILTER_LABELS[fKey]}
@@ -124,35 +132,44 @@ export function FormationCalendar() {
             );
           })}
         </div>
-      </header>
 
-      {groups.length === 0 ? (
-        <p className="text-sm text-slate-500">
-          Aucune formation publiée pour l&apos;instant.
-        </p>
-      ) : (
-        <div className="space-y-8">
-          {groups.map((group) => (
-            <div key={group.sortKey} className="space-y-3">
-              {/* En-tête mois */}
-              <div className="flex items-center gap-3">
-                <div className="h-px flex-1 bg-gradient-to-r from-sky-400/70 via-slate-200 to-transparent" />
-                <div className="whitespace-nowrap rounded-full bg-slate-900 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-slate-50">
-                  {group.label}
+        {groups.length === 0 ? (
+          <p className="text-sm text-slate-600">
+            Aucune formation publiée pour l&apos;instant.
+          </p>
+        ) : (
+          <div className="space-y-8">
+            {groups.map((group) => (
+              <div key={group.sortKey} className="space-y-3">
+                {/* En-tête mois */}
+                <div className="flex items-center gap-3">
+                  <div className="h-px flex-1 bg-gradient-to-r from-sky-300 via-amber-100 to-transparent" />
+                  <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-[11px] font-semibold text-slate-800 shadow-sm ring-1 ring-slate-200">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-amber-50 text-xs">
+                      📅
+                    </span>
+                    <span className="uppercase tracking-[0.16em]">
+                      {group.label}
+                    </span>
+                    <span className="text-[10px] font-normal text-slate-500">
+                      · {group.items.length} session
+                      {group.items.length > 1 ? "s" : ""}
+                    </span>
+                  </div>
+                  <div className="h-px flex-1 bg-gradient-to-l from-sky-300 via-amber-100 to-transparent" />
                 </div>
-                <div className="h-px flex-1 bg-gradient-to-l from-sky-400/70 via-slate-200 to-transparent" />
-              </div>
 
-              {/* Grille de cartes */}
-              <div className="grid gap-4 md:grid-cols-2">
-                {group.items.map((formation) => (
-                  <FormationCard key={formation.id} formation={formation} />
-                ))}
+                {/* Grille de cartes */}
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                  {group.items.map((formation) => (
+                    <FormationCard key={formation.id} formation={formation} />
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
     </section>
   );
 }

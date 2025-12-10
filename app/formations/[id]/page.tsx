@@ -93,153 +93,265 @@ export default function FormationDetailPage() {
   const options = formation.transportOptions ?? [];
   const hasOptions = options.length > 0;
 
+  // Images héro : tu pourras remplacer ces URLs facilement
+  const heroImages: string[] = [
+    "https://www.dronecontrast.com/wordpress/wp-content/uploads/2023/10/DJI_0061-1030x687.jpg",
+    "https://images.pexels.com/photos/5726870/pexels-photo-5726870.jpeg",
+    "https://images.pexels.com/photos/3184398/pexels-photo-3184398.jpeg",
+  ];
+
   return (
-    <main className="bg-slate-50 min-h-screen">
-      <section className="border-b border-slate-200 bg-white/90">
-        <div className="mx-auto max-w-4xl px-4 py-8 md:px-6">
-          <button
-            onClick={() => router.push("/formations")}
-            className="mb-4 text-xs font-medium text-slate-600 underline underline-offset-2 hover:text-slate-900"
-          >
-            ← Retour au calendrier
-          </button>
+    <main className="min-h-screen bg-amber-50/40">
+      {/* HÉRO + GALERIE – pastel & arrondi */}
+      <section className="relative border-b border-slate-100 bg-gradient-to-b from-sky-50 via-amber-50/70 to-rose-50/70">
+        {/* petite ombre douce en haut */}
+        <div className="pointer-events-none absolute -top-6 left-0 right-0 h-6 bg-[radial-gradient(ellipse_at_top,_rgba(15,23,42,0.12),_transparent)]" />
 
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-            {typeLabel[formation.type] ?? "Formation BAFA"}
-          </p>
-          <h1 className="mt-1 text-2xl font-semibold text-slate-900">
-            {formation.title}
-          </h1>
+        <div className="relative mx-auto max-w-5xl px-4 py-7 md:px-6 md:py-8">
+          <div className="flex flex-col gap-8 md:flex-row md:items-center">
+            {/* Colonne texte */}
+            <div className="flex-1 space-y-4">
+              <p className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-600 shadow-sm ring-1 ring-sky-100">
+                <span className="text-base">🎓</span>
+                <span>{typeLabel[formation.type] ?? "Formation BAFA"}</span>
+              </p>
 
-          {dateLabel && (
-            <p className="mt-1 text-sm text-slate-700">
-              {dateLabel}
-            </p>
-          )}
+              <div>
+                <h1 className="font-display text-2xl md:text-3xl font-semibold text-slate-900">
+                  {formation.title}
+                </h1>
+                {dateLabel && (
+                  <p className="mt-1 text-sm text-slate-700">{dateLabel}</p>
+                )}
+              </div>
 
-          <div className="mt-4 flex flex-wrap items-center gap-3 text-xs">
-            <span className="inline-flex items-center gap-2 rounded-full bg-sky-50 px-3 py-1 font-medium text-sky-900">
-              <span className="h-1.5 w-1.5 rounded-full bg-sky-500" />
-              {formation.price} € la formation (hors transport)
-            </span>
+              <div className="flex flex-wrap items-center gap-2 text-xs">
+                <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-3 py-1 font-medium text-slate-900 shadow-sm ring-1 ring-sky-200">
+                  <span className="text-base">💶</span>
+                  {formation.price} €
+                  <span className="text-slate-500">(hors transport)</span>
+                </span>
 
-            {hasOptions && (
-              <span className="inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1 font-medium text-amber-900">
-                <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-                {options.length} option
-                {options.length > 1 ? "s transport" : " transport"} disponible
-                {options.length > 1 ? "s" : ""}
-              </span>
-            )}
+                {hasOptions && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-3 py-1 font-medium text-slate-900 shadow-sm ring-1 ring-amber-200">
+                    <span className="text-base">🚌</span>
+                    {options.length} option
+                    {options.length > 1 ? "s transport" : " transport"} disponible
+                    {options.length > 1 ? "s" : ""}
+                  </span>
+                )}
+              </div>
+
+              <div className="pt-1">
+                <Link
+                  href="/#reservation"
+                  className="inline-flex items-center gap-2 rounded-full bg-amber-400 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-900 shadow-sm transition hover:bg-amber-300"
+                >
+                  Je m&apos;inscris
+                  <span className="text-sm">→</span>
+                </Link>
+              </div>
+            </div>
+
+            {/* Colonne galerie */}
+            <div className="flex-1">
+              <div className="grid grid-cols-2 gap-3">
+                {/* Grande image */}
+                <div className="col-span-2 overflow-hidden rounded-3xl border border-sky-100 bg-white/70 shadow-sm">
+                  <img
+                    src={heroImages[0]}
+                    alt="Vue du site de formation en Auvergne"
+                    className="h-full max-h-56 w-full object-cover"
+                  />
+                </div>
+
+                {/* Petite image 1 */}
+                <div className="overflow-hidden rounded-3xl border border-emerald-100 bg-white/80 shadow-sm">
+                  <img
+                    src={heroImages[1]}
+                    alt="Moments de vie de groupe en formation"
+                    className="h-full max-h-32 w-full object-cover"
+                  />
+                </div>
+
+                {/* Petite image 2 / placeholder */}
+                <div className="flex items-center justify-center overflow-hidden rounded-3xl border border-dashed border-amber-200 bg-white/70 px-3 text-center text-[11px] text-slate-600 shadow-inner">
+                  <span>
+                    Tu pourras ajouter ici une photo de ta session (lieu, jeux,
+                    veillées… ✨).
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div className="mt-5">
-            <Link
-              href="/#reservation"
-              className="inline-flex items-center rounded-full border border-red-600 px-5 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-red-700 transition hover:bg-red-50"
+          {/* Lien retour discret juste sous le header */}
+          <div className="mt-4">
+            <button
+              onClick={() => router.push("/formations")}
+              className="inline-flex items-center text-[11px] font-medium text-slate-500 underline underline-offset-4 hover:text-slate-800"
             >
-              Je m&apos;inscris
-            </Link>
+              <span className="mr-1">←</span>
+              Retour au calendrier des formations
+            </button>
           </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-4xl px-4 py-8 md:px-6">
-        <div className="grid gap-6 md:grid-cols-[minmax(0,2fr)_minmax(0,1.4fr)]">
+      {/* CONTENU + INFOS PRATIQUES */}
+      <section className="mx-auto max-w-5xl px-4 py-8 md:px-6 md:py-10">
+        <div className="grid gap-8 md:grid-cols-[minmax(0,2fr)_minmax(0,1.4fr)]">
           {/* Description / contenu */}
-          <div className="space-y-4">
-            <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-500">
-              Le contenu de la formation
-            </h2>
-            {formation.description ? (
-              <p className="whitespace-pre-line text-sm text-slate-800">
-                {formation.description}
+          <div className="space-y-5">
+            <div className="space-y-2">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                Le contenu de la formation
               </p>
-            ) : (
-              <p className="text-sm text-slate-500">
-                La description détaillée de cette formation sera bientôt
-                disponible.
-              </p>
-            )}
+              <h2 className="font-display text-xl font-semibold text-slate-900">
+                Ce que tu vas vivre pendant cette semaine
+              </h2>
 
-            <div className="mt-4 space-y-2 text-xs text-slate-700">
-              <p className="font-semibold text-slate-900">
-                Concrètement, tu vas :
-              </p>
-              <ul className="list-disc list-inside space-y-1">
-                <li>Travailler sur ta posture d&apos;animateur·ice.</li>
-                <li>Tester des jeux, veillées et situations d&apos;animation.</li>
-                <li>Vivre une vraie vie de colo en groupe.</li>
+              {formation.description ? (
+                <p className="whitespace-pre-line text-sm leading-relaxed text-slate-800">
+                  {formation.description}
+                </p>
+              ) : (
+                <p className="text-sm text-slate-600">
+                  La description détaillée de cette formation sera bientôt
+                  disponible. En attendant, voici ce que tu peux attendre
+                  d&apos;une session BAFA Murathènes.
+                </p>
+              )}
+            </div>
+
+            {/* Bloc fun façon “concrètement tu vas” */}
+            <div className="rounded-2xl bg-white/90 p-4 text-xs text-slate-700 shadow-sm ring-1 ring-slate-200/70">
+              <div className="mb-3 flex items-center gap-2">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-sky-500 text-lg">
+                  <span className="translate-y-[1px] text-white">✨</span>
+                </span>
+                <p className="font-display text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-800">
+                  Concrètement, pendant la formation
+                </p>
+              </div>
+
+              <ul className="list-disc list-inside space-y-1.5">
+                <li>Travailler ta posture d&apos;animateur·ice sur le terrain.</li>
+                <li>
+                  Tester et analyser des jeux, veillées et situations
+                  d&apos;animation.
+                </li>
+                <li>
+                  Vivre une vraie vie de colo : vie quotidienne, gestion de
+                  groupe, projets collectifs.
+                </li>
+                <li>
+                  Échanger avec d&apos;autres stagiaires et des formateur·ices
+                  expérimenté·es.
+                </li>
               </ul>
             </div>
           </div>
 
-          {/* Encadré infos pratiques + transport */}
-          <aside className="space-y-4 rounded-md border border-slate-200 bg-white px-4 py-4 text-xs text-slate-700">
-            <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
-              Infos pratiques
-            </h3>
-
-            <div className="space-y-1">
-              <p>
-                <span className="font-semibold text-slate-900">
-                  Durée :
-                </span>{" "}
-                7 jours (arrivée le premier jour, départ le dernier jour).
-              </p>
-              <p>
-                <span className="font-semibold text-slate-900">
-                  Hébergement :
-                </span>{" "}
-                en pension complète, en structure d&apos;accueil collective.
-              </p>
-            </div>
-
-            <div className="h-px w-full bg-slate-200" />
-
-            <div className="space-y-2">
-              <h4 className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                Options de transport
-              </h4>
-
-              {!hasOptions && (
-                <p className="text-xs text-slate-500">
-                  Pas d&apos;option de transport spécifique renseignée pour
-                  cette formation. Les infos pratiques te seront précisées lors
-                  de l&apos;inscription.
+          {/* Encadré infos pratiques + transport, dans l’esprit de ta section “Infos pratiques” */}
+          <aside className="space-y-4 text-xs text-slate-700">
+            <div className="group relative overflow-hidden rounded-2xl border border-amber-100 bg-white/90 px-4 py-4 shadow-sm">
+              <div className="absolute -right-6 -top-6 h-16 w-16 rounded-full bg-amber-100/80" />
+              <div className="relative space-y-2">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+                  Infos pratiques
                 </p>
-              )}
+                <p className="font-display text-sm font-semibold text-slate-900">
+                  Un cadre de colo pour ta formation
+                </p>
 
-              {hasOptions && (
-                <ul className="space-y-2">
-                  {options.map((opt, idx) => (
-                    <li
-                      key={idx}
-                      className="flex items-center justify-between gap-3 rounded-md bg-slate-50 px-3 py-2"
-                    >
-                      <div className="flex flex-col">
-                        <span className="text-xs font-medium text-slate-900">
-                          {opt.label}
-                        </span>
-                        <span className="text-[11px] text-slate-500">
-                          Tarif transport
-                        </span>
-                      </div>
-                      <span className="text-xs font-semibold text-slate-900">
-                        {opt.price} €
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
+                <div className="space-y-1.5 text-xs">
+                  <p>
+                    <span className="font-semibold text-slate-900">Durée :</span>{" "}
+                    7 jours (arrivée le premier jour, départ le dernier jour).
+                  </p>
+                  <p>
+                    <span className="font-semibold text-slate-900">
+                      Hébergement :
+                    </span>{" "}
+                    en pension complète, en structure d&apos;accueil collective.
+                  </p>
+                  <p>
+                    <span className="font-semibold text-slate-900">Lieu :</span>{" "}
+                    en Auvergne. Le lieu exact et les horaires te seront précisés
+                    sur la convocation.
+                  </p>
+                </div>
+              </div>
             </div>
 
-            <div className="h-px w-full bg-slate-200" />
+            <div className="group relative overflow-hidden rounded-2xl border border-sky-100 bg-white/90 px-4 py-4 shadow-sm">
+              <div className="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-sky-100/80" />
+              <div className="relative space-y-3">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-sky-500 text-lg">
+                    <span className="translate-y-[1px] text-white">🚌</span>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-sky-700">
+                      Options de transport
+                    </p>
+                    {!hasOptions && (
+                      <p className="mt-1 text-xs text-slate-600">
+                        Pas d&apos;option de transport spécifique renseignée pour
+                        cette formation. Les infos pratiques te seront précisées
+                        lors de l&apos;inscription.
+                      </p>
+                    )}
 
-            <p className="text-[11px] text-slate-500">
-              Toutes les infos détaillées (liste à emporter, horaires précis,
-              convocation) te seront envoyées par mail après ton inscription.
-            </p>
+                    {hasOptions && (
+                      <p className="mt-1 text-xs text-slate-700">
+                        Choisis le point de départ qui t&apos;arrange le plus.
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {hasOptions && (
+                  <ul className="space-y-2">
+                    {options.map((opt, idx) => (
+                      <li
+                        key={idx}
+                        className="flex items-center justify-between gap-3 rounded-xl bg-sky-50 px-3 py-2 ring-1 ring-sky-100"
+                      >
+                        <div className="flex flex-col">
+                          <span className="text-xs font-medium text-slate-900">
+                            {opt.label}
+                          </span>
+                          <span className="text-[11px] text-slate-500">
+                            Tarif transport
+                          </span>
+                        </div>
+                        <span className="text-xs font-semibold text-slate-900">
+                          {opt.price} €
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+
+            <div className="rounded-2xl bg-white/90 px-4 py-3 text-[11px] text-slate-600 shadow-sm ring-1 ring-slate-200">
+              <div className="mb-2 flex items-center gap-2">
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-lg">
+                  <span className="translate-y-[1px] text-white">📩</span>
+                </span>
+                <p className="font-display text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-800">
+                  Convocation & détails pratiques
+                </p>
+              </div>
+              <p>
+                Toutes les infos détaillées (liste à emporter, horaires précis,
+                convocation) te seront envoyées par mail une fois ton inscription
+                validée.
+              </p>
+            </div>
           </aside>
         </div>
       </section>

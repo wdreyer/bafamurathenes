@@ -1,5 +1,5 @@
 {
-  "name": "mon-site",
+  "name": "Bafa Murathenes",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "firebase": "^12.6.0",
+    "framer-motion": "^12.23.26",
     "lucide-react": "^0.556.0",
     "next": "^16.0.8",
     "react": "^19.2.1",

@@ -117,7 +117,8 @@ export default function HomePage() {
     .filter((f) => f._startDateObj && f._startDateObj >= today)
     .sort(
       (a, b) =>
-        (a._startDateObj?.getTime() ?? 0) - (b._startDateObj?.getTime() ?? 0)
+        (a._startDateObj?.getTime() ?? 0) -
+        (b._startDateObj?.getTime() ?? 0)
     );
 
   const heroFormations = upcomingFormations.slice(0, 2);
@@ -140,7 +141,7 @@ export default function HomePage() {
 
   return (
     <>
-      {/* HERO */}
+      {/* HERO – on ne touche pas */}
       <section
         id="hero"
         className="relative w-full bg-slate-950 min-h-[60vh] md:min-h-[65vh]"
@@ -204,298 +205,353 @@ export default function HomePage() {
                   ? "Voici les prochaines dates de formation générale et d'approfondissement."
                   : "Les prochaines dates arrivent très bientôt."}
               </p>
-              <div className="mt-6 flex">
-  {/* Colonne timeline */}
-  <div className="relative mr-5 flex flex-col items-center pt-1">
-    <div className="absolute top-3 bottom-3 w-[2px] bg-gradient-to-b from-sky-400/80 via-sky-300/60 to-sky-200/30" />
-    <div className="relative z-10 flex h-full flex-col justify-between gap-10">
-      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-sky-400 shadow-[0_0_0_3px_rgba(15,23,42,0.8)] ring-2 ring-sky-200">
-        <span className="h-2.5 w-2.5 rounded-full bg-white" />
-      </span>
-      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-sky-300 shadow-[0_0_0_3px_rgba(15,23,42,0.8)] ring-2 ring-sky-100">
-        <span className="h-2.5 w-2.5 rounded-full bg-white" />
-      </span>
-    </div>
-  </div>
 
-  {/* Cartes sessions */}
-  <div className="flex-1 space-y-4">
-    {heroFormations.length === 0 && (
-      <article className="rounded-xl bg-black/55 px-4 py-3 backdrop-blur-md ring-1 ring-white/10">
-        <p className="text-xs text-slate-100/85">
-          Le calendrier des formations sera mis en ligne très prochainement. Tu
-          peux déjà jeter un œil aux infos générales plus bas.
-        </p>
-      </article>
-    )}
+              <div className="mt-6">
+                {heroFormations.length === 0 && (
+                  <article className="rounded-xl bg-black/55 px-4 py-3 backdrop-blur-md ring-1 ring-white/10">
+                    <p className="text-xs text-slate-100/85">
+                      Le calendrier des formations sera mis en ligne très
+                      prochainement. Tu peux déjà jeter un œil aux infos
+                      générales plus bas.
+                    </p>
+                  </article>
+                )}
 
-    {heroFormations.map((f, index) => {
-      const isFG = f.type === "formation_generale";
+                {heroFormations.length > 0 && (
+                  <div className="space-y-4">
+                    {heroFormations.map((f, index) => {
+                      const isFG = f.type === "formation_generale";
+                      const badgeColor = isFG
+                        ? "text-sky-200"
+                        : "text-amber-200";
 
-      const badgeColor = isFG ? "text-sky-200" : "text-amber-200";
-      const buttonClasses = isFG
-        ? "shrink-0 rounded-md bg-sky-500 px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-sky-400"
-        : "shrink-0 rounded-md border border-amber-300/80 bg-amber-400/90 px-4 py-1.5 text-xs font-semibold text-slate-900 transition hover:bg-amber-300";
+                      // Tous les boutons = style jaune (comme le 2e) + pointer
+                      const buttonClasses =
+                        "shrink-0 rounded-md border border-amber-300/80 bg-amber-400/90 px-4 py-1.5 text-xs font-semibold text-slate-900 transition hover:bg-amber-300 cursor-pointer";
 
-      // 🔹 début de la vraie description
-      const rawDescription = f.description ?? "";
-      const firstLine =
-        typeof rawDescription === "string"
-          ? rawDescription
-              .split("\n")
-              .map((line) => line.trim())
-              .find((line) => line.length > 0) ?? ""
-          : "";
+                      const rawDescription = f.description ?? "";
+                      const firstLine =
+                        typeof rawDescription === "string"
+                          ? rawDescription
+                              .split("\n")
+                              .map((line) => line.trim())
+                              .find((line) => line.length > 0) ?? ""
+                          : "";
 
-      return (
-        <Link key={f.id} href={`/formations/${f.id}`} className="block group">
-          <article className="rounded-xl bg-black/55 px-4 py-3 backdrop-blur-md ring-1 ring-white/10 transition-transform duration-200 ease-out hover:-translate-y-0.5 hover:bg-black/70 hover:shadow-xl">
-            <header className="mb-2 flex items-center justify-between gap-3">
-              <div className="space-y-0.5">
-                <p
-                  className={`text-[11px] font-semibold uppercase tracking-wide ${badgeColor}`}
-                >
-                  {getMonthYearLabelFr(f.startDate)} ·{" "}
-                  {typeShortLabel[f.type] ?? f.type}
-                </p>
-                <p className="text-sm font-semibold text-white">
-                  {typeLongLabel[f.type] ?? f.type}
-                </p>
+                      const isLast = index === heroFormations.length - 1;
+                      const isSecond = index === 1;
+
+                      return (
+                        <Link
+                          key={f.id}
+                          href={`/formations/${f.id}`}
+                          className="block group"
+                        >
+                          <div className="flex gap-4">
+                            {/* Colonne timeline */}
+                            <div className="relative flex flex-col items-center pt-1">
+                              {!isLast && (
+                                <div className="timeline-line absolute top-5 bottom-[-18px] w-[2px] bg-gradient-to-b from-sky-300/80 via-sky-200/60 to-sky-100/20" />
+                              )}
+
+                              {isSecond && (
+                                <div className="timeline-segment absolute top-5 h-24 w-[2px] rounded-full bg-gradient-to-b from-sky-300/90 via-sky-200/70 to-transparent" />
+                              )}
+
+                              <span className="timeline-dot-wrapper relative z-10 flex h-5 w-5 items-center justify-center rounded-full bg-sky-400 shadow-[0_0_0_3px_rgba(15,23,42,0.85)] ring-2 ring-sky-200">
+                                <span className="timeline-dot h-2.5 w-2.5 rounded-full bg-white" />
+                              </span>
+                            </div>
+
+                            {/* Carte session */}
+                            <article className="flex-1 rounded-xl bg-black/55 px-4 py-3 backdrop-blur-md ring-1 ring-white/10 transition-transform duration-200 ease-out hover:-translate-y-0.5 hover:bg-black/70 hover:shadow-xl">
+                              <header className="mb-2 flex items-center justify-between gap-3">
+                                <div className="space-y-0.5">
+                                  <p
+                                    className={`text-[11px] font-semibold uppercase tracking-wide ${badgeColor}`}
+                                  >
+                                    {getMonthYearLabelFr(f.startDate)} ·{" "}
+                                    {typeShortLabel[f.type] ?? f.type}
+                                  </p>
+                                  <p className="text-sm font-semibold text-white">
+                                    {typeLongLabel[f.type] ?? f.type}
+                                  </p>
+                                </div>
+                                <button
+                                  className={buttonClasses}
+                                  type="button"
+                                  onClick={(e) => e.preventDefault()}
+                                >
+                                  Voir les détails
+                                </button>
+                              </header>
+
+                              <p className="text-xs text-slate-100/85">
+                                <span className="font-medium">
+                                  {formatDateRangeFr(
+                                    f.startDate,
+                                    f.endDate
+                                  )}
+                                </span>
+                                <br />
+                                {firstLine ||
+                                  "Une formation BAFA centrée sur la pratique et la vie de colo."}
+                              </p>
+                            </article>
+                          </div>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-              <button className={buttonClasses}>
-                {index === 0 ? "Je m'inscris" : "Voir les détails"}
-              </button>
-            </header>
-
-            <p className="text-xs text-slate-100/85">
-              <span className="font-medium">
-                {formatDateRangeFr(f.startDate, f.endDate)}
-              </span>
-              <br />
-              {firstLine ||
-                "Une formation BAFA centrée sur la pratique et la vie de colo."}
-              <br />
-              <span className="text-[11px] italic text-slate-200">
-                Plus de détails en cliquant sur le bouton.
-              </span>
-            </p>
-          </article>
-        </Link>
-      );
-    })}
-  </div>
-</div>
-
-
-
             </div>
           </div>
         </div>
       </section>
 
-      {/* SECTION 1 : Présentation BAFA */}
+      {/* SECTION 1 : Présentation BAFA – reprise de la DA « infos pratiques » */}
       <section
         id="programme"
-        className="border-t border-slate-100 bg-amber-50/70"
+        className="relative border-t border-slate-100 bg-gradient-to-b from-sky-50 via-amber-50/70 to-rose-50/60"
       >
-        <div className="mx-auto flex max-w-6xl flex-col gap-8 px-4 py-10 md:flex-row md:items-start md:justify-between md:px-6">
+        <div className="pointer-events-none absolute -top-6 left-0 right-0 bg-[radial-gradient(ellipse_at_top,_rgba(15,23,42,0.12),_transparent)]" />
+
+        <div className="relative mx-auto flex max-w-6xl flex-col gap-8 px-4 py-10 md:flex-row md:items-start md:justify-between md:px-6">
           <div className="max-w-xl space-y-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-800">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
               Le BAFA avec Murathènes
             </p>
-            <h2 className="font-display text-xl md:text-2xl font-semibold text-slate-900">
+            <h2 className="font-display text-2xl md:text-3xl font-semibold text-slate-900">
               Un BAFA vivant, engagé et ancré dans la réalité du terrain
             </h2>
-            <p className="text-sm text-slate-700">
+            <p className="text-base text-slate-700">
               On ne te récite pas un manuel : on part de situations vécues, de
               jeux, de mises en scène et de la vraie vie de colo. L&apos;idée,
               c&apos;est que tu repartes avec des outils concrets et une posture
               pro, tout en restant toi-même.
             </p>
 
-            <div className="flex flex-wrap gap-3 text-xs text-slate-700">
-              <span className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 shadow-sm ring-1 ring-slate-200">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+            <div className="flex flex-wrap gap-3 text-sm text-slate-700">
+              <span className="inline-flex items-center gap-2 rounded-full bg-white/90 px-3 py-1 shadow-sm ring-1 ring-emerald-100">
+                <span className="text-base">🤝</span>
                 Approche bienveillante mais exigeante
               </span>
-              <span className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 shadow-sm ring-1 ring-slate-200">
-                <span className="h-1.5 w-1.5 rounded-full bg-sky-500" />
+              <span className="inline-flex items-center gap-2 rounded-full bg-white/90 px-3 py-1 shadow-sm ring-1 ring-sky-100">
+                <span className="text-base">🌈</span>
                 Cohésion de groupe et entraide
               </span>
             </div>
 
             <div className="pt-2">
-  <Link
-    href="/bafa"
-    className="group relative inline-flex items-center gap-2 whitespace-nowrap text-sm font-semibold uppercase tracking-wide text-sky-900 hover:text-sky-700"
-  >
-    En savoir plus sur le BAFA
-
-    {/* flèche */}
-    <span className="transition-transform duration-300 group-hover:translate-x-1">
-      →
-    </span>
-
-    {/* underline animé */}
-  </Link>
-</div>
-
+              <Link
+                href="/bafa"
+                className="group relative inline-flex items-center gap-2 whitespace-nowrap text-sm font-semibold uppercase tracking-wide text-sky-900 hover:text-sky-700"
+              >
+                En savoir plus sur le BAFA
+                <span className="transition-transform duration-300 group-hover:translate-x-1">
+                  →
+                </span>
+              </Link>
+            </div>
           </div>
 
-          <div className="grid w-full max-w-md gap-4 text-sm text-slate-800 md:text-xs">
-            <div className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white px-4 py-3 transition hover:-translate-y-0.5 hover:border-sky-300 hover:shadow-md">
-              <div className="absolute left-0 top-0 h-1 w-16 bg-sky-500" />
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                Pédagogie active
-              </p>
-              <p className="mt-1 text-sm font-medium text-slate-900">
-                On apprend en faisant, pas en restant assis 7 heures.
-              </p>
+          {/* Cartes pédagogie dans la même DA que "infos pratiques" */}
+          <div className="grid w-full max-w-md gap-4 text-sm text-slate-700 md:text-sm">
+            <div className="group relative overflow-hidden rounded-2xl border border-sky-100 bg-white/90 px-4 py-4 shadow-sm transition-transform duration-200 hover:-translate-y-1 hover:border-sky-300 hover:shadow-md">
+              <div className="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-sky-100/80" />
+              <div className="relative flex items-start gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-sky-500 text-lg">
+                  <span className="translate-y-[1px] text-white">🎲</span>
+                </div>
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-sky-700">
+                    Pédagogie active
+                  </p>
+                  <p className="mt-1 text-sm font-medium text-slate-900">
+                    On apprend en faisant, pas en restant assis 7 heures.
+                  </p>
+                  <p className="mt-1 text-xs text-slate-700">
+                    Jeux de rôles, mises en situation, analyses de pratiques :
+                    tu expérimentes d&apos;abord, on décortique ensuite.
+                  </p>
+                </div>
+              </div>
             </div>
-            <div className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white px-4 py-3 transition hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-md">
-              <div className="absolute left-0 top-0 h-1 w-16 bg-emerald-500" />
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                Cadre sécurisant
-              </p>
-              <p className="mt-1 text-sm font-medium text-slate-900">
-                Un cadre clair, des règles expliquées, un vrai accompagnement.
-              </p>
+
+            <div className="group relative overflow-hidden rounded-2xl border border-emerald-100 bg-white/90 px-4 py-4 shadow-sm transition-transform duration-200 hover:-translate-y-1 hover:border-emerald-300 hover:shadow-md">
+              <div className="absolute -right-5 -top-5 h-16 w-16 rounded-full bg-emerald-100/80" />
+              <div className="relative flex items-start gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500 text-lg">
+                  <span className="translate-y-[1px] text-white">🛟</span>
+                </div>
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700">
+                    Cadre sécurisant
+                  </p>
+                  <p className="mt-1 text-sm font-medium text-slate-900">
+                    Un cadre clair, des règles expliquées, un vrai accompagnement.
+                  </p>
+                  <p className="mt-1 text-xs text-slate-700">
+                    On t&apos;accompagne sur tes questions, tes doutes, tes
+                    premières expériences d&apos;animation.
+                  </p>
+                </div>
+              </div>
             </div>
-            <div className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white px-4 py-3 transition hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-md">
-              <div className="absolute left-0 top-0 h-1 w-16 bg-amber-500" />
-              <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                Esprit colo
-              </p>
-              <p className="mt-1 text-sm font-medium text-slate-900">
-                Tu vis une vraie mini-colo, avec veillées, services, vie
-                collective.
-              </p>
+
+            <div className="group relative overflow-hidden rounded-2xl border border-amber-100 bg-white/90 px-4 py-4 shadow-sm transition-transform duration-200 hover:-translate-y-1 hover:border-amber-300 hover:shadow-md">
+              <div className="absolute -right-6 -top-6 h-16 w-16 rounded-full bg-amber-100/80" />
+              <div className="relative flex items-start gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-400 text-lg">
+                  <span className="translate-y-[1px] text-slate-900">🏕️</span>
+                </div>
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-700">
+                    Esprit colo
+                  </p>
+                  <p className="mt-1 text-sm font-medium text-slate-900">
+                    Tu vis une vraie mini-colo, pas une simple formation en salle.
+                  </p>
+                  <p className="mt-1 text-xs text-slate-700">
+                    Veillées, services, vie quotidienne en groupe… tu vis ce que
+                    tu feras ensuite avec les enfants.
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* SECTION 2 : Calendrier dynamique */}
-{/* SECTION : TIMELINE V2 */}
-<section id="timeline" className="border-t border-slate-100 bg-white">
-  <div className="mx-auto max-w-6xl px-4 py-10 md:px-6">
-    {/* HEADER */}
-    <header className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 whitespace-nowrap">
-          Calendrier {calendarYearLabel || "des formations"}
-        </p>
-        <h2 className="font-display text-xl md:text-2xl font-semibold text-slate-900">
-          Les prochaines sessions en un coup d&apos;œil
-        </h2>
-        <p className="mt-1 text-sm text-slate-700 max-w-xl">
-          Un aperçu rapide des prochaines dates. Le calendrier détaillé est accessible sur la page dédiée.
-        </p>
-      </div>
-
-      <Link
-        href="/formations"
-        className="mt-2 inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-sky-100 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-sky-900 hover:bg-sky-200 transition"
+      {/* SECTION 2 : Calendrier dynamique – version pastel */}
+      <section
+        id="timeline"
+        className="relative border-t border-slate-100 bg-gradient-to-b from-white via-sky-50/60 to-amber-50/60"
       >
-        Voir le calendrier complet
-        <span className="text-sm">→</span>
-      </Link>
-    </header>
+        <div className="pointer-events-none absolute -top-6 left-0 right-0 bg-[radial-gradient(ellipse_at_top,_rgba(15,23,42,0.10),_transparent)]" />
 
-    {calendarFormations.length === 0 ? (
-      <p className="text-sm text-slate-600">
-        Les prochaines dates seront affichées ici dès qu&apos;elles sont confirmées.
-      </p>
-    ) : (
-      <div className="grid gap-5 md:grid-cols-2">
-        {calendarFormations.map((f) => {
-          const isFG = f.type === "formation_generale";
-          const chipBg = isFG
-            ? "bg-sky-100 text-sky-800"
-            : "bg-amber-100 text-amber-800";
-          const borderColor = isFG
-            ? "border-sky-100 hover:border-sky-300"
-            : "border-amber-100 hover:border-amber-300";
-          const emoji = isFG ? "🌱" : "🌍";
+        <div className="relative mx-auto max-w-6xl px-4 py-10 md:px-6">
+          {/* HEADER */}
+          <header className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 whitespace-nowrap">
+                Calendrier {calendarYearLabel || "des formations"}
+              </p>
+              <h2 className="font-display text-2xl md:text-3xl font-semibold text-slate-900">
+                Les prochaines sessions en un coup d&apos;œil
+              </h2>
+              <p className="mt-1 max-w-xl text-base text-slate-700">
+                Un aperçu rapide des prochaines dates. Pour tous les détails
+                (programme, lieu, transport), tu peux ouvrir chaque formation ou
+                consulter le calendrier complet.
+              </p>
+            </div>
 
-          // 📝 On récupère le début du vrai texte de description
-          const rawDescription = f.description ?? "";
-          const firstLine =
-            typeof rawDescription === "string"
-              ? (rawDescription
-                  .split("\n")
-                  .map((line) => line.trim())
-                  .find((line) => line.length > 0) ?? "")
-              : "";
-
-          return (
-            <Link key={f.id} href={`/formations/${f.id}`} className="group">
-              <article
-                className={`flex flex-col gap-3 rounded-2xl border bg-slate-50/80 px-4 py-4 text-sm transition-transform duration-200 hover:-translate-y-1 hover:bg-white hover:shadow-md ${borderColor}`}
-              >
-                {/* Ligne haut : icône + type + mois */}
-                <div className="flex items-start gap-3">
-                  <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-900 text-lg">
-                    <span className="translate-y-[1px]">{emoji}</span>
-                  </div>
-
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 whitespace-nowrap">
-                        {getMonthYearLabelFr(f.startDate)}
-                      </p>
-                      <span
-                        className={`shrink-0 rounded-full px-2 py-1 text-[11px] font-semibold ${chipBg}`}
-                      >
-                        {typeShortLabel[f.type] ?? f.type}
-                      </span>
-                    </div>
-                    <h3 className="mt-1 font-display text-sm md:text-base font-semibold text-slate-900">
-                      {typeLongLabel[f.type] ?? f.type}
-                    </h3>
-                  </div>
-                </div>
-
-                {/* Dates bien visibles */}
-                <p className="text-sm font-medium text-slate-800">
-                  📅 {formatDateRangeFr(f.startDate, f.endDate)}
-                </p>
-
-                {/* Prix */}
-                <p className="text-xs text-slate-600">
-                  💶 <span className="font-semibold">{f.price} €</span> — hors transport
-                </p>
-
-                {/* 🔥 Début du vrai texte de la formation */}
-                <p className="text-xs text-slate-600">
-                  {firstLine || "La description détaillée de cette formation arrive bientôt."}
-                </p>
-
-                {/* Ligne “voir les détails” */}
-                <div className="mt-1 flex items-center gap-1 text-xs font-semibold text-sky-700 group-hover:text-sky-900">
-                  Voir les détails
-                  <span className="transition-transform duration-200 group-hover:translate-x-1">
-                    →
-                  </span>
-                </div>
-              </article>
+            <Link
+              href="/formations"
+              className="mt-2 inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-50 shadow-sm transition hover:bg-slate-800"
+            >
+              Voir le calendrier complet
+              <span className="text-sm">→</span>
             </Link>
-          );
-        })}
-      </div>
-    )}
-  </div>
-</section>
+          </header>
 
+          {calendarFormations.length === 0 ? (
+            <p className="text-sm text-slate-600">
+              Les prochaines dates seront affichées ici dès qu&apos;elles sont
+              confirmées.
+            </p>
+          ) : (
+            <div className="grid gap-5 md:grid-cols-2">
+              {calendarFormations.map((f) => {
+                const isFG = f.type === "formation_generale";
+                const chipBg = isFG
+                  ? "bg-sky-100 text-sky-900"
+                  : "bg-amber-100 text-amber-900";
+                const borderColor = isFG
+                  ? "border-sky-100 hover:border-sky-300"
+                  : "border-amber-100 hover:border-amber-300";
+                const emoji = isFG ? "🌱" : "🌍";
 
+                const rawDescription = f.description ?? "";
+                const firstLine =
+                  typeof rawDescription === "string"
+                    ? rawDescription
+                        .split("\n")
+                        .map((line) => line.trim())
+                        .find((line) => line.length > 0) ?? ""
+                    : "";
 
+                return (
+                  <Link key={f.id} href={`/formations/${f.id}`} className="group">
+                    <article
+                      className={`flex flex-col gap-3 rounded-2xl border bg-white/90 px-4 py-4 text-sm shadow-sm ring-1 ring-slate-100 transition-transform duration-200 hover:-translate-y-1 hover:bg-white hover:shadow-md ${borderColor}`}
+                    >
+                      {/* Ligne haut : icône + type + mois */}
+                      <div className="flex items-start gap-3">
+                        <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-900 text-lg">
+                          <span className="translate-y-[1px] text-white">
+                            {emoji}
+                          </span>
+                        </div>
 
-      {/* SECTION 3 : Infos pratiques plus fun */}
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <p className="whitespace-nowrap text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                              {getMonthYearLabelFr(f.startDate)}
+                            </p>
+                            <span
+                              className={`shrink-0 rounded-full px-2 py-1 text-[11px] font-semibold ${chipBg}`}
+                            >
+                              {typeShortLabel[f.type] ?? f.type}
+                            </span>
+                          </div>
+                          <h3 className="mt-1 font-display text-sm md:text-base font-semibold text-slate-900">
+                            {typeLongLabel[f.type] ?? f.type}
+                          </h3>
+                        </div>
+                      </div>
+
+                      {/* Dates bien visibles */}
+                      <p className="text-sm font-medium text-slate-800">
+                        📅 {formatDateRangeFr(f.startDate, f.endDate)}
+                      </p>
+
+                      {/* Prix */}
+                      <p className="text-sm text-slate-600">
+                        💶{" "}
+                        <span className="font-semibold">{f.price} €</span> — hors
+                        transport
+                      </p>
+
+                      {/* Début du vrai texte de la formation */}
+                      <p className="text-sm text-slate-600">
+                        {firstLine ||
+                          "La description détaillée de cette formation arrive bientôt."}
+                      </p>
+
+                      <div className="mt-1 flex items-center gap-1 text-xs font-semibold text-sky-700 group-hover:text-sky-900">
+                        Voir les détails
+                        <span className="transition-transform duration-200 group-hover:translate-x-1">
+                          →
+                        </span>
+                      </div>
+                    </article>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* SECTION 3 : Infos pratiques */}
       <section
         id="infos"
         className="relative border-t border-slate-100 bg-gradient-to-b from-sky-50 via-amber-50/70 to-rose-50/70"
       >
-        <div className="pointer-events-none absolute -top-6 left-0 right-0 h-6 bg-[radial-gradient(ellipse_at_top,_rgba(15,23,42,0.12),_transparent)]" />
+        <div className="pointer-events-none absolute -top-6 left-0 right-0 bg-[radial-gradient(ellipse_at_top,_rgba(15,23,42,0.12),_transparent)]" />
 
         <div className="relative mx-auto max-w-6xl px-4 py-10 md:px-6">
           <div className="mb-8 flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
@@ -504,15 +560,17 @@ export default function HomePage() {
                 Infos pratiques
               </p>
               <h2 className="font-display text-2xl md:text-3xl font-semibold text-slate-900">
-                Un séjour tout compris, avec un pack transport pensé pour toi
+                Une formation accessible pour tous et toutes
               </h2>
-              <p className="text-sm text-slate-700">
-                On sait que se déplacer jusqu&apos;au lieu de formation peut
-                être un casse-tête. Du coup on a fait simple :{" "}
+              <p className="text-base text-slate-700">
+                Nos formations se déroulent dans le Cantal, ce qui a beaucoup
+                d&apos;avantages, mais demande un peu d&apos;organisation. Pour
+                te simplifier la vie, tu peux bénéficier{" "}
                 <span className="font-medium text-slate-900">
-                  transport organisé, hébergement, bouffe, animations
+                  d&apos;un transport organisé
                 </span>
-                . Tu te concentres sur ta formation, on s&apos;occupe du reste.
+                . Sur place, l&apos;hébergement et la restauration sont pensés
+                pour te mettre dans les meilleures conditions d&apos;apprentissage.
               </p>
 
               <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-medium text-slate-700">
@@ -532,8 +590,8 @@ export default function HomePage() {
 
               <div className="pt-4">
                 <Link
-                  href="/#reservation"
-                  className="inline-flex items-center gap-2 rounded-full bg-rose-500 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-white shadow-sm transition hover:bg-rose-400"
+                  href="/infos"
+                  className="inline-flex items-center gap-2 rounded-full bg-amber-500 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-900 shadow-sm transition hover:bg-amber-400"
                 >
                   Voir les modalités d&apos;inscription
                   <span className="text-sm">→</span>
@@ -541,7 +599,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="grid w-full max-w-md gap-4 text-xs text-slate-700 md:text-sm">
+            <div className="grid w-full max-w-md gap-4 text-sm text-slate-700 md:text-sm">
               <div className="group relative overflow-hidden rounded-2xl border border-sky-100 bg-white/90 px-4 py-4 shadow-sm transition-transform duration-200 hover:-translate-y-1 hover:border-sky-300 hover:shadow-md">
                 <div className="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-sky-100/80" />
                 <div className="relative flex items-start gap-3">
@@ -614,7 +672,7 @@ export default function HomePage() {
                 <span className="translate-y-[1px] text-white">✨</span>
               </span>
               <p className="font-display text-xs font-semibold uppercase tracking-[0.16em] text-slate-800">
-                Ambiance colo garantie
+                Ambiance séjour garantie
               </p>
             </div>
             <div className="flex flex-wrap gap-2 text-[11px]">

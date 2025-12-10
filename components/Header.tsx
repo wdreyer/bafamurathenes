@@ -30,13 +30,13 @@ export default function Header() {
         <div className="flex items-center gap-6">
           <nav className="hidden items-center gap-6 md:gap-8 text-sm md:text-base font-semibold tracking-[0.08em] uppercase text-slate-700 md:flex">
             <Link
-              href="#hero"
+              href="/"
               className="relative whitespace-nowrap transition hover:text-sky-900 after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-sky-800 after:transition-all after:duration-200 hover:after:w-full"
             >
               Accueil
             </Link>
             <Link
-              href="#programme"
+              href="/bafa"
               className="relative whitespace-nowrap transition hover:text-sky-900 after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-sky-800 after:transition-all after:duration-200 hover:after:w-full"
             >
               Le BAFA
@@ -49,7 +49,7 @@ export default function Header() {
               Nos formations 2026
             </Link>
             <Link
-              href="#infos"
+              href="/infos"
               className="relative whitespace-nowrap transition hover:text-sky-900 after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-sky-800 after:transition-all after:duration-200 hover:after:w-full"
             >
               Infos pratiques
@@ -62,9 +62,6 @@ export default function Header() {
 >
   Je m&apos;inscris
 </Link>
-
-
-
 
         </div>
       </div>
