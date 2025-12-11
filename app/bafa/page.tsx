@@ -5,51 +5,56 @@ export default function BafaPage() {
   return (
     <main className="bg-white">
       {/* HERO – simple, lisible */}
-      <section className="relative w-full overflow-hidden bg-slate-950">
-        <div className="absolute inset-0">
-          <Image
-            src="https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?auto=format&fit=crop&w=1600&q=80"
-            alt="Jeunes en activité de groupe en plein air"
-            fill
-            priority
-            className="object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-br from-slate-950/85 via-slate-900/65 to-slate-900/20" />
-        </div>
+<section className="relative w-full h-[30vh] md:h-[30vh] overflow-hidden bg-slate-950">
+  {/* Background image */}
+  <div className="absolute inset-0 h-[30vh] md:h-[30vh]">
+    <Image
+      src="https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?auto=format&fit=crop&w=1600&q=80"
+      alt="Jeunes en activité de groupe en plein air"
+      fill
+      priority
+      className="object-cover"
+    />
+    <div className="absolute inset-0 bg-gradient-to-br from-slate-950/85 via-slate-900/65 to-slate-900/20" />
+  </div>
 
-        <div className="relative mx-auto flex max-w-6xl flex-col px-4 py-14 md:px-6 md:py-18">
-          <div className="inline-flex items-center gap-2 rounded-full bg-black/40 px-3 py-1 text-xs font-medium uppercase tracking-[0.2em] text-slate-100 ring-1 ring-white/15">
-            <span className="h-1.5 w-1.5 rounded-full bg-amber-300" />
-            Comprendre le BAFA
-          </div>
+  {/* Contenu compact centré */}
+  <div className="relative mx-auto flex h-full max-w-6xl flex-col justify-center px-4 md:px-6">
+    {/* Chip */}
+    <div className="inline-flex items-center gap-2  px-3 py-1 text-[10px] md:text-xs font-medium uppercase tracking-[0.18em] text-slate-100 ">
+      Comprendre le BAFA
+    </div>
 
-          <div className="mt-5 max-w-2xl space-y-4">
-            <h1 className="font-display text-3xl font-semibold leading-tight text-white md:text-4xl">
-              Le BAFA, ton premier pas dans l&apos;animation
-            </h1>
-            <p className="text-base text-slate-100/85 md:text-lg">
-              Le BAFA te permet d&apos;encadrer des enfants et des ados en
-              centres de loisirs, colos et périscolaire. Avec Murathènes,
-              tu te formes dans un cadre bienveillant, engagé et très concret.
-            </p>
-          </div>
+    {/* Titre + texte */}
+    <div className="mt-3 space-y-2 max-w-2xl">
+      <h1 className="font-display text-2xl md:text-3xl font-semibold leading-snug text-white">
+        Le BAFA, ton premier pas dans l&apos;animation
+      </h1>
+      <p className="text-[13px] md:text-sm text-slate-100/85">
+        Le BAFA te permet d&apos;encadrer des enfants et des ados en centres de loisirs,
+        colos et périscolaire. Avec Murathènes, tu te formes dans un cadre bienveillant,
+        engagé et très concret.
+      </p>
+    </div>
 
-          <div className="mt-6 flex flex-wrap gap-2 text-sm font-medium text-slate-100/90">
-            <span className="inline-flex items-center gap-2 rounded-full bg-black/40 px-3 py-1 ring-1 ring-white/10">
-              <span className="text-base">🎓</span>
-              Diplôme jeunesse & sports
-            </span>
-            <span className="inline-flex items-center gap-2 rounded-full bg-black/40 px-3 py-1 ring-1 ring-white/10">
-              <span className="text-base">✨</span>
-              3 grandes étapes de formation
-            </span>
-            <span className="inline-flex items-center gap-2 rounded-full bg-black/40 px-3 py-1 ring-1 ring-white/10">
-              <span className="text-base">📍</span>
-              Cantal – Région AURA
-            </span>
-          </div>
-        </div>
-      </section>
+    {/* Petits badges */}
+    <div className="mt-3 flex flex-wrap gap-2 text-[11px] md:text-xs font-medium text-slate-100/90">
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-black/40 px-3 py-1 ring-1 ring-white/10">
+        <span className="text-sm">🎓</span>
+        Diplôme Jeunesse & Sports
+      </span>
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-black/40 px-3 py-1 ring-1 ring-white/10">
+        <span className="text-sm">✨</span>
+        3 grandes étapes de formation
+      </span>
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-black/40 px-3 py-1 ring-1 ring-white/10">
+        <span className="text-sm">📍</span>
+        Cantal – Région AURA
+      </span>
+    </div>
+  </div>
+</section>
+
 
       {/* SECTION : Le BAFA, c’est quoi ? */}
       <section className="border-t border-slate-100 bg-gradient-to-b from-sky-50 via-amber-50/60 to-rose-50/40">
