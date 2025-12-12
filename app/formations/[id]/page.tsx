@@ -50,6 +50,7 @@ export default function FormationDetailPage() {
 
   const [formation, setFormation] = useState<Formation | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isYaplaOpen, setIsYaplaOpen] = useState(false);
 
   useEffect(() => {
     const fetchFormation = async () => {
@@ -93,7 +94,6 @@ export default function FormationDetailPage() {
   const options = formation.transportOptions ?? [];
   const hasOptions = options.length > 0;
 
-  // Images héro : tu pourras remplacer ces URLs facilement
   const heroImages: string[] = [
     "https://www.dronecontrast.com/wordpress/wp-content/uploads/2023/10/DJI_0061-1030x687.jpg",
     "https://images.pexels.com/photos/5726870/pexels-photo-5726870.jpeg",
@@ -102,9 +102,8 @@ export default function FormationDetailPage() {
 
   return (
     <main className="min-h-screen bg-amber-50/40">
-      {/* HÉRO + GALERIE – pastel & arrondi */}
+      {/* HÉRO + GALERIE */}
       <section className="relative border-b border-slate-100 bg-gradient-to-b from-sky-50 via-amber-50/70 to-rose-50/70">
-        {/* petite ombre douce en haut */}
         <div className="pointer-events-none absolute -top-6 left-0 right-0 h-6 bg-[radial-gradient(ellipse_at_top,_rgba(15,23,42,0.12),_transparent)]" />
 
         <div className="relative mx-auto max-w-5xl px-4 py-7 md:px-6 md:py-8">
@@ -143,20 +142,20 @@ export default function FormationDetailPage() {
               </div>
 
               <div className="pt-1">
-                <Link
-                  href="/#reservation"
+                <button
+                  type="button"
+                  onClick={() => setIsYaplaOpen(true)}
                   className="inline-flex items-center gap-2 rounded-full bg-amber-400 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-900 shadow-sm transition hover:bg-amber-300"
                 >
                   Je m&apos;inscris
                   <span className="text-sm">→</span>
-                </Link>
+                </button>
               </div>
             </div>
 
             {/* Colonne galerie */}
             <div className="flex-1">
               <div className="grid grid-cols-2 gap-3">
-                {/* Grande image */}
                 <div className="col-span-2 overflow-hidden rounded-3xl border border-sky-100 bg-white/70 shadow-sm">
                   <img
                     src={heroImages[0]}
@@ -165,7 +164,6 @@ export default function FormationDetailPage() {
                   />
                 </div>
 
-                {/* Petite image 1 */}
                 <div className="overflow-hidden rounded-3xl border border-emerald-100 bg-white/80 shadow-sm">
                   <img
                     src={heroImages[1]}
@@ -174,7 +172,6 @@ export default function FormationDetailPage() {
                   />
                 </div>
 
-                {/* Petite image 2 / placeholder */}
                 <div className="flex items-center justify-center overflow-hidden rounded-3xl border border-dashed border-amber-200 bg-white/70 px-3 text-center text-[11px] text-slate-600 shadow-inner">
                   <span>
                     Tu pourras ajouter ici une photo de ta session (lieu, jeux,
@@ -185,7 +182,6 @@ export default function FormationDetailPage() {
             </div>
           </div>
 
-          {/* Lien retour discret juste sous le header */}
           <div className="mt-4">
             <button
               onClick={() => router.push("/formations")}
@@ -224,7 +220,6 @@ export default function FormationDetailPage() {
               )}
             </div>
 
-            {/* Bloc fun façon “concrètement tu vas” */}
             <div className="rounded-2xl bg-white/90 p-4 text-xs text-slate-700 shadow-sm ring-1 ring-slate-200/70">
               <div className="mb-3 flex items-center gap-2">
                 <span className="flex h-7 w-7 items-center justify-center rounded-full bg-sky-500 text-lg">
@@ -253,7 +248,7 @@ export default function FormationDetailPage() {
             </div>
           </div>
 
-          {/* Encadré infos pratiques + transport, dans l’esprit de ta section “Infos pratiques” */}
+          {/* Infos pratiques + transport + note inscription */}
           <aside className="space-y-4 text-xs text-slate-700">
             <div className="group relative overflow-hidden rounded-2xl border border-amber-100 bg-white/90 px-4 py-4 shadow-sm">
               <div className="absolute -right-6 -top-6 h-16 w-16 rounded-full bg-amber-100/80" />
@@ -278,7 +273,7 @@ export default function FormationDetailPage() {
                   </p>
                   <p>
                     <span className="font-semibold text-slate-900">Lieu :</span>{" "}
-                    en Auvergne. Le lieu exact et les horaires te seront précisés
+                    Auvergne. Le lieu exact et les horaires te seront précisés
                     sur la convocation.
                   </p>
                 </div>
@@ -317,7 +312,7 @@ export default function FormationDetailPage() {
                     {options.map((opt, idx) => (
                       <li
                         key={idx}
-                        className="flex items-center justify-between gap-3 rounded-xl bg-sky-50 px-3 py-2 ring-1 ring-sky-100"
+                        className="flex items-center justify_between gap-3 rounded-xl bg-sky-50 px-3 py-2 ring-1 ring-sky-100"
                       >
                         <div className="flex flex-col">
                           <span className="text-xs font-medium text-slate-900">
@@ -343,18 +338,85 @@ export default function FormationDetailPage() {
                   <span className="translate-y-[1px] text-white">📩</span>
                 </span>
                 <p className="font-display text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-800">
-                  Convocation & détails pratiques
+                  Inscription & convocation
                 </p>
               </div>
               <p>
-                Toutes les infos détaillées (liste à emporter, horaires précis,
-                convocation) te seront envoyées par mail une fois ton inscription
-                validée.
+                L&apos;inscription et le paiement se font via un formulaire
+                sécurisé (Yapla). Une fois ton inscription validée, tu recevras
+                un mail avec la convocation, les horaires précis et la liste à
+                emporter.
               </p>
+              <button
+                type="button"
+                onClick={() => setIsYaplaOpen(true)}
+                className="mt-3 inline-flex items-center gap-1 rounded-full bg-slate-900 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-50 shadow-sm transition hover:bg-slate-800"
+              >
+                Ouvrir le formulaire d&apos;inscription
+                <span className="text-xs">↗</span>
+              </button>
             </div>
           </aside>
         </div>
       </section>
+
+      {/* MODALE YAPLA */}
+      {isYaplaOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 px-2">
+          <div className="relative w-full max-w-4xl overflow-hidden rounded-2xl bg-white shadow-2xl">
+            {/* Header modale */}
+            <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
+              <div className="space-y-0.5">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                  Inscription en ligne
+                </p>
+                <p className="text-xs font-medium text-slate-800">
+                  {formation.title}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <p className="hidden text-[10px] font-medium text-slate-500 sm:block text-right">
+                  Paiement sécurisé via{" "}
+                  <span className="font-semibold">Yapla</span>{" "}
+                  · solution associative{" "}
+                  <span className="font-semibold">Crédit Agricole</span>
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setIsYaplaOpen(false)}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-700 hover:bg-slate-200"
+                  aria-label="Fermer la fenêtre d'inscription"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* Contenu iframe */}
+            <div className="relative h-[70vh] w-full">
+              <iframe
+                src="https://murathenes.s2.yapla.com/fr/event-100366"
+                title="Formulaire d'inscription BAFA Murathènes"
+                className="absolute inset-0 h-full w-full border-0"
+              />
+            </div>
+
+            {/* Note participation volontaire */}
+            <div className="border-t border-slate-200 bg-slate-50 px-4 py-2">
+              <p className="text-[11px] text-slate-600">
+                💡 Sur la page Yapla, une ligne{" "}
+                <span className="font-semibold">« participation volontaire »</span>{" "}
+                peut apparaître : il suffit de{" "}
+                <span className="font-semibold">
+                  ne pas cocher cette case
+                </span>{" "}
+                si tu ne souhaites pas ajouter de contribution.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

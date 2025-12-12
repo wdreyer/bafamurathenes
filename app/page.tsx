@@ -117,8 +117,7 @@ export default function HomePage() {
     .filter((f) => f._startDateObj && f._startDateObj >= today)
     .sort(
       (a, b) =>
-        (a._startDateObj?.getTime() ?? 0) -
-        (b._startDateObj?.getTime() ?? 0)
+        (a._startDateObj?.getTime() ?? 0) - (b._startDateObj?.getTime() ?? 0)
     );
 
   const heroFormations = upcomingFormations.slice(0, 2);
@@ -144,11 +143,11 @@ export default function HomePage() {
       {/* HERO – on ne touche pas */}
       <section
         id="hero"
-        className="relative w-full bg-slate-950 min-h-[60vh] md:min-h-[65vh]"
+        className="relative w-full bg-slate-950 min-h-[50vh] md:min-h-[50vh]"
       >
         {/* Image de fond */}
         <Image
-          src="/hero-bafa.jpg"
+          src="/5.jpg"
           alt="Jeunes en formation BAFA dans un cadre nature"
           fill
           priority
@@ -170,12 +169,18 @@ export default function HomePage() {
 
               <div className="space-y-3">
                 <h1 className="font-display text-3xl md:text-4xl font-semibold leading-tight text-white">
-                  BAFA Murathènes
+                  <Image
+                    src="/bafa.png"
+                    alt="BAFA Murathènes"
+                    width={530}
+                    height={120}
+                    className="w-[230px] md:w-[320px] h-auto"
+                  />
+                  <span className="sr-only">BAFA Murathènes</span>
                 </h1>
+
                 <p className="text-sm md:text-base text-slate-100/90">
-                  Des formations BAFA exigeantes et bienveillantes, dans un
-                  cadre nature en Auvergne, pour préparer ton premier job
-                  d&apos;anim&apos; avec une vraie équipe pédagogique.
+                Formations BAFA dans le Cantal au domaine de Gravières
                 </p>
               </div>
 
@@ -186,11 +191,11 @@ export default function HomePage() {
                 </div>
                 <div className="inline-flex items-center gap-2 rounded-full bg-black/40 px-3 py-1.5 ring-1 ring-white/10">
                   <span className="h-1.5 w-1.5 rounded-full bg-sky-400" />
-                  <span>Petits groupes</span>
+                  <span>Cadre magnifique</span>
                 </div>
                 <div className="inline-flex items-center gap-2 rounded-full bg-black/40 px-3 py-1.5 ring-1 ring-white/10">
                   <span className="h-1.5 w-1.5 rounded-full bg-amber-300" />
-                  <span>Immersion vie de colo</span>
+                  <span>Vie en collectivité</span>
                 </div>
               </div>
             </div>
@@ -288,10 +293,7 @@ export default function HomePage() {
 
                               <p className="text-xs text-slate-100/85">
                                 <span className="font-medium">
-                                  {formatDateRangeFr(
-                                    f.startDate,
-                                    f.endDate
-                                  )}
+                                  {formatDateRangeFr(f.startDate, f.endDate)}
                                 </span>
                                 <br />
                                 {firstLine ||
@@ -322,20 +324,27 @@ export default function HomePage() {
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
               Le BAFA avec Murathènes
             </p>
-            <h2 className="font-display text-2xl md:text-3xl font-semibold text-slate-900">
-              Un BAFA vivant, engagé et ancré dans la réalité du terrain
+            <h2 className="font-display text-xl md:text-2xl font-semibold text-slate-900">
+            Le BAFA dans un environnement incroyable et une pédagogie émancipatrice
             </h2>
             <p className="text-base text-slate-700">
-              On ne te récite pas un manuel : on part de situations vécues, de
-              jeux, de mises en scène et de la vraie vie de colo. L&apos;idée,
-              c&apos;est que tu repartes avec des outils concrets et une posture
-              pro, tout en restant toi-même.
-            </p>
+  À Murathènes, nous mettons en avant notre idée de l&apos;éducation populaire via nos{" "}
+  <span className="font-semibold">pédagogies actives</span>. Animations,{" "}
+  grands jeux, veillées, débats, chaque
+  module et chaque temps de la formation est réfléchi pour qu&apos;il <span className="font-semibold">favorise
+  l&apos;apprentissage</span>. Nous proposons tout au long de l&apos;année des{" "}
+  <span className="font-semibold">formations générales</span> et des{" "}
+  <span className="font-semibold">
+    approfondissements &quot;échanges de jeunes et séjours à l&apos;étranger&quot;
+  </span>
+  .
+</p>
+
 
             <div className="flex flex-wrap gap-3 text-sm text-slate-700">
               <span className="inline-flex items-center gap-2 rounded-full bg-white/90 px-3 py-1 shadow-sm ring-1 ring-emerald-100">
                 <span className="text-base">🤝</span>
-                Approche bienveillante mais exigeante
+                Approche bienveillante
               </span>
               <span className="inline-flex items-center gap-2 rounded-full bg-white/90 px-3 py-1 shadow-sm ring-1 ring-sky-100">
                 <span className="text-base">🌈</span>
@@ -369,11 +378,10 @@ export default function HomePage() {
                     Pédagogie active
                   </p>
                   <p className="mt-1 text-sm font-medium text-slate-900">
-                    On apprend en faisant, pas en restant assis 7 heures.
+                    On apprend en faisant, et en experimentant.
                   </p>
                   <p className="mt-1 text-xs text-slate-700">
-                    Jeux de rôles, mises en situation, analyses de pratiques :
-                    tu expérimentes d&apos;abord, on décortique ensuite.
+                    Jeux de rôles, mises en situation, analyses de pratiques, supports vidéos et audio, débats, animations seront  au programme de ton stage.
                   </p>
                 </div>
               </div>
@@ -387,14 +395,13 @@ export default function HomePage() {
                 </div>
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700">
-                    Cadre sécurisant
+                    Un contenu diversifié
                   </p>
                   <p className="mt-1 text-sm font-medium text-slate-900">
-                    Un cadre clair, des règles expliquées, un vrai accompagnement.
+                    Les bases de l'animation jusqu'au problématique individuelles de chaque enfant
                   </p>
                   <p className="mt-1 text-xs text-slate-700">
-                    On t&apos;accompagne sur tes questions, tes doutes, tes
-                    premières expériences d&apos;animation.
+                    Animation, vie quotidienne, mais également lutte contre les VSS, maltraitance, responsabilité civile et pénal, réglementation et bien d'autres seront vu au long de ta semaine.
                   </p>
                 </div>
               </div>
@@ -408,14 +415,14 @@ export default function HomePage() {
                 </div>
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-700">
-                    Esprit colo
+                    Vie collective
                   </p>
                   <p className="mt-1 text-sm font-medium text-slate-900">
-                    Tu vis une vraie mini-colo, pas une simple formation en salle.
+                    Au delà de la formation, la vie en collectivité !
                   </p>
                   <p className="mt-1 text-xs text-slate-700">
-                    Veillées, services, vie quotidienne en groupe… tu vis ce que
-                    tu feras ensuite avec les enfants.
+                    Veillées, vie quotidienne en groupe, tu vis ce que
+                    tu feras ensuite avec les enfants. Mais également des rencontres et un cadre favorisant l'apprentissage
                   </p>
                 </div>
               </div>
@@ -425,126 +432,150 @@ export default function HomePage() {
       </section>
 
       {/* SECTION 2 : Calendrier dynamique – version pastel */}
-      <section
-        id="timeline"
-        className="relative border-t border-slate-100 bg-gradient-to-b from-white via-sky-50/60 to-amber-50/60"
+<section
+  id="timeline"
+  className="relative border-t border-slate-100 bg-gradient-to-b from-white via-sky-50/60 to-amber-50/60"
+>
+  <div className="pointer-events-none absolute -top-6 left-0 right-0 bg-[radial-gradient(ellipse_at_top,_rgba(15,23,42,0.10),_transparent)]" />
+
+  <div className="relative mx-auto max-w-6xl px-4 py-10 md:px-6">
+    {/* HEADER */}
+    <header className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+      <div>
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 whitespace-nowrap">
+          Calendrier {calendarYearLabel || "des formations"}
+        </p>
+        <h2 className="font-display text-2xl md:text-3xl font-semibold text-slate-900">
+          Les prochaines sessions en un coup d&apos;œil
+        </h2>
+        <p className="mt-1 max-w-xl text-base text-slate-700">
+          Un aperçu rapide des prochaines dates. Pour tous les détails
+          (programme, lieu, transport), tu peux ouvrir chaque formation ou
+          consulter le calendrier complet.
+        </p>
+      </div>
+
+      <Link
+        href="/formations"
+        className="mt-2 inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-50 shadow-sm transition hover:bg-slate-800"
       >
-        <div className="pointer-events-none absolute -top-6 left-0 right-0 bg-[radial-gradient(ellipse_at_top,_rgba(15,23,42,0.10),_transparent)]" />
+        Voir le calendrier complet
+        <span className="text-sm">→</span>
+      </Link>
+    </header>
 
-        <div className="relative mx-auto max-w-6xl px-4 py-10 md:px-6">
-          {/* HEADER */}
-          <header className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 whitespace-nowrap">
-                Calendrier {calendarYearLabel || "des formations"}
-              </p>
-              <h2 className="font-display text-2xl md:text-3xl font-semibold text-slate-900">
-                Les prochaines sessions en un coup d&apos;œil
-              </h2>
-              <p className="mt-1 max-w-xl text-base text-slate-700">
-                Un aperçu rapide des prochaines dates. Pour tous les détails
-                (programme, lieu, transport), tu peux ouvrir chaque formation ou
-                consulter le calendrier complet.
-              </p>
-            </div>
+    {calendarFormations.length === 0 ? (
+      <p className="text-sm text-slate-600">
+        Les prochaines dates seront affichées ici dès qu&apos;elles sont
+        confirmées.
+      </p>
+    ) : (
+      <div className="grid gap-5 md:grid-cols-2">
+        {calendarFormations.map((f) => {
+          const isFG = f.type === "formation_generale";
 
-            <Link
-              href="/formations"
-              className="mt-2 inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-50 shadow-sm transition hover:bg-slate-800"
-            >
-              Voir le calendrier complet
-              <span className="text-sm">→</span>
+          const typeShort = isFG ? "Formation générale" : "Approfondissement";
+          const typePillClasses = isFG
+            ? "bg-sky-50 text-sky-800 border border-slate-200"
+            : "bg-amber-50 text-amber-900 border border-amber-200";
+
+          const icon = isFG ? "🎲" : "🌍";
+
+          const cardHoverClasses = isFG
+            ? "hover:bg-sky-50 hover:ring-sky-200"
+            : "hover:bg-amber-50 hover:ring-amber-200";
+
+          const rawDescription = f.description ?? "";
+          const firstLine =
+            typeof rawDescription === "string"
+              ? rawDescription
+                  .split("\n")
+                  .map((line) => line.trim())
+                  .find((line) => line.length > 0) ?? ""
+              : "";
+
+          return (
+            <Link key={f.id} href={`/formations/${f.id}`} className="group">
+              <article
+                className={[
+                  "flex h-full flex-col justify-between rounded-2xl bg-white/95 p-4 text-sm shadow-[0_8px_18px_rgba(15,23,42,0.04)]",
+                  "ring-1 ring-slate-100 transition-transform transition-shadow transition-colors duration-200",
+                  "hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(15,23,42,0.10)]",
+                  cardHoverClasses,
+                ].join(" ")}
+              >
+                {/* En-tête : icône + type + mois + titre + prix */}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="space-y-1.5">
+                    {/* Icône + pill type */}
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-50">
+                        <span className="text-xl">{icon}</span>
+                      </div>
+
+                      <span
+                        className={[
+                          "inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.12em]",
+                          typePillClasses,
+                        ].join(" ")}
+                      >
+                        <span className="h-1.5 w-1.5 rounded-full bg-sky-400" />
+                        {typeShort}
+                      </span>
+                    </div>
+
+                    {/* Mois + titre */}
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                      {getMonthYearLabelFr(f.startDate)}
+                    </p>
+                    <h3 className="font-display text-sm md:text-base font-semibold text-slate-900">
+                      {typeLongLabel[f.type] ?? f.type}
+                    </h3>
+                  </div>
+
+                  {/* Prix en pill à droite */}
+                  <div className="flex flex-col items-end gap-1 text-xs">
+                    <span className="rounded-full bg-sky-600 px-3 py-1 font-semibold text-white shadow-sm whitespace-nowrap">
+                      {f.price} €
+                    </span>
+                 
+                  </div>
+                </div>
+
+                {/* Dates bien visibles */}
+                <p className="mt-3 text-sm font-medium text-slate-800">
+                  📅 {formatDateRangeFr(f.startDate, f.endDate)}
+                </p>
+
+                {/* Début du vrai texte de la formation */}
+                <p className="mt-1 text-sm text-slate-600">
+                  {firstLine ||
+                    "La description détaillée de cette formation arrive bientôt."}
+                </p>
+
+                {/* Lien “voir les détails” */}
+                <div className="mt-4 flex items-center justify-between text-[11px] text-slate-500">
+                  <span className="inline-flex items-center gap-1">
+                    <span className="h-1.5 w-1.5 rounded-full bg-sky-400 group-hover:bg-sky-500" />
+                    <span className="font-medium">
+                      Voir le détail de la session
+                    </span>
+                  </span>
+                  <span className="text-base transition-transform group-hover:translate-x-1">
+                    →
+                  </span>
+                </div>
+              </article>
             </Link>
-          </header>
+          );
+        })}
+      </div>
+    )}
+  </div>
+</section>
 
-          {calendarFormations.length === 0 ? (
-            <p className="text-sm text-slate-600">
-              Les prochaines dates seront affichées ici dès qu&apos;elles sont
-              confirmées.
-            </p>
-          ) : (
-            <div className="grid gap-5 md:grid-cols-2">
-              {calendarFormations.map((f) => {
-                const isFG = f.type === "formation_generale";
-                const chipBg = isFG
-                  ? "bg-sky-100 text-sky-900"
-                  : "bg-amber-100 text-amber-900";
-                const borderColor = isFG
-                  ? "border-sky-100 hover:border-sky-300"
-                  : "border-amber-100 hover:border-amber-300";
-                const emoji = isFG ? "🌱" : "🌍";
 
-                const rawDescription = f.description ?? "";
-                const firstLine =
-                  typeof rawDescription === "string"
-                    ? rawDescription
-                        .split("\n")
-                        .map((line) => line.trim())
-                        .find((line) => line.length > 0) ?? ""
-                    : "";
 
-                return (
-                  <Link key={f.id} href={`/formations/${f.id}`} className="group">
-                    <article
-                      className={`flex flex-col gap-3 rounded-2xl border bg-white/90 px-4 py-4 text-sm shadow-sm ring-1 ring-slate-100 transition-transform duration-200 hover:-translate-y-1 hover:bg-white hover:shadow-md ${borderColor}`}
-                    >
-                      {/* Ligne haut : icône + type + mois */}
-                      <div className="flex items-start gap-3">
-                        <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-900 text-lg">
-                          <span className="translate-y-[1px] text-white">
-                            {emoji}
-                          </span>
-                        </div>
-
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between gap-2">
-                            <p className="whitespace-nowrap text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                              {getMonthYearLabelFr(f.startDate)}
-                            </p>
-                            <span
-                              className={`shrink-0 rounded-full px-2 py-1 text-[11px] font-semibold ${chipBg}`}
-                            >
-                              {typeShortLabel[f.type] ?? f.type}
-                            </span>
-                          </div>
-                          <h3 className="mt-1 font-display text-sm md:text-base font-semibold text-slate-900">
-                            {typeLongLabel[f.type] ?? f.type}
-                          </h3>
-                        </div>
-                      </div>
-
-                      {/* Dates bien visibles */}
-                      <p className="text-sm font-medium text-slate-800">
-                        📅 {formatDateRangeFr(f.startDate, f.endDate)}
-                      </p>
-
-                      {/* Prix */}
-                      <p className="text-sm text-slate-600">
-                        💶{" "}
-                        <span className="font-semibold">{f.price} €</span> — hors
-                        transport
-                      </p>
-
-                      {/* Début du vrai texte de la formation */}
-                      <p className="text-sm text-slate-600">
-                        {firstLine ||
-                          "La description détaillée de cette formation arrive bientôt."}
-                      </p>
-
-                      <div className="mt-1 flex items-center gap-1 text-xs font-semibold text-sky-700 group-hover:text-sky-900">
-                        Voir les détails
-                        <span className="transition-transform duration-200 group-hover:translate-x-1">
-                          →
-                        </span>
-                      </div>
-                    </article>
-                  </Link>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </section>
 
       {/* SECTION 3 : Infos pratiques */}
       <section
@@ -554,7 +585,8 @@ export default function HomePage() {
         <div className="pointer-events-none absolute -top-6 left-0 right-0 bg-[radial-gradient(ellipse_at_top,_rgba(15,23,42,0.12),_transparent)]" />
 
         <div className="relative mx-auto max-w-6xl px-4 py-10 md:px-6">
-          <div className="mb-8 flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
+          <div className="mb-8 flex flex-col gap-6 md:flex-row md:items-stretch md:justify-between">
+            {/* Colonne gauche : texte */}
             <div className="max-w-xl space-y-4">
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                 Infos pratiques
@@ -563,14 +595,15 @@ export default function HomePage() {
                 Une formation accessible pour tous et toutes
               </h2>
               <p className="text-base text-slate-700">
-                Nos formations se déroulent dans le Cantal, ce qui a beaucoup
+                Nos formations se déroulent dans le Cantal <span className="font-semibold">au domaine de Gravières</span> , ce qui a beaucoup
                 d&apos;avantages, mais demande un peu d&apos;organisation. Pour
                 te simplifier la vie, tu peux bénéficier{" "}
                 <span className="font-medium text-slate-900">
                   d&apos;un transport organisé
                 </span>
                 . Sur place, l&apos;hébergement et la restauration sont pensés
-                pour te mettre dans les meilleures conditions d&apos;apprentissage.
+                pour te mettre dans les meilleures conditions
+                d&apos;apprentissage.
               </p>
 
               <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-medium text-slate-700">
@@ -584,7 +617,7 @@ export default function HomePage() {
                 </span>
                 <span className="inline-flex items-center gap-1 rounded-full bg-white/80 px-3 py-1 shadow-sm ring-1 ring-amber-200">
                   <span className="text-base">🛏️</span>
-                  Chambres partagées façon colo
+                  Chambres tout confort 
                 </span>
               </div>
 
@@ -599,96 +632,27 @@ export default function HomePage() {
               </div>
             </div>
 
-            <div className="grid w-full max-w-md gap-4 text-sm text-slate-700 md:text-sm">
-              <div className="group relative overflow-hidden rounded-2xl border border-sky-100 bg-white/90 px-4 py-4 shadow-sm transition-transform duration-200 hover:-translate-y-1 hover:border-sky-300 hover:shadow-md">
-                <div className="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-sky-100/80" />
-                <div className="relative flex items-start gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-sky-500 text-lg">
-                    <span className="translate-y-[1px] text-white">🚌</span>
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-sky-700">
-                      Pack transport
-                    </p>
-                    <p className="mt-1 text-sm font-medium text-slate-900">
-                      Trajets organisés depuis les grandes villes
-                    </p>
-                    <p className="mt-1 text-xs text-slate-700">
-                      Départs groupés depuis Lyon et Paris, pour arriver ensemble
-                      sur le lieu de formation, encadrés par l&apos;équipe.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="group relative overflow-hidden rounded-2xl border border-emerald-100 bg-white/90 px-4 py-4 shadow-sm transition-transform duration-200 hover:-translate-y-1 hover:border-emerald-300 hover:shadow-md">
-                <div className="absolute -right-5 -top-5 h-16 w-16 rounded-full bg-emerald-100/80" />
-                <div className="relative flex items-start gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500 text-lg">
-                    <span className="translate-y-[1px] text-white">🏡</span>
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700">
-                      Hébergement & repas
-                    </p>
-                    <p className="mt-1 text-sm font-medium text-slate-900">
-                      Pension complète sur place
-                    </p>
-                    <p className="mt-1 text-xs text-slate-700">
-                      Chambres partagées, repas équilibrés et temps conviviaux :
-                      bref, une vraie vie de colo pendant ta formation.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="group relative overflow-hidden rounded-2xl border border-amber-100 bg-white/90 px-4 py-4 shadow-sm transition-transform duration-200 hover:-translate-y-1 hover:border-amber-300 hover:shadow-md">
-                <div className="absolute -right-6 -top-6 h-16 w-16 rounded-full bg-amber-100/80" />
-                <div className="relative flex items-start gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-400 text-lg">
-                    <span className="translate-y-[1px] text-slate-900">💸</span>
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-700">
-                      Budget maîtrisé
-                    </p>
-                    <p className="mt-1 text-sm font-medium text-slate-900">
-                      Un tarif clair, sans mauvaise surprise
-                    </p>
-                    <p className="mt-1 text-xs text-slate-700">
-                      Le pack inclut la formation, l&apos;hébergement, les repas
-                      et le transport organisé. Les détails précis sont indiqués
-                      au moment de l&apos;inscription.
-                    </p>
-                  </div>
-                </div>
+            {/* Colonne droite : photo plein pot */}
+                       {/* Colonne droite : photo plein pot */}
+            <div className="relative w-full max-w-md md:flex-1">
+              <div className="relative h-72 md:h-96 lg:h-[26rem] w-full overflow-hidden  ring-1 ring-slate-100">
+                <Image
+                  src="/6.jpg"
+                  alt="Vie de colo au Domaine de Gravières"
+                  fill
+                  className="object-cover"
+                  sizes="(min-width: 1024px) 440px, (min-width: 768px) 360px, 100vw"
+                  priority={false}
+                />
               </div>
             </div>
+
           </div>
 
-          <div className="mt-6 rounded-2xl bg-white/80 px-4 py-3 text-[11px] text-slate-700 shadow-sm md:flex md:items-center md:justify-between">
-            <div className="mb-2 flex items-center gap-2 md:mb-0">
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-sky-500 text-lg">
-                <span className="translate-y-[1px] text-white">✨</span>
-              </span>
-              <p className="font-display text-xs font-semibold uppercase tracking-[0.16em] text-slate-800">
-                Ambiance séjour garantie
-              </p>
-            </div>
-            <div className="flex flex-wrap gap-2 text-[11px]">
-              <span className="inline-flex items-center gap-1 rounded-full bg-slate-900 text-white px-3 py-1">
-                🎤 Veillées & grands jeux
-              </span>
-              <span className="inline-flex items-center gap-1 rounded-full bg-sky-100 text-sky-900 px-3 py-1">
-                🤝 Cohésion de groupe
-              </span>
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 text-emerald-900 px-3 py-1">
-                🧠 Posture pro & bienveillance
-              </span>
-            </div>
-          </div>
+         
         </div>
       </section>
+
     </>
   );
 }
