@@ -147,7 +147,7 @@ export default function HomePage() {
       >
         {/* Image de fond */}
         <Image
-          src="/5.jpg"
+          src="/bafa.jpg"
           alt="Jeunes en formation BAFA dans un cadre nature"
           fill
           priority
@@ -637,7 +637,7 @@ export default function HomePage() {
             <div className="relative w-full max-w-md md:flex-1">
               <div className="relative h-72 md:h-96 lg:h-[26rem] w-full overflow-hidden  ring-1 ring-slate-100">
                 <Image
-                  src="/6.jpg"
+                  src="/fanion.jpg"
                   alt="Vie de colo au Domaine de Gravières"
                   fill
                   className="object-cover"
