@@ -71,7 +71,7 @@ const getMonthYearLabelFr = (dateStr?: string): string => {
 };
 
 const typeShortLabel: Record<string, string> = {
-  formation_generale: "BAFA Base",
+  formation_generale: "BAFA FG",
   approfondissement_sejour_etranger: "BAFA Appro",
 };
 
@@ -315,7 +315,7 @@ export default function HomePage() {
       {/* SECTION 1 : Présentation BAFA – reprise de la DA « infos pratiques » */}
       <section
         id="programme"
-        className="relative border-t border-slate-100 bg-gradient-to-b from-sky-50 via-amber-50/70 to-rose-50/60"
+        className="relative border-t border-slate-100 bg-gradient-to-b from-white via-sky-50 to-[#6668C6]/50 "
       >
         <div className="pointer-events-none absolute -top-6 left-0 right-0 bg-[radial-gradient(ellipse_at_top,_rgba(15,23,42,0.12),_transparent)]" />
 
@@ -433,7 +433,7 @@ export default function HomePage() {
       {/* SECTION 2 : Calendrier dynamique – version pastel */}
 <section
   id="timeline"
-  className="relative border-t border-slate-100 bg-gradient-to-b from-white via-sky-50/60 to-amber-50/60"
+  className="relative border-t border-slate-100 bg-amber-50/70 "
 >
   <div className="pointer-events-none absolute -top-6 left-0 right-0 bg-[radial-gradient(ellipse_at_top,_rgba(15,23,42,0.10),_transparent)]" />
 
@@ -579,7 +579,7 @@ export default function HomePage() {
       {/* SECTION 3 : Infos pratiques */}
       <section
         id="infos"
-        className="relative border-t border-slate-100 bg-gradient-to-b from-sky-50 via-amber-50/70 to-rose-50/70"
+        className="relative border-t border-slate-100 bg-sky-50 "
       >
         <div className="pointer-events-none absolute -top-6 left-0 right-0 bg-[radial-gradient(ellipse_at_top,_rgba(15,23,42,0.12),_transparent)]" />
 

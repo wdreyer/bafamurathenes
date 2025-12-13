@@ -153,7 +153,7 @@ export default function BafaPage() {
       </section>
 
       {/* SECTION : Les 3 étapes du BAFA */}
-      <section className="border-t border-slate-100 bg-gradient-to-b from-white via-sky-50/70 to-emerald-50/60">
+      <section className="border-t border-slate-100 bg-gradient-to-b from-white via-sky-50 to-[#6668C6]/50">
         <div className="mx-auto max-w-6xl px-4 py-12 md:px-6">
           <header className="mb-7 max-w-3xl space-y-3">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
