@@ -64,7 +64,7 @@ export default function Header() {
           <Link
             href="#reservation"
             className="relative whitespace-nowrap rounded-full text-red-700 px-4 py-2 text-xs md:text-sm font-semibold uppercase tracking-[0.12em] transition-all duration-150 hover:text-red-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6668C6] focus-visible:ring-offset-2 focus-visible:ring-offset-amber-50
-              after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-red-600 after:transition-all after:duration-150 hover:after:w-full"
+              after:absolute after:left-0 after:-bottom-1  after:h-[2px] after:w-0 after:bg-red-600 after:transition-all after:duration-150 hover:after:w-full"
           >
             Je m&apos;inscris
           </Link>
@@ -105,28 +105,28 @@ export default function Header() {
             <Link
               href="/"
               onClick={closeMenu}
-              className="rounded-full px-3 py-2 hover:bg-white/80"
+              className="rounded-full px-3 py-2 "
             >
               Accueil
             </Link>
             <Link
               href="/bafa"
               onClick={closeMenu}
-              className="rounded-full px-3 py-2 hover:bg-white/80"
+              className="rounded-full px-3 py-2 "
             >
               Le BAFA
             </Link>
             <Link
               href="/formations"
               onClick={closeMenu}
-              className="rounded-full px-3 py-2 hover:bg-white/80"
+              className="rounded-full px-3 py-2 "
             >
               Nos formations 2026
             </Link>
             <Link
               href="/infos"
               onClick={closeMenu}
-              className="rounded-full px-3 py-2 hover:bg-white/80"
+              className="rounded-full px-3 py-2 "
             >
               Infos pratiques
             </Link>
@@ -134,7 +134,7 @@ export default function Header() {
             <Link
               href="#reservation"
               onClick={closeMenu}
-              className="mt-2 inline-flex items-center justify-center rounded-full bg-red-600 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-white shadow-sm hover:bg-red-500"
+              className="mt-2 inline-flex items-center justify-center rounded-full bg-[#6668C6] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-white shadow-sm hover:bg-[#7068C6]"
             >
               Je m&apos;inscris
             </Link>

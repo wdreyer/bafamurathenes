@@ -184,18 +184,18 @@ export default function HomePage() {
                 </p>
               </div>
 
-              <div className="mt-4 flex flex-wrap gap-3 text-xs text-slate-100/80">
+              <div className="mt-4 flex flex-col w-1/2  flex-wrap gap-3 text-xs text-slate-100/80">
                 <div className="inline-flex items-center gap-2 rounded-full bg-black/40 px-3 py-1.5 ring-1 ring-white/10">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                  <span>Encadrement expérimenté</span>
+                  <span>Education populaire</span>
                 </div>
                 <div className="inline-flex items-center gap-2 rounded-full bg-black/40 px-3 py-1.5 ring-1 ring-white/10">
                   <span className="h-1.5 w-1.5 rounded-full bg-sky-400" />
-                  <span>Cadre magnifique</span>
+                  <span>Vie en collectivité</span>
                 </div>
                 <div className="inline-flex items-center gap-2 rounded-full bg-black/40 px-3 py-1.5 ring-1 ring-white/10">
                   <span className="h-1.5 w-1.5 rounded-full bg-amber-300" />
-                  <span>Vie en collectivité</span>
+                  <span>Pedagogie émancipatrice</span>
                 </div>
               </div>
             </div>
@@ -328,8 +328,8 @@ export default function HomePage() {
             Le BAFA dans un environnement incroyable et une pédagogie émancipatrice
             </h2>
             <p className="text-base text-slate-700">
-  À Murathènes, nous mettons en avant notre idée de l&apos;éducation populaire via nos{" "}
-  <span className="font-semibold">pédagogies actives</span>. Animations,{" "}
+  Murathènes, défend des principes d&apos;éducation populaire à travers l'utilisation de {" "}
+  <span className="font-semibold">pédagogies actives et émancipatrices</span>. Animations,{" "}
   grands jeux, veillées, débats, chaque
   module et chaque temps de la formation est réfléchi pour qu&apos;il <span className="font-semibold">favorise
   l&apos;apprentissage</span>. Nous proposons tout au long de l&apos;année des{" "}
@@ -398,10 +398,10 @@ export default function HomePage() {
                     Un contenu diversifié
                   </p>
                   <p className="mt-1 text-sm font-medium text-slate-900">
-                    Les bases de l'animation jusqu'au problématique individuelles de chaque enfant
+                    Des bases de l'animation jusqu'aux problématiques individuelles de chaque enfant
                   </p>
                   <p className="mt-1 text-xs text-slate-700">
-                    Animation, vie quotidienne, mais également lutte contre les VSS, maltraitance, responsabilité civile et pénal, réglementation et bien d'autres seront vu au long de ta semaine.
+                    Animation, vie quotidienne, mais également lutte contre les violences sexistes et sexuelles, maltraitance, handicap,  responsabilité civile et pénal, discrimination, réglementation et bien d'autres sujets seront au programme de ta semaine.
                   </p>
                 </div>
               </div>
@@ -421,8 +421,7 @@ export default function HomePage() {
                     Au delà de la formation, la vie en collectivité !
                   </p>
                   <p className="mt-1 text-xs text-slate-700">
-                    Veillées, vie quotidienne en groupe, tu vis ce que
-                    tu feras ensuite avec les enfants. Mais également des rencontres et un cadre favorisant l'apprentissage
+                    Veillées, vie quotidienne en groupe, ta formation en internat te permet de vivre ce que tu vivras ensuite avec le public. Mais également des rencontres et un cadre favorisant l'apprentissage
                   </p>
                 </div>
               </div>
@@ -597,9 +596,9 @@ export default function HomePage() {
               <p className="text-base text-slate-700">
                 Nos formations se déroulent dans le Cantal <span className="font-semibold">au domaine de Gravières</span> , ce qui a beaucoup
                 d&apos;avantages, mais demande un peu d&apos;organisation. Pour
-                te simplifier la vie, tu peux bénéficier{" "}
+               plus de facilité , nous proposons {" "}
                 <span className="font-medium text-slate-900">
-                  d&apos;un transport organisé
+                 un transport organisé
                 </span>
                 . Sur place, l&apos;hébergement et la restauration sont pensés
                 pour te mettre dans les meilleures conditions
