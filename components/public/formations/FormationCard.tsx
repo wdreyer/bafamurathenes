@@ -100,7 +100,7 @@ const typePillClasses = isFG
 
           {dateLabel && (
             <p className="text-xs font-medium text-slate-700">
-              📅 {dateLabel}
+              🗓️ {dateLabel}
             </p>
           )}
         </div>
