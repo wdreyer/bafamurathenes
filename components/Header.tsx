@@ -76,7 +76,7 @@ export default function Header() {
           aria-label="Ouvrir le menu"
           aria-expanded={isOpen}
           onClick={() => setIsOpen((prev) => !prev)}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-300 bg-white/70 text-slate-800 shadow-sm transition hover:bg-white md:hidden"
+          className="inline-flex cursor-pointer h-9 w-9 items-center justify-center rounded-full border border-slate-300 bg-white/70 text-slate-800 shadow-sm transition hover:bg-white md:hidden"
         >
           <span className="relative block h-4 w-4">
             <span

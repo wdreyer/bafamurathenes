@@ -192,21 +192,47 @@ export function FormationCalendar() {
     el.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  const MonthBadge = ({
-    month,
-    year,
-    count,
-  }: {
-    month: string;
-    year: string;
-    count: number;
-  }) => (
-    <div className="group relative overflow-hidden rounded-2xl bg-white p-5 text-center shadow-sm ring-1 ring-slate-200 transition will-change-transform hover:-translate-y-0.5 hover:shadow-md">
-      {/* wash gradient */}
-      <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-sky-50 via-white to-amber-50 opacity-90" />
+  // ✅ 1) Remplace MonthBadge par cette version (desktop = pareil, mobile = compact horizontal)
 
-      {/* contenu */}
-      <div className="relative flex flex-col items-center">
+const MonthBadge = ({
+  month,
+  year,
+  count,
+}: {
+  month: string;
+  year: string;
+  count: number;
+}) => (
+  <div className="group relative overflow-hidden rounded-2xl bg-white p-4 md:p-5 shadow-sm ring-1 ring-slate-200 transition will-change-transform hover:-translate-y-0.5 hover:shadow-md">
+    {/* wash gradient */}
+    <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-sky-50 via-white to-amber-50 opacity-90" />
+
+    {/* contenu */}
+    <div className="relative">
+      {/* MOBILE: compact horizontal */}
+      <div className="flex items-center justify-between gap-3 md:hidden">
+        <div className="flex items-center gap-3">
+          {/* petite icone (sans date): "sparkle/calendar-ish" */}
+📅
+
+
+          <div className="leading-tight">
+            <div className="font-display text-lg font-semibold text-slate-900">
+              {month}
+            </div>
+            <div className="text-[11px] font-semibold uppercase tracking-[0.22em] text-sky-700">
+              {year}
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-full bg-slate-900/5 px-2.5 py-1 text-xs font-semibold text-slate-600 ring-1 ring-slate-200">
+          {count} session{count > 1 ? "s" : ""}
+        </div>
+      </div>
+
+      {/* DESKTOP: version verticale fun */}
+      <div className="hidden md:flex md:flex-col md:items-center md:text-center">
         <span className="text-8xl leading-none">📅</span>
 
         <div className="mt-2 font-display text-4xl font-semibold leading-none text-slate-900">
@@ -226,7 +252,9 @@ export function FormationCalendar() {
         <div className="pointer-events-none absolute -right-1 -top-1 h-14 w-14 rounded-full bg-gradient-to-br from-sky-300/30 to-amber-300/20 blur-2xl transition-opacity group-hover:opacity-100 opacity-60" />
       </div>
     </div>
-  );
+  </div>
+);
+
 
   const noResults = filtered.length === 0;
 
