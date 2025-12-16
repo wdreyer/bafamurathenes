@@ -6,6 +6,8 @@ import { db } from "@/lib/firebase";
 import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
 import type { Formation } from "@/lib/types";
 import { FormationCard } from "./FormationCard";
+import { useSearchParams } from "next/navigation";
+
 
 type Filter = "all" | "formation_generale" | "approfondissement";
 
@@ -43,6 +45,7 @@ function monthLabelFR(startDate: any) {
 }
 
 export function FormationCalendar() {
+   const searchParams = useSearchParams();
   const [formations, setFormations] = useState<Formation[]>([]);
   const [filter, setFilter] = useState<Filter>("all");
   const [monthFilter, setMonthFilter] = useState<string>("all");
@@ -51,6 +54,13 @@ export function FormationCalendar() {
   const [activeGroupIndex, setActiveGroupIndex] = useState(0);
   const [showArrow, setShowArrow] = useState(false);
   const groupRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  useEffect(() => {
+    const t = searchParams.get("type");
+    if (t === "approfondissement") setFilter("approfondissement");
+    if (t === "formation_generale") setFilter("formation_generale");
+    if (t === "all") setFilter("all");
+  }, [searchParams]);
 
   useEffect(() => {
     const q = query(collection(db, "formations"), orderBy("startDate", "asc"));
