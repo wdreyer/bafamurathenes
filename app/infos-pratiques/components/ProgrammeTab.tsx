@@ -33,34 +33,47 @@ function Badge({
 
 function TwoColHeader() {
   return (
-    <div className="col-span-12 grid grid-cols-12 gap-3">
-      <div className="col-span-12 md:col-span-6 rounded-2xl bg-white/95 px-4 py-4 shadow-sm ring-1 ring-slate-100">
+    <div className="col-span-12 grid grid-cols-12 gap-6">
+      {/* Formation Générale */}
+      <div className="col-span-12 md:col-span-6">
         <div className="flex items-start justify-between gap-3">
-          <div>
+          <div className="space-y-1">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+              BAFA
+            </p>
+            <p className="font-display text-lg md:text-xl font-semibold text-slate-900">
               Formation Générale
             </p>
           </div>
+
           <Badge tone="sky">8 jours</Badge>
         </div>
+
+        <div className="mt-3 h-px w-full bg-slate-200" />
       </div>
 
-      <div className="col-span-12 md:col-span-6 rounded-2xl bg-white/95 px-4 py-4 shadow-sm ring-1 ring-slate-100">
+      {/* Approfondissement */}
+      <div className="col-span-12 md:col-span-6">
         <div className="flex items-start justify-between gap-3">
-          <div>
+          <div className="space-y-1">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
               Approfondissement
             </p>
-            <p className="mt-1 text-sm text-slate-700">
+            <p className="font-display text-lg md:text-xl font-semibold text-slate-900">
               Séjours à l’étranger | Echanges de jeunes
             </p>
           </div>
+
           <Badge tone="emerald">6 jours</Badge>
         </div>
+
+        <div className="mt-3 h-px w-full bg-slate-200" />
       </div>
     </div>
   );
 }
+
+
 
 function Cell({
   label,
