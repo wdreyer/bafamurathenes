@@ -143,7 +143,7 @@ export default function HomePage() {
       {/* HERO – on ne touche pas */}
       <section
         id="hero"
-        className="relative w-full bg-slate-950 min-h-[50vh] md:min-h-[50vh]"
+        className="relative w-full  min-h-[50vh] md:min-h-[50vh]"
       >
         {/* Image de fond */}
         <Image
@@ -158,7 +158,7 @@ export default function HomePage() {
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-slate-950/70 via-slate-950/40 to-slate-900/10" />
 
         {/* Contenu */}
-        <div className="relative z-10 mx-auto flex h-full max-w-6xl items-center px-4 py-12 md:px-6">
+        <div className="relative z-10  mx-auto flex h-full max-w-6xl items-center px-4 py-12 md:px-6">
           <div className="flex w-full flex-col gap-10 md:flex-row md:items-start md:justify-between">
             {/* Colonne gauche : intro */}
             <div className="max-w-md space-y-5">
@@ -180,7 +180,7 @@ export default function HomePage() {
                 </h1>
 
                 <p className="text-sm md:text-base text-slate-100/90">
-                Formations BAFA dans le Cantal au domaine de Gravières
+                  Formations BAFA dans le Cantal au domaine de Gravières
                 </p>
               </div>
 
@@ -313,10 +313,7 @@ export default function HomePage() {
       </section>
 
       {/* SECTION 1 : Présentation BAFA – reprise de la DA « infos pratiques » */}
-      <section
-        id="programme"
-        className="relative border-t border-slate-100 bg-gradient-to-b from-white via-sky-50 to-[#6668C6]/50 "
-      >
+      <section id="programme" className="relative border-t border-slate-200   ">
         <div className="pointer-events-none absolute -top-6 left-0 right-0 bg-[radial-gradient(ellipse_at_top,_rgba(15,23,42,0.12),_transparent)]" />
 
         <div className="relative mx-auto flex max-w-6xl flex-col gap-8 px-4 py-10 md:flex-row md:items-start md:justify-between md:px-6">
@@ -325,21 +322,28 @@ export default function HomePage() {
               Le BAFA avec Murathènes
             </p>
             <h2 className="font-display text-xl md:text-2xl font-semibold text-slate-900">
-            Le BAFA dans un environnement incroyable et une pédagogie émancipatrice
+              Le BAFA dans un environnement incroyable et une pédagogie
+              émancipatrice
             </h2>
             <p className="text-base text-slate-700">
-  Murathènes, défend des principes d&apos;éducation populaire à travers l'utilisation de {" "}
-  <span className="font-semibold">pédagogies actives et émancipatrices</span>. Animations,{" "}
-  grands jeux, veillées, débats, chaque
-  module et chaque temps de la formation est réfléchi pour qu&apos;il <span className="font-semibold">favorise
-  l&apos;apprentissage</span>. Nous proposons tout au long de l&apos;année des{" "}
-  <span className="font-semibold">formations générales</span> et des{" "}
-  <span className="font-semibold">
-    approfondissements &quot;échanges de jeunes et séjours à l&apos;étranger&quot;
-  </span>
-  .
-</p>
-
+              Murathènes, défend des principes d&apos;éducation populaire à
+              travers l'utilisation de{" "}
+              <span className="font-semibold">
+                pédagogies actives et émancipatrices
+              </span>
+              . Animations, grands jeux, veillées, débats, chaque module et
+              chaque temps de la formation est réfléchi pour qu&apos;il{" "}
+              <span className="font-semibold">
+                favorise l&apos;apprentissage
+              </span>
+              . Nous proposons tout au long de l&apos;année des{" "}
+              <span className="font-semibold">formations générales</span> et des{" "}
+              <span className="font-semibold">
+                approfondissements &quot;échanges de jeunes et séjours à
+                l&apos;étranger&quot;
+              </span>
+              .
+            </p>
 
             <div className="flex flex-wrap gap-3 text-sm text-slate-700">
               <span className="inline-flex items-center gap-2 rounded-full bg-white/90 px-3 py-1 shadow-sm ring-1 ring-emerald-100">
@@ -381,7 +385,9 @@ export default function HomePage() {
                     On apprend en faisant, et en experimentant.
                   </p>
                   <p className="mt-1 text-xs text-slate-700">
-                    Jeux de rôles, mises en situation, analyses de pratiques, supports vidéos et audio, débats, animations seront  au programme de ton stage.
+                    Jeux de rôles, mises en situation, analyses de pratiques,
+                    supports vidéos et audio, débats, animations seront au
+                    programme de ton stage.
                   </p>
                 </div>
               </div>
@@ -398,10 +404,15 @@ export default function HomePage() {
                     Un contenu diversifié
                   </p>
                   <p className="mt-1 text-sm font-medium text-slate-900">
-                    Des bases de l'animation jusqu'aux problématiques individuelles de chaque enfant
+                    Des bases de l'animation jusqu'aux problématiques
+                    individuelles de chaque enfant
                   </p>
                   <p className="mt-1 text-xs text-slate-700">
-                    Animation, vie quotidienne, mais également lutte contre les violences sexistes et sexuelles, maltraitance, handicap,  responsabilité civile et pénal, discrimination, réglementation et bien d'autres sujets seront au programme de ta semaine.
+                    Animation, vie quotidienne, mais également lutte contre les
+                    violences sexistes et sexuelles, maltraitance, handicap,
+                    responsabilité civile et pénal, discrimination,
+                    réglementation et bien d'autres sujets seront au programme
+                    de ta semaine.
                   </p>
                 </div>
               </div>
@@ -421,7 +432,10 @@ export default function HomePage() {
                     Au delà de la formation, la vie en collectivité !
                   </p>
                   <p className="mt-1 text-xs text-slate-700">
-                    Veillées, vie quotidienne en groupe, ta formation en internat te permet de vivre ce que tu vivras ensuite avec le public. Mais également des rencontres et un cadre favorisant l'apprentissage
+                    Veillées, vie quotidienne en groupe, ta formation en
+                    internat te permet de vivre ce que tu vivras ensuite avec le
+                    public. Mais également des rencontres et un cadre favorisant
+                    l'apprentissage
                   </p>
                 </div>
               </div>
@@ -431,155 +445,157 @@ export default function HomePage() {
       </section>
 
       {/* SECTION 2 : Calendrier dynamique – version pastel */}
-<section
-  id="timeline"
-  className="relative border-t border-slate-100 bg-amber-50/70 "
->
-  <div className="pointer-events-none absolute -top-6 left-0 right-0 bg-[radial-gradient(ellipse_at_top,_rgba(15,23,42,0.10),_transparent)]" />
-
-  <div className="relative mx-auto max-w-6xl px-4 py-10 md:px-6">
-    {/* HEADER */}
-    <header className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 whitespace-nowrap">
-          Calendrier {calendarYearLabel || "des formations"}
-        </p>
-        <h2 className="font-display text-2xl md:text-3xl font-semibold text-slate-900">
-          Les prochaines sessions en un coup d&apos;œil
-        </h2>
-        <p className="mt-1 max-w-xl text-base text-slate-700">
-          Un aperçu rapide des prochaines dates. Pour tous les détails
-          (programme, lieu, transport), tu peux ouvrir chaque formation ou
-          consulter le calendrier complet.
-        </p>
-      </div>
-
-      <Link
-        href="/formations"
-        className="mt-2 inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-50 shadow-sm transition hover:bg-slate-800"
+      <section
+        id="timeline"
+        className="relative border-t border-slate-200  "
       >
-        Voir le calendrier complet
-        <span className="text-sm">→</span>
-      </Link>
-    </header>
+        <div className="pointer-events-none absolute -top-6 left-0 right-0 bg-[radial-gradient(ellipse_at_top,_rgba(15,23,42,0.10),_transparent)]" />
 
-    {calendarFormations.length === 0 ? (
-      <p className="text-sm text-slate-600">
-        Les prochaines dates seront affichées ici dès qu&apos;elles sont
-        confirmées.
-      </p>
-    ) : (
-      <div className="grid gap-5 md:grid-cols-2">
-        {calendarFormations.map((f) => {
-          const isFG = f.type === "formation_generale";
+        <div className="relative mx-auto max-w-6xl px-4 py-10 md:px-6">
+          {/* HEADER */}
+          <header className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 whitespace-nowrap">
+                Calendrier {calendarYearLabel || "des formations"}
+              </p>
+              <h2 className="font-display text-2xl md:text-3xl font-semibold text-slate-900">
+                Les prochaines sessions en un coup d&apos;œil
+              </h2>
+              <p className="mt-1 max-w-xl text-base text-slate-700">
+                Un aperçu rapide des prochaines dates. Pour tous les détails
+                (programme, lieu, transport), tu peux ouvrir chaque formation ou
+                consulter le calendrier complet.
+              </p>
+            </div>
 
-          const typeShort = isFG ? "Formation générale" : "Approfondissement";
-          const typePillClasses = isFG
-            ? "bg-sky-50 text-sky-800 border border-slate-200"
-            : "bg-amber-50 text-amber-900 border border-amber-200";
+            <Link
+              href="/formations"
+              className="mt-2 inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-50 shadow-sm transition hover:bg-slate-800"
+            >
+              Voir le calendrier complet
+              <span className="text-sm">→</span>
+            </Link>
+          </header>
 
-          const icon = isFG ? "🎲" : "🌍";
+          {calendarFormations.length === 0 ? (
+            <p className="text-sm text-slate-600">
+              Les prochaines dates seront affichées ici dès qu&apos;elles sont
+              confirmées.
+            </p>
+          ) : (
+            <div className="grid gap-5 md:grid-cols-2">
+              {calendarFormations.map((f) => {
+                const isFG = f.type === "formation_generale";
 
-          const cardHoverClasses = isFG
-            ? "hover:bg-sky-50 hover:ring-sky-200"
-            : "hover:bg-amber-50 hover:ring-amber-200";
+                const typeShort = isFG
+                  ? "Formation générale"
+                  : "Approfondissement";
+                const typePillClasses = isFG
+                  ? "bg-sky-50 text-sky-800 border border-slate-200"
+                  : "bg-amber-50 text-amber-900 border border-amber-200";
 
-          const rawDescription = f.description ?? "";
-          const firstLine =
-            typeof rawDescription === "string"
-              ? rawDescription
-                  .split("\n")
-                  .map((line) => line.trim())
-                  .find((line) => line.length > 0) ?? ""
-              : "";
+                const icon = isFG ? "🎲" : "🌍";
 
-          return (
-            <Link key={f.id} href={`/formations/${f.id}`} className="group">
-              <article
-                className={[
-                  "flex h-full flex-col justify-between rounded-2xl bg-white/95 p-4 text-sm shadow-[0_8px_18px_rgba(15,23,42,0.04)]",
-                  "ring-1 ring-slate-100 transition-transform transition-shadow transition-colors duration-200",
-                  "hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(15,23,42,0.10)]",
-                  cardHoverClasses,
-                ].join(" ")}
-              >
-                {/* En-tête : icône + type + mois + titre + prix */}
-                <div className="flex items-start justify-between gap-3">
-                  <div className="space-y-1.5">
-                    {/* Icône + pill type */}
-                    <div className="flex items-center gap-2">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-50">
-                        <span className="text-xl">{icon}</span>
+                const cardHoverClasses = isFG
+                  ? "hover:bg-sky-50 hover:ring-sky-200"
+                  : "hover:bg-amber-50 hover:ring-amber-200";
+
+                const rawDescription = f.description ?? "";
+                const firstLine =
+                  typeof rawDescription === "string"
+                    ? rawDescription
+                        .split("\n")
+                        .map((line) => line.trim())
+                        .find((line) => line.length > 0) ?? ""
+                    : "";
+
+                return (
+                  <Link
+                    key={f.id}
+                    href={`/formations/${f.id}`}
+                    className="group"
+                  >
+                    <article
+                      className={[
+                        "flex h-full flex-col justify-between rounded-2xl bg-white/95 p-4 text-sm shadow-[0_8px_18px_rgba(15,23,42,0.04)]",
+                        "ring-1 ring-slate-100 transition-transform transition-shadow transition-colors duration-200",
+                        "hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(15,23,42,0.10)]",
+                        cardHoverClasses,
+                      ].join(" ")}
+                    >
+                      {/* En-tête : icône + type + mois + titre + prix */}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="space-y-1.5">
+                          {/* Icône + pill type */}
+                          <div className="flex items-center gap-2">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-50">
+                              <span className="text-xl">{icon}</span>
+                            </div>
+
+                            <span
+                              className={[
+                                "inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.12em]",
+                                typePillClasses,
+                              ].join(" ")}
+                            >
+                              <span className="h-1.5 w-1.5 rounded-full bg-sky-400" />
+                              {typeShort}
+                            </span>
+                          </div>
+
+                          {/* Mois + titre */}
+                          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+                            {getMonthYearLabelFr(f.startDate)}
+                          </p>
+                          <h3 className="font-display text-sm md:text-base font-semibold text-slate-900">
+                            {typeLongLabel[f.type] ?? f.type}
+                          </h3>
+                        </div>
+
+                        {/* Prix en pill à droite */}
+                        <div className="flex flex-col items-end gap-1 text-xs">
+                          <span className="rounded-full bg-sky-600 px-3 py-1 font-semibold text-white shadow-sm whitespace-nowrap">
+                            {f.price} €
+                          </span>
+                        </div>
                       </div>
 
-                      <span
-                        className={[
-                          "inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.12em]",
-                          typePillClasses,
-                        ].join(" ")}
-                      >
-                        <span className="h-1.5 w-1.5 rounded-full bg-sky-400" />
-                        {typeShort}
-                      </span>
-                    </div>
+                      {/* Dates bien visibles */}
+                      <p className="mt-3 text-sm font-medium text-slate-800">
+                        📅 {formatDateRangeFr(f.startDate, f.endDate)}
+                      </p>
 
-                    {/* Mois + titre */}
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                      {getMonthYearLabelFr(f.startDate)}
-                    </p>
-                    <h3 className="font-display text-sm md:text-base font-semibold text-slate-900">
-                      {typeLongLabel[f.type] ?? f.type}
-                    </h3>
-                  </div>
+                      {/* Début du vrai texte de la formation */}
+                      <p className="mt-1 text-sm text-slate-600">
+                        {firstLine ||
+                          "La description détaillée de cette formation arrive bientôt."}
+                      </p>
 
-                  {/* Prix en pill à droite */}
-                  <div className="flex flex-col items-end gap-1 text-xs">
-                    <span className="rounded-full bg-sky-600 px-3 py-1 font-semibold text-white shadow-sm whitespace-nowrap">
-                      {f.price} €
-                    </span>
-                 
-                  </div>
-                </div>
-
-                {/* Dates bien visibles */}
-                <p className="mt-3 text-sm font-medium text-slate-800">
-                  📅 {formatDateRangeFr(f.startDate, f.endDate)}
-                </p>
-
-                {/* Début du vrai texte de la formation */}
-                <p className="mt-1 text-sm text-slate-600">
-                  {firstLine ||
-                    "La description détaillée de cette formation arrive bientôt."}
-                </p>
-
-                {/* Lien “voir les détails” */}
-                <div className="mt-4 flex items-center justify-between text-[11px] text-slate-500">
-                  <span className="inline-flex items-center gap-1">
-                    <span className="h-1.5 w-1.5 rounded-full bg-sky-400 group-hover:bg-sky-500" />
-                    <span className="font-medium">
-                      Voir le détail de la session
-                    </span>
-                  </span>
-                  <span className="text-base transition-transform group-hover:translate-x-1">
-                    →
-                  </span>
-                </div>
-              </article>
-            </Link>
-          );
-        })}
-      </div>
-    )}
-  </div>
-</section>
-
-
-
+                      {/* Lien “voir les détails” */}
+                      <div className="mt-4 flex items-center justify-between text-[11px] text-slate-500">
+                        <span className="inline-flex items-center gap-1">
+                          <span className="h-1.5 w-1.5 rounded-full bg-sky-400 group-hover:bg-sky-500" />
+                          <span className="font-medium">
+                            Voir le détail de la session
+                          </span>
+                        </span>
+                        <span className="text-base transition-transform group-hover:translate-x-1">
+                          →
+                        </span>
+                      </div>
+                    </article>
+                  </Link>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </section>
 
       {/* SECTION 3 : Infos pratiques */}
       <section
         id="infos"
-        className="relative border-t border-slate-100 bg-sky-50 "
+        className="relative border-t border-slate-200"
       >
         <div className="pointer-events-none absolute -top-6 left-0 right-0 bg-[radial-gradient(ellipse_at_top,_rgba(15,23,42,0.12),_transparent)]" />
 
@@ -594,11 +610,12 @@ export default function HomePage() {
                 Une formation accessible pour tous et toutes
               </h2>
               <p className="text-base text-slate-700">
-                Nos formations se déroulent dans le Cantal <span className="font-semibold">au domaine de Gravières</span> , ce qui a beaucoup
-                d&apos;avantages, mais demande un peu d&apos;organisation. Pour
-               plus de facilité , nous proposons {" "}
+                Nos formations se déroulent dans le Cantal{" "}
+                <span className="font-semibold">au domaine de Gravières</span> ,
+                ce qui a beaucoup d&apos;avantages, mais demande un peu
+                d&apos;organisation. Pour plus de facilité , nous proposons{" "}
                 <span className="font-medium text-slate-900">
-                 un transport organisé
+                  un transport organisé
                 </span>
                 . Sur place, l&apos;hébergement et la restauration sont pensés
                 pour te mettre dans les meilleures conditions
@@ -616,7 +633,7 @@ export default function HomePage() {
                 </span>
                 <span className="inline-flex items-center gap-1 rounded-full bg-white/80 px-3 py-1 shadow-sm ring-1 ring-amber-200">
                   <span className="text-base">🛏️</span>
-                  Chambres tout confort 
+                  Chambres tout confort
                 </span>
               </div>
 
@@ -632,7 +649,7 @@ export default function HomePage() {
             </div>
 
             {/* Colonne droite : photo plein pot */}
-                       {/* Colonne droite : photo plein pot */}
+            {/* Colonne droite : photo plein pot */}
             <div className="relative w-full max-w-md md:flex-1">
               <div className="relative h-72 md:h-96 lg:h-[26rem] w-full overflow-hidden  ring-1 ring-slate-100">
                 <Image
@@ -645,13 +662,9 @@ export default function HomePage() {
                 />
               </div>
             </div>
-
           </div>
-
-         
         </div>
       </section>
-
     </>
   );
 }

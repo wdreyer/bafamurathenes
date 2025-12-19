@@ -54,7 +54,7 @@ export default function Header() {
               Nos formations 2026
             </Link>
             <Link
-              href="/infos"
+              href="/infos-pratiques"
               className="relative whitespace-nowrap transition hover:text-sky-900 after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-sky-800 after:transition-all after:duration-200 hover:after:w-full"
             >
               Infos pratiques
@@ -124,7 +124,7 @@ export default function Header() {
               Nos formations 2026
             </Link>
             <Link
-              href="/infos"
+              href="/infos-pratiques"
               onClick={closeMenu}
               className="rounded-full px-3 py-2 "
             >

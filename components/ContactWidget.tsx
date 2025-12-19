@@ -16,14 +16,27 @@ export default function ContactWidget() {
   const panelRef = useRef<HTMLDivElement | null>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
 
+  const okEmail = useMemo(
+    () => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim()),
+    [form.email]
+  );
+
   const canSend = useMemo(() => {
-    const okEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim());
     return (
       form.name.trim().length >= 2 &&
       okEmail &&
       form.message.trim().length >= 10
     );
-  }, [form]);
+  }, [form.name, form.message, okEmail]);
+
+  // Texte affiché UNIQUEMENT dans l’infobulle au hover sur "Envoyer"
+  const tooltipReasons = useMemo(() => {
+    const reasons: string[] = [];
+    if (form.name.trim().length < 2) reasons.push("Prénom trop court (min 2 caractères).");
+    if (!okEmail) reasons.push("Email invalide (ex : prenom.nom@mail.com).");
+    if (form.message.trim().length < 10) reasons.push("Message trop court (min 10 caractères).");
+    return reasons;
+  }, [form.name, form.message, okEmail]);
 
   useEffect(() => {
     if (!open) return;
@@ -58,23 +71,22 @@ export default function ContactWidget() {
       setStatus("sending");
       const endpoint = `https://formsubmit.co/ajax/df5c9ad1c007276c6796deff3fcc7887`;
 
-const res = await fetch(endpoint, {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-    Accept: "application/json",
-  },
-  body: JSON.stringify({
-    name: form.name.trim(),
-    email: form.email.trim(),
-    message: form.message.trim(),
-    pageUrl: typeof window !== "undefined" ? window.location.href : "",
-    _subject: "[Murathenes BAFA] Nouveau message (widget)",
-    _template: "table",
-    _captcha: "false",
-  }),
-});
-
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          name: form.name.trim(),
+          email: form.email.trim(),
+          message: form.message.trim(),
+          pageUrl: typeof window !== "undefined" ? window.location.href : "",
+          _subject: "[Murathenes BAFA] Nouveau message (widget)",
+          _template: "table",
+          _captcha: "false",
+        }),
+      });
 
       if (!res.ok) throw new Error("Failed");
       setStatus("sent");
@@ -117,9 +129,7 @@ const res = await fetch(endpoint, {
           <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-600">
             Contact
           </span>
-          <span className="text-sm text-slate-900">
-            Téléphone • Email
-          </span>
+          <span className="text-sm text-slate-900">Téléphone • Email</span>
         </span>
       </button>
 
@@ -131,7 +141,6 @@ const res = await fetch(endpoint, {
         aria-label="Contacter l’équipe"
         className={[
           "fixed bottom-20 right-5 z-50 w-[360px] max-w-[calc(100vw-2.5rem)] overflow-hidden rounded-3xl",
-          // moins de bordures, plus “soft”
           "bg-gradient-to-b from-white via-amber-50/60 to-sky-50/60",
           "shadow-2xl ring-1 ring-slate-900/5",
           "transition-all duration-200 ease-out",
@@ -143,6 +152,7 @@ const res = await fetch(endpoint, {
         {/* halos + déco */}
         <div className="pointer-events-none absolute -left-16 -top-16 h-44 w-44 rounded-full bg-amber-200/50 blur-3xl" />
         <div className="pointer-events-none absolute -right-16 top-8 h-44 w-44 rounded-full bg-sky-200/50 blur-3xl" />
+
         <div className="relative flex items-start justify-between gap-4 px-5 py-5">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-600">
@@ -202,9 +212,7 @@ const res = await fetch(endpoint, {
           {/* Faux chat = formulaire */}
           <div className="rounded-2xl bg-white/75 shadow-sm ring-1 ring-slate-900/5 overflow-hidden">
             <div className="px-4 pt-4">
-              <p className="text-xs font-semibold text-slate-900">
-                Message 
-              </p>      
+              <p className="text-xs font-semibold text-slate-900">Message</p>
             </div>
 
             <form onSubmit={onSubmit} className="mt-3 space-y-2.5 px-4 pb-4">
@@ -230,24 +238,47 @@ const res = await fetch(endpoint, {
                 placeholder="Message…"
               />
 
-              <button
-                type="submit"
-                disabled={!canSend || status === "sending"}
-                className={[
-                  "group inline-flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold",
-                  "text-slate-900 shadow-md",
-                  "bg-gradient-to-r from-amber-200 via-amber-100 to-sky-200",
-                  "ring-1 ring-slate-900/5",
-                  "transition-all duration-200",
-                  "hover:-translate-y-0.5 hover:shadow-lg",
-                  "disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0",
-                ].join(" ")}
-              >
-                {status === "sending" ? "Envoi…" : "Envoyer"}
-                <span className="transition group-hover:translate-x-0.5">
-                  <IconSend />
-                </span>
-              </button>
+              {/* Bouton + infobulle discrète (uniquement au hover sur Envoyer) */}
+              <div className="relative group">
+                {!canSend && status !== "sending" && (
+                  <div
+                    role="tooltip"
+                    className={[
+                      "pointer-events-none absolute left-0 right-0 bottom-full mb-2",
+                      "opacity-0 translate-y-1",
+                      "group-hover:opacity-100 group-hover:translate-y-0",
+                      "transition-all duration-150",
+                    ].join(" ")}
+                  >
+                    <div className="rounded-xl bg-slate-900/85 text-white text-[11px] leading-snug px-3 py-2 shadow-lg ring-1 ring-slate-900/20 backdrop-blur">
+                      <ul className="list-disc pl-4">
+                        {tooltipReasons.map((r) => (
+                          <li key={r}>{r}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={!canSend || status === "sending"}
+                  className={[
+                    "group inline-flex cursor-pointer w-full items-center justify-center gap-2 rounded-xl px-3 py-2 text-sm font-semibold",
+                    "text-slate-900 shadow-md",
+                    "bg-gradient-to-r from-amber-200 via-amber-100 to-sky-200",
+                    "ring-1 ring-slate-900/5",
+                    "transition-all duration-200",
+                    "hover:-translate-y-0.5 hover:shadow-lg",
+                    "disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:translate-y-0",
+                  ].join(" ")}
+                >
+                  {status === "sending" ? "Envoi…" : "Envoyer"}
+                  <span className="transition group-hover:translate-x-0.5">
+                    {!canSend && status !== "sending" ? <IconNoEntry /> : <IconSend />}
+                  </span>
+                </button>
+              </div>
 
               {status === "sent" && (
                 <div className="rounded-xl bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-800 ring-1 ring-emerald-900/10">
@@ -260,11 +291,7 @@ const res = await fetch(endpoint, {
                 </div>
               )}
             </form>
-
-            
           </div>
-
-
         </div>
       </div>
     </>
@@ -291,6 +318,7 @@ function IconChatPhone() {
     </svg>
   );
 }
+
 function IconPhone() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -303,6 +331,7 @@ function IconPhone() {
     </svg>
   );
 }
+
 function IconMail() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -311,15 +340,11 @@ function IconMail() {
         stroke="currentColor"
         strokeWidth="1.8"
       />
-      <path
-        d="m5 8 7 5 7-5"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinejoin="round"
-      />
+      <path d="m5 8 7 5 7-5" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />
     </svg>
   );
 }
+
 function IconSend() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -329,8 +354,21 @@ function IconSend() {
         strokeWidth="1.8"
         strokeLinejoin="round"
       />
+      <path d="M21 4 10.3 13.7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function IconNoEntry() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path
-        d="M21 4 10.3 13.7"
+        d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Z"
+        stroke="currentColor"
+        strokeWidth="1.8"
+      />
+      <path
+        d="M7.6 16.4 16.4 7.6"
         stroke="currentColor"
         strokeWidth="1.8"
         strokeLinecap="round"
@@ -338,6 +376,7 @@ function IconSend() {
     </svg>
   );
 }
+
 function IconClose() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">

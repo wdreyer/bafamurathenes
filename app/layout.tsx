@@ -50,7 +50,7 @@ export default function RootLayout({
         className={`${poppins.className} antialiased min-h-screen flex flex-col bg-amber-50 text-slate-900`}
       >
         <Header />
-        <main className="flex-1">{children}</main>
+        <main className="flex-1 bg-gradient-to-b from-rose-50/70 via-amber-50/70 to-sky-50/70">{children}</main>
         <Footer />
 
         {/* ✅ Widget contact flottant */}
