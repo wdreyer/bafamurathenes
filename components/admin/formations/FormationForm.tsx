@@ -193,17 +193,14 @@ export function FormationForm({ initialData, formationId, onSaved }: Props) {
         </div>
 
         <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="imageUrl">URL de la photo</Label>
+          <Label htmlFor="imageUrl">URL du Yapla</Label>
           <Input
             id="imageUrl"
             value={imageUrl}
             onChange={(e) => setImageUrl(e.target.value)}
             placeholder="https://..."
           />
-          <p className="text-xs text-slate-500">
-            Plus tard, on pourra remplacer ça par un vrai upload vers Firebase
-            Storage.
-          </p>
+
         </div>
 
         <div className="space-y-2 md:col-span-2">
