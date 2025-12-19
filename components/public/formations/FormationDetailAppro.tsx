@@ -57,14 +57,10 @@ export default function FormationDetailAppro(props: {
     (formation as any).location ??
     "Auvergne | Domaine de Gravières, Lanobre, Cantal.";
 
-  // Menus BAFA / Appro (pas de carrousel)
-  const [menu, setMenu] = useState<"bafa" | "appro">("bafa");
+  const [bafaIndex, setBafaIndex] = useState(0);
+  const [approIndex, setApproIndex] = useState(0);
 
   const bafaThemes = [
-    {
-      title: "Ce que tu vas vivre pendant cette semaine",
-      text: "Développer et affiner ta posture d’animateur·rice responsable et référent·e, en revenant notamment sur ton stage pratique. Approfondir les thématiques abordées en Formation Générale.",
-    },
     {
       title: "EXPERIMENTER & ANALYSER",
       text: "Grands jeux, veillées, situations d’animation, projet collectif, organisation de la vie quotidienne.",
@@ -80,10 +76,6 @@ export default function FormationDetailAppro(props: {
   ];
 
   const approThemes = [
-    {
-      title: "Comprendre les enjeux",
-      text: "D’un séjour à l’étranger / d’échanges de jeunes.",
-    },
     {
       title: "GESTION LOGISTIQUE",
       text: "Transports, réglementation, hébergement, alimentation…",
@@ -101,8 +93,6 @@ export default function FormationDetailAppro(props: {
       text: "Élaboration des menus et gestion d’un budget, mise en place d’animations types de séjour à l’étranger, intervenants experts.",
     },
   ];
-
-  const activeThemes = menu === "bafa" ? bafaThemes : approThemes;
 
   return (
     <>
@@ -234,50 +224,150 @@ export default function FormationDetailAppro(props: {
               <h2 className="font-display text-xl font-semibold text-slate-900">
                 Ce que tu vas vivre pendant cette semaine
               </h2>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                {" "}
+                Developper et affiner ta posture d’animateur.rice responsable et
+                réferent.e en revenant notamment sur ton stage pratique.
+                Approfondir les thématiques abordées en Formation Générale.
+              </p>
 
-              {/* Menus BAFA / Appro (simple) */}
-              <div className="flex flex-wrap items-center gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setMenu("bafa")}
-                  className={[
-                    "rounded-full px-3 cursor-pointer py-1 text-[11px] font-semibold uppercase tracking-[0.14em] ring-1 transition",
-                    menu === "bafa"
-                      ? "bg-slate-900 text-white ring-slate-900"
-                      : "bg-white/80 text-slate-700 ring-slate-200 hover:bg-white",
-                  ].join(" ")}
-                >
-                  Partie BAFA
-                </button>
+              <div className="mt-3 relative overflow-hidden rounded bg-white/40 shadow-sm backdrop-blur">
+                {/* petits halos */}
+                <div className="pointer-events-none absolute -left-10 -top-10 h-40 w-40 rounded-full bg-sky-200/40 blur-2xl" />
+                <div className="pointer-events-none absolute -right-10 -bottom-10 h-40 w-40 rounded-full bg-amber-200/40 blur-2xl" />
 
-                <button
-                  type="button"
-                  onClick={() => setMenu("appro")}
-                  className={[
-                    "rounded-full px-3 cursor-pointer py-1 text-[11px] font-semibold uppercase tracking-[0.14em] ring-1 transition",
-                    menu === "appro"
-                      ? "bg-slate-900 text-white ring-slate-900"
-                      : "bg-white/80 text-slate-700 ring-slate-200 hover:bg-white",
-                  ].join(" ")}
-                >
-                  Séjours à l’étranger
-                </button>
-              </div>
-
-              {/* Liste des thèmes */}
-              <div className="mt-3 space-y-2">
-                {activeThemes.map((t) => (
-                  <div
-                    key={t.title}
-                    className="rounded-2xl bg-white/90 p-4 text-sm text-slate-700 shadow-sm ring-1 ring-slate-200/70"
+                <div className="relative grid grid-cols-[auto_1fr_auto] items-stretch">
+                  {/* Flèche gauche (grosse, “intégrée”) */}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setBafaIndex(
+                        (i) => (i - 1 + bafaThemes.length) % bafaThemes.length
+                      )
+                    }
+                    className="group flex w-14 md:w-16 cursor-pointer items-center justify-center bg-transparent transition hover:bg-white/30"
+                    aria-label="Thème précédent"
                   >
-                    <p className="font-display text-[13px] font-semibold text-slate-900">
-                      {t.title}
+                    <span className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full bg-white/40 ring-1 ring-white/50 text-2xl md:text-3xl font-semibold text-slate-800 shadow-sm transition group-hover:bg-white/55 group-hover:-translate-x-0.5">
+                      ‹
+                    </span>
+                  </button>
+
+                  {/* Contenu */}
+                  <div className="p-4 md:p-6">
+
+
+                    <p className="mt-2 font-display text-[15px] md:text-[17px] font-semibold text-slate-900">
+                      {bafaThemes[bafaIndex].title}
                     </p>
-                    <p className="mt-1 leading-relaxed">{t.text}</p>
+
+                    <p className="mt-2 text-sm leading-relaxed text-slate-700">
+                      {bafaThemes[bafaIndex].text}
+                    </p>
                   </div>
-                ))}
+
+                  {/* Flèche droite */}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setBafaIndex((i) => (i + 1) % bafaThemes.length)
+                    }
+                    className="group flex w-14 md:w-16 cursor-pointer items-center justify-center bg-transparent transition hover:bg-white/30"
+                    aria-label="Thème suivant"
+                  >
+                    <span className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full bg-white/40 ring-1 ring-white/50 text-2xl md:text-3xl font-semibold text-slate-800 shadow-sm transition group-hover:bg-white/55 group-hover:translate-x-0.5">
+                      ›
+                    </span>
+                  </button>
+                </div>
+
+                {/* Indicateurs (plus “soft”) */}
+                <div className="relative flex items-center justify-center gap-2 px-4 pb-4">
+                  {bafaThemes.map((_, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => setBafaIndex(i)}
+                      className={[
+                        "h-1.5 rounded-full transition",
+                        i === bafaIndex
+                          ? "w-10 bg-slate-900/80"
+                          : "w-6 bg-slate-300/70 hover:bg-slate-400/80",
+                      ].join(" ")}
+                      aria-label={`Aller au thème ${i + 1}`}
+                    />
+                  ))}
+                </div>
               </div>
+
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                Comprendre les enjeux d’un séjour à l’étranger | échange de
+                jeunes.
+              </p>
+{/* ✅ CARROUSEL APPRO (corrigé) */}
+<div className="mt-3 relative overflow-hidden rounded bg-white/40 shadow-sm backdrop-blur">
+  {/* petits halos */}
+  <div className="pointer-events-none absolute -left-10 -top-10 h-40 w-40 rounded-full bg-sky-200/40 blur-2xl" />
+  <div className="pointer-events-none absolute -right-10 -bottom-10 h-40 w-40 rounded-full bg-amber-200/40 blur-2xl" />
+
+  <div className="relative grid grid-cols-[auto_1fr_auto] items-stretch">
+    {/* Flèche gauche */}
+    <button
+      type="button"
+      onClick={() =>
+        setApproIndex((i) => (i - 1 + approThemes.length) % approThemes.length)
+      }
+      className="group flex w-14 md:w-16 cursor-pointer items-center justify-center bg-transparent transition hover:bg-white/30"
+      aria-label="Thème précédent"
+    >
+      <span className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full bg-white/40 ring-1 ring-white/50 text-2xl md:text-3xl font-semibold text-slate-800 shadow-sm transition group-hover:bg-white/55 group-hover:-translate-x-0.5">
+        ‹
+      </span>
+    </button>
+
+    {/* Contenu */}
+    <div className="p-4 md:p-6">
+
+
+      <p className="mt-2 font-display text-[15px] md:text-[17px] font-semibold text-slate-900">
+        {approThemes[approIndex].title}
+      </p>
+
+      <p className="mt-2 text-sm leading-relaxed text-slate-700">
+        {approThemes[approIndex].text}
+      </p>
+    </div>
+
+    {/* Flèche droite */}
+    <button
+      type="button"
+      onClick={() => setApproIndex((i) => (i + 1) % approThemes.length)}
+      className="group flex w-14 md:w-16 cursor-pointer items-center justify-center bg-transparent transition hover:bg-white/30"
+      aria-label="Thème suivant"
+    >
+      <span className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full bg-white/40 ring-1 ring-white/50 text-2xl md:text-3xl font-semibold text-slate-800 shadow-sm transition group-hover:bg-white/55 group-hover:translate-x-0.5">
+        ›
+      </span>
+    </button>
+  </div>
+
+  {/* Indicateurs */}
+  <div className="relative flex items-center justify-center gap-2 px-4 pb-4">
+    {approThemes.map((_, i) => (
+      <button
+        key={i}
+        type="button"
+        onClick={() => setApproIndex(i)}
+        className={[
+          "h-1.5 rounded-full transition",
+          i === approIndex ? "w-10 bg-slate-900/80" : "w-6 bg-slate-300/70 hover:bg-slate-400/80",
+        ].join(" ")}
+        aria-label={`Aller au thème ${i + 1}`}
+      />
+    ))}
+  </div>
+</div>
+
 
               {/* Complété par la description Firebase */}
               {formation.description && (
