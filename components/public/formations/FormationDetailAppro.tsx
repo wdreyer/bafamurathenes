@@ -215,173 +215,168 @@ export default function FormationDetailAppro(props: {
       >
         <div className="grid gap-8 md:grid-cols-[minmax(0,2fr)_minmax(0,1.4fr)]">
           {/* Colonne gauche */}
-          <div className="space-y-5">
-            <div className="space-y-2">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                Le contenu de la formation
-              </p>
+<div className="space-y-5">
+  <div className="space-y-2">
+    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+      Le contenu de la formation
+    </p>
 
-              <h2 className="font-display text-xl font-semibold text-slate-900">
-                Ce que tu vas vivre pendant cette semaine
-              </h2>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                {" "}
-                Developper et affiner ta posture d’animateur.rice responsable et
-                réferent.e en revenant notamment sur ton stage pratique.
-                Approfondir les thématiques abordées en Formation Générale.
-              </p>
+    <h2 className="font-display text-xl font-semibold text-slate-900">
+      Ce que tu vas vivre pendant cette semaine
+    </h2>
 
-              <div className="mt-3 relative overflow-hidden rounded bg-white/40 shadow-sm backdrop-blur">
-                {/* petits halos */}
-                <div className="pointer-events-none absolute -left-10 -top-10 h-40 w-40 rounded-full bg-sky-200/40 blur-2xl" />
-                <div className="pointer-events-none absolute -right-10 -bottom-10 h-40 w-40 rounded-full bg-amber-200/40 blur-2xl" />
+    {/* ✅ Sous-titre raccourci + plus lisible */}
+    <p className="text-sm font-medium text-slate-700">
+      Affiner ta posture d’animateur·rice et approfondir les acquis de la Formation Générale.
+    </p>
 
-                <div className="relative grid grid-cols-[auto_1fr_auto] items-stretch">
-                  {/* Flèche gauche (grosse, “intégrée”) */}
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setBafaIndex(
-                        (i) => (i - 1 + bafaThemes.length) % bafaThemes.length
-                      )
-                    }
-                    className="group flex w-14 md:w-16 cursor-pointer items-center justify-center bg-transparent transition hover:bg-white/30"
-                    aria-label="Thème précédent"
-                  >
-                    <span className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full bg-white/40 ring-1 ring-white/50 text-2xl md:text-3xl font-semibold text-slate-800 shadow-sm transition group-hover:bg-white/55 group-hover:-translate-x-0.5">
-                      ‹
-                    </span>
-                  </button>
+    {/* ✅ CARROUSEL BAFA — hauteur fixe + titre mieux calibré */}
+    <div className="mt-3 relative overflow-hidden rounded-3xl  bg-white/40 shadow-sm backdrop-blur">
+      {/* petits halos */}
+      <div className="pointer-events-none absolute -left-10 -top-10 h-40 w-40 rounded-full bg-sky-200/40 blur-2xl" />
+      <div className="pointer-events-none absolute -right-10 -bottom-10 h-40 w-40 rounded-full bg-amber-200/40 blur-2xl" />
 
-                  {/* Contenu */}
-                  <div className="p-4 md:p-6">
+      <div className="relative grid grid-cols-[auto_1fr_auto] items-stretch">
+        {/* Flèche gauche */}
+        <button
+          type="button"
+          onClick={() =>
+            setBafaIndex((i) => (i - 1 + bafaThemes.length) % bafaThemes.length)
+          }
+          className="group flex w-14 md:w-16 cursor-pointer items-center justify-center bg-transparent transition hover:bg-white/30"
+          aria-label="Thème précédent"
+        >
+          <span className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full bg-white/40 ring-1 ring-white/50 text-2xl md:text-3xl font-semibold text-slate-800 shadow-sm transition group-hover:bg-white/55 group-hover:-translate-x-0.5">
+            ‹
+          </span>
+        </button>
 
+        {/* Contenu (✅ hauteur fixe) */}
+        <div className="p-4 md:p-6 min-h-[170px] md:min-h-[190px] flex flex-col justify-center">
+          <p className="font-display text-base md:text-lg font-semibold text-slate-900">
+            {bafaThemes[bafaIndex].title}
+          </p>
 
-                    <p className="mt-2 font-display text-[15px] md:text-[17px] font-semibold text-slate-900">
-                      {bafaThemes[bafaIndex].title}
-                    </p>
+          <p className="mt-2 text-sm leading-relaxed text-slate-700">
+            {bafaThemes[bafaIndex].text}
+          </p>
+        </div>
 
-                    <p className="mt-2 text-sm leading-relaxed text-slate-700">
-                      {bafaThemes[bafaIndex].text}
-                    </p>
-                  </div>
+        {/* Flèche droite */}
+        <button
+          type="button"
+          onClick={() => setBafaIndex((i) => (i + 1) % bafaThemes.length)}
+          className="group flex w-14 md:w-16 cursor-pointer items-center justify-center bg-transparent transition hover:bg-white/30"
+          aria-label="Thème suivant"
+        >
+          <span className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full bg-white/40 ring-1 ring-white/50 text-2xl md:text-3xl font-semibold text-slate-800 shadow-sm transition group-hover:bg-white/55 group-hover:translate-x-0.5">
+            ›
+          </span>
+        </button>
+      </div>
 
-                  {/* Flèche droite */}
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setBafaIndex((i) => (i + 1) % bafaThemes.length)
-                    }
-                    className="group flex w-14 md:w-16 cursor-pointer items-center justify-center bg-transparent transition hover:bg-white/30"
-                    aria-label="Thème suivant"
-                  >
-                    <span className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full bg-white/40 ring-1 ring-white/50 text-2xl md:text-3xl font-semibold text-slate-800 shadow-sm transition group-hover:bg-white/55 group-hover:translate-x-0.5">
-                      ›
-                    </span>
-                  </button>
-                </div>
-
-                {/* Indicateurs (plus “soft”) */}
-                <div className="relative flex items-center justify-center gap-2 px-4 pb-4">
-                  {bafaThemes.map((_, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => setBafaIndex(i)}
-                      className={[
-                        "h-1.5 rounded-full transition",
-                        i === bafaIndex
-                          ? "w-10 bg-slate-900/80"
-                          : "w-6 bg-slate-300/70 hover:bg-slate-400/80",
-                      ].join(" ")}
-                      aria-label={`Aller au thème ${i + 1}`}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                Comprendre les enjeux d’un séjour à l’étranger | échange de
-                jeunes.
-              </p>
-{/* ✅ CARROUSEL APPRO (corrigé) */}
-<div className="mt-3 relative overflow-hidden rounded bg-white/40 shadow-sm backdrop-blur">
-  {/* petits halos */}
-  <div className="pointer-events-none absolute -left-10 -top-10 h-40 w-40 rounded-full bg-sky-200/40 blur-2xl" />
-  <div className="pointer-events-none absolute -right-10 -bottom-10 h-40 w-40 rounded-full bg-amber-200/40 blur-2xl" />
-
-  <div className="relative grid grid-cols-[auto_1fr_auto] items-stretch">
-    {/* Flèche gauche */}
-    <button
-      type="button"
-      onClick={() =>
-        setApproIndex((i) => (i - 1 + approThemes.length) % approThemes.length)
-      }
-      className="group flex w-14 md:w-16 cursor-pointer items-center justify-center bg-transparent transition hover:bg-white/30"
-      aria-label="Thème précédent"
-    >
-      <span className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full bg-white/40 ring-1 ring-white/50 text-2xl md:text-3xl font-semibold text-slate-800 shadow-sm transition group-hover:bg-white/55 group-hover:-translate-x-0.5">
-        ‹
-      </span>
-    </button>
-
-    {/* Contenu */}
-    <div className="p-4 md:p-6">
-
-
-      <p className="mt-2 font-display text-[15px] md:text-[17px] font-semibold text-slate-900">
-        {approThemes[approIndex].title}
-      </p>
-
-      <p className="mt-2 text-sm leading-relaxed text-slate-700">
-        {approThemes[approIndex].text}
-      </p>
+      {/* Indicateurs */}
+      <div className="relative flex items-center justify-center gap-2 px-4 pb-4">
+        {bafaThemes.map((_, i) => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => setBafaIndex(i)}
+            className={[
+              "h-1.5 rounded-full transition",
+              i === bafaIndex
+                ? "w-10 bg-slate-900/80"
+                : "w-6 bg-slate-300/70 hover:bg-slate-400/80",
+            ].join(" ")}
+            aria-label={`Aller au thème ${i + 1}`}
+          />
+        ))}
+      </div>
     </div>
 
-    {/* Flèche droite */}
-    <button
-      type="button"
-      onClick={() => setApproIndex((i) => (i + 1) % approThemes.length)}
-      className="group flex w-14 md:w-16 cursor-pointer items-center justify-center bg-transparent transition hover:bg-white/30"
-      aria-label="Thème suivant"
-    >
-      <span className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full bg-white/40 ring-1 ring-white/50 text-2xl md:text-3xl font-semibold text-slate-800 shadow-sm transition group-hover:bg-white/55 group-hover:translate-x-0.5">
-        ›
-      </span>
-    </button>
-  </div>
+    {/* ✅ plus d’aération entre les 2 carrousels */}
+    <div className="pt-5">
+      <p className="text-sm font-medium text-slate-700">
+        Comprendre les enjeux d’un séjour à l’étranger / échanges de jeunes.
+      </p>
 
-  {/* Indicateurs */}
-  <div className="relative flex items-center justify-center gap-2 px-4 pb-4">
-    {approThemes.map((_, i) => (
-      <button
-        key={i}
-        type="button"
-        onClick={() => setApproIndex(i)}
-        className={[
-          "h-1.5 rounded-full transition",
-          i === approIndex ? "w-10 bg-slate-900/80" : "w-6 bg-slate-300/70 hover:bg-slate-400/80",
-        ].join(" ")}
-        aria-label={`Aller au thème ${i + 1}`}
-      />
-    ))}
+      {/* ✅ CARROUSEL APPRO — hauteur fixe + titre mieux calibré */}
+      <div className="mt-3 relative overflow-hidden rounded-3xl  bg-white/40 shadow-sm backdrop-blur">
+        {/* petits halos */}
+        <div className="pointer-events-none absolute -left-10 -top-10 h-40 w-40 rounded-full bg-sky-200/40 blur-2xl" />
+        <div className="pointer-events-none absolute -right-10 -bottom-10 h-40 w-40 rounded-full bg-amber-200/40 blur-2xl" />
+
+        <div className="relative grid grid-cols-[auto_1fr_auto] items-stretch">
+          {/* Flèche gauche */}
+          <button
+            type="button"
+            onClick={() =>
+              setApproIndex(
+                (i) => (i - 1 + approThemes.length) % approThemes.length
+              )
+            }
+            className="group flex w-14 md:w-16 cursor-pointer items-center justify-center bg-transparent transition hover:bg-white/30"
+            aria-label="Thème précédent"
+          >
+            <span className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full bg-white/40 ring-1 ring-white/50 text-2xl md:text-3xl font-semibold text-slate-800 shadow-sm transition group-hover:bg-white/55 group-hover:-translate-x-0.5">
+              ‹
+            </span>
+          </button>
+
+          {/* Contenu (✅ hauteur fixe) */}
+          <div className="p-4 md:p-6 min-h-[170px] md:min-h-[190px] flex flex-col justify-center">
+            <p className="font-display text-base md:text-lg font-semibold text-slate-900">
+              {approThemes[approIndex].title}
+            </p>
+
+            <p className="mt-2 text-sm leading-relaxed text-slate-700">
+              {approThemes[approIndex].text}
+            </p>
+          </div>
+
+          {/* Flèche droite */}
+          <button
+            type="button"
+            onClick={() => setApproIndex((i) => (i + 1) % approThemes.length)}
+            className="group flex w-14 md:w-16 cursor-pointer items-center justify-center bg-transparent transition hover:bg-white/30"
+            aria-label="Thème suivant"
+          >
+            <span className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full bg-white/40 ring-1 ring-white/50 text-2xl md:text-3xl font-semibold text-slate-800 shadow-sm transition group-hover:bg-white/55 group-hover:translate-x-0.5">
+              ›
+            </span>
+          </button>
+        </div>
+
+        {/* Indicateurs */}
+        <div className="relative flex items-center justify-center gap-2 px-4 pb-4">
+          {approThemes.map((_, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => setApproIndex(i)}
+              className={[
+                "h-1.5 rounded-full transition",
+                i === approIndex
+                  ? "w-10 bg-slate-900/80"
+                  : "w-6 bg-slate-300/70 hover:bg-slate-400/80",
+              ].join(" ")}
+              aria-label={`Aller au thème ${i + 1}`}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+
+    {/* Complété par la description Firebase */}
+    {formation.description && (
+      <div className="pt-2">
+        <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-slate-800">
+          {formation.description}
+        </p>
+      </div>
+    )}
   </div>
 </div>
-
-
-              {/* Complété par la description Firebase */}
-              {formation.description && (
-                <div className="pt-2">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                    Détails (session)
-                  </p>
-                  <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-slate-800">
-                    {formation.description}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
 
           {/* Colonne droite (inchangée) */}
           <aside className="space-y-4 text-xs text-slate-700">
