@@ -25,7 +25,7 @@ export default function FormationDetailFG(props: {
   // Assets FG (public/FG)
   const heroVideoSrc = "/FG/video.mp4";
   const heroImg1 = "/FG/1.JPG";
-  const heroImg2 = "/FG/2.JPG";
+  const heroImg2 = "/FG/2.jpeg";
 
   const baseDescription = {
     intro: "8 jours pour comprendre les rôles et fonctions de l’animateur.rice",
