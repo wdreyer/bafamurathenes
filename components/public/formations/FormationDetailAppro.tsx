@@ -233,8 +233,8 @@ export default function FormationDetailAppro(props: {
     {/* ✅ CARROUSEL BAFA — hauteur fixe + titre mieux calibré */}
     <div className="mt-3 relative overflow-hidden rounded-3xl  bg-white/40 shadow-sm backdrop-blur">
       {/* petits halos */}
-      <div className="pointer-events-none absolute -left-10 -top-10 h-40 w-40 rounded-full bg-sky-200/40 blur-2xl" />
-      <div className="pointer-events-none absolute -right-10 -bottom-10 h-40 w-40 rounded-full bg-amber-200/40 blur-2xl" />
+      <div className="pointer-events-none absolute -left-10 -top-10 h-40 w-40 rounded-full  bg-amber-200/40 blur-2xl" />
+      <div className="pointer-events-none absolute -right-10 -bottom-10 h-40 w-40 rounded-full bg-sky-200/40 blur-2xl" />
 
       <div className="relative grid grid-cols-[auto_1fr_auto] items-stretch">
         {/* Flèche gauche */}
@@ -253,7 +253,7 @@ export default function FormationDetailAppro(props: {
 
         {/* Contenu (✅ hauteur fixe) */}
         <div className="p-4 md:p-6 min-h-[170px] md:min-h-[190px] flex flex-col justify-center">
-          <p className="font-display text-base md:text-lg font-semibold text-slate-900">
+          <p className="font-display  text-base md:text-lg font-semibold text-slate-900">
             {bafaThemes[bafaIndex].title}
           </p>
 
@@ -303,8 +303,8 @@ export default function FormationDetailAppro(props: {
       {/* ✅ CARROUSEL APPRO — hauteur fixe + titre mieux calibré */}
       <div className="mt-3 relative overflow-hidden rounded-3xl  bg-white/40 shadow-sm backdrop-blur">
         {/* petits halos */}
-        <div className="pointer-events-none absolute -left-10 -top-10 h-40 w-40 rounded-full bg-sky-200/40 blur-2xl" />
-        <div className="pointer-events-none absolute -right-10 -bottom-10 h-40 w-40 rounded-full bg-amber-200/40 blur-2xl" />
+        <div className="pointer-events-none absolute -left-10 -top-10 h-40 w-40 rounded-full bg-amber-200/40 blur-2xl" />
+        <div className="pointer-events-none absolute -right-10 -bottom-10 h-40 w-40 rounded-full bg-sky-200/40  blur-2xl" />
 
         <div className="relative grid grid-cols-[auto_1fr_auto] items-stretch">
           {/* Flèche gauche */}
@@ -325,7 +325,7 @@ export default function FormationDetailAppro(props: {
 
           {/* Contenu (✅ hauteur fixe) */}
           <div className="p-4 md:p-6 min-h-[170px] md:min-h-[190px] flex flex-col justify-center">
-            <p className="font-display text-base md:text-lg font-semibold text-slate-900">
+            <p className="font-display text-center text-base md:text-lg font-semibold text-slate-900">
               {approThemes[approIndex].title}
             </p>
 

@@ -1,10 +1,18 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 export async function POST(req: Request) {
   try {
+    const apiKey = process.env.RESEND_API_KEY;
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: "Missing RESEND_API_KEY (configure it in .env.local / env vars)" },
+        { status: 500 }
+      );
+    }
+
+    const resend = new Resend(apiKey);
+
     const { name, email, message, pageUrl } = await req.json();
 
     if (!name || !email || !message) {
@@ -15,7 +23,6 @@ export async function POST(req: Request) {
     const from = process.env.CONTACT_FROM || "onboarding@resend.dev";
 
     const subject = `[Murathenes BAFA] Message de ${String(name).trim()}`;
-
     const html = `
       <div style="font-family: ui-sans-serif, system-ui; line-height: 1.5">
         <h2>Nouveau message (widget)</h2>
@@ -40,7 +47,7 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ ok: true });
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
