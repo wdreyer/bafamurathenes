@@ -23,7 +23,7 @@ export default function FormationDetailFG(props: {
   const hasOptions = (options?.length ?? 0) > 0;
 
   // Assets FG (public/FG)
-  const heroVideoSrc = "/FG/video.mp4";
+  const heroVideoSrc = "/FG/Video.mp4";
   const heroImg1 = "/FG/1.JPG";
   const heroImg2 = "/FG/2.jpeg";
 
