@@ -7,7 +7,7 @@ type Status = "idle" | "sending" | "sent" | "error";
 export default function ContactWidget() {
   const PHONE_DISPLAY = "01 84 21 05 48";
   const PHONE_TEL = "0184210548";
-  const EMAIL = "df5c9ad1c007276c6796deff3fcc7887";
+  const EMAIL = "bafa@murathenes.org";
 
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState<Status>("idle");
@@ -56,24 +56,25 @@ export default function ContactWidget() {
 
     try {
       setStatus("sending");
-      const endpoint = `https://formsubmit.co/ajax/${EMAIL}`;
+      const endpoint = `https://formsubmit.co/ajax/df5c9ad1c007276c6796deff3fcc7887`;
 
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({
-          name: form.name.trim(),
-          email: form.email.trim(),
-          message: form.message.trim(),
-          pageUrl: typeof window !== "undefined" ? window.location.href : "",
-          _subject: "[Murathenes BAFA] Nouveau message (widget)",
-          _template: "table",
-          _captcha: "false",
-        }),
-      });
+const res = await fetch(endpoint, {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+  },
+  body: JSON.stringify({
+    name: form.name.trim(),
+    email: form.email.trim(),
+    message: form.message.trim(),
+    pageUrl: typeof window !== "undefined" ? window.location.href : "",
+    _subject: "[Murathenes BAFA] Nouveau message (widget)",
+    _template: "table",
+    _captcha: "false",
+  }),
+});
+
 
       if (!res.ok) throw new Error("Failed");
       setStatus("sent");
@@ -116,7 +117,9 @@ export default function ContactWidget() {
           <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-600">
             Contact
           </span>
-          <span className="text-sm text-slate-900">Téléphone • Email</span>
+          <span className="text-sm text-slate-900">
+            Téléphone • Email
+          </span>
         </span>
       </button>
 
@@ -168,9 +171,7 @@ export default function ContactWidget() {
                 <IconPhone />
               </div>
               <div className="min-w-0">
-                <p className="text-xs font-semibold text-slate-900">
-                  Téléphone
-                </p>
+                <p className="text-xs font-semibold text-slate-900">Téléphone</p>
                 <a
                   href={`tel:${PHONE_TEL}`}
                   className="text-sm text-slate-700 underline decoration-slate-300 underline-offset-4 hover:text-slate-900"
@@ -201,24 +202,22 @@ export default function ContactWidget() {
           {/* Faux chat = formulaire */}
           <div className="rounded-2xl bg-white/75 shadow-sm ring-1 ring-slate-900/5 overflow-hidden">
             <div className="px-4 pt-4">
-              <p className="text-xs font-semibold text-slate-900">Message</p>
+              <p className="text-xs font-semibold text-slate-900">
+                Message 
+              </p>      
             </div>
 
             <form onSubmit={onSubmit} className="mt-3 space-y-2.5 px-4 pb-4">
               <input
                 value={form.name}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, name: e.target.value }))
-                }
+                onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                 className="w-full rounded-xl bg-white/90 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 ring-1 ring-slate-900/10 focus:outline-none focus:ring-2 focus:ring-sky-300"
                 placeholder="Prénom"
                 autoComplete="name"
               />
               <input
                 value={form.email}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, email: e.target.value }))
-                }
+                onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
                 className="w-full rounded-xl bg-white/90 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 ring-1 ring-slate-900/10 focus:outline-none focus:ring-2 focus:ring-sky-300"
                 placeholder="Email"
                 autoComplete="email"
@@ -226,9 +225,7 @@ export default function ContactWidget() {
               />
               <textarea
                 value={form.message}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, message: e.target.value }))
-                }
+                onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
                 className="min-h-[92px] w-full resize-none rounded-xl bg-white/90 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 ring-1 ring-slate-900/10 focus:outline-none focus:ring-2 focus:ring-sky-300"
                 placeholder="Message…"
               />
@@ -263,7 +260,11 @@ export default function ContactWidget() {
                 </div>
               )}
             </form>
+
+            
           </div>
+
+
         </div>
       </div>
     </>
@@ -274,13 +275,7 @@ export default function ContactWidget() {
 
 function IconChatPhone() {
   return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-    >
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path
         d="M4 13.5C3.4 12.4 3 11.2 3 10c0-4.1 4-7.5 9-7.5S21 5.9 21 10s-4 7.5-9 7.5c-1.1 0-2.2-.2-3.2-.5L4 19.5l.8-3.6c-.3-.3-.6-.8-.8-1.4Z"
         stroke="currentColor"
@@ -298,13 +293,7 @@ function IconChatPhone() {
 }
 function IconPhone() {
   return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-    >
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path
         d="M6.6 3.6 9 5.8c.6.6.7 1.5.2 2.2l-1.2 1.7c1 1.9 2.5 3.5 4.4 4.5l1.8-1.2c.7-.5 1.6-.4 2.2.2l2.1 2.1c.7.7.7 1.8 0 2.5l-1.3 1.3c-.8.8-2 1.1-3.1.7-6.1-2.2-10-6.2-12.1-12.3-.3-1.1 0-2.3.8-3.1l1.2-1.2c.7-.7 1.8-.7 2.5 0Z"
         stroke="currentColor"
@@ -316,13 +305,7 @@ function IconPhone() {
 }
 function IconMail() {
   return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-    >
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path
         d="M4 7.5c0-1.1.9-2 2-2h12c1.1 0 2 .9 2 2v9c0 1.1-.9 2-2 2H6c-1.1 0-2-.9-2-2v-9Z"
         stroke="currentColor"
@@ -339,13 +322,7 @@ function IconMail() {
 }
 function IconSend() {
   return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-    >
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path
         d="M4 12 21 4l-8 17-2.7-7.3L4 12Z"
         stroke="currentColor"
@@ -363,13 +340,7 @@ function IconSend() {
 }
 function IconClose() {
   return (
-    <svg
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      aria-hidden="true"
-    >
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
       <path
         d="M6 6l12 12M18 6 6 18"
         stroke="currentColor"
