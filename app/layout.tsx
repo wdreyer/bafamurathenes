@@ -5,6 +5,7 @@ import { Poppins, Nunito } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import ContactWidget from "@/components/ContactWidget"; // ✅ AJOUT
 
 // Police principale : Poppins
 const poppins = Poppins({
@@ -51,6 +52,9 @@ export default function RootLayout({
         <Header />
         <main className="flex-1">{children}</main>
         <Footer />
+
+        {/* ✅ Widget contact flottant */}
+        <ContactWidget />
       </body>
     </html>
   );
