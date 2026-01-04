@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import type { Formation } from "@/lib/types";
+import { CalendarDays } from "lucide-react";
 
 function formatDateRange(start: string, end: string) {
   if (!start || !end) return "";
@@ -99,8 +100,8 @@ const typePillClasses = isFG
           )}
 
           {dateLabel && (
-            <p className="text-xs font-medium text-slate-700">
-              🗓️ {dateLabel}
+            <p className="text-xs flex items-center gap-2 font-medium text-slate-700">
+              <CalendarDays className="w-4"/> {dateLabel}
             </p>
           )}
         </div>

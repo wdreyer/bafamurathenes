@@ -12,7 +12,7 @@ export default function BafaPage() {
         {/* TODO PHOTO: bannière en longueur */}
         <div className="absolute inset-0">
           <Image
-            src="/pagebafa.jpg" // ← remplace par ta photo bannière
+            src="/pagebafa1.jpg" // ← remplace par ta photo bannière
             alt="Murathènes — BAFA"
             fill
             priority
@@ -94,7 +94,7 @@ export default function BafaPage() {
             {/* TODO PHOTO: grande photo */}
             <div className="relative h-48 w-full overflow-hidden rounded-2xl bg-slate-200">
               <Image
-                src="/bafa3.jpg"
+                src="/bafa30.jpg"
                 alt="Photo formation BAFA Murathènes"
                 fill
                 className="object-cover"

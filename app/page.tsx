@@ -33,21 +33,34 @@ const parseDateSafe = (value: string | undefined | null): Date | null => {
 const formatDateRangeFr = (start?: string, end?: string): string => {
   const dStart = parseDateSafe(start ?? "");
   const dEnd = parseDateSafe(end ?? "");
-
   if (!dStart || !dEnd) return "";
 
   const dayStart = String(dStart.getDate()).padStart(2, "0");
   const dayEnd = String(dEnd.getDate()).padStart(2, "0");
-  const month = String(dStart.getMonth() + 1).padStart(2, "0");
-  const year = dStart.getFullYear();
 
-  if (dStart.getMonth() === dEnd.getMonth()) {
-    return `${dayStart}–${dayEnd}/${month}/${year}`;
+  const sameMonth =
+    dStart.getMonth() === dEnd.getMonth() &&
+    dStart.getFullYear() === dEnd.getFullYear();
+
+  if (sameMonth) {
+    const monthLabel = monthNamesFr[dStart.getMonth()];
+    const year = dStart.getFullYear();
+    // ✅ 05–12 avril 2026
+    return `${dayStart}–${dayEnd} ${monthLabel} ${year}`;
   }
 
-  const monthEnd = String(dEnd.getMonth() + 1).padStart(2, "0");
-  return `${dayStart}/${month}/${year} – ${dayEnd}/${monthEnd}/${year}`;
+  // si ça traverse un mois : 28 mars – 02 avril 2026 (et si année diff, on l'affiche)
+  const startMonth = monthNamesFr[dStart.getMonth()];
+  const endMonth = monthNamesFr[dEnd.getMonth()];
+  const startYear = dStart.getFullYear();
+  const endYear = dEnd.getFullYear();
+
+  if (startYear === endYear) {
+    return `${dayStart} ${startMonth} – ${dayEnd} ${endMonth} ${startYear}`;
+  }
+  return `${dayStart} ${startMonth} ${startYear} – ${dayEnd} ${endMonth} ${endYear}`;
 };
+
 
 const monthNamesFr = [
   "janvier",
@@ -164,7 +177,7 @@ export default function HomePage() {
             <div className="max-w-md space-y-5">
               <div className="inline-flex items-center gap-2 rounded-full bg-sky-500/15 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.22em] text-sky-100 ring-1 ring-sky-400/40 backdrop-blur">
                 <span className="h-1.5 w-1.5 rounded-full bg-sky-300" />
-                Formations BAFA en Auvergne
+                Formations BAFA en AURA
               </div>
 
               <div className="space-y-3">
