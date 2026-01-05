@@ -124,7 +124,7 @@ export default function InfosPage() {
                         className={[
                           "inline-flex items-center gap-2 cursor-pointer rounded-full px-3 py-1.5 transition shadow-sm",
                           active
-                            ? "bg-slate-900 text-white shadow-slate-900/10"
+                            ? "bg-[#6664C5] text-white "
                             : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50",
                         ].join(" ")}
                       >

@@ -32,7 +32,7 @@ export default function Header() {
           </div>
         </Link>
 
-        {/* Desktop menu + CTA */}
+        {/* Desktop menu */}
         <div className="hidden items-center gap-6 md:flex">
           <nav className="flex items-center gap-6 md:gap-8 text-xs md:text-sm font-semibold tracking-[0.08em] uppercase text-slate-700">
             <Link
@@ -59,15 +59,15 @@ export default function Header() {
             >
               Infos pratiques
             </Link>
-          </nav>
 
-          <Link
-            href="#reservation"
-            className="relative whitespace-nowrap rounded-full text-red-700 px-4 py-2 text-xs md:text-sm font-semibold uppercase tracking-[0.12em] transition-all duration-150 hover:text-red-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6668C6] focus-visible:ring-offset-2 focus-visible:ring-offset-amber-50
-              after:absolute after:left-0 after:-bottom-1  after:h-[2px] after:w-0 after:bg-red-600 after:transition-all after:duration-150 hover:after:w-full"
-          >
-            Je m&apos;inscris
-          </Link>
+            {/* NEW: Qui sommes nous (même DA que les liens du menu) */}
+            <Link
+              href="/murathenes"
+              className="relative whitespace-nowrap transition hover:text-sky-900 after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-sky-800 after:transition-all after:duration-200 hover:after:w-full"
+            >
+              Qui sommes nous
+            </Link>
+          </nav>
         </div>
 
         {/* Burger mobile */}
@@ -102,18 +102,10 @@ export default function Header() {
       {isOpen && (
         <div className="md:hidden border-t border-sky-100 bg-amber-50/95 backdrop-blur">
           <nav className="mx-auto flex max-w-6xl flex-col gap-1 px-4 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-slate-800">
-            <Link
-              href="/"
-              onClick={closeMenu}
-              className="rounded-full px-3 py-2 "
-            >
+            <Link href="/" onClick={closeMenu} className="rounded-full px-3 py-2 ">
               Accueil
             </Link>
-            <Link
-              href="/bafa"
-              onClick={closeMenu}
-              className="rounded-full px-3 py-2 "
-            >
+            <Link href="/bafa" onClick={closeMenu} className="rounded-full px-3 py-2 ">
               Le BAFA
             </Link>
             <Link
@@ -131,12 +123,13 @@ export default function Header() {
               Infos pratiques
             </Link>
 
+            {/* NEW: Qui sommes nous (reprend la DA des items mobile) */}
             <Link
-              href="#reservation"
+              href="/murathenes"
               onClick={closeMenu}
-              className="mt-2 inline-flex items-center justify-center rounded-full bg-[#6668C6] px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-white shadow-sm hover:bg-[#7068C6]"
+              className="rounded-full px-3 py-2 "
             >
-              Je m&apos;inscris
+              Qui sommes nous
             </Link>
           </nav>
         </div>
