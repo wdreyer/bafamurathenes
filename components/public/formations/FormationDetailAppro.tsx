@@ -6,7 +6,10 @@ import type { Formation } from "@/lib/types";
 
 import { ProgrammeModal } from "@/app/infos-pratiques/components/ProgrammeModal";
 import ContenuAppro from "@/app/infos-pratiques/components/contenuAppro";
-import { VIOLET_FG, YELLOW } from "@/app/infos-pratiques/components/ProgrammeParts";
+import {
+  VIOLET_FG,
+  YELLOW,
+} from "@/app/infos-pratiques/components/ProgrammeParts";
 
 type TransportOption = {
   label?: string;
@@ -93,7 +96,10 @@ function MiniCarouselCard({
               "text-2xl md:text-3xl font-semibold text-slate-800",
               "ring-1"
             )}
-            style={{ ringColor: ring, border: `1px solid ${ring}` }}
+            style={{
+              border: `1px solid ${ring}`,
+              boxShadow: `0 0 0 1px ${ring}`, // optionnel : simule le ring
+            }}
           >
             ‹
           </span>
@@ -125,7 +131,10 @@ function MiniCarouselCard({
               "text-2xl md:text-3xl font-semibold text-slate-800",
               "ring-1"
             )}
-            style={{ ringColor: ring, border: `1px solid ${ring}` }}
+            style={{
+  border: `1px solid ${ring}`,
+  boxShadow: `0 0 0 1px ${ring}`, // optionnel : simule le ring
+}}
           >
             ›
           </span>
@@ -160,7 +169,8 @@ export default function FormationDetailAppro(props: {
   onBack: () => void;
   onOpenYapla: () => void;
 }) {
-  const { formation, dateLabel, typeText, options, onBack, onOpenYapla } = props;
+  const { formation, dateLabel, typeText, options, onBack, onOpenYapla } =
+    props;
 
   const hasOptions = (options?.length ?? 0) > 0;
 
@@ -251,7 +261,8 @@ export default function FormationDetailAppro(props: {
                 {hasOptions && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-3 py-1 font-medium text-slate-900 shadow-sm ring-1 ring-slate-200">
                     <span className="text-base">🚌</span>
-                    {options.length} option{options.length > 1 ? "s" : ""} transport
+                    {options.length} option{options.length > 1 ? "s" : ""}{" "}
+                    transport
                   </span>
                 )}
               </div>
@@ -269,7 +280,9 @@ export default function FormationDetailAppro(props: {
                 <button
                   type="button"
                   onClick={() =>
-                    document.getElementById("contenu")?.scrollIntoView({ behavior: "smooth" })
+                    document
+                      .getElementById("contenu")
+                      ?.scrollIntoView({ behavior: "smooth" })
                   }
                   className="inline-flex items-center cursor-pointer gap-2 rounded-full bg-white/80 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-900 shadow-sm ring-1 ring-slate-200 transition hover:bg-white"
                 >
@@ -326,7 +339,10 @@ export default function FormationDetailAppro(props: {
       </section>
 
       {/* CONTENT */}
-      <section id="contenu" className="mx-auto max-w-5xl px-4 py-8 md:px-6 md:py-10">
+      <section
+        id="contenu"
+        className="mx-auto max-w-5xl px-4 py-8 md:px-6 md:py-10"
+      >
         <div className="grid gap-8 md:grid-cols-[minmax(0,2fr)_minmax(0,1.4fr)]">
           {/* Left */}
           <div className="space-y-5">
@@ -382,7 +398,9 @@ export default function FormationDetailAppro(props: {
                   <div className="mt-1 font-display text-lg md:text-xl font-semibold">
                     Ouvrir le programme détaillé
                   </div>
-                  <div className="mt-2 text-sm opacity-95">Voir le déroulé complet</div>
+                  <div className="mt-2 text-sm opacity-95">
+                    Voir le déroulé complet
+                  </div>
                 </button>
               </div>
             </div>
@@ -402,15 +420,20 @@ export default function FormationDetailAppro(props: {
 
                 <div className="space-y-1.5 text-xs">
                   <p>
-                    <span className="font-semibold text-slate-900">Durée :</span>{" "}
+                    <span className="font-semibold text-slate-900">
+                      Durée :
+                    </span>{" "}
                     6 jours (arrivée le dimanche, départ le samedi suivant).
                   </p>
                   <p>
-                    <span className="font-semibold text-slate-900">Hébergement :</span>{" "}
+                    <span className="font-semibold text-slate-900">
+                      Hébergement :
+                    </span>{" "}
                     Internat en pension complète, dortoirs avec sdb privative.
                   </p>
                   <p>
-                    <span className="font-semibold text-slate-900">Lieu :</span> {locationText}
+                    <span className="font-semibold text-slate-900">Lieu :</span>{" "}
+                    {locationText}
                   </p>
                 </div>
               </div>
@@ -424,7 +447,10 @@ export default function FormationDetailAppro(props: {
                     className="flex h-9 w-9 items-center justify-center rounded-full text-lg"
                     style={{ backgroundColor: VIOLET_FG }}
                   >
-                    <span className="translate-y-[1px]" style={{ color: YELLOW }}>
+                    <span
+                      className="translate-y-[1px]"
+                      style={{ color: YELLOW }}
+                    >
                       🚌
                     </span>
                   </div>
@@ -435,8 +461,9 @@ export default function FormationDetailAppro(props: {
 
                     {!hasOptions ? (
                       <p className="mt-1 text-xs text-slate-600">
-                        Pas d&apos;option de transport spécifique renseignée pour cette formation.
-                        Les infos pratiques te seront précisées lors de l&apos;inscription.
+                        Pas d&apos;option de transport spécifique renseignée
+                        pour cette formation. Les infos pratiques te seront
+                        précisées lors de l&apos;inscription.
                       </p>
                     ) : (
                       <p className="mt-1 text-xs text-slate-700">
@@ -464,7 +491,9 @@ export default function FormationDetailAppro(props: {
                                 </span>
                               ) : null}
                             </span>
-                            <span className="text-[11px] text-slate-500">Tarif transport</span>
+                            <span className="text-[11px] text-slate-500">
+                              Tarif transport
+                            </span>
                           </div>
                           <span className="text-xs font-semibold text-slate-900">
                             {opt.price} €
@@ -488,9 +517,9 @@ export default function FormationDetailAppro(props: {
               </div>
 
               <p>
-                L&apos;inscription et le paiement se font via un formulaire sécurisé (Yapla). Une
-                fois ton inscription validée, tu recevras un mail avec la convocation, les
-                horaires précis et l’info pack.
+                L&apos;inscription et le paiement se font via un formulaire
+                sécurisé (Yapla). Une fois ton inscription validée, tu recevras
+                un mail avec la convocation, les horaires précis et l’info pack.
               </p>
 
               <button

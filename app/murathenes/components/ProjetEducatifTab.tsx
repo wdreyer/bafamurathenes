@@ -11,12 +11,13 @@ function cx(...v: Array<string | false | null | undefined>) {
 export default function ProjetEducatifTab() {
   const [lang, setLang] = useState<Lang>("fr");
 
-  const pdf = useMemo(() => {
-    // Important : fichiers dans public/mt/ (avec espaces + accent) => on encode pour l’URL
-    const fr = "/mt/FRProjet éducatif.pdf";
-    const en = "/mt/EN%20Projet%20%C3%A9ducatif%20(2).pdf";
-    return lang === "fr" ? fr : en;
-  }, [lang]);
+const pdf = useMemo(() => {
+  // fichiers dans public/MT/ (respecter la casse + encoder espaces/accents)
+  const fr = "/MT/FRProjet%20%C3%A9ducatif.pdf";
+  const en = "/MT/EN%20Projet%20%C3%A9ducatif%20(2).pdf";
+  return lang === "fr" ? fr : en;
+}, [lang]);
+
 
   return (
     <section className="space-y-6">
