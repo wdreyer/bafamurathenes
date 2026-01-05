@@ -57,7 +57,7 @@ export default function MurathenesPage() {
         <div className="relative h-[42vh] md:h-[44vh] w-full">
           {/* Image hero — tu peux la changer */}
           <Image
-            src="/1.jpg"
+            src="/1.JPG"
             alt="Murathènes — Qui sommes-nous"
             fill
             priority
