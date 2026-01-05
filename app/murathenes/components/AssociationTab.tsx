@@ -239,7 +239,58 @@ export default function AssociationTab() {
 
   return (
     <section className="space-y-6">
-      {/* ... inchangé */}
+      {/* Intro */}
+      <div className="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-slate-100">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+            L’association
+          </p>
+          <h2 className="mt-1 font-display text-xl md:text-2xl font-semibold text-slate-900">
+            Association loi 1901 d’éducation populaire
+          </h2>
+        </div>
+
+        <div className="px-5 py-5 text-sm leading-6 text-slate-700 space-y-3">
+          <p>
+            Fondée en 2019, l’association Murathènes est une association d’éducation
+            populaire visant à promouvoir les rencontres interculturelles, le patrimoine,
+            le vivre-ensemble et l’émancipation à des échelles locales, nationales,
+            européennes et internationales. L’association promeut l’art et la musique
+            comme vecteurs sociaux d’insertion et de cohésion.
+          </p>
+          <p>
+            L’association organise des activités de loisirs permettant aux jeunes de se
+            rencontrer, d’échanger, par delà les cadres limitants et coercitifs qu’elles
+            et ils peuvent rencontrer dans leurs quotidiens.
+          </p>
+          <p>
+            Murathènes est née pour donner suite au constat de l’isolement culturel et
+            social de certains publics isolés ou marginalisés et des inégalités d’accès
+            aux opportunités et aux infrastructures notamment dans les secteurs de la
+            jeunesse. Murathènes, c’est la jeunesse en action, pour que chaque jeune ait
+            droit de se rencontrer et de vivre ensemble des expériences extra-ordinaires.
+          </p>
+        </div>
+      </div>
+
+      {/* Erasmus */}
+      <div className="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-slate-100">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+            Accréditation Erasmus+
+          </p>
+          <h2 className="mt-1 font-display text-xl md:text-2xl font-semibold text-slate-900">
+            Échanges de jeunes
+          </h2>
+        </div>
+        <div className="px-5 py-5 text-sm leading-6 text-slate-700">
+          L’association organise chaque année plusieurs échanges de jeunes Erasmus+. Entre
+          20 et 60 jeunes européens se rencontrent pendant 1 à 2 semaines pour réaliser
+          un projet commun.
+        </div>
+      </div>
+
+      {/* Carousel */}
       <div className="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
         <div className="px-5 py-4 border-b border-slate-100">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
