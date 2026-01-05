@@ -1,8 +1,12 @@
 // components/public/formations/FormationDetailAppro.tsx
 "use client";
 
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import type { Formation } from "@/lib/types";
+
+import { ProgrammeModal } from "@/app/infos-pratiques/components/ProgrammeModal";
+import ContenuAppro from "@/app/infos-pratiques/components/contenuAppro";
+import { VIOLET_FG, YELLOW } from "@/app/infos-pratiques/components/ProgrammeParts";
 
 type TransportOption = {
   label?: string;
@@ -20,14 +24,132 @@ function formatApproDateLine(start?: string, end?: string) {
     s.getMonth() === e.getMonth() && s.getFullYear() === e.getFullYear();
   if (sameMonth) {
     const month = s.toLocaleDateString("fr-FR", { month: "long" });
-    // ex: 12–18 avril 2026
     return `${s.getDate()}–${e.getDate()} ${month} ${s.getFullYear()}`;
   }
 
   const sm = s.toLocaleDateString("fr-FR", { month: "long" });
   const em = e.toLocaleDateString("fr-FR", { month: "long" });
-  // ex: 28 mars 2026 – 3 avril 2026
   return `${s.getDate()} ${sm} ${s.getFullYear()} – ${e.getDate()} ${em} ${e.getFullYear()}`;
+}
+
+function cx(...v: Array<string | false | null | undefined>) {
+  return v.filter(Boolean).join(" ");
+}
+
+function MiniCarouselCard({
+  fixedTitle,
+  items,
+  index,
+  setIndex,
+}: {
+  fixedTitle: string;
+  items: Array<{ title: string; text: string }>;
+  index: number;
+  setIndex: React.Dispatch<React.SetStateAction<number>>;
+}) {
+  const prev = () => setIndex((i) => (i - 1 + items.length) % items.length);
+  const next = () => setIndex((i) => (i + 1) % items.length);
+
+  // DA violet pourpre
+  const haloA = "rgba(122,122,232,0.28)"; // VIOLET_FG-ish
+  const haloB = "rgba(122,122,232,0.18)";
+  const ring = "rgba(122,122,232,0.22)";
+  const dotOn = "rgba(122,122,232,0.85)";
+  const dotOff = "rgba(148,163,184,0.55)";
+
+  return (
+    <div className="relative overflow-hidden rounded-3xl bg-white/40 shadow-sm backdrop-blur ring-1 ring-white/30">
+      {/* halos purple */}
+      <div
+        className="pointer-events-none absolute -left-12 -top-12 h-52 w-52 rounded-full blur-2xl"
+        style={{ background: haloA }}
+      />
+      <div
+        className="pointer-events-none absolute -right-12 -bottom-12 h-52 w-52 rounded-full blur-2xl"
+        style={{ background: haloB }}
+      />
+
+      {/* ✅ Header fixe (ne bouge pas quand on change de slide) */}
+      <div
+        className="relative px-4 pt-4 md:px-6 md:pt-5"
+        style={{ borderBottom: `1px solid ${ring}` }}
+      >
+        <p className="text-sm font-medium text-slate-800">{fixedTitle}</p>
+      </div>
+
+      {/* Body */}
+      <div className="relative grid grid-cols-[auto_1fr_auto] items-stretch">
+        {/* left */}
+        <button
+          type="button"
+          onClick={prev}
+          className="group flex w-14 md:w-16 cursor-pointer items-center justify-center transition hover:bg-white/25"
+          aria-label="Précédent"
+        >
+          <span
+            className={cx(
+              "flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full",
+              "bg-white/35 shadow-sm transition",
+              "text-2xl md:text-3xl font-semibold text-slate-800",
+              "ring-1"
+            )}
+            style={{ ringColor: ring, border: `1px solid ${ring}` }}
+          >
+            ‹
+          </span>
+        </button>
+
+        {/* content */}
+        <div className="px-4 py-4 md:px-6 md:py-5 min-h-[175px] md:min-h-[195px] flex flex-col justify-center">
+          {/* ✅ “EXPERIMENTER & ANALYSER” => plus petit */}
+          <p className="text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-700">
+            {items[index].title}
+          </p>
+
+          <p className="mt-2 text-sm leading-relaxed text-slate-700">
+            {items[index].text}
+          </p>
+        </div>
+
+        {/* right */}
+        <button
+          type="button"
+          onClick={next}
+          className="group flex w-14 md:w-16 cursor-pointer items-center justify-center transition hover:bg-white/25"
+          aria-label="Suivant"
+        >
+          <span
+            className={cx(
+              "flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full",
+              "bg-white/35 shadow-sm transition",
+              "text-2xl md:text-3xl font-semibold text-slate-800",
+              "ring-1"
+            )}
+            style={{ ringColor: ring, border: `1px solid ${ring}` }}
+          >
+            ›
+          </span>
+        </button>
+      </div>
+
+      {/* dots */}
+      <div className="relative flex items-center justify-center gap-2 px-4 pb-4">
+        {items.map((_, i) => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => setIndex(i)}
+            className="h-1.5 rounded-full transition"
+            style={{
+              width: i === index ? 36 : 22,
+              background: i === index ? dotOn : dotOff,
+            }}
+            aria-label={`Aller au point ${i + 1}`}
+          />
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export default function FormationDetailAppro(props: {
@@ -38,15 +160,14 @@ export default function FormationDetailAppro(props: {
   onBack: () => void;
   onOpenYapla: () => void;
 }) {
-  const { formation, dateLabel, typeText, options, onBack, onOpenYapla } =
-    props;
+  const { formation, dateLabel, typeText, options, onBack, onOpenYapla } = props;
 
   const hasOptions = (options?.length ?? 0) > 0;
 
-  // Media (Gravières + photos)
-  const heroVideoSrc = "/APPRO/video.mp4"; // portrait
-  const heroImg1 = "/APPRO/1.jpeg"; // paysage
-  const heroImg2 = "/APPRO/2.jpeg"; // paysage
+  // Media
+  const heroVideoSrc = "/APPRO/video.mp4";
+  const heroImg1 = "/APPRO/1.jpeg";
+  const heroImg2 = "/APPRO/2.jpeg";
 
   const prettyDate = useMemo(() => {
     const d = formatApproDateLine(formation.startDate, formation.endDate);
@@ -59,6 +180,8 @@ export default function FormationDetailAppro(props: {
 
   const [bafaIndex, setBafaIndex] = useState(0);
   const [approIndex, setApproIndex] = useState(0);
+
+  const [programmeOpen, setProgrammeOpen] = useState(false);
 
   const bafaThemes = [
     {
@@ -96,17 +219,18 @@ export default function FormationDetailAppro(props: {
 
   return (
     <>
-      {/* HÉRO + MEDIA (même hauteur que FG : vidéo à droite, 2 photos empilées à gauche) */}
+      {/* HERO */}
       <section className="relative border-b border-slate-100 bg-transparent">
         <div className="mx-auto max-w-5xl px-4 pt-7 pb-8 md:px-6 md:pt-9 md:pb-10">
           <div className="flex flex-col gap-8 md:flex-row md:items-center">
-            {/* Colonne texte (sobre, pas de répétitions) */}
+            {/* Text */}
             <div className="flex-1 space-y-4">
               <div className="flex flex-wrap items-center gap-2">
-                <p className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-600 shadow-sm ring-1 ring-sky-100">
+                <p className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-600 shadow-sm ring-1 ring-slate-200">
                   <span className="text-base">🎓</span>
                   <span>{typeText}</span>
                 </p>
+
                 {prettyDate && (
                   <span className="inline-flex items-center rounded-full bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-700 shadow-sm ring-1 ring-slate-200">
                     {prettyDate}
@@ -114,23 +238,20 @@ export default function FormationDetailAppro(props: {
                 )}
               </div>
 
-              <div>
-                <h1 className="font-display text-2xl md:text-3xl font-semibold text-slate-900">
-                  {formation.title}
-                </h1>
-              </div>
+              <h1 className="font-display text-2xl md:text-3xl font-semibold text-slate-900">
+                {formation.title}
+              </h1>
 
               <div className="flex flex-wrap items-center gap-2 text-xs">
-                <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-3 py-1 font-medium text-slate-900 shadow-sm ring-1 ring-sky-200">
+                <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-3 py-1 font-medium text-slate-900 shadow-sm ring-1 ring-slate-200">
                   <span className="text-base">💶</span>
                   {formation.price} €
                 </span>
 
                 {hasOptions && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-3 py-1 font-medium text-slate-900 shadow-sm ring-1 ring-amber-200">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-3 py-1 font-medium text-slate-900 shadow-sm ring-1 ring-slate-200">
                     <span className="text-base">🚌</span>
-                    {options.length} option{options.length > 1 ? "s" : ""}{" "}
-                    transport
+                    {options.length} option{options.length > 1 ? "s" : ""} transport
                   </span>
                 )}
               </div>
@@ -139,7 +260,8 @@ export default function FormationDetailAppro(props: {
                 <button
                   type="button"
                   onClick={onOpenYapla}
-                  className="inline-flex items-center cursor-pointer gap-2 rounded-full bg-amber-400 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-900 shadow-sm transition hover:bg-amber-300"
+                  className="inline-flex items-center cursor-pointer gap-2 rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] shadow-sm transition hover:opacity-95"
+                  style={{ backgroundColor: VIOLET_FG, color: YELLOW }}
                 >
                   Je m&apos;inscris <span className="text-sm">→</span>
                 </button>
@@ -147,9 +269,7 @@ export default function FormationDetailAppro(props: {
                 <button
                   type="button"
                   onClick={() =>
-                    document
-                      .getElementById("contenu")
-                      ?.scrollIntoView({ behavior: "smooth" })
+                    document.getElementById("contenu")?.scrollIntoView({ behavior: "smooth" })
                   }
                   className="inline-flex items-center cursor-pointer gap-2 rounded-full bg-white/80 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-900 shadow-sm ring-1 ring-slate-200 transition hover:bg-white"
                 >
@@ -167,12 +287,11 @@ export default function FormationDetailAppro(props: {
               </div>
             </div>
 
-            {/* Colonne media */}
+            {/* Media */}
             <div className="flex-1">
               <div className="grid grid-cols-2 gap-3">
-                {/* Photos empilées (paysage, compact) */}
                 <div className="flex flex-col gap-4">
-                  <div className="overflow-hidden rounded  bg-white/80 shadow-sm">
+                  <div className="overflow-hidden rounded bg-white/80 shadow-sm">
                     <img
                       src={heroImg1}
                       alt="Photo de la formation (1)"
@@ -180,8 +299,7 @@ export default function FormationDetailAppro(props: {
                       loading="lazy"
                     />
                   </div>
-
-                  <div className="overflow-hidden rounded  bg-white/80 shadow-sm">
+                  <div className="overflow-hidden rounded bg-white/80 shadow-sm">
                     <img
                       src={heroImg2}
                       alt="Photo de la formation (2)"
@@ -191,8 +309,7 @@ export default function FormationDetailAppro(props: {
                   </div>
                 </div>
 
-                {/* Vidéo portrait (même hauteur globale que FG) */}
-                <div className="overflow-hidden rounded  bg-white/70 shadow-sm">
+                <div className="overflow-hidden rounded bg-white/70 shadow-sm">
                   <video
                     src={heroVideoSrc}
                     autoPlay
@@ -208,180 +325,73 @@ export default function FormationDetailAppro(props: {
         </div>
       </section>
 
-      {/* CONTENU + COLONNES */}
-      <section
-        id="contenu"
-        className="mx-auto max-w-5xl px-4 py-8 md:px-6 md:py-10"
-      >
+      {/* CONTENT */}
+      <section id="contenu" className="mx-auto max-w-5xl px-4 py-8 md:px-6 md:py-10">
         <div className="grid gap-8 md:grid-cols-[minmax(0,2fr)_minmax(0,1.4fr)]">
-          {/* Colonne gauche */}
-<div className="space-y-5">
-  <div className="space-y-2">
-    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-      Le contenu de la formation
-    </p>
+          {/* Left */}
+          <div className="space-y-5">
+            <div className="space-y-2">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                Le contenu de la formation
+              </p>
 
-    <h2 className="font-display text-xl font-semibold text-slate-900">
-      Ce que tu vas vivre pendant cette semaine
-    </h2>
+              <h2 className="font-display text-xl font-semibold text-slate-900">
+                Ce que tu vas vivre pendant cette semaine
+              </h2>
 
-    {/* ✅ Sous-titre raccourci + plus lisible */}
-    <p className="text-sm font-medium text-slate-700">
-      Affiner ta posture d’animateur·rice et approfondir les acquis de la Formation Générale.
-    </p>
+              {/* ✅ Carrousel “BAFA” (titre fixe dans la case) */}
+              <div className="mt-3">
+                <MiniCarouselCard
+                  fixedTitle="Affiner ta posture d’animateur·rice et approfondir les acquis de la Formation Générale."
+                  items={bafaThemes}
+                  index={bafaIndex}
+                  setIndex={setBafaIndex}
+                />
+              </div>
 
-    {/* ✅ CARROUSEL BAFA — hauteur fixe + titre mieux calibré */}
-    <div className="mt-3 relative overflow-hidden rounded-3xl  bg-white/40 shadow-sm backdrop-blur">
-      {/* petits halos */}
-      <div className="pointer-events-none absolute -left-10 -top-10 h-40 w-40 rounded-full  bg-amber-200/40 blur-2xl" />
-      <div className="pointer-events-none absolute -right-10 -bottom-10 h-40 w-40 rounded-full bg-sky-200/40 blur-2xl" />
+              {/* ✅ Carrousel “Appro” (titre fixe dans la case) */}
+              <div className="pt-4">
+                <MiniCarouselCard
+                  fixedTitle="Comprendre les enjeux d’un séjour à l’étranger / échanges de jeunes."
+                  items={approThemes}
+                  index={approIndex}
+                  setIndex={setApproIndex}
+                />
+              </div>
 
-      <div className="relative grid grid-cols-[auto_1fr_auto] items-stretch">
-        {/* Flèche gauche */}
-        <button
-          type="button"
-          onClick={() =>
-            setBafaIndex((i) => (i - 1 + bafaThemes.length) % bafaThemes.length)
-          }
-          className="group flex w-14 md:w-16 cursor-pointer items-center justify-center bg-transparent transition hover:bg-white/30"
-          aria-label="Thème précédent"
-        >
-          <span className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full bg-white/40 ring-1 ring-white/50 text-2xl md:text-3xl font-semibold text-slate-800 shadow-sm transition group-hover:bg-white/55 group-hover:-translate-x-0.5">
-            ‹
-          </span>
-        </button>
+              {/* Description Firebase (inchangée) */}
+              {formation.description && (
+                <div className="pt-2">
+                  <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-slate-800">
+                    {formation.description}
+                  </p>
+                </div>
+              )}
 
-        {/* Contenu (✅ hauteur fixe) */}
-        <div className="p-4 md:p-6 min-h-[170px] md:min-h-[190px] flex flex-col justify-center">
-          <p className="font-display  text-base md:text-lg font-semibold text-slate-900">
-            {bafaThemes[bafaIndex].title}
-          </p>
-
-          <p className="mt-2 text-sm leading-relaxed text-slate-700">
-            {bafaThemes[bafaIndex].text}
-          </p>
-        </div>
-
-        {/* Flèche droite */}
-        <button
-          type="button"
-          onClick={() => setBafaIndex((i) => (i + 1) % bafaThemes.length)}
-          className="group flex w-14 md:w-16 cursor-pointer items-center justify-center bg-transparent transition hover:bg-white/30"
-          aria-label="Thème suivant"
-        >
-          <span className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full bg-white/40 ring-1 ring-white/50 text-2xl md:text-3xl font-semibold text-slate-800 shadow-sm transition group-hover:bg-white/55 group-hover:translate-x-0.5">
-            ›
-          </span>
-        </button>
-      </div>
-
-      {/* Indicateurs */}
-      <div className="relative flex items-center justify-center gap-2 px-4 pb-4">
-        {bafaThemes.map((_, i) => (
-          <button
-            key={i}
-            type="button"
-            onClick={() => setBafaIndex(i)}
-            className={[
-              "h-1.5 rounded-full transition",
-              i === bafaIndex
-                ? "w-10 bg-slate-900/80"
-                : "w-6 bg-slate-300/70 hover:bg-slate-400/80",
-            ].join(" ")}
-            aria-label={`Aller au thème ${i + 1}`}
-          />
-        ))}
-      </div>
-    </div>
-
-    {/* ✅ plus d’aération entre les 2 carrousels */}
-    <div className="pt-5">
-      <p className="text-sm font-medium text-slate-700">
-        Comprendre les enjeux d’un séjour à l’étranger / échanges de jeunes.
-      </p>
-
-      {/* ✅ CARROUSEL APPRO — hauteur fixe + titre mieux calibré */}
-      <div className="mt-3 relative overflow-hidden rounded-3xl  bg-white/40 shadow-sm backdrop-blur">
-        {/* petits halos */}
-        <div className="pointer-events-none absolute -left-10 -top-10 h-40 w-40 rounded-full bg-amber-200/40 blur-2xl" />
-        <div className="pointer-events-none absolute -right-10 -bottom-10 h-40 w-40 rounded-full bg-sky-200/40  blur-2xl" />
-
-        <div className="relative grid grid-cols-[auto_1fr_auto] items-stretch">
-          {/* Flèche gauche */}
-          <button
-            type="button"
-            onClick={() =>
-              setApproIndex(
-                (i) => (i - 1 + approThemes.length) % approThemes.length
-              )
-            }
-            className="group flex w-14 md:w-16 cursor-pointer items-center justify-center bg-transparent transition hover:bg-white/30"
-            aria-label="Thème précédent"
-          >
-            <span className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full bg-white/40 ring-1 ring-white/50 text-2xl md:text-3xl font-semibold text-slate-800 shadow-sm transition group-hover:bg-white/55 group-hover:-translate-x-0.5">
-              ‹
-            </span>
-          </button>
-
-          {/* Contenu (✅ hauteur fixe) */}
-          <div className="p-4 md:p-6 min-h-[170px] md:min-h-[190px] flex flex-col justify-center">
-            <p className="font-display text-center text-base md:text-lg font-semibold text-slate-900">
-              {approThemes[approIndex].title}
-            </p>
-
-            <p className="mt-2 text-sm leading-relaxed text-slate-700">
-              {approThemes[approIndex].text}
-            </p>
+              {/* ✅ Gros bouton violet => ouvre modale Appro */}
+              <div className="pt-4">
+                <button
+                  type="button"
+                  onClick={() => setProgrammeOpen(true)}
+                  className="w-full cursor-pointer rounded-2xl px-5 py-4 text-center shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                  style={{ backgroundColor: VIOLET_FG, color: YELLOW }}
+                >
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.18em] opacity-95">
+                    Approfondissement
+                  </div>
+                  <div className="mt-1 font-display text-lg md:text-xl font-semibold">
+                    Ouvrir le programme détaillé
+                  </div>
+                  <div className="mt-2 text-sm opacity-95">Voir le déroulé complet</div>
+                </button>
+              </div>
+            </div>
           </div>
 
-          {/* Flèche droite */}
-          <button
-            type="button"
-            onClick={() => setApproIndex((i) => (i + 1) % approThemes.length)}
-            className="group flex w-14 md:w-16 cursor-pointer items-center justify-center bg-transparent transition hover:bg-white/30"
-            aria-label="Thème suivant"
-          >
-            <span className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full bg-white/40 ring-1 ring-white/50 text-2xl md:text-3xl font-semibold text-slate-800 shadow-sm transition group-hover:bg-white/55 group-hover:translate-x-0.5">
-              ›
-            </span>
-          </button>
-        </div>
-
-        {/* Indicateurs */}
-        <div className="relative flex items-center justify-center gap-2 px-4 pb-4">
-          {approThemes.map((_, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => setApproIndex(i)}
-              className={[
-                "h-1.5 rounded-full transition",
-                i === approIndex
-                  ? "w-10 bg-slate-900/80"
-                  : "w-6 bg-slate-300/70 hover:bg-slate-400/80",
-              ].join(" ")}
-              aria-label={`Aller au thème ${i + 1}`}
-            />
-          ))}
-        </div>
-      </div>
-    </div>
-
-    {/* Complété par la description Firebase */}
-    {formation.description && (
-      <div className="pt-2">
-        <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-slate-800">
-          {formation.description}
-        </p>
-      </div>
-    )}
-  </div>
-</div>
-
-          {/* Colonne droite (inchangée) */}
+          {/* Right (quasi inchangé, juste cohérence DA si tu veux après) */}
           <aside className="space-y-4 text-xs text-slate-700">
-            <div className="group relative overflow-hidden rounded-2xl  bg-white/90 px-4 py-4 shadow-sm">
-              <div className="absolute -right-6 -top-6 h-16 w-16 rounded-full bg-amber-100/80" />
+            <div className="group relative overflow-hidden rounded-2xl bg-white/90 px-4 py-4 shadow-sm">
+              <div className="absolute -right-6 -top-6 h-16 w-16 rounded-full bg-slate-100/80" />
               <div className="relative space-y-2">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
                   Infos pratiques
@@ -392,42 +402,41 @@ export default function FormationDetailAppro(props: {
 
                 <div className="space-y-1.5 text-xs">
                   <p>
-                    <span className="font-semibold text-slate-900">
-                      Durée :
-                    </span>{" "}
+                    <span className="font-semibold text-slate-900">Durée :</span>{" "}
                     6 jours (arrivée le dimanche, départ le samedi suivant).
                   </p>
                   <p>
-                    <span className="font-semibold text-slate-900">
-                      Hébergement :
-                    </span>{" "}
+                    <span className="font-semibold text-slate-900">Hébergement :</span>{" "}
                     Internat en pension complète, dortoirs avec sdb privative.
                   </p>
                   <p>
-                    <span className="font-semibold text-slate-900">Lieu :</span>{" "}
-                    {locationText}
+                    <span className="font-semibold text-slate-900">Lieu :</span> {locationText}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="group relative overflow-hidden rounded-2xl  bg-white/90 px-4 py-4 shadow-sm">
-              <div className="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-sky-100/80" />
+            <div className="group relative overflow-hidden rounded-2xl bg-white/90 px-4 py-4 shadow-sm">
+              <div className="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-slate-100/80" />
               <div className="relative space-y-3">
                 <div className="flex items-start gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-sky-500 text-lg">
-                    <span className="translate-y-[1px] text-white">🚌</span>
+                  <div
+                    className="flex h-9 w-9 items-center justify-center rounded-full text-lg"
+                    style={{ backgroundColor: VIOLET_FG }}
+                  >
+                    <span className="translate-y-[1px]" style={{ color: YELLOW }}>
+                      🚌
+                    </span>
                   </div>
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-sky-700">
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-700">
                       Options de transport
                     </p>
 
                     {!hasOptions ? (
                       <p className="mt-1 text-xs text-slate-600">
-                        Pas d&apos;option de transport spécifique renseignée
-                        pour cette formation. Les infos pratiques te seront
-                        précisées lors de l&apos;inscription.
+                        Pas d&apos;option de transport spécifique renseignée pour cette formation.
+                        Les infos pratiques te seront précisées lors de l&apos;inscription.
                       </p>
                     ) : (
                       <p className="mt-1 text-xs text-slate-700">
@@ -444,7 +453,7 @@ export default function FormationDetailAppro(props: {
                       return (
                         <li
                           key={`${label}-${idx}`}
-                          className="flex items-center justify-between gap-3 rounded-xl bg-sky-50 px-3 py-2 ring-1 ring-sky-100"
+                          className="flex items-center justify-between gap-3 rounded-xl bg-white px-3 py-2 ring-1 ring-slate-200"
                         >
                           <div className="flex flex-col">
                             <span className="text-xs font-medium text-slate-900">
@@ -455,9 +464,7 @@ export default function FormationDetailAppro(props: {
                                 </span>
                               ) : null}
                             </span>
-                            <span className="text-[11px] text-slate-500">
-                              Tarif transport
-                            </span>
+                            <span className="text-[11px] text-slate-500">Tarif transport</span>
                           </div>
                           <span className="text-xs font-semibold text-slate-900">
                             {opt.price} €
@@ -481,15 +488,16 @@ export default function FormationDetailAppro(props: {
               </div>
 
               <p>
-                L&apos;inscription et le paiement se font via un formulaire
-                sécurisé (Yapla). Une fois ton inscription validée, tu recevras
-                un mail avec la convocation, les horaires précis et l’info pack.
+                L&apos;inscription et le paiement se font via un formulaire sécurisé (Yapla). Une
+                fois ton inscription validée, tu recevras un mail avec la convocation, les
+                horaires précis et l’info pack.
               </p>
 
               <button
                 type="button"
                 onClick={onOpenYapla}
-                className="mt-3 inline-flex cursor-pointer items-center gap-1 rounded-full bg-slate-900 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-50 shadow-sm transition hover:bg-slate-800"
+                className="mt-3 inline-flex cursor-pointer items-center gap-1 rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] shadow-sm transition hover:opacity-95"
+                style={{ backgroundColor: VIOLET_FG, color: YELLOW }}
               >
                 Ouvrir le formulaire <span className="text-xs">↗</span>
               </button>
@@ -497,6 +505,19 @@ export default function FormationDetailAppro(props: {
           </aside>
         </div>
       </section>
+
+      {/* ✅ MODALE APPRO */}
+      <ProgrammeModal
+        open={programmeOpen}
+        onClose={() => setProgrammeOpen(false)}
+        tone="appro"
+        titleTop="Approfondissement"
+        title="Séjours à l’étranger | Echanges de jeunes"
+        duration="6 jours"
+        summary="Encadrer des séjours à l’étranger, gérer les déplacements, animer en contexte interculturel et organiser le quotidien (budget, repas, vie de groupe)."
+      >
+        <ContenuAppro />
+      </ProgrammeModal>
     </>
   );
 }
