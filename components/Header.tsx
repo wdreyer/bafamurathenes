@@ -6,8 +6,10 @@ import Image from "next/image";
 
 export default function Header() {
   const [isOpen, setIsOpen] = useState(false);
-
   const closeMenu = () => setIsOpen(false);
+
+  // pourpre un peu plus foncé
+  const FORMS_PURPLE = "#B13A4A";
 
   return (
     <header className="sticky top-0 z-30 border-b border-sky-100 bg-amber-50/90 backdrop-blur">
@@ -41,18 +43,31 @@ export default function Header() {
             >
               Accueil
             </Link>
+
             <Link
               href="/bafa"
               className="relative whitespace-nowrap transition hover:text-sky-900 after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-sky-800 after:transition-all after:duration-200 hover:after:w-full"
             >
               Le BAFA
             </Link>
-            <Link
-              href="/formations"
-              className="relative whitespace-nowrap transition hover:text-sky-900 after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-sky-800 after:transition-all after:duration-200 hover:after:w-full"
-            >
-              Nos formations 2026
-            </Link>
+
+            {/* ✅ Highlight: pourpre + trait fonctionnel */}
+<Link
+  href="/formations"
+  className="group relative whitespace-nowrap transition"
+  style={{ color: "#B13A4A" }} // pourpre plus foncé
+>
+  Nos formations 2026
+
+  {/* trait hover */}
+  <span
+    aria-hidden
+    className="pointer-events-none absolute left-0 -bottom-1 h-[2px] w-full origin-left scale-x-0 transition-transform duration-200 group-hover:scale-x-100"
+    style={{ backgroundColor: "#B13A4A" }}
+  />
+</Link>
+
+
             <Link
               href="/infos-pratiques"
               className="relative whitespace-nowrap transition hover:text-sky-900 after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-sky-800 after:transition-all after:duration-200 hover:after:w-full"
@@ -60,7 +75,6 @@ export default function Header() {
               Infos pratiques
             </Link>
 
-            {/* NEW: Qui sommes nous (même DA que les liens du menu) */}
             <Link
               href="/murathenes"
               className="relative whitespace-nowrap transition hover:text-sky-900 after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-sky-800 after:transition-all after:duration-200 hover:after:w-full"
@@ -105,16 +119,25 @@ export default function Header() {
             <Link href="/" onClick={closeMenu} className="rounded-full px-3 py-2 ">
               Accueil
             </Link>
+
             <Link href="/bafa" onClick={closeMenu} className="rounded-full px-3 py-2 ">
               Le BAFA
             </Link>
+
+            {/* ✅ Highlight mobile pourpre */}
             <Link
               href="/formations"
               onClick={closeMenu}
-              className="rounded-full px-3 py-2 "
+              className="rounded-full px-3 py-2 ring-1"
+              style={{
+                color: FORMS_PURPLE,
+                borderColor: `${FORMS_PURPLE}55`,
+                background: `${FORMS_PURPLE}10`,
+              }}
             >
               Nos formations 2026
             </Link>
+
             <Link
               href="/infos-pratiques"
               onClick={closeMenu}
@@ -123,7 +146,6 @@ export default function Header() {
               Infos pratiques
             </Link>
 
-            {/* NEW: Qui sommes nous (reprend la DA des items mobile) */}
             <Link
               href="/murathenes"
               onClick={closeMenu}
@@ -134,6 +156,13 @@ export default function Header() {
           </nav>
         </div>
       )}
+
+      {/* ✅ petit style inline pour le trait pourpre via after (sans dépendre de Tailwind arbitraire) */}
+      <style jsx>{`
+        a[href="/formations"]::after {
+          background: ${FORMS_PURPLE};
+        }
+      `}</style>
     </header>
   );
 }
