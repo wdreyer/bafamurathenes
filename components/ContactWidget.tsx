@@ -7,6 +7,13 @@ type Status = "idle" | "sending" | "sent" | "error";
 const PRIMARY = "#74D4FF";
 const SECONDARY = "#D75F64";
 
+/**
+ * 🔌 API simple : pour ouvrir depuis n'importe où
+ * window.dispatchEvent(new Event("contact-widget:open"))
+ */
+const CONTACT_OPEN_EVENT = "contact-widget:open";
+const CONTACT_CLOSE_EVENT = "contact-widget:close";
+
 export default function ContactWidget() {
   const PHONE_DISPLAY = "01 84 21 05 48";
   const PHONE_TEL = "0184210548";
@@ -41,6 +48,20 @@ export default function ContactWidget() {
       reasons.push("Message trop court (min 10 caractères).");
     return reasons;
   }, [form.name, form.message, okEmail]);
+
+  // ✅ Ouverture depuis l’extérieur (pages/CTA)
+  useEffect(() => {
+    const onOpen = () => setOpen(true);
+    const onClose = () => setOpen(false);
+
+    window.addEventListener(CONTACT_OPEN_EVENT, onOpen);
+    window.addEventListener(CONTACT_CLOSE_EVENT, onClose);
+
+    return () => {
+      window.removeEventListener(CONTACT_OPEN_EVENT, onOpen);
+      window.removeEventListener(CONTACT_CLOSE_EVENT, onClose);
+    };
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -77,10 +98,7 @@ export default function ContactWidget() {
 
       const res = await fetch(endpoint, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({
           name: form.name.trim(),
           email: form.email.trim(),
@@ -126,11 +144,8 @@ export default function ContactWidget() {
       >
         <span
           className="relative grid h-9 w-9 place-items-center rounded-full shadow-sm ring-1 ring-white/30 transition group-hover:scale-105"
-          style={{
-            background: "rgba(255,255,255,0.80)",
-          }}
+          style={{ background: "rgba(255,255,255,0.80)" }}
         >
-          {/* ping neon */}
           <span
             className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full"
             style={{ backgroundColor: PRIMARY }}
@@ -209,9 +224,7 @@ export default function ContactWidget() {
             type="button"
             onClick={() => setOpen(false)}
             className="rounded-full cursor-pointer p-2 text-slate-700 hover:bg-white/70 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-offset-2"
-            style={{
-              boxShadow: "0 10px 25px rgba(15,23,42,0.08)",
-            }}
+            style={{ boxShadow: "0 10px 25px rgba(15,23,42,0.08)" }}
             aria-label="Fermer"
           >
             <IconClose />
@@ -222,9 +235,7 @@ export default function ContactWidget() {
           {/* Coordonnées */}
           <div
             className="rounded-2xl bg-white/75 shadow-sm ring-1 ring-white/40 overflow-hidden"
-            style={{
-              boxShadow: `0 12px 30px rgba(15,23,42,0.08)`,
-            }}
+            style={{ boxShadow: `0 12px 30px rgba(15,23,42,0.08)` }}
           >
             <div className="flex items-center gap-3 px-4 py-4">
               <div
@@ -241,10 +252,7 @@ export default function ContactWidget() {
                 <a
                   href={`tel:${PHONE_TEL}`}
                   className="text-sm underline underline-offset-4 hover:text-slate-950"
-                  style={{
-                    color: "#334155",
-                    textDecorationColor: `${PRIMARY}99`,
-                  }}
+                  style={{ color: "#334155", textDecorationColor: `${PRIMARY}99` }}
                 >
                   {PHONE_DISPLAY}
                 </a>
@@ -274,10 +282,7 @@ export default function ContactWidget() {
                 <a
                   href={`mailto:${EMAIL}`}
                   className="text-sm underline underline-offset-4 hover:text-slate-950"
-                  style={{
-                    color: "#334155",
-                    textDecorationColor: `${SECONDARY}99`,
-                  }}
+                  style={{ color: "#334155", textDecorationColor: `${SECONDARY}99` }}
                 >
                   {EMAIL}
                 </a>
@@ -288,9 +293,7 @@ export default function ContactWidget() {
           {/* Formulaire */}
           <div
             className="rounded-2xl bg-white/80 shadow-sm ring-1 ring-white/40 overflow-hidden"
-            style={{
-              boxShadow: `0 12px 30px rgba(15,23,42,0.08)`,
-            }}
+            style={{ boxShadow: `0 12px 30px rgba(15,23,42,0.08)` }}
           >
             <div className="px-4 pt-4">
               <p className="text-xs font-semibold text-slate-900">Message</p>
@@ -473,12 +476,7 @@ function IconNoEntry() {
         stroke="currentColor"
         strokeWidth="1.8"
       />
-      <path
-        d="M7.6 16.4 16.4 7.6"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
+      <path d="M7.6 16.4 16.4 7.6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
     </svg>
   );
 }
@@ -486,12 +484,7 @@ function IconNoEntry() {
 function IconClose() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M6 6l12 12M18 6 6 18"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-      />
+      <path d="M6 6l12 12M18 6 6 18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
     </svg>
   );
 }

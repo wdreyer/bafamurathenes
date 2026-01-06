@@ -53,26 +53,22 @@ function MiniCarouselCard({
   const prev = () => setIndex((i) => (i - 1 + items.length) % items.length);
   const next = () => setIndex((i) => (i + 1) % items.length);
 
-  // DA violet pourpre
-  const haloA = "rgba(122,122,232,0.28)"; // VIOLET_FG-ish
-  const haloB = "rgba(122,122,232,0.18)";
-  const ring = "rgba(122,122,232,0.22)";
-  const dotOn = "rgba(122,122,232,0.85)";
-  const dotOff = "rgba(148,163,184,0.55)";
+  // DA blanche + ring slate, accent violet discret
+  const accent = "rgba(102,102,198,0.95)"; // violet doux
+  const ring = "rgba(226,232,240,1)"; // slate-200
+  const dotOn = "rgba(102,102,198,0.75)";
+  const dotOff = "rgba(148,163,184,0.45)";
 
   return (
-    <div className="relative overflow-hidden rounded-3xl bg-white/40 shadow-sm backdrop-blur ring-1 ring-white/30">
-      {/* halos purple */}
+    <div className="relative overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
+      {/* petit cercle violet en haut à droite (style “transport”) */}
       <div
-        className="pointer-events-none absolute -left-12 -top-12 h-52 w-52 rounded-full blur-2xl"
-        style={{ background: haloA }}
-      />
-      <div
-        className="pointer-events-none absolute -right-12 -bottom-12 h-52 w-52 rounded-full blur-2xl"
-        style={{ background: haloB }}
+        aria-hidden
+        className="pointer-events-none absolute -right-6 -top-6 h-16 w-16 rounded-full"
+        style={{ background: "rgba(102,102,198,0.14)" }}
       />
 
-      {/* ✅ Header fixe (ne bouge pas quand on change de slide) */}
+      {/* ✅ Header fixe */}
       <div
         className="relative px-4 pt-4 md:px-6 md:pt-5"
         style={{ borderBottom: `1px solid ${ring}` }}
@@ -86,19 +82,18 @@ function MiniCarouselCard({
         <button
           type="button"
           onClick={prev}
-          className="group flex w-14 md:w-16 cursor-pointer items-center justify-center transition hover:bg-white/25"
+          className="group flex w-14 cursor-pointer items-center justify-center transition  md:w-16"
           aria-label="Précédent"
         >
           <span
             className={cx(
-              "flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full",
-              "bg-white/35 shadow-sm transition",
-              "text-2xl md:text-3xl font-semibold text-slate-800",
-              "ring-1"
+              "flex h-10 w-10 items-center justify-center rounded-full",
+              "bg-white shadow-sm transition",
+              "text-2xl font-semibold text-slate-800 md:h-11 md:w-11 md:text-3xl"
             )}
             style={{
               border: `1px solid ${ring}`,
-              boxShadow: `0 0 0 1px ${ring}`, // optionnel : simule le ring
+              boxShadow: "0 1px 0 rgba(15,23,42,0.06)",
             }}
           >
             ‹
@@ -106,9 +101,11 @@ function MiniCarouselCard({
         </button>
 
         {/* content */}
-        <div className="px-4 py-4 md:px-6 md:py-5 min-h-[175px] md:min-h-[195px] flex flex-col justify-center">
-          {/* ✅ “EXPERIMENTER & ANALYSER” => plus petit */}
-          <p className="text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-700">
+        <div className="flex min-h-[175px] flex-col justify-center px-4 py-4 md:min-h-[195px] md:px-6 md:py-5">
+          <p
+            className="text-[10px] font-semibold uppercase tracking-[0.18em] md:text-[11px]"
+            style={{ color: accent }}
+          >
             {items[index].title}
           </p>
 
@@ -121,20 +118,19 @@ function MiniCarouselCard({
         <button
           type="button"
           onClick={next}
-          className="group flex w-14 md:w-16 cursor-pointer items-center justify-center transition hover:bg-white/25"
+          className="group flex w-14 cursor-pointer items-center justify-center transition md:w-16"
           aria-label="Suivant"
         >
           <span
             className={cx(
-              "flex h-10 w-10 md:h-11 md:w-11 items-center justify-center rounded-full",
-              "bg-white/35 shadow-sm transition",
-              "text-2xl md:text-3xl font-semibold text-slate-800",
-              "ring-1"
+              "flex h-10 w-10 items-center justify-center rounded-full",
+              "bg-white shadow-sm transition",
+              "text-2xl font-semibold text-slate-800 md:h-11 md:w-11 md:text-3xl"
             )}
             style={{
-  border: `1px solid ${ring}`,
-  boxShadow: `0 0 0 1px ${ring}`, // optionnel : simule le ring
-}}
+              border: `1px solid ${ring}`,
+              boxShadow: "0 1px 0 rgba(15,23,42,0.06)",
+            }}
           >
             ›
           </span>
@@ -385,24 +381,76 @@ export default function FormationDetailAppro(props: {
               )}
 
               {/* ✅ Gros bouton violet => ouvre modale Appro */}
-              <div className="pt-4">
-                <button
-                  type="button"
-                  onClick={() => setProgrammeOpen(true)}
-                  className="w-full cursor-pointer rounded-2xl px-5 py-4 text-center shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-                  style={{ backgroundColor: VIOLET_FG, color: YELLOW }}
-                >
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.18em] opacity-95">
-                    Approfondissement
-                  </div>
-                  <div className="mt-1 font-display text-lg md:text-xl font-semibold">
-                    Ouvrir le programme détaillé
-                  </div>
-                  <div className="mt-2 text-sm opacity-95">
-                    Voir le déroulé complet
-                  </div>
-                </button>
-              </div>
+{/* ✅ Bouton compact & smooth (ouvre la modale Approfondissement) */}
+<div className="pt-4">
+  <button
+    type="button"
+    onClick={() => setProgrammeOpen(true)}
+    className={[
+      "group relative w-full cursor-pointer select-none overflow-hidden",
+      "rounded-full px-4 py-3 md:px-5 md:py-3.5",
+      "shadow-sm ring-1 ring-black/5",
+      "transition-all duration-200 ease-out",
+      "hover:-translate-y-0.5 hover:shadow-md",
+      "active:translate-y-0 active:shadow-sm active:scale-[0.99]",
+      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
+    ].join(" ")}
+    style={{
+      backgroundColor: VIOLET_FG,
+      color: YELLOW,
+      outlineColor: YELLOW,
+    }}
+  >
+    {/* petit halo doux */}
+    <span
+      aria-hidden
+      className="pointer-events-none absolute -left-10 -top-10 h-40 w-40 rounded-full opacity-0 blur-2xl transition-opacity duration-300 group-hover:opacity-25"
+      style={{ background: YELLOW }}
+    />
+
+    {/* sheen qui glisse */}
+    <span
+      aria-hidden
+      className="pointer-events-none absolute inset-0 translate-x-[-120%] opacity-0 transition-all duration-500 group-hover:translate-x-[120%] group-hover:opacity-20"
+      style={{
+        background:
+          "linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent)",
+      }}
+    />
+
+    <div className="relative flex items-center justify-between gap-3">
+      <div className="min-w-0 text-left">
+        <div className="text-[10px] font-semibold uppercase tracking-[0.18em] opacity-90">
+          Approfondissement
+        </div>
+
+        <div className="mt-0.5 text-sm md:text-[15px] font-semibold leading-snug">
+          Programme détaillé
+          <span className="hidden md:inline opacity-85 font-normal">
+            {" "}
+            · déroulé complet
+          </span>
+        </div>
+      </div>
+
+      {/* icône + micro-anim */}
+      <span
+        className={[
+          "inline-flex h-9 w-9 flex-none items-center justify-center rounded-full",
+          "bg-white/10 ring-1 ring-white/15",
+          "transition-all duration-200 ease-out",
+          "group-hover:bg-white/15 group-hover:scale-[1.03]",
+          "group-active:scale-[0.98]",
+        ].join(" ")}
+      >
+        <span className="text-[18px] transition-transform duration-200 group-hover:translate-x-[1px]">
+          ›
+        </span>
+      </span>
+    </div>
+  </button>
+</div>
+
             </div>
           </div>
 

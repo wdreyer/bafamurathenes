@@ -26,7 +26,7 @@ export default function ContenuFG() {
           permettent à chacun.e de se reposer, d’assimiler, de se ressourcer,
           mais également d’avoir la possibilité de partager des temps de vie
           informels qualitatifs.{" "}
-          <b className="text-slate-900">Des collations</b> sont également
+          <b className="text-slate-900">Des collations</b> sont 
           proposées.
         </div>
       </Line>

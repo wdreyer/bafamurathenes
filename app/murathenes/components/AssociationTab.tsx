@@ -62,7 +62,10 @@ function ProjectsCarousel({ items }: { items: Project[] }) {
           <span className="text-3xl leading-none">‹</span>
         </button>
 
-        <div ref={emblaRef} className={cx("relative w-full overflow-hidden", "rounded-3xl")}>
+        <div
+          ref={emblaRef}
+          className={cx("relative w-full overflow-hidden", "rounded-3xl")}
+        >
           <div className="flex touch-pan-y">
             {items.map((p, i) => {
               const active = i === selected;
@@ -84,7 +87,12 @@ function ProjectsCarousel({ items }: { items: Project[] }) {
                     )}
                   >
                     <div className="relative h-52 md:h-72 w-full bg-slate-100">
-                      <Image src={p.image} alt={p.title} fill className="object-cover" />
+                      <Image
+                        src={p.image}
+                        alt={p.title}
+                        fill
+                        className="object-cover"
+                      />
                       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-black/0" />
 
                       <div className="absolute bottom-3 left-3 right-3">
@@ -252,28 +260,31 @@ export default function AssociationTab() {
 
         <div className="px-5 py-5 text-sm leading-6 text-slate-700 space-y-3">
           <p>
-            Fondée en 2019, l’association Murathènes est une association d’éducation
-            populaire visant à promouvoir les rencontres interculturelles, le patrimoine,
-            le vivre-ensemble et l’émancipation à des échelles locales, nationales,
-            européennes et internationales. L’association promeut l’art et la musique
-            comme vecteurs sociaux d’insertion et de cohésion.
+            Fondée en 2019, l’association Murathènes est une association
+            d’éducation populaire visant à promouvoir les rencontres
+            interculturelles, le patrimoine, le vivre-ensemble et l’émancipation
+            à des échelles locales, nationales, européennes et internationales.
+            L’association promeut l’art et la musique comme vecteurs sociaux
+            d’insertion et de cohésion.
           </p>
           <p>
-            L’association organise des activités de loisirs permettant aux jeunes de se
-            rencontrer, d’échanger, par delà les cadres limitants et coercitifs qu’elles
-            et ils peuvent rencontrer dans leurs quotidiens.
+            L’association organise des activités de loisirs permettant aux
+            jeunes de se rencontrer, d’échanger, par delà les cadres limitants
+            et coercitifs qu’elles et ils peuvent rencontrer dans leurs
+            quotidiens.
           </p>
           <p>
-            Murathènes est née pour donner suite au constat de l’isolement culturel et
-            social de certains publics isolés ou marginalisés et des inégalités d’accès
-            aux opportunités et aux infrastructures notamment dans les secteurs de la
-            jeunesse. Murathènes, c’est la jeunesse en action, pour que chaque jeune ait
-            droit de se rencontrer et de vivre ensemble des expériences extra-ordinaires.
+            Murathènes est née pour donner suite au constat de l’isolement
+            culturel et social de certains publics isolés ou marginalisés et des
+            inégalités d’accès aux opportunités et aux infrastructures notamment
+            dans les secteurs de la jeunesse. Murathènes, c’est la jeunesse en
+            action, pour que chaque jeune ait droit de se rencontrer et de vivre
+            ensemble des expériences extra-ordinaires.
           </p>
         </div>
       </div>
 
-      {/* Erasmus */}
+      {/* Carousel */}
       <div className="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
         <div className="px-5 py-4 border-b border-slate-100">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
@@ -284,22 +295,11 @@ export default function AssociationTab() {
           </h2>
         </div>
         <div className="px-5 py-5 text-sm leading-6 text-slate-700">
-          L’association organise chaque année plusieurs échanges de jeunes Erasmus+. Entre
-          20 et 60 jeunes européens se rencontrent pendant 1 à 2 semaines pour réaliser
-          un projet commun.
+          L’association organise chaque année plusieurs échanges de jeunes
+          Erasmus+. Entre 20 et 60 jeunes européens se rencontrent pendant 1 à 2
+          semaines pour réaliser un projet commun.
         </div>
-      </div>
 
-      {/* Carousel */}
-      <div className="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-        <div className="px-5 py-4 border-b border-slate-100">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-            Projets
-          </p>
-          <h3 className="mt-1 font-display text-xl md:text-2xl font-semibold text-slate-900">
-            Nos projets
-          </h3>
-        </div>
 
         <div className="px-4 md:px-6 py-6">
           <ProjectsCarousel items={projects} />
