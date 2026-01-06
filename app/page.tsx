@@ -652,7 +652,7 @@ export default function HomePage() {
 
               <div className="pt-4">
                 <Link
-                  href="/infos"
+                  href="/infos-pratiques"
                   className="inline-flex items-center gap-2 rounded-full bg-amber-500 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-900 shadow-sm transition hover:bg-amber-400"
                 >
                   Voir les modalités d&apos;inscription
