@@ -126,19 +126,6 @@ export default function InfoPackTab() {
           </MiniCard>
         </div>
 
-        <SoftMedia>
-          {/* IMPORTANT: wrapper relative + fill */}
-          <div className="relative h-56 w-full md:h-[320px]">
-            <Image
-              src="/pack.jpg"
-              alt="Guide d’arrivée — check-list à emporter"
-              fill
-              className="object-cover"
-              sizes="(min-width: 768px) 40vw, 100vw"
-              priority
-            />
-          </div>
-        </SoftMedia>
       </div>
     </section>
   );
