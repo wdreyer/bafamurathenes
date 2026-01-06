@@ -347,23 +347,21 @@ export default function TarifsAidesTab() {
                 Montant
               </p>
               <p className="mt-1 font-display text-4xl font-semibold text-slate-900">
-                200 €
+                200 € remboursé
               </p>
               <p className="mt-2 text-sm text-slate-700">
                 Une aide nationale CAF annoncée à{" "}
                 <span className="font-semibold text-slate-900">200€</span> pour
                 passer le BAFA. Les conditions et la procédure peuvent varier :
-                vérifie la page officielle.
+                vérifie sur la page officielle.
               </p>
             </div>
 
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="mt-3 flex flex-wrap justify-end gap-2">
               <VioletButton href={cafNationalLink} external>
                 Page CAF 200€ <span className="text-xs">↗</span>
               </VioletButton>
-              <VioletButton onClick={openContactWidget}>
-                Je veux vérifier mon cas <span className="text-sm">→</span>
-              </VioletButton>
+
             </div>
           </div>
         </div>
@@ -400,7 +398,7 @@ export default function TarifsAidesTab() {
             <span className="text-slate-600"> selon conditions.</span>
           </li>
           <li className="leading-relaxed">
-            • Les critères et la procédure peuvent varier : vérifie la page officielle.
+            • Les critères et la procédure peuvent varier :  sur la page officielle.
           </li>
         </ul>
 

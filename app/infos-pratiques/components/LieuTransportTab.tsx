@@ -268,7 +268,7 @@ export default function LieuTransportTab() {
       team: "/PIX/1.webp",
       domaine: "/PIX/2.jpg",
       cantal: "/PIX/3.jpg",
-      cuisine: "/PIX/4.JPG",
+      cuisine: "/PIX/cuisine.jpg",
       salle: "/PIX/5.JPG",
       dehors: "/PIX/60.JPG",
       nuit: "/PIX/7.JPG",
@@ -397,7 +397,7 @@ export default function LieuTransportTab() {
           <span className="font-semibold text-slate-900">Clermont-Ferrand</span>,
           tu peux rejoindre Lanobre en bus via la{" "}
           <span className="font-semibold text-slate-900">ligne P47</span>{" "}
-          (selon les jours et les horaires).
+          
         </p>
 
         <p className="text-sm leading-6 text-slate-700">
@@ -646,12 +646,7 @@ export default function LieuTransportTab() {
 
 
     {/* 5) FINAL BIG PHOTO (ambiance) */}
-    <div className="grid gap-6 ">
-      <div className="">
-        <Photo src={pix.nuit} alt="Ambiance du soir" h="h-56 md:h-[360px]" />
-      </div>
 
-    </div>
   </div>
 </Section>
 
