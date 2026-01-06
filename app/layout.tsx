@@ -6,6 +6,8 @@ import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import ContactWidget from "@/components/ContactWidget"; // ✅ AJOUT
+import ScrollHint from "@/components/ScrollHint";
+
 
 // Police principale : Poppins
 const poppins = Poppins({
@@ -55,6 +57,7 @@ export default function RootLayout({
 
         {/* ✅ Widget contact flottant */}
         <ContactWidget />
+        <ScrollHint />
       </body>
     </html>
   );

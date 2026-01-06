@@ -75,8 +75,7 @@ export default function InfosPratiquesPage() {
                   Tout ce qu’il faut savoir
                 </h1>
                 <p className="max-w-2xl text-sm text-slate-100/90 md:text-base">
-                  Programme, inscription, tarifs &amp; aides, lieu, transport —
-                  les infos utiles au même endroit.
+                  Toutes les infos utiles au même endroit.
                 </p>
               </div>
             </div>
