@@ -368,7 +368,7 @@ export default function LieuTransportTab() {
         🚆
       </span>
       <h3 className="text-base font-semibold text-slate-900">
-        Venir en train (puis bus)
+        Venir en train
       </h3>
     </div>
 
