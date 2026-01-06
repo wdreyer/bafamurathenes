@@ -269,7 +269,7 @@ export default function LieuTransportTab() {
       domaine: "/PIX/2.jpg",
       cantal: "/PIX/3.jpg",
       cuisine: "/PIX/cuisine.jpg",
-      salle: "/PIX/5.JPG",
+      salle: "/PIX/50.jpeg",
       dehors: "/PIX/60.JPG",
       nuit: "/PIX/7.JPG",
       domaine1:"/infos.jpg"

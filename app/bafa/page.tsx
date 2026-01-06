@@ -8,7 +8,8 @@ export default function BafaPage() {
     <main className="min-h-screen bg-gradient-to-b from-rose-50/70 via-amber-50/70 to-sky-50/70">
       {" "}
       {/* HERO / BANNIÈRE (PHOTO EN LONGUEUR) */}
-      <section className="relative h-[32vh] w-full overflow-hidden bg-slate-950 md:h-[36vh]">
+      <section className="relative h-[42vh] w-full md:h-[44vh]">
+        
         {/* TODO PHOTO: bannière en longueur */}
         <div className="absolute inset-0">
           <Image
