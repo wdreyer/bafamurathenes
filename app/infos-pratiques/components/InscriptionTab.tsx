@@ -118,7 +118,7 @@ export default function InscriptionTab() {
                 src="/etape10.png"
                 alt="Étape 1 — inscription"
                 fill
-                className="object-cover"
+                className="object-contain p-3"
               />
             </div>
 
