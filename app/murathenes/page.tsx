@@ -57,7 +57,7 @@ export default function MurathenesPage() {
       <section className="relative w-full">
         <div className="relative h-[42vh] w-full md:h-[44vh]">
           <Image
-            src="/1.JPG"
+            src="/MT/mew24.jpg"
             alt="Murathènes — Qui sommes-nous"
             fill
             priority
