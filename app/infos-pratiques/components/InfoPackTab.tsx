@@ -1,68 +1,111 @@
+"use client";
+
 import React from "react";
 
-function Card({
+const VIOLET = "#6664C5";
+const YELLOW = "#F5EEDA";
+
+function VioletButton({
+  href,
+  children,
+  external,
+}: {
+  href: string;
+  children: React.ReactNode;
+  external?: boolean;
+}) {
+  return (
+    <a
+      href={href}
+      {...(external ? { target: "_blank", rel: "noreferrer" } : {})}
+      className="inline-flex cursor-pointer items-center gap-2 rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] shadow-sm transition hover:opacity-95"
+      style={{ backgroundColor: VIOLET, color: YELLOW }}
+    >
+      {children}
+    </a>
+  );
+}
+
+function MiniCard({
   title,
-  subtitle,
   children,
 }: {
   title: string;
-  subtitle?: string;
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-2xl bg-white/95 px-4 py-4 shadow-sm ring-1 ring-slate-100">
-      <div className="space-y-1">
-        <h3 className="font-display text-base font-semibold text-slate-900 md:text-lg">{title}</h3>
-        {subtitle && <p className="text-sm text-slate-700">{subtitle}</p>}
-      </div>
-      <div className="mt-3 text-xs text-slate-700 md:text-sm">{children}</div>
-    </section>
+    <div className="rounded-3xl bg-white/85 p-5 shadow-sm ring-1 ring-slate-200">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+        {title}
+      </p>
+      <div className="mt-3 text-sm leading-6 text-slate-700">{children}</div>
+    </div>
   );
 }
 
 export default function InfoPackTab() {
+  // TODO: remplace par ton vrai fichier (public/...).
+  const pdf = "/MT/InfoPack.pdf";
+
   return (
-    <section className="space-y-6">
-      <Card title="Info Pack" subtitle="Ce que tu dois prévoir dans ta valise.">
-        <p className="text-sm text-slate-700">
-          L&apos;hébergement, les repas et les temps d&apos;animation sont pris en charge sur place. De ton côté,
-          pense à amener de quoi être à l&apos;aise pour une semaine entière de vie en collectivité, en intérieur comme
-          en extérieur.
-        </p>
+    <section className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen border-t border-slate-200 bg-transparent">
+      <div className="mx-auto max-w-6xl px-4 py-10 md:px-6 md:py-12">
+        <header className="mb-8 max-w-3xl space-y-3">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+            Infos pratiques
+          </p>
+          <h2 className="font-display text-2xl font-semibold text-slate-900 md:text-3xl">
+            Info pack
+          </h2>
+          <p className="text-sm leading-6 text-slate-700">
+            Après ton inscription, on t’envoie un document récapitulatif avec
+            les infos essentielles : arrivée, horaires, adresse, liste à
+            emporter, contacts, etc.
+          </p>
 
-        <div className="mt-4 grid gap-3 md:grid-cols-2">
-          <div className="rounded-2xl bg-white/95 px-4 py-3 shadow-sm ring-1 ring-slate-100">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Documents & administratif</p>
-            <ul className="mt-2 space-y-1 text-sm text-slate-700">
-              <li>Numéro Jeunesse et Sport</li>
-              <li>Pièce d&apos;identité en cours de validité</li>
-              <li>Carte Vitale ou attestation de droits</li>
-              <li>Numéro d&apos;allocataire CAF (si tu en as un) + infos utiles pour les aides</li>
-              <li>Ordonnances éventuelles (si traitement médical personnel)</li>
-            </ul>
+          <div className="flex flex-wrap gap-2 pt-2">
+            <VioletButton href={pdf} external>
+              Ouvrir l’info pack <span className="text-sm">↗</span>
+            </VioletButton>
           </div>
 
-          <div className="rounded-2xl bg-white/95 px-4 py-3 shadow-sm ring-1 ring-slate-100">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Tenue & vie quotidienne</p>
-            <ul className="mt-2 space-y-1 text-sm text-slate-700">
-              <li>Vêtements confortables pour bouger et jouer</li>
-              <li>Affaires chaudes (pull, polaire, coupe-vent)</li>
-              <li>Chaussures fermées adaptées pour l&apos;extérieur</li>
-              <li>Nécessaire de toilette & serviettes</li>
-              <li>Gourde, petit sac à dos pour la journée</li>
-            </ul>
-          </div>
+          <p className="text-[11px] text-slate-600">
+            (Si le bouton ne marche pas encore, c’est normal : remplace juste
+            le fichier “InfoPack.pdf” dans /public/MT/.)
+          </p>
+        </header>
 
-          <div className="rounded-2xl bg-white/95 px-4 py-3 shadow-sm ring-1 ring-slate-100 md:col-span-2">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">Animations & créativité</p>
-            <ul className="mt-2 space-y-1 text-sm text-slate-700">
-              <li>Cahier ou carnet pour prendre des notes</li>
-              <li>Stylo, surligneurs, éventuels feutres / matériel perso</li>
-              <li>Si tu le souhaites : instrument de musique, jeux, déguisements ou accessoires pour les veillées</li>
+        <div className="grid gap-4 md:grid-cols-3">
+          <MiniCard title="Ce que tu trouveras dedans">
+            <ul className="list-disc space-y-1.5 pl-5">
+              <li>Adresse exacte + comment arriver</li>
+              <li>Horaires d’arrivée / départ</li>
+              <li>Numéros utiles (équipe, urgence, intendance)</li>
+              <li>Organisation de la semaine</li>
             </ul>
-          </div>
+          </MiniCard>
+
+          <MiniCard title="Liste à emporter">
+            <ul className="list-disc space-y-1.5 pl-5">
+              <li>Tenues confort + chaussures adaptées</li>
+              <li>Gourde, trousse de toilette</li>
+              <li>Documents utiles (identité, carte vitale…)</li>
+              <li>Petits indispensables de vie collective</li>
+            </ul>
+          </MiniCard>
+
+          <MiniCard title="On peut t’aider">
+            <p>
+              Si tu as un doute (transport, aide financière, démarches), écris
+              nous via le widget Contact : on te répond vite.
+            </p>
+            <p className="mt-2 text-xs text-slate-600">
+              Astuce : garde l’info pack dans ton téléphone, il sert de “check
+              list” la veille du départ.
+            </p>
+          </MiniCard>
         </div>
-      </Card>
+      </div>
     </section>
   );
 }

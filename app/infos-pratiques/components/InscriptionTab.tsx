@@ -1,5 +1,11 @@
+"use client";
+
 import React from "react";
+import Image from "next/image";
 import Link from "next/link";
+
+const VIOLET = "#6664C5";
+const YELLOW = "#F5EEDA";
 
 function Pill({
   children,
@@ -32,82 +38,70 @@ function Pill({
   );
 }
 
+function VioletButton({
+  href,
+  children,
+  external,
+}: {
+  href: string;
+  children: React.ReactNode;
+  external?: boolean;
+}) {
+  return (
+    <a
+      href={href}
+      {...(external ? { target: "_blank", rel: "noreferrer" } : {})}
+      className="inline-flex cursor-pointer items-center gap-2 rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] shadow-sm transition hover:opacity-95"
+      style={{ backgroundColor: VIOLET, color: YELLOW }}
+    >
+      {children}
+    </a>
+  );
+}
+
 export default function InscriptionTab() {
   return (
-    <section className="w-full space-y-6 pb-6">
-      {/* ✅ Titre “comme les autres pages”, sans gros cadre */}
-      <div className="space-y-2">
-        <h2 className="font-display text-2xl font-semibold text-slate-900 md:text-3xl">
-          Inscription
-        </h2>
-        <p className="text-sm leading-6 text-slate-700">
-          Comment s’inscrire en formation BAFA ? Deux étapes : réserver ta place
-          + obtenir ton numéro Jeunesse &amp; Sport.
-        </p>
-      </div>
+    <section className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen border-t border-slate-200 bg-transparent">
+      <div className="mx-auto max-w-6xl px-4 py-10 md:px-6 md:py-12">
+        <header className="mb-8 max-w-3xl space-y-3">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+            Infos pratiques
+          </p>
+          <h2 className="font-display text-2xl font-semibold text-slate-900 md:text-3xl">
+            Comment s’inscrire ?
+          </h2>
+          <p className="text-sm leading-6 text-slate-700">
+            Deux étapes : réserver ta place sur Yapla, puis obtenir ton numéro
+            Jeunesse &amp; Sport (obligatoire pour commencer la formation).
+          </p>
+        </header>
 
-      {/* ✅ Étape 1 */}
-      <section className="relative overflow-hidden rounded-2xl bg-white/90 shadow-sm ring-1 ring-slate-200">
-        <div className="pointer-events-none absolute -right-6 -top-6 h-16 w-16 rounded-full bg-slate-100/80" />
-
-        <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[320px_1fr] lg:items-start">
-          {/* Image gauche */}
-          <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
-            <img
-              src="/etape1.png"
-              alt="Illustration étape 1"
-              className="h-64 w-full object-cover lg:h-80"
-              loading="lazy"
-            />
-          </div>
-
+        {/* ÉTAPE 1 (image à droite) */}
+        <section className="grid gap-6 md:grid-cols-[1fr_1.05fr] md:items-start">
           {/* Texte */}
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div className="flex flex-wrap items-center gap-2">
               <Pill tone="sky">Étape 1</Pill>
-              <p className="font-medium text-slate-900">
+              <p className="text-base font-semibold text-slate-900">
                 Inscription à l’une de nos formations
               </p>
             </div>
 
-            <p className="text-sm leading-relaxed text-slate-700">
+            <p className="text-sm leading-6 text-slate-700">
               Pour t’inscrire, rien de plus simple : choisis la formation qui
-              t’intéresse et choisis la méthode de paiement qui te plaît sur la
+              t’intéresse et sélectionne ta méthode de paiement sur la
               plateforme sécurisée{" "}
               <span className="font-semibold text-slate-900">Yapla</span>. Ta
               place sera réservée.
             </p>
 
-            <div className="pt-1">
+            <div className="flex flex-wrap gap-2 pt-1">
               <Link
                 href="/formations"
-                className={[
-                  "group relative inline-flex items-center gap-2",
-                  "rounded-full px-4 py-2",
-                  "text-[11px] font-semibold uppercase tracking-[0.16em]",
-                  "shadow-sm ring-1 ring-black/5",
-                  "transition-all duration-200 ease-out",
-                  "hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 active:scale-[0.99]",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
-                ].join(" ")}
-                style={{
-                  backgroundColor: "#5B5AF7",
-                  color: "#FFF3C4",
-                  outlineColor: "#FFF3C4",
-                }}
+                className="inline-flex cursor-pointer items-center gap-2 rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] shadow-sm transition hover:opacity-95"
+                style={{ backgroundColor: VIOLET, color: YELLOW }}
               >
-                {/* sheen */}
-                <span
-                  aria-hidden
-                  className="pointer-events-none absolute inset-0 translate-x-[-120%] opacity-0 transition-all duration-500 group-hover:translate-x-[120%] group-hover:opacity-20"
-                  style={{
-                    background:
-                      "linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent)",
-                  }}
-                />
-                <span className="relative">
-                  Calendrier des formations <span className="text-sm">→</span>
-                </span>
+                Calendrier des formations <span className="text-sm">→</span>
               </Link>
             </div>
 
@@ -116,46 +110,70 @@ export default function InscriptionTab() {
               associations (Crédit Agricole).
             </p>
           </div>
-        </div>
-      </section>
 
-      <div className="h-px bg-gradient-to-r from-transparent via-slate-200/70 to-transparent" />
+          {/* Image (réduite) */}
+          <div className="relative overflow-hidden rounded-3xl bg-slate-100 shadow-sm ring-1 ring-slate-200">
+            <div className="relative h-60 w-full md:h-[320px]">
+              <Image
+                src="/etape10.png"
+                alt="Étape 1 — inscription"
+                fill
+                className="object-cover"
+              />
+            </div>
 
-      {/* ✅ Étape 2 */}
-      <section className="relative overflow-hidden rounded-2xl bg-white/90 shadow-sm ring-1 ring-slate-200">
-        <div className="pointer-events-none absolute -right-6 -top-6 h-16 w-16 rounded-full bg-slate-100/80" />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/25 via-black/0 to-black/0" />
 
-        <div className="grid gap-6 p-4 md:p-6 lg:grid-cols-[1fr_320px] lg:items-start">
+            <div className="absolute bottom-4 left-4">
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/85 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-700 ring-1 ring-white/40 backdrop-blur">
+                <span className="text-sm">🗓️</span> Réserver ta place
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* ✅ bordure full page entre étape 1 et étape 2 */}
+        <div className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] my-10 w-screen border-t border-slate-200" />
+
+        {/* ÉTAPE 2 (image à gauche) */}
+        <section className="grid gap-6 md:grid-cols-[1.05fr_1fr] md:items-start">
+          {/* Image (réduite) */}
+          <div className="relative overflow-hidden rounded-3xl bg-slate-100 shadow-sm ring-1 ring-slate-200">
+            <div className="relative h-60 w-full md:h-[320px]">
+              <Image
+                src="/etape20.png"
+                alt="Étape 2 — Jeunesse & Sports"
+                fill
+                className="object-cover"
+              />
+            </div>
+
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/25 via-black/0 to-black/0" />
+
+            <div className="absolute bottom-4 right-4">
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/85 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-700 ring-1 ring-white/40 backdrop-blur">
+                <span className="text-sm">🪪</span> Numéro J&amp;S
+              </div>
+            </div>
+          </div>
+
           {/* Texte */}
-          <div className="space-y-3 lg:order-1">
+          <div className="space-y-4">
             <div className="flex flex-wrap items-center gap-2">
               <Pill tone="amber">Étape 2</Pill>
-              <p className="font-medium text-slate-900">
-                Inscription Jeunesse et Sport
+              <p className="text-base font-semibold text-slate-900">
+                Inscription Jeunesse &amp; Sport
               </p>
             </div>
 
-            <p className="text-sm leading-relaxed text-slate-700">
+            <p className="text-sm leading-6 text-slate-700">
               Avant de commencer ta formation, tu dois t’inscrire sur le site du
               ministère de la Jeunesse et des Sports afin d’obtenir un numéro
-              Jeunesse et Sport. Ce numéro est comme le passeport de ton cursus
-              BAFA.
+              Jeunesse &amp; Sport. Ce numéro est comme le passeport de ton
+              cursus BAFA.
             </p>
 
-            {/* Bouton site Jeunesse & Sport */}
-            <div className="pt-1">
-              <a
-                href="http://www.jeunes.gouv.fr/bafa-bafd/"
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-900 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-50"
-              >
-                Aller sur Jeunes.gouv.fr <span className="text-sm">↗</span>
-              </a>
-            </div>
-
-            {/* Steps box */}
-            <div className="rounded-2xl bg-white/90 px-4 py-4 shadow-sm ring-1 ring-slate-200">
+            <div className="rounded-2xl bg-white/70 p-4 shadow-sm ring-1 ring-slate-200">
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                 Étapes
               </p>
@@ -176,7 +194,7 @@ export default function InscriptionTab() {
                   Dans l’onglet <span className="font-medium">“Cursus”</span>,
                   partie{" "}
                   <span className="font-medium">
-                    “Confirmation d'identité”
+                    “Confirmation d&apos;identité”
                   </span>
                   , dépose une pièce d’identité recto-verso.
                 </li>
@@ -184,23 +202,19 @@ export default function InscriptionTab() {
                 <li>
                   Un numéro te sera attribué (ex :{" "}
                   <span className="font-medium">1234567-ABCD</span>) : c’est ton
-                  numéro Jeunesse et Sport !
+                  numéro Jeunesse &amp; Sport !
                 </li>
               </ol>
             </div>
-          </div>
 
-          {/* Image droite */}
-          <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200 lg:order-2">
-            <img
-              src="/etape2.png"
-              alt="Illustration étape 2"
-              className="h-64 w-full object-cover lg:h-80"
-              loading="lazy"
-            />
+            <div className="flex flex-wrap gap-2 pt-1">
+              <VioletButton href="http://www.jeunes.gouv.fr/bafa-bafd/" external>
+                Site Jeunesse &amp; Sports <span className="text-sm">↗</span>
+              </VioletButton>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
     </section>
   );
 }

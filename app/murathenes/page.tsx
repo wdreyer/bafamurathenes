@@ -1,3 +1,4 @@
+// app/mt/page.tsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -54,8 +55,7 @@ export default function MurathenesPage() {
     <main className="min-h-screen bg-gradient-to-b from-rose-50/70 via-amber-50/70 to-sky-50/70">
       {/* HERO */}
       <section className="relative w-full">
-        <div className="relative h-[42vh] md:h-[44vh] w-full">
-          {/* Image hero — tu peux la changer */}
+        <div className="relative h-[42vh] w-full md:h-[44vh]">
           <Image
             src="/1.JPG"
             alt="Murathènes — Qui sommes-nous"
@@ -64,10 +64,8 @@ export default function MurathenesPage() {
             className="object-cover"
           />
 
-          {/* Dégradé + voile */}
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-slate-950/85 via-slate-950/50 to-slate-900/20" />
 
-          {/* Contenu hero */}
           <div className="relative z-10 mx-auto flex h-full max-w-6xl items-end px-4 pb-22 pt-10 md:px-6 md:pb-24">
             <div className="max-w-2xl space-y-5">
               <div className="inline-flex items-center gap-2 rounded-full bg-sky-500/15 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.22em] text-sky-100 ring-1 ring-sky-400/40 backdrop-blur">
@@ -102,7 +100,7 @@ export default function MurathenesPage() {
                       className={[
                         "inline-flex items-center gap-2 cursor-pointer rounded-full px-3 py-1.5 transition shadow-sm",
                         active
-                          ? "bg-[#6664C5] text-white "
+                          ? "bg-[#6664C5] text-white"
                           : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50",
                       ].join(" ")}
                     >
@@ -125,11 +123,11 @@ export default function MurathenesPage() {
         </div>
       </section>
 
-      {/* CONTENT */}
-      <section className="mx-auto max-w-6xl px-4 py-8 md:px-6">
+      {/* ✅ CONTENT : full width (les séparateurs/bordures des tabs peuvent aller de bord à bord) */}
+      <section className="w-full py-8">
         <div
           className={[
-            "transition-opacity duration-200 ease-out ",
+            "transition-opacity duration-200 ease-out",
             fadeIn ? "opacity-100" : "opacity-0",
           ].join(" ")}
         >

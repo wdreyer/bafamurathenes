@@ -54,18 +54,15 @@ function ProjectsCarousel({ items }: { items: Project[] }) {
           className={cx(
             "cursor-pointer shrink-0",
             "h-12 w-12 md:h-14 md:w-14 rounded-full",
-            "border border-slate-200 bg-white shadow-sm",
-            "grid place-items-center transition hover:bg-slate-50 active:scale-[0.98]"
+            "bg-white/95 shadow-sm ring-1 ring-slate-200",
+            "grid place-items-center transition hover:bg-white active:scale-[0.98]"
           )}
           aria-label="Projet précédent"
         >
           <span className="text-3xl leading-none">‹</span>
         </button>
 
-        <div
-          ref={emblaRef}
-          className={cx("relative w-full overflow-hidden", "rounded-3xl")}
-        >
+        <div ref={emblaRef} className="relative w-full overflow-hidden rounded-3xl">
           <div className="flex touch-pan-y">
             {items.map((p, i) => {
               const active = i === selected;
@@ -81,18 +78,13 @@ function ProjectsCarousel({ items }: { items: Project[] }) {
                 >
                   <div
                     className={cx(
-                      "rounded-3xl overflow-hidden border border-slate-200 bg-white shadow-sm",
+                      "rounded-3xl overflow-hidden bg-white/95 shadow-sm ring-1 ring-slate-200",
                       "transition-transform duration-300",
                       active ? "md:scale-[1.03]" : "opacity-80 md:scale-[0.93]"
                     )}
                   >
                     <div className="relative h-52 md:h-72 w-full bg-slate-100">
-                      <Image
-                        src={p.image}
-                        alt={p.title}
-                        fill
-                        className="object-cover"
-                      />
+                      <Image src={p.image} alt={p.title} fill className="object-cover" />
                       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-black/0" />
 
                       <div className="absolute bottom-3 left-3 right-3">
@@ -130,8 +122,9 @@ function ProjectsCarousel({ items }: { items: Project[] }) {
             })}
           </div>
 
-          <div className="pointer-events-none absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-white to-white/0" />
-          <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-white to-white/0" />
+          {/* fades */}
+          <div className="pointer-events-none absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-white/80 to-white/0" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-white/80 to-white/0" />
         </div>
 
         <button
@@ -140,8 +133,8 @@ function ProjectsCarousel({ items }: { items: Project[] }) {
           className={cx(
             "cursor-pointer shrink-0",
             "h-12 w-12 md:h-14 md:w-14 rounded-full",
-            "border border-slate-200 bg-white shadow-sm",
-            "grid place-items-center transition hover:bg-slate-50 active:scale-[0.98]"
+            "bg-white/95 shadow-sm ring-1 ring-slate-200",
+            "grid place-items-center transition hover:bg-white active:scale-[0.98]"
           )}
           aria-label="Projet suivant"
         >
@@ -246,65 +239,67 @@ export default function AssociationTab() {
   );
 
   return (
-    <section className="space-y-6">
-      {/* Intro */}
-      <div className="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-        <div className="px-5 py-4 border-b border-slate-100">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-            L’association
-          </p>
-          <h2 className="mt-1 font-display text-xl md:text-2xl font-semibold text-slate-900">
-            Association loi 1901 d’éducation populaire
-          </h2>
-        </div>
+    <section className="space-y-0">
+      {/* HEADER hors cadre */}
+      <header className="mx-auto max-w-6xl px-4 pb-8 md:px-6">
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+          L’association
+        </p>
+        <h1 className="mt-2 font-display text-2xl font-semibold text-slate-900 md:text-3xl">
+          Association loi 1901 d’éducation populaire
+        </h1>
+      </header>
 
-        <div className="px-5 py-5 text-sm leading-6 text-slate-700 space-y-3">
-          <p>
-            Fondée en 2019, l’association Murathènes est une association
-            d’éducation populaire visant à promouvoir les rencontres
-            interculturelles, le patrimoine, le vivre-ensemble et l’émancipation
-            à des échelles locales, nationales, européennes et internationales.
-            L’association promeut l’art et la musique comme vecteurs sociaux
-            d’insertion et de cohésion.
-          </p>
-          <p>
-            L’association organise des activités de loisirs permettant aux
-            jeunes de se rencontrer, d’échanger, par delà les cadres limitants
-            et coercitifs qu’elles et ils peuvent rencontrer dans leurs
-            quotidiens.
-          </p>
-          <p>
-            Murathènes est née pour donner suite au constat de l’isolement
-            culturel et social de certains publics isolés ou marginalisés et des
-            inégalités d’accès aux opportunités et aux infrastructures notamment
-            dans les secteurs de la jeunesse. Murathènes, c’est la jeunesse en
-            action, pour que chaque jeune ait droit de se rencontrer et de vivre
-            ensemble des expériences extra-ordinaires.
-          </p>
+      {/* INTRO (section border-t) */}
+   <section className="border-t border-slate-200">
+  <div className="mx-auto max-w-6xl px-4 py-10 md:px-6">
+          <div className="max-w-4xl space-y-4 text-base text-slate-700">
+            <p>
+              Fondée en 2019, l’association Murathènes est une association
+              d’éducation populaire visant à promouvoir les rencontres
+              interculturelles, le patrimoine, le vivre-ensemble et l’émancipation
+              à des échelles locales, nationales, européennes et internationales.
+              L’association promeut l’art et la musique comme vecteurs sociaux
+              d’insertion et de cohésion.
+            </p>
+            <p>
+              L’association organise des activités de loisirs permettant aux
+              jeunes de se rencontrer, d’échanger, par delà les cadres limitants
+              et coercitifs qu’elles et ils peuvent rencontrer dans leurs
+              quotidiens.
+            </p>
+            <p>
+              Murathènes est née pour donner suite au constat de l’isolement
+              culturel et social de certains publics isolés ou marginalisés et des
+              inégalités d’accès aux opportunités et aux infrastructures notamment
+              dans les secteurs de la jeunesse. Murathènes, c’est la jeunesse en
+              action, pour que chaque jeune ait droit de se rencontrer et de vivre
+              ensemble des expériences extra-ordinaires.
+            </p>
+          </div>
         </div>
-      </div>
+      </section>
 
-      {/* Carousel */}
-      <div className="rounded-3xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-        <div className="px-5 py-4 border-b border-slate-100">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-            Accréditation Erasmus+
-          </p>
-          <h2 className="mt-1 font-display text-xl md:text-2xl font-semibold text-slate-900">
-            Échanges de jeunes
-          </h2>
-        </div>
-        <div className="px-5 py-5 text-sm leading-6 text-slate-700">
-          L’association organise chaque année plusieurs échanges de jeunes
-          Erasmus+. Entre 20 et 60 jeunes européens se rencontrent pendant 1 à 2
-          semaines pour réaliser un projet commun.
-        </div>
+      {/* ERASMUS + CAROUSEL (section border-t) */}
+      <section className="border-t border-slate-200 bg-transparent">
+        <div className="mx-auto max-w-6xl px-4 py-10 md:px-6 md:py-12">
+          <header className="mb-6 max-w-3xl space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+              Accréditation Erasmus+
+            </p>
+            <h2 className="font-display text-2xl font-semibold text-slate-900 md:text-3xl">
+              Échanges de jeunes
+            </h2>
+            <p className="text-base text-slate-700">
+              L’association organise chaque année plusieurs échanges de jeunes
+              Erasmus+. Entre 20 et 60 jeunes européens se rencontrent pendant 1 à 2
+              semaines pour réaliser un projet commun.
+            </p>
+          </header>
 
-
-        <div className="px-4 md:px-6 py-6">
           <ProjectsCarousel items={projects} />
         </div>
-      </div>
+      </section>
     </section>
   );
 }

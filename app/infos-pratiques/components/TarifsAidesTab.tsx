@@ -7,10 +7,8 @@ function cx(...v: Array<string | false | null | undefined>) {
   return v.filter(Boolean).join(" ");
 }
 
-function openContactWidget() {
-  if (typeof window === "undefined") return;
-  window.dispatchEvent(new Event("contact-widget:open"));
-}
+/** ✅ version “comme juste avant” : event + fallback click bouton flottant */
+function openContactWidget() { if (typeof window === "undefined") return; window.dispatchEvent(new Event("contact-widget:open")); }
 
 function VioletButton({
   href,
@@ -24,7 +22,7 @@ function VioletButton({
   children: React.ReactNode;
 }) {
   const cls = cx(
-    "group relative inline-flex items-center gap-2 cursor-pointer ",
+    "group relative inline-flex items-center gap-2 cursor-pointer",
     "rounded-full px-4 py-2",
     "text-[11px] font-semibold uppercase tracking-[0.16em]",
     "shadow-sm ring-1 ring-black/5",
@@ -51,16 +49,13 @@ function VioletButton({
   );
 
   if (href) {
-    if (external) {
-      return (
-        <a href={href} target="_blank" rel="noreferrer" className={cls} style={style}>
-          {sheen}
-          <span className="relative">{children}</span>
-        </a>
-      );
-    }
     return (
-      <a href={href} className={cls} style={style}>
+      <a
+        href={href}
+        {...(external ? { target: "_blank", rel: "noreferrer" } : {})}
+        className={cls}
+        style={style}
+      >
         {sheen}
         <span className="relative">{children}</span>
       </a>
@@ -75,55 +70,35 @@ function VioletButton({
   );
 }
 
-function Block({
-  title,
-  subtitle,
+/** ✅ helper: section full width avec contenu centré + border full page */
+function FullWidthSection({
   children,
+  className,
 }: {
-  title: string;
-  subtitle?: string;
   children: React.ReactNode;
+  className?: string;
 }) {
   return (
-    <section className="group relative overflow-hidden rounded-2xl bg-white/90 px-4 py-4 shadow-sm ring-1 ring-slate-200 md:px-6 md:py-5">
-      {/* petit cercle discret */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -right-6 -top-6 h-16 w-16 rounded-full bg-slate-100/80"
-      />
-
-      <div className="relative space-y-2">
-        <div className="space-y-1">
-          <h3 className="font-display text-base font-semibold text-slate-900 md:text-lg">
-            {title}
-          </h3>
-          {subtitle ? <p className="text-sm text-slate-700">{subtitle}</p> : null}
-        </div>
-
-        <div className="pt-1 text-sm text-slate-700">{children}</div>
+    <section
+      className={cx(
+        "relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen",
+        className
+      )}
+    >
+      <div className="mx-auto max-w-6xl px-4 py-6 md:px-6 md:py-8">
+        {children}
       </div>
     </section>
   );
 }
 
-function PriceTile({
-  label,
-  price,
-  note,
-}: {
-  label: string;
-  price: string;
-  note?: string;
-}) {
+function PriceLine({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl bg-slate-50/60 px-4 py-4">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-        {label}
+    <div className="flex items-center justify-between gap-4 rounded-2xl bg-white/85 px-4 py-3 shadow-sm ring-1 ring-slate-200/70">
+      <p className="text-sm font-medium text-slate-900">{label}</p>
+      <p className="font-display text-xl font-semibold text-slate-900">
+        {value}
       </p>
-      <p className="mt-1 font-display text-3xl font-semibold text-slate-900">
-        {price}
-      </p>
-      {note ? <p className="mt-1 text-sm text-slate-700">{note}</p> : null}
     </div>
   );
 }
@@ -138,12 +113,11 @@ function DeptAccordion({
   sourceHref: string;
 }) {
   return (
-    <details className="rounded-2xl bg-slate-50/60 px-4 py-3">
+    <details className="group rounded-2xl bg-white/85 p-4 shadow-sm ring-1 ring-slate-200/70">
       <summary className="cursor-pointer list-none">
         <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <p className="font-medium text-slate-900">{name}</p>
-          </div>
+          <p className="font-medium text-slate-900">{name}</p>
+
           <span
             className={cx(
               "inline-flex h-9 w-9 flex-none items-center justify-center rounded-full",
@@ -166,9 +140,14 @@ function DeptAccordion({
           ))}
         </ul>
 
-        <VioletButton href={sourceHref} external>
-          Voir la source <span className="text-xs">↗</span>
-        </VioletButton>
+        <div className="flex flex-wrap gap-2">
+          <VioletButton href={sourceHref} external>
+            Voir la source <span className="text-xs">↗</span>
+          </VioletButton>
+          <VioletButton onClick={openContactWidget}>
+            Aide rapide <span className="text-sm">→</span>
+          </VioletButton>
+        </div>
       </div>
     </details>
   );
@@ -284,180 +263,296 @@ export default function TarifsAidesTab() {
   ];
 
   return (
-    <section className="w-full space-y-6 pb-6">
-      {/* Header + encart “on t’aide” */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-        <div className="space-y-2">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-            Infos pratiques
-          </p>
-          <h2 className="font-display text-2xl font-semibold text-slate-900 md:text-3xl">
-            Tarifs & aides
-          </h2>
-          <p className="max-w-3xl text-sm leading-6 text-slate-700">
-            Tarifs des formations et dispositifs d’aides au financement (national + local).
-          </p>
-        </div>
+    <section className="w-full space-y-0 pb-4">
+      {/* ✅ plus d’espace en haut */}
+      <header className="mx-auto max-w-6xl px-4 pb-6 pt-6 md:px-6 md:pt-10">
+<div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+  <div className="space-y-2">
+    <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+      Infos pratiques
+    </p>
+    <h2 className="font-display text-2xl font-semibold text-slate-900 md:text-3xl">
+      Tarifs & aides
+    </h2>
+    <p className="max-w-3xl text-sm leading-6 text-slate-700">
+      Les prix des formations + les aides les plus fréquentes (CAF nationale,
+      CAF locale, Département, MSA, aides régionales).
+    </p>
+  </div>
 
-        {/* CTA contact -> ouvre le widget */}
-        <div className="relative overflow-hidden rounded-2xl bg-white/90 px-4 py-3 shadow-sm ring-1 ring-slate-200 md:px-5">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute -right-6 -top-6 h-16 w-16 rounded-full"
-            style={{ background: "rgba(102,102,198,0.12)" }}
-          />
-          <p className="relative text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-            On peut t’aider
-          </p>
-          <p className="relative mt-1 text-sm font-medium text-slate-900">
-            Si tu veux, on t’aide à repérer les aides qui te correspondent.
-          </p>
-          <div className="relative mt-2">
-            <VioletButton onClick={openContactWidget}>
-              Contactez-nous <span className="text-sm">→</span>
-            </VioletButton>
+  {/* ✅ Encart “contact financement” (à droite) */}
+{/* ✅ Encart “contact financement” (à droite) */}
+<div className="relative mt-2 md:mt-6 overflow-hidden rounded-2xl bg-white/90 px-4 py-3 shadow-sm ring-1 ring-slate-200 md:px-5">
+  {/* petit cercle violet */}
+  <div
+    aria-hidden
+    className="pointer-events-none absolute -right-6 -top-6 h-16 w-16 rounded-full"
+    style={{ background: "rgba(102,100,197,0.14)" }}
+  />
+
+  <p className="relative text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+    Besoin d’un coup de main ?
+  </p>
+
+  <div className="relative mt-1 flex flex-col gap-2 md:flex-row md:items-center md:justify-between md:gap-4">
+    <p className="text-sm font-medium text-slate-900 md:max-w-[420px]">
+      Si tu as la moindre difficulté de financement, contacte-nous : on t’aide à
+      repérer les aides possibles.
+    </p>
+
+    {/* ✅ bouton collé à droite */}
+    <div className="shrink-0 md:ml-auto">
+      <VioletButton onClick={openContactWidget}>
+        Contacter l’équipe <span className="text-sm">→</span>
+      </VioletButton>
+    </div>
+  </div>
+</div>
+
+</div>
+
+      </header>
+
+      {/* ✅ SECTION UNIQUE : Tarifs + CAF 200€ */}
+      <FullWidthSection className="border-t border-slate-200 bg-transparent">
+        <div className="grid gap-5 md:grid-cols-[1.1fr_0.9fr] md:items-start">
+          {/* Tarifs */}
+          <div className="space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+              Tarifs
+            </p>
+            <h3 className="font-display text-xl font-semibold text-slate-900 md:text-2xl">
+              Tarifs des formations
+            </h3>
+
+            <div className="grid gap-2">
+              <PriceLine label="Formation Générale" value="550 €" />
+              <PriceLine label="Approfondissement" value="450 €" />
+            </div>
+
+            <p className="text-sm leading-6 text-slate-700">
+              Le tarif inclut la formation, l’encadrement, et généralement
+              l’hébergement/repas (selon la session). Les détails précis sont
+              indiqués au moment de l’inscription.
+            </p>
           </div>
+
+          {/* CAF 200€ */}
+          <div className="rounded-3xl bg-white/85 p-5 shadow-sm ring-1 ring-slate-200/70">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+              Aide nationale CAF
+            </p>
+
+            <div className="mt-2 rounded-2xl bg-slate-50/60 px-4 py-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+                Montant
+              </p>
+              <p className="mt-1 font-display text-4xl font-semibold text-slate-900">
+                200 €
+              </p>
+              <p className="mt-2 text-sm text-slate-700">
+                Une aide nationale CAF annoncée à{" "}
+                <span className="font-semibold text-slate-900">200€</span> pour
+                passer le BAFA. Les conditions et la procédure peuvent varier :
+                vérifie la page officielle.
+              </p>
+            </div>
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              <VioletButton href={cafNationalLink} external>
+                Page CAF 200€ <span className="text-xs">↗</span>
+              </VioletButton>
+              <VioletButton onClick={openContactWidget}>
+                Je veux vérifier mon cas <span className="text-sm">→</span>
+              </VioletButton>
+            </div>
+          </div>
+        </div>
+      </FullWidthSection>
+
+      {/* CANTAL */}
+<FullWidthSection className="border-t border-slate-200 bg-transparent">
+  <div className="space-y-3">
+    <div className="max-w-3xl space-y-2">
+      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+        Aides locales
+      </p>
+      <h3 className="font-display text-xl font-semibold text-slate-900 md:text-2xl">
+        Tu viens du Cantal ?
+      </h3>
+      <p className="text-sm leading-6 text-slate-700">
+        En plus de l’aide CAF nationale, tu peux souvent cumuler des aides locales (selon profil) :
+        CAF du Cantal, Conseil départemental, MSA.
+      </p>
+    </div>
+
+    <div className="grid gap-3 md:grid-cols-3">
+      {/* CAF Cantal */}
+      <div className="rounded-3xl bg-white/85 p-4 shadow-sm ring-1 ring-slate-200/70">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+          CAF du Cantal
+        </p>
+
+        <ul className="mt-2 space-y-1.5 text-sm text-slate-700">
+          <li className="leading-relaxed">
+            • Aide locale annoncée jusqu’à{" "}
+            <span className="font-semibold text-slate-900">400€</span> (Formation Générale) et{" "}
+            <span className="font-semibold text-slate-900">300€</span> (Approfondissement),
+            <span className="text-slate-600"> selon conditions.</span>
+          </li>
+          <li className="leading-relaxed">
+            • Les critères et la procédure peuvent varier : vérifie la page officielle.
+          </li>
+        </ul>
+
+        <div className="mt-3 flex flex-wrap gap-2">
+          <VioletButton href={cantalCafLink} external>
+            Voir l’aide CAF <span className="text-xs">↗</span>
+          </VioletButton>
         </div>
       </div>
 
-      {/* Tarifs */}
-      <Block title="Tarifs des formations" subtitle="Les tarifs affichés sur le site sont :">
-        <div className="mt-3 grid gap-3 md:grid-cols-2">
-          <PriceTile label="Formation Générale" price="550 €" />
-          <PriceTile label="Approfondissement" price="450 €" />
-        </div>
+      {/* Département */}
+      <div className="rounded-3xl bg-white/85 p-4 shadow-sm ring-1 ring-slate-200/70">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+          Conseil départemental (Cantal)
+        </p>
 
-        <div className="mt-4 flex flex-wrap gap-2">
-          <VioletButton href="/formations">
-            Voir les formations <span className="text-sm">→</span>
-          </VioletButton>
-        </div>
-      </Block>
+        <ul className="mt-2 space-y-1.5 text-sm text-slate-700">
+          <li className="leading-relaxed">
+            • <span className="font-medium text-slate-900">16 à 25 ans</span> et domicilié fiscalement
+            dans le Cantal.
+          </li>
+          <li className="leading-relaxed">
+            • Montant selon revenu fiscal (RBG / parts) :{" "}
+            <span className="font-semibold text-slate-900">120€</span>,{" "}
+            <span className="font-semibold text-slate-900">100€</span> ou{" "}
+            <span className="font-semibold text-slate-900">80€</span>.
+          </li>
+          <li className="leading-relaxed">
+            • Versement <span className="font-medium">à l’issue</span> de la formation (après l’Appro /
+            Qualif) avec pièces justificatives.
+          </li>
+        </ul>
 
-      {/* Aide nationale */}
-      <Block
-        title="Aide nationale (CAF)"
-        subtitle="Une aide nationale annoncée à 200€ : à vérifier et demander via ta CAF."
-      >
-        <div className="mt-3 rounded-2xl bg-slate-50/60 px-4 py-4">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-            Montant
-          </p>
-          <p className="mt-1 font-display text-4xl font-semibold text-slate-900">
-            200 €
-          </p>
-          <p className="mt-2 text-sm text-slate-700">
-            Aide nationale CAF (annoncée à 200€) — consulte les modalités et la procédure.
-          </p>
-        </div>
-
-        <div className="mt-4 flex flex-wrap gap-2">
-          <VioletButton href={cafNationalLink} external>
-            Lien CAF (aide 200€) <span className="text-xs">↗</span>
-          </VioletButton>
-        </div>
-      </Block>
-
-      {/* Cantal */}
-      <Block
-        title="Tu viens du Cantal ?"
-        subtitle="CAF / Département / MSA : tu peux cumuler des aides selon ton profil."
-      >
-        <div className="mt-3 grid gap-3 md:grid-cols-3">
-          <div className="rounded-2xl bg-slate-50/60 px-4 py-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-              CAF du Cantal
-            </p>
-            <p className="mt-2 text-sm text-slate-700">
-              Montants indiqués : jusqu’à <span className="font-semibold text-slate-900">400€</span> (FG)
-              et <span className="font-semibold text-slate-900">300€</span> (Appro) selon conditions.
-            </p>
-          </div>
-
-          <div className="rounded-2xl bg-slate-50/60 px-4 py-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-              Conseil départemental
-            </p>
-            <p className="mt-2 text-sm text-slate-700">
-              Aide possible via dossier (selon conditions).
-            </p>
-          </div>
-
-          <div className="rounded-2xl bg-slate-50/60 px-4 py-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-              MSA (Auvergne)
-            </p>
-            <p className="mt-2 text-sm text-slate-700">
-              Aides possibles (selon éligibilité).
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-4 flex flex-wrap gap-2">
-          <VioletButton href={cantalCafLink} external>
-            CAF Cantal <span className="text-xs">↗</span>
-          </VioletButton>
+        <div className="mt-3 flex flex-wrap gap-2">
           <VioletButton href={cantalDeptPdf} external>
             Dossier département (PDF) <span className="text-xs">↗</span>
           </VioletButton>
-          <VioletButton href={msaAuvergneLink} external>
-            MSA Auvergne <span className="text-xs">↗</span>
-          </VioletButton>
         </div>
+      </div>
 
-        <div className="mt-4">
-          <VioletButton onClick={openContactWidget}>
-            Je veux qu’on m’aide (Cantal) <span className="text-sm">→</span>
+      {/* MSA */}
+      <div className="rounded-3xl bg-white/85 p-4 shadow-sm ring-1 ring-slate-200/70">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+          MSA (Auvergne)
+        </p>
+
+        <ul className="mt-2 space-y-1.5 text-sm text-slate-700">
+          <li className="leading-relaxed">
+            • Aide possible si tu dépends du régime MSA (assuré·e / ayant-droit).
+          </li>
+          <li className="leading-relaxed">
+            • Montants et modalités (BAFA/BAFD) : demande sur dossier,{" "}
+            <span className="text-slate-600">dans la limite des frais réels / selon conditions.</span>
+          </li>
+        </ul>
+
+        <div className="mt-3 flex flex-wrap gap-2">
+          <VioletButton href={msaAuvergneLink} external>
+            Voir MSA Auvergne <span className="text-xs">↗</span>
           </VioletButton>
         </div>
-      </Block>
+      </div>
+    </div>
+
+    {/* NOTE communes/intercos */}
+    <div className="pt-2">
+      <div className="rounded-3xl bg-white/80 p-4 shadow-sm ring-1 ring-slate-200/70">
+        <p className="text-sm leading-6 text-slate-700">
+          <span className="font-medium text-slate-900">Bon réflexe :</span> ta commune, ta communauté
+          de communes, la mission locale, ou ton établissement (lycée/formation) peuvent aussi proposer
+          des aides BAFA (aides jeunes, bourses, chèques, etc.). Le plus simple : les contacter directement
+          et demander “aide au financement BAFA”.
+        </p>
+      </div>
+    </div>
+  </div>
+</FullWidthSection>
+
 
       {/* AURA */}
-      <Block
-        title="Auvergne-Rhône-Alpes (AURA)"
-        subtitle="Choisis ton département pour afficher les infos. (Source : Académie de Lyon)"
-      >
-        <div className="mt-3 space-y-2">
-          {auraDepts.map((d) => (
-            <DeptAccordion key={d.name} name={d.name} lines={d.lines} sourceHref={acLyonAuraLink} />
-          ))}
-        </div>
+      <FullWidthSection className="border-t border-slate-200 bg-transparent">
+        <div className="space-y-3">
+          <div className="max-w-3xl space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+              Auvergne-Rhône-Alpes
+            </p>
+            <h3 className="font-display text-xl font-semibold text-slate-900 md:text-2xl">
+              Aides par département (AURA)
+            </h3>
+            <p className="text-sm leading-6 text-slate-700">
+              Plusieurs aides existent selon ton département : CAF, Département,
+              MSA, dispositifs locaux. Ouvre ton département ci-dessous pour
+              voir un résumé, puis la source officielle (Académie de Lyon).
+            </p>
+          </div>
 
-        <div className="mt-4 flex flex-wrap gap-2">
-          <VioletButton href={acLyonAuraLink} external>
-            Page complète AURA <span className="text-xs">↗</span>
-          </VioletButton>
-          <VioletButton onClick={openContactWidget}>
-            Aide-moi à trouver la bonne aide <span className="text-sm">→</span>
-          </VioletButton>
-        </div>
-      </Block>
+          <div className="space-y-2">
+            {auraDepts.map((d) => (
+              <DeptAccordion
+                key={d.name}
+                name={d.name}
+                lines={d.lines}
+                sourceHref={acLyonAuraLink}
+              />
+            ))}
+          </div>
 
-      {/* France */}
-      <Block
-        title="Partout en France"
-        subtitle="Il existe plein d’autres aides (régions, communes, missions locales, CE, etc.)."
-      >
-        <div className="mt-3 rounded-2xl bg-slate-50/60 px-4 py-4">
-          <p className="text-sm text-slate-700 leading-relaxed">
-            Les dispositifs changent selon ton âge, ton lieu d’habitation, ton quotient, ton régime CAF/MSA,
-            et parfois un engagement (bénévolat / stage pratique).
-            <span className="font-medium text-slate-900">
-              {" "}
-              Si tu nous dis ta situation, on t’aide à repérer les pistes.
-            </span>
-          </p>
+          <div className="flex flex-wrap gap-2 pt-1">
+            <VioletButton href={acLyonAuraLink} external>
+              Page complète AURA <span className="text-xs">↗</span>
+            </VioletButton>
+            <VioletButton onClick={openContactWidget}>
+              J’ai besoin d’un résumé <span className="text-sm">→</span>
+            </VioletButton>
+          </div>
         </div>
+      </FullWidthSection>
 
-        <div className="mt-4 flex flex-wrap gap-2">
-          <VioletButton onClick={openContactWidget}>
-            Contactez-nous <span className="text-sm">→</span>
-          </VioletButton>
-          <VioletButton href="/formations">
-            Voir les formations <span className="text-sm">→</span>
-          </VioletButton>
+      {/* FRANCE */}
+      <FullWidthSection className="border-t border-slate-200 bg-transparent">
+        <div className="grid gap-4 md:grid-cols-[1.2fr_0.8fr] md:items-start">
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+              France entière
+            </p>
+            <h3 className="font-display text-xl font-semibold text-slate-900 md:text-2xl">
+              Et partout en France
+            </h3>
+            <p className="text-sm leading-6 text-slate-700">
+              Il existe souvent d’autres aides : communes, intercos, missions
+              locales, CE, associations, etc. Ça dépend énormément du territoire
+              et parfois de l’âge / quotient / régime CAF ou MSA.
+            </p>
+          </div>
+
+          <div className="rounded-3xl bg-white/85 p-5 shadow-sm ring-1 ring-slate-200/70">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
+              On te guide vite
+            </p>
+            <p className="mt-2 text-sm leading-6 text-slate-700">
+              Envoie-nous ton département + ta situation (CAF/MSA, étudiant·e,
+              etc.) : on te dit où chercher en priorité et quoi demander.
+            </p>
+            <div className="mt-3">
+              <VioletButton onClick={openContactWidget}>
+                Ouvrir le contact <span className="text-sm">→</span>
+              </VioletButton>
+            </div>
+          </div>
         </div>
-      </Block>
+      </FullWidthSection>
     </section>
   );
 }
