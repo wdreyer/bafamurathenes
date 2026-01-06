@@ -12,6 +12,7 @@ function PersonCard({
   children,
   photoSrc,
   photoAlt,
+  photoClassName,
 }: {
   tone: "violet" | "cream";
   role: string;
@@ -20,6 +21,7 @@ function PersonCard({
   children: React.ReactNode;
   photoSrc: string; // public/...
   photoAlt: string;
+  photoClassName?: string; // permet d'ajuster le focus de l'image (ex: "object-top")
 }) {
   const headerBg = tone === "violet" ? "#6666C6" : "#F5EEDA";
   const headerFg = tone === "violet" ? "#F5EEDA" : "#6666C6";
@@ -42,7 +44,15 @@ function PersonCard({
       <div className="relative space-y-4 px-5 py-5 md:px-6 md:py-6">
         {/* photo (grosse, clean) */}
         <div className="relative h-64 overflow-hidden rounded-2xl bg-slate-200 md:h-72">
-          <Image src={photoSrc} alt={photoAlt} fill className="object-cover" />
+          <Image
+            src={photoSrc}
+            alt={photoAlt}
+            fill
+            className={[
+              "object-cover",
+              photoClassName ?? "object-center",
+            ].join(" ")}
+          />
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/0 via-white/0 to-slate-300/40" />
         </div>
 
@@ -103,8 +113,8 @@ export default function EquipesTab() {
                 </p>
                 <p className="mt-2 text-base text-slate-700">
                   Des équipes ancrées dans le terrain, une pédagogie active et
-                  collective, et une attention forte aux publics, au groupe et à
-                  la vie de séjour.
+                  collective, et une attention particulière vers les publics accueillis,
+                  au groupe et à la vie de séjour.
                 </p>
               </div>
             </div>
@@ -131,7 +141,9 @@ export default function EquipesTab() {
               name="Lorette Kuc"
               photoSrc="/lorette.jpg"
               photoAlt="Portrait de Lorette Kuc"
+              photoClassName="object-top"
               bullets={[
+                "Titulaire du BAFA et du BAFD",
                 "Formatrice BAFA depuis 2018",
                 "Directrice des séjours et échanges de jeunes Erasmus+ (Murathènes)",
                 "Responsable des activités européennes de Murathènes",
@@ -144,6 +156,12 @@ export default function EquipesTab() {
                 l’accessibilité des loisirs, et en particulier la pratique
                 musicale collective, comme outil d’émancipation et d’action
                 sociale.
+              </p>
+
+              <p>
+                Elle a par ailleurs consacré son Master de recherche en Musique
+                et Musicologie à l’étude de l’utilisation de l’animation et de
+                l’éducation populaire comme outil de construction identitaire.
               </p>
 
               <p>
@@ -196,12 +214,13 @@ export default function EquipesTab() {
               <p className="text-sm text-slate-600">
                 Co-fondateur de{" "}
                 <Link
-                  href="Http://www.colocrew.com"
+                  href="https://www.colocrew.com"
+                  target="_blank"
+                  rel="noreferrer"
                   className="font-semibold underline underline-offset-4 decoration-slate-300 hover:text-slate-900"
                 >
                   ColoCrew
                 </Link>
-                {/* 👉 adapte le lien si besoin */}
               </p>
             </PersonCard>
           </div>

@@ -114,7 +114,7 @@ export default function BafaPage() {
               {/* TODO PHOTO */}
               <div className="relative h-28 overflow-hidden rounded-2xl bg-slate-200">
                 <Image
-                  src="/bafa4.jpg"
+                  src="/bafa40.jpeg"
                   alt="Photo formation BAFA Murathènes"
                   fill
                   className="object-cover"
@@ -534,7 +534,7 @@ export default function BafaPage() {
               </Link>
 
               <Link
-                href="/infos"
+                href="/infos-pratiques"
                 className="inline-flex items-center gap-2 rounded-full bg-sky-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-sky-900 shadow-sm ring-1 ring-sky-200 transition hover:bg-sky-100"
               >
                 <span className="text-sm">ℹ️</span>

@@ -69,12 +69,31 @@ function MiniCarouselCard({
       />
 
       {/* ✅ Header fixe */}
+      {/* ✅ Header fixe (titre centré, poppins, uppercase) */}
       <div
-        className="relative px-4 pt-4 md:px-6 md:pt-5"
+        className="relative px-4 py-4 md:px-6 md:py-5"
         style={{ borderBottom: `1px solid ${ring}` }}
       >
-        <p className="text-sm font-medium text-slate-800">{fixedTitle}</p>
+        <p
+          className={[
+            "text-center uppercase",
+            "font-display", // <- si ton font-display = Poppins (sinon remplace par "font-poppins")
+            "text-[11px] md:text-xs",
+            "tracking-[0.22em]",
+            "text-slate-700",
+          ].join(" ")}
+        >
+          {fixedTitle}
+        </p>
+
+        {/* petit trait fonctionnel discret */}
+        <span
+          aria-hidden
+          className="pointer-events-none absolute left-1/2 top-full mt-0.5 h-[2px] w-12 -translate-x-1/2 rounded-full opacity-70"
+          style={{ background: accent }}
+        />
       </div>
+
 
       {/* Body */}
       <div className="relative grid grid-cols-[auto_1fr_auto] items-stretch">
@@ -487,72 +506,7 @@ export default function FormationDetailAppro(props: {
               </div>
             </div>
 
-            <div className="group relative overflow-hidden rounded-2xl bg-white/90 px-4 py-4 shadow-sm">
-              <div className="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-slate-100/80" />
-              <div className="relative space-y-3">
-                <div className="flex items-start gap-3">
-                  <div
-                    className="flex h-9 w-9 items-center justify-center rounded-full text-lg"
-                    style={{ backgroundColor: VIOLET_FG }}
-                  >
-                    <span
-                      className="translate-y-[1px]"
-                      style={{ color: YELLOW }}
-                    >
-                      🚌
-                    </span>
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-700">
-                      Options de transport
-                    </p>
 
-                    {!hasOptions ? (
-                      <p className="mt-1 text-xs text-slate-600">
-                        Pas d&apos;option de transport spécifique renseignée
-                        pour cette formation. Les infos pratiques te seront
-                        précisées lors de l&apos;inscription.
-                      </p>
-                    ) : (
-                      <p className="mt-1 text-xs text-slate-700">
-                        Choisis le point de départ qui t&apos;arrange le plus.
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {hasOptions && (
-                  <ul className="space-y-2">
-                    {options.map((opt, idx) => {
-                      const label = opt.label ?? opt.city ?? "Transport";
-                      return (
-                        <li
-                          key={`${label}-${idx}`}
-                          className="flex items-center justify-between gap-3 rounded-xl bg-white px-3 py-2 ring-1 ring-slate-200"
-                        >
-                          <div className="flex flex-col">
-                            <span className="text-xs font-medium text-slate-900">
-                              {label}
-                              {opt.time ? (
-                                <span className="ml-2 text-[11px] font-medium text-slate-500">
-                                  ({opt.time})
-                                </span>
-                              ) : null}
-                            </span>
-                            <span className="text-[11px] text-slate-500">
-                              Tarif transport
-                            </span>
-                          </div>
-                          <span className="text-xs font-semibold text-slate-900">
-                            {opt.price} €
-                          </span>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                )}
-              </div>
-            </div>
 
             <div className="rounded-2xl bg-white/90 px-4 py-3 text-[11px] text-slate-600 shadow-sm ring-1 ring-slate-200">
               <div className="mb-2 flex items-center gap-2">

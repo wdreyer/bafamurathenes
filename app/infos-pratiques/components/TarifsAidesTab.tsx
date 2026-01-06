@@ -296,8 +296,7 @@ export default function TarifsAidesTab() {
 
   <div className="relative mt-1 flex flex-col gap-2 md:flex-row md:items-center md:justify-between md:gap-4">
     <p className="text-sm font-medium text-slate-900 md:max-w-[420px]">
-      Si tu as la moindre difficulté de financement, contacte-nous : on t’aide à
-      repérer les aides possibles.
+     Nous vous aidons à reperer les aides possibles
     </p>
 
     {/* ✅ bouton collé à droite */}
@@ -539,11 +538,11 @@ export default function TarifsAidesTab() {
 
           <div className="rounded-3xl bg-white/85 p-5 shadow-sm ring-1 ring-slate-200/70">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-              On te guide vite
+              Nous te guidons vite
             </p>
             <p className="mt-2 text-sm leading-6 text-slate-700">
               Envoie-nous ton département + ta situation (CAF/MSA, étudiant·e,
-              etc.) : on te dit où chercher en priorité et quoi demander.
+              etc.) : nous te disons où chercher en priorité et quoi demander.
             </p>
             <div className="mt-3">
               <VioletButton onClick={openContactWidget}>
