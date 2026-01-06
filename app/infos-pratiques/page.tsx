@@ -27,7 +27,7 @@ export default function InfosPratiquesPage() {
         ["inscription", "Inscription", "✅", "Les démarches en 2 étapes."],
         ["tarifs", "Tarifs & aides", "💶", "Tarifs + aides nationales et locales."],
         ["lieu", "Lieu & transport", "📍", "Adresse, arrivée, trajets."],
-        ["infopack", "Info pack", "📦", "Le récap à garder sur ton tel."],
+        ["infopack", "Guide d’arrivée", "📦", "Le récap à garder sur ton tel."],
       ] as const,
     []
   );

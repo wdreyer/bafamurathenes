@@ -405,7 +405,7 @@ export default function LieuTransportTab() {
           <span className="font-semibold text-slate-900">
             coordonner la suite du trajet
           </span>{" "}
-          jusqu’au domaine : contacte-nous à l’avance via le widget Contact.
+          jusqu’au domaine : contacte-nous à l’avance .
         </p>
 
         <p className="text-xs leading-5 text-slate-600">
