@@ -144,7 +144,8 @@ export default function InscriptionTab() {
                 src="/etape2.png"
                 alt="Étape 2 — Jeunesse & Sports"
                 fill
-                className="object-cover"
+                sizes="(min-width: 768px) 50vw, 100vw"
+                className="object-contain p-3"
               />
             </div>
 
@@ -208,7 +209,10 @@ export default function InscriptionTab() {
             </div>
 
             <div className="flex flex-wrap gap-2 pt-1">
-              <VioletButton href="http://www.jeunes.gouv.fr/bafa-bafd/" external>
+              <VioletButton
+                href="http://www.jeunes.gouv.fr/bafa-bafd/"
+                external
+              >
                 Site Jeunesse &amp; Sports <span className="text-sm">↗</span>
               </VioletButton>
             </div>
