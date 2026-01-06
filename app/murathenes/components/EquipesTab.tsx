@@ -13,6 +13,7 @@ function PersonCard({
   photoSrc,
   photoAlt,
   photoClassName,
+  photoStyle,
 }: {
   tone: "violet" | "cream";
   role: string;
@@ -21,7 +22,8 @@ function PersonCard({
   children: React.ReactNode;
   photoSrc: string; // public/...
   photoAlt: string;
-  photoClassName?: string; // permet d'ajuster le focus de l'image (ex: "object-top")
+  photoClassName?: string; // permet d'ajuster le focus (ex: "object-top" ou "object-[40%_20%]")
+  photoStyle?: React.CSSProperties; // ✅ NEW: réglages fins (brightness/contrast…)
 }) {
   const headerBg = tone === "violet" ? "#6666C6" : "#F5EEDA";
   const headerFg = tone === "violet" ? "#F5EEDA" : "#6666C6";
@@ -48,10 +50,11 @@ function PersonCard({
             src={photoSrc}
             alt={photoAlt}
             fill
-            className={[
-              "object-cover",
-              photoClassName ?? "object-center",
-            ].join(" ")}
+            sizes="(min-width: 768px) 50vw, 100vw"
+            className={["object-cover", photoClassName ?? "object-center"].join(
+              " "
+            )}
+            style={photoStyle}
           />
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-white/0 via-white/0 to-slate-300/40" />
         </div>
@@ -113,8 +116,8 @@ export default function EquipesTab() {
                 </p>
                 <p className="mt-2 text-base text-slate-700">
                   Des équipes ancrées dans le terrain, une pédagogie active et
-                  collective, et une attention particulière vers les publics accueillis,
-                  au groupe et à la vie de séjour.
+                  collective, et une attention particulière portée aux publics
+                  accueillis, au groupe et à la vie de séjour.
                 </p>
               </div>
             </div>
@@ -139,9 +142,12 @@ export default function EquipesTab() {
               tone="violet"
               role="Coordination"
               name="Lorette Kuc"
-              photoSrc="/lorette.jpg"
+              photoSrc="/lorette10.jpeg"
               photoAlt="Portrait de Lorette Kuc"
-              photoClassName="object-top"
+              photoClassName="object-[10%_5%]" // ✅ focus personne de gauche
+              photoStyle={{
+                filter: "brightness(1.14) contrast(1.08) saturate(1.06)",
+              }} // ✅ scène + lisibilité
               bullets={[
                 "Titulaire du BAFA et du BAFD",
                 "Formatrice BAFA depuis 2018",
@@ -178,8 +184,12 @@ export default function EquipesTab() {
               tone="cream"
               role="Coordination"
               name="William Dreyer"
-              photoSrc="/william2.jpg"
+              photoSrc="/william10.jpeg"
               photoAlt="Portrait de William Dreyer"
+              photoClassName="object-[62%_10%]" // ✅ table moins visible (focus plus haut)
+              photoStyle={{
+                filter: "brightness(1.06) contrast(1.06) saturate(1.02)",
+              }}
               bullets={[
                 "Diplômé d’un Master en Sciences de l’éducation",
                 "Titulaire du BAFA et du BAFD",
