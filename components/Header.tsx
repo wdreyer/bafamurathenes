@@ -79,7 +79,7 @@ export default function Header() {
               href="/murathenes"
               className="relative whitespace-nowrap transition hover:text-sky-900 after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-sky-800 after:transition-all after:duration-200 hover:after:w-full"
             >
-              Qui sommes nous
+              Qui sommes-nous ? 
             </Link>
           </nav>
         </div>
@@ -151,7 +151,7 @@ export default function Header() {
               onClick={closeMenu}
               className="rounded-full px-3 py-2 "
             >
-              Qui sommes nous
+              Qui sommes-nous ? 
             </Link>
           </nav>
         </div>

@@ -215,7 +215,7 @@ export default function AssociationTab() {
         datePlace: "Fév & Juillet 2025 · DOMAINE DE GRAVIèRES",
         theme: "Création Rap · Hip-Hop · R’n’B · Pop",
         title: "“Murathens European Week 2025 — 4 KILTI”",
-        image: "/MT/mew25.2.jpg",
+        image: "/MT/mew25.png",
         paragraphs: [
           "Manifestation des richesses de la jeunesse francophone : Belgique, France, Guadeloupe, Cantal… Cinquantaine de jeunes de 16 à 26 ans, dont des résidents francophones du CADA de St Flour.",
           "2 étapes : résidence artistique en février au domaine de Gravières, puis concerts à Paris et Bruxelles en juillet.",
