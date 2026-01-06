@@ -141,7 +141,7 @@ export default function InscriptionTab() {
           <div className="relative overflow-hidden rounded-3xl bg-slate-100 shadow-sm ring-1 ring-slate-200">
             <div className="relative h-60 w-full md:h-[320px]">
               <Image
-                src="/etape20.png"
+                src="/etape2.png"
                 alt="Étape 2 — Jeunesse & Sports"
                 fill
                 className="object-cover"
