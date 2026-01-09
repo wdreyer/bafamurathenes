@@ -164,13 +164,14 @@ export default function FormationDetailPage() {
             </div>
 
             <div className="border-t border-slate-200 bg-slate-50 px-4 py-2">
-              <p className="text-[11px] text-slate-600">
-                💡 Sur la page Yapla, une ligne{" "}
-                <span className="font-semibold">« participation volontaire »</span> peut
-                apparaître : il suffit de{" "}
-                <span className="font-semibold">ne pas cocher cette case</span> si tu ne souhaites
-                pas ajouter de contribution.
-              </p>
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+  <p className="text-sm leading-relaxed text-slate-700">
+    💡 Sur la page Yapla, la ligne <span className="font-semibold">«Contribution suggérée»</span> apparaît.
+    Pour la désactiver : cliquez sur <span className="font-semibold">«Modifier»</span>, puis choisissez
+    <span className="font-semibold"> «Je ne souhaite pas apporter mon soutien»</span>.
+  </p>
+</div>
+
             </div>
           </div>
         </div>

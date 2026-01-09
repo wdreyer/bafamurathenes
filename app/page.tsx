@@ -298,7 +298,7 @@ export default function HomePage() {
                                 <button
                                   className={buttonClasses}
                                   type="button"
-                                  onClick={(e) => e.preventDefault()}
+                                  
                                 >
                                   Voir les détails
                                 </button>
