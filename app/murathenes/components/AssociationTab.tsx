@@ -275,7 +275,7 @@ export default function AssociationTab() {
         datePlace: "2025 · DOMAINE DE GRAVIèRES",
         theme: "Composition musicale · pop instrumentale · théâtre",
         title: "“Curious Birds”",
-        image: "/MT/curiousbird10.jpg",
+        image: "/MT/curiousbird10.png",
         paragraphs: [
           "Une vingtaine de jeunes tchèques et une vingtaine de français ont créé pendant plusieurs mois une création artistique unique mêlant composition musicale et théâtrale.",
           "À distance : histoire, mots, notes, percussions et la hâte de se retrouver. En juillet 2025 : rencontre et représentation au festival.",
