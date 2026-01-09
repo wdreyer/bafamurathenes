@@ -47,22 +47,69 @@ function ProjectsCarousel({ items }: { items: Project[] }) {
 
   return (
     <div className="w-full">
-      <div className="flex items-center gap-3">
+      {/* Navigation desktop - au dessus sur mobile */}
+      <div className="flex items-center justify-center gap-4 mb-4 md:hidden">
         <button
           type="button"
           onClick={scrollPrev}
           className={cx(
             "cursor-pointer shrink-0",
-            "h-12 w-12 md:h-14 md:w-14 rounded-full",
+            "h-10 w-10 rounded-full",
             "bg-white/95 shadow-sm ring-1 ring-slate-200",
             "grid place-items-center transition hover:bg-white active:scale-[0.98]"
+          )}
+          aria-label="Projet précédent"
+        >
+          <span className="text-2xl leading-none">‹</span>
+        </button>
+        
+        {/* Indicateurs de pagination */}
+        <div className="flex gap-1.5">
+          {items.map((_, i) => (
+            <div
+              key={i}
+              className={cx(
+                "h-1.5 rounded-full transition-all duration-300",
+                i === selected 
+                  ? "w-6 bg-slate-800" 
+                  : "w-1.5 bg-slate-300"
+              )}
+            />
+          ))}
+        </div>
+        
+        <button
+          type="button"
+          onClick={scrollNext}
+          className={cx(
+            "cursor-pointer shrink-0",
+            "h-10 w-10 rounded-full",
+            "bg-white/95 shadow-sm ring-1 ring-slate-200",
+            "grid place-items-center transition hover:bg-white active:scale-[0.98]"
+          )}
+          aria-label="Projet suivant"
+        >
+          <span className="text-2xl leading-none">›</span>
+        </button>
+      </div>
+
+      <div className="flex items-center gap-3">
+        {/* Bouton précédent - caché sur mobile */}
+        <button
+          type="button"
+          onClick={scrollPrev}
+          className={cx(
+            "cursor-pointer shrink-0 hidden md:grid",
+            "h-14 w-14 rounded-full",
+            "bg-white/95 shadow-sm ring-1 ring-slate-200",
+            "place-items-center transition hover:bg-white active:scale-[0.98]"
           )}
           aria-label="Projet précédent"
         >
           <span className="text-3xl leading-none">‹</span>
         </button>
 
-        <div ref={emblaRef} className="relative w-full overflow-hidden rounded-3xl">
+        <div ref={emblaRef} className="relative w-full overflow-hidden rounded-2xl md:rounded-3xl">
           <div className="flex touch-pan-y">
             {items.map((p, i) => {
               const active = i === selected;
@@ -72,46 +119,46 @@ function ProjectsCarousel({ items }: { items: Project[] }) {
                   key={p.id}
                   className={cx(
                     "shrink-0",
-                    "basis-[82%] sm:basis-[70%] md:basis-[560px]",
-                    "px-2 md:px-3"
+                    "basis-[92%] sm:basis-[75%] md:basis-[560px]",
+                    "px-1 sm:px-2 md:px-3"
                   )}
                 >
                   <div
                     className={cx(
-                      "rounded-3xl overflow-hidden bg-white/95 shadow-sm ring-1 ring-slate-200",
+                      "rounded-2xl md:rounded-3xl overflow-hidden bg-white/95 shadow-sm ring-1 ring-slate-200",
                       "transition-transform duration-300",
                       active ? "md:scale-[1.03]" : "opacity-80 md:scale-[0.93]"
                     )}
                   >
-                    <div className="relative h-52 md:h-72 w-full bg-slate-100">
+                    <div className="relative h-44 sm:h-52 md:h-72 w-full bg-slate-100">
                       <Image src={p.image} alt={p.title} fill className="object-cover" />
                       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-black/0" />
 
-                      <div className="absolute bottom-3 left-3 right-3">
-                        <div className="rounded-2xl bg-white/85 backdrop-blur px-3 py-2 ring-1 ring-white/40">
-                          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-600">
+                      <div className="absolute bottom-2 left-2 right-2 md:bottom-3 md:left-3 md:right-3">
+                        <div className="rounded-xl md:rounded-2xl bg-white/85 backdrop-blur px-2.5 py-1.5 md:px-3 md:py-2 ring-1 ring-white/40">
+                          <p className="text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.16em] md:tracking-[0.18em] text-slate-600">
                             {p.datePlace}
                           </p>
-                          <p className="mt-0.5 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-600">
+                          <p className="mt-0.5 text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.14em] md:tracking-[0.16em] text-slate-600">
                             {p.theme}
                           </p>
                         </div>
                       </div>
                     </div>
 
-                    <div className="px-5 py-5">
-                      <h4 className="font-display text-lg md:text-2xl font-semibold text-slate-900">
+                    <div className="px-4 py-4 md:px-5 md:py-5">
+                      <h4 className="font-display text-base sm:text-lg md:text-2xl font-semibold text-slate-900">
                         {p.title}
                       </h4>
 
-                      <div className="mt-3 space-y-2 text-sm leading-6 text-slate-700">
+                      <div className="mt-2 md:mt-3 space-y-1.5 md:space-y-2 text-[13px] md:text-sm leading-[1.6] md:leading-6 text-slate-700">
                         {p.paragraphs.map((t, idx) => (
                           <p key={idx}>{t}</p>
                         ))}
                       </div>
 
                       {p.partner ? (
-                        <p className="mt-3 text-xs font-semibold text-slate-600">
+                        <p className="mt-2 md:mt-3 text-[11px] md:text-xs font-semibold text-slate-600">
                           Partenaire : {p.partner}
                         </p>
                       ) : null}
@@ -122,19 +169,20 @@ function ProjectsCarousel({ items }: { items: Project[] }) {
             })}
           </div>
 
-          {/* fades */}
-          <div className="pointer-events-none absolute inset-y-0 left-0 w-10 bg-gradient-to-r from-white/80 to-white/0" />
-          <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-white/80 to-white/0" />
+          {/* fades - plus subtils sur mobile */}
+          <div className="pointer-events-none absolute inset-y-0 left-0 w-4 md:w-10 bg-gradient-to-r from-white/60 md:from-white/80 to-white/0" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-4 md:w-10 bg-gradient-to-l from-white/60 md:from-white/80 to-white/0" />
         </div>
 
+        {/* Bouton suivant - caché sur mobile */}
         <button
           type="button"
           onClick={scrollNext}
           className={cx(
-            "cursor-pointer shrink-0",
-            "h-12 w-12 md:h-14 md:w-14 rounded-full",
+            "cursor-pointer shrink-0 hidden md:grid",
+            "h-14 w-14 rounded-full",
             "bg-white/95 shadow-sm ring-1 ring-slate-200",
-            "grid place-items-center transition hover:bg-white active:scale-[0.98]"
+            "place-items-center transition hover:bg-white active:scale-[0.98]"
           )}
           aria-label="Projet suivant"
         >
@@ -227,7 +275,7 @@ export default function AssociationTab() {
         datePlace: "2025 · DOMAINE DE GRAVIèRES",
         theme: "Composition musicale · pop instrumentale · théâtre",
         title: "“Curious Birds”",
-        image: "/MT/curiousbird1.jpg",
+        image: "/MT/curiousbird10.jpg",
         paragraphs: [
           "Une vingtaine de jeunes tchèques et une vingtaine de français ont créé pendant plusieurs mois une création artistique unique mêlant composition musicale et théâtrale.",
           "À distance : histoire, mots, notes, percussions et la hâte de se retrouver. En juillet 2025 : rencontre et représentation au festival.",
