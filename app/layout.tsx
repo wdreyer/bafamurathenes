@@ -36,7 +36,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "BAFA Murathènes",
   description: "Formations BAFA en Auvergne avec Murathènes",
-  icons: '/murathenes.png',
+   icons: {
+    icon: '/murathenes.png',
+  },
 };
 
 
