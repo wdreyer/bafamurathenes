@@ -22,6 +22,9 @@ function ProjectsCarousel({ items }: { items: Project[] }) {
   const [emblaRef, emblaApi] = useEmblaCarousel({
     loop: true,
     align: "center",
+    dragFree: false,
+    skipSnaps: false,
+    containScroll: "trimSnaps",
   });
 
   const [selected, setSelected] = useState(0);
@@ -109,8 +112,8 @@ function ProjectsCarousel({ items }: { items: Project[] }) {
           <span className="text-3xl leading-none">‹</span>
         </button>
 
-        <div ref={emblaRef} className="relative w-full overflow-hidden rounded-2xl md:rounded-3xl">
-          <div className="flex touch-pan-y">
+        <div ref={emblaRef} className="relative w-full overflow-hidden rounded-2xl md:rounded-3xl cursor-grab active:cursor-grabbing">
+          <div className="flex">
             {items.map((p, i) => {
               const active = i === selected;
 
@@ -118,7 +121,7 @@ function ProjectsCarousel({ items }: { items: Project[] }) {
                 <article
                   key={p.id}
                   className={cx(
-                    "shrink-0",
+                    "shrink-0 select-none",
                     "basis-[92%] sm:basis-[75%] md:basis-[560px]",
                     "px-1 sm:px-2 md:px-3"
                   )}

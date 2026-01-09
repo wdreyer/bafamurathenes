@@ -46,7 +46,8 @@ export default function ScrollHint() {
       onClick={onClick}
       aria-label="Faire défiler la page"
       className={[
-        "fixed left-1/2 z-[55] -translate-x-1/2",
+        "fixed z-[55]",
+        "left-4 md:left-1/2 md:-translate-x-1/2",
         "bottom-6 md:bottom-7",
         "rounded-full border border-slate-200 bg-white/70 backdrop-blur",
         "px-3 py-2 shadow-sm",
