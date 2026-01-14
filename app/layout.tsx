@@ -61,10 +61,6 @@ export default function RootLayout({
       <body
         className={`${poppins.className} antialiased min-h-screen flex flex-col bg-amber-50 text-slate-900`}
       >
-         <Script
-          src="https://scripts.simpleanalyticscdn.com/latest.js"
-          strategy="afterInteractive"
-        />
         <Header />
         <main className="flex-1 bg-gradient-to-b from-rose-50/70 via-amber-50/70 to-sky-50/70">{children}</main>
         <Footer />
@@ -73,6 +69,8 @@ export default function RootLayout({
         <ContactWidget />
         <ScrollHint />
       </body>
+            <Script src="https://scripts.simpleanalyticscdn.com/latest.js"  />
+
 
     </html>
   );
