@@ -1,25 +1,27 @@
 "use client";
 
 import Link from "next/link";
-import type { Formation } from "@/lib/types";
 import { CalendarDays } from "lucide-react";
+import type { Formation } from "@/lib/types";
+import {
+  getDisplayedFormationPrice,
+  getReferenceFormationPrice,
+  isAprilFgPromoFormation,
+} from "@/lib/offers";
 
 function formatDateRange(start: string, end: string) {
   if (!start || !end) return "";
+
   const startDate = new Date(start);
   const endDate = new Date(end);
-
   const sameMonth =
     startDate.getMonth() === endDate.getMonth() &&
     startDate.getFullYear() === endDate.getFullYear();
 
-  const optionsDay: Intl.DateTimeFormatOptions = { day: "numeric" };
-
   if (sameMonth) {
-    return `${startDate.toLocaleDateString(
-      "fr-FR",
-      optionsDay,
-    )}–${endDate.toLocaleDateString("fr-FR", {
+    return `${startDate.toLocaleDateString("fr-FR", {
+      day: "numeric",
+    })}-${endDate.toLocaleDateString("fr-FR", {
       day: "numeric",
       month: "long",
       year: "numeric",
@@ -29,7 +31,7 @@ function formatDateRange(start: string, end: string) {
   return `${startDate.toLocaleDateString("fr-FR", {
     day: "numeric",
     month: "long",
-  })} – ${endDate.toLocaleDateString("fr-FR", {
+  })} - ${endDate.toLocaleDateString("fr-FR", {
     day: "numeric",
     month: "long",
     year: "numeric",
@@ -37,23 +39,18 @@ function formatDateRange(start: string, end: string) {
 }
 
 export function FormationCard({ formation }: { formation: Formation }) {
-  const options = formation.transportOptions ?? [];
-  const hasOptions = options.length > 0;
-  const minTransportPrice = hasOptions
-    ? Math.min(...options.map((o) => Number(o.price) || 0))
-    : null;
-
   const dateLabel = formatDateRange(formation.startDate, formation.endDate);
   const isFG = formation.type === "formation_generale";
+  const isAprilPromo = isAprilFgPromoFormation(formation);
+  const displayedPrice = getDisplayedFormationPrice(formation);
+  const referencePrice = getReferenceFormationPrice(formation);
 
-  const typeShortLabel = isFG ? "Formation générale" : "Approfondissement";
-const typePillClasses = isFG
-  ? "bg-sky-50 text-sky-800 border border-indigo-500"
-  : "bg-amber-50 text-amber-900 border ";
+  const typeShortLabel = isFG ? "Formation generale" : "Approfondissement";
+  const typePillClasses = isFG
+    ? "bg-sky-50 text-sky-800 border border-indigo-500"
+    : "bg-amber-50 text-amber-900 border";
 
-
-  const icon = isFG ? "🎲" : "🌍";
-
+  const icon = isFG ? "FG" : "APP";
   const cardHoverClasses = isFG
     ? "hover:bg-sky-50 hover:ring-sky-200"
     : "hover:bg-amber-50 hover:ring-amber-200";
@@ -70,10 +67,9 @@ const typePillClasses = isFG
     >
       <div className="flex items-start justify-between gap-3">
         <div className="space-y-1.5">
-          {/* Icône + pill type */}
           <div className="flex items-center gap-2">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-50">
-              <span className="text-xl">{icon}</span>
+              <span className="text-[11px] font-semibold tracking-wide text-slate-700">{icon}</span>
             </div>
 
             <span
@@ -87,48 +83,54 @@ const typePillClasses = isFG
             </span>
           </div>
 
-          {/* Titre = nom de la session */}
           <h3 className="text-sm md:text-base font-semibold text-slate-900">
             {formation.title}
           </h3>
 
-          {/* Sous-titre complet pour les appro */}
           {!isFG && (
             <p className="text-[11px] font-medium text-amber-800">
-              Approfondissement — Séjour à l&apos;étranger / échanges de jeunes
+              Approfondissement - Sejour a l&apos;etranger / echanges de jeunes
             </p>
           )}
 
           {dateLabel && (
             <p className="text-xs flex items-center gap-2 font-medium text-slate-700">
-              <CalendarDays className="w-4"/> {dateLabel}
+              <CalendarDays className="w-4" /> {dateLabel}
             </p>
           )}
         </div>
 
-        {/* Prix en pill à droite */}
         <div className="flex flex-col items-end gap-1 text-xs">
-  <span className="rounded-full bg-sky-600 px-3 py-1 font-semibold text-white shadow-sm whitespace-nowrap">
-    {formation.price} €
-  </span>
-</div>
-
+          {isAprilPromo && (
+            <span className="rounded-full bg-rose-100 px-2 py-1 font-semibold uppercase tracking-wide text-rose-700">
+              Dernieres places
+            </span>
+          )}
+          <span className="rounded-full bg-sky-600 px-3 py-1 font-semibold text-white shadow-sm whitespace-nowrap">
+            {referencePrice && (
+              <span className="mr-1 text-sky-100 line-through">{referencePrice} €</span>
+            )}
+            {displayedPrice} €
+          </span>
+        </div>
       </div>
 
       {formation.description && (
-        <p className="mt-3 line-clamp-3 text-xs text-slate-700">
-          {formation.description}
+        <p className="mt-3 line-clamp-3 text-xs text-slate-700">{formation.description}</p>
+      )}
+
+      {isAprilPromo && (
+        <p className="mt-2 text-xs font-medium text-rose-700">
+          Aides + paiement en plusieurs fois: contacte-nous pour t&apos;aider a financer.
         </p>
       )}
 
       <div className="mt-4 flex items-center justify-between text-[11px] text-slate-500">
         <span className="inline-flex items-center gap-1">
           <span className="h-1.5 w-1.5 rounded-full bg-sky-400 group-hover:bg-sky-500" />
-          <span className="font-medium">Voir le détail de la session</span>
+          <span className="font-medium">Voir le detail de la session</span>
         </span>
-        <span className="text-base transition-transform group-hover:translate-x-1">
-          →
-        </span>
+        <span className="text-base transition-transform group-hover:translate-x-1">-&gt;</span>
       </div>
     </Link>
   );

@@ -10,6 +10,11 @@ import {
   VIOLET_FG,
   YELLOW,
 } from "@/app/infos-pratiques/components/ProgrammeParts";
+import {
+  getDisplayedFormationPrice,
+  getReferenceFormationPrice,
+  isAprilFgPromoFormation,
+} from "@/lib/offers";
 
 type TransportOption = {
   label?: string;
@@ -31,6 +36,14 @@ export default function FormationDetailFG(props: {
   const [programmeOpen, setProgrammeOpen] = useState(false);
 
   const hasOptions = (options?.length ?? 0) > 0;
+  const isAprilPromo = isAprilFgPromoFormation(formation);
+  const displayedPrice = getDisplayedFormationPrice(formation);
+  const referencePrice = getReferenceFormationPrice(formation);
+
+  const openContactWidget = () => {
+    if (typeof window === "undefined") return;
+    window.dispatchEvent(new Event("contact-widget:open"));
+  };
 
   // Assets FG (public/FG)
   const heroVideoSrc = "/FG/Video.mp4";
@@ -49,7 +62,7 @@ export default function FormationDetailFG(props: {
   };
 
   const locationText =
-    (formation as any).location ??
+    (formation as Formation & { location?: string }).location ??
     "Auvergne | Domaine de Gravières, Lanobre, Cantal.";
 
   return (
@@ -82,8 +95,21 @@ export default function FormationDetailFG(props: {
               <div className="flex flex-wrap items-center gap-2 text-xs">
                 <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-3 py-1 font-medium text-slate-900 shadow-sm ring-1 ring-slate-200">
                   <span className="text-base">💶</span>
-                  {formation.price} €
+                  {referencePrice && (
+                    <span className="text-slate-500 line-through">
+                      {referencePrice} €
+                    </span>
+                  )}
+                  <span className={isAprilPromo ? "text-rose-700 font-semibold" : ""}>
+                    {displayedPrice} €
+                  </span>
                 </span>
+
+                {isAprilPromo && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-3 py-1 font-semibold uppercase tracking-[0.16em] text-rose-700 shadow-sm ring-1 ring-rose-200">
+                    Dernieres places avril
+                  </span>
+                )}
 
                 {hasOptions && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-3 py-1 font-medium text-slate-900 shadow-sm ring-1 ring-slate-200">
@@ -93,12 +119,32 @@ export default function FormationDetailFG(props: {
                 )}
               </div>
 
+              {isAprilPromo && (
+                <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-rose-700">
+                    Financement disponible
+                  </p>
+                  <p className="mt-1 text-sm text-slate-800">
+                    Aides possibles + paiement en plusieurs fois. Contacte
+                    l&apos;equipe et on te guide rapidement.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={openContactWidget}
+                    className="mt-3 inline-flex items-center gap-2 rounded-full bg-rose-600 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-white shadow-sm transition hover:bg-rose-500 hover:cursor-pointer"
+                  >
+                    Nous contacter pour le financement
+                    <span className="text-sm">-&gt;</span>
+                  </button>
+                </div>
+              )}
+
               <div className="flex flex-wrap items-center gap-2 pt-1">
                 {/* ✅ Même DA que Appro (bouton violet) */}
                 <button
                   type="button"
                   onClick={onOpenYapla}
-                  className="inline-flex items-center cursor-pointer gap-2 rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] shadow-sm transition hover:opacity-95"
+                  className="inline-flex items-center cursor-pointer hover:cursor-pointer gap-2 rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] shadow-sm transition hover:opacity-95"
                   style={{ backgroundColor: VIOLET_FG, color: YELLOW }}
                 >
                   Je m&apos;inscris <span className="text-sm">→</span>
@@ -111,7 +157,7 @@ export default function FormationDetailFG(props: {
                       .getElementById("contenu")
                       ?.scrollIntoView({ behavior: "smooth" })
                   }
-                  className="inline-flex items-center cursor-pointer gap-2 rounded-full bg-white/80 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-900 shadow-sm ring-1 ring-slate-200 transition hover:bg-white"
+                  className="inline-flex items-center cursor-pointer hover:cursor-pointer gap-2 rounded-full bg-white/80 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-900 shadow-sm ring-1 ring-slate-200 transition hover:bg-white"
                 >
                   Découvrir le programme <span className="text-sm">↓</span>
                 </button>
@@ -351,7 +397,7 @@ export default function FormationDetailFG(props: {
               <button
                 type="button"
                 onClick={onOpenYapla}
-                className="mt-3 inline-flex cursor-pointer items-center gap-1 rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] shadow-sm transition hover:opacity-95"
+                className="mt-3 inline-flex cursor-pointer hover:cursor-pointer items-center gap-1 rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] shadow-sm transition hover:opacity-95"
                 style={{ backgroundColor: VIOLET_FG, color: YELLOW }}
               >
                 Ouvrir le formulaire d&apos;inscription <span className="text-xs">↗</span>
