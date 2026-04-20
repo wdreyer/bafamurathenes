@@ -1,7 +1,7 @@
 // app/mt/page.tsx
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 
@@ -14,6 +14,14 @@ export type MurathenesTab = "association" | "projet" | "equipes";
 const VALID_TABS: MurathenesTab[] = ["association", "projet", "equipes"];
 
 export default function MurathenesPage() {
+  return (
+    <Suspense>
+      <MurathenesContent />
+    </Suspense>
+  );
+}
+
+function MurathenesContent() {
   const searchParams = useSearchParams();
   const [tab, setTab] = useState<MurathenesTab>(() => {
     const t = searchParams.get("tab");
