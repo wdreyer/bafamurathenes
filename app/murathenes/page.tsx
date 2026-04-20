@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 
 import AssociationTab from "./components/AssociationTab";
@@ -10,8 +11,14 @@ import EquipesTab from "./components/EquipesTab";
 
 export type MurathenesTab = "association" | "projet" | "equipes";
 
+const VALID_TABS: MurathenesTab[] = ["association", "projet", "equipes"];
+
 export default function MurathenesPage() {
-  const [tab, setTab] = useState<MurathenesTab>("association");
+  const searchParams = useSearchParams();
+  const [tab, setTab] = useState<MurathenesTab>(() => {
+    const t = searchParams.get("tab");
+    return VALID_TABS.includes(t as MurathenesTab) ? (t as MurathenesTab) : "association";
+  });
   const [fadeIn, setFadeIn] = useState(true);
 
   const tabs = useMemo(

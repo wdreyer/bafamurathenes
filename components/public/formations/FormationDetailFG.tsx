@@ -13,7 +13,6 @@ import {
 import {
   getDisplayedFormationPrice,
   getReferenceFormationPrice,
-  isAprilFgPromoFormation,
 } from "@/lib/offers";
 
 type TransportOption = {
@@ -36,14 +35,8 @@ export default function FormationDetailFG(props: {
   const [programmeOpen, setProgrammeOpen] = useState(false);
 
   const hasOptions = (options?.length ?? 0) > 0;
-  const isAprilPromo = isAprilFgPromoFormation(formation);
   const displayedPrice = getDisplayedFormationPrice(formation);
   const referencePrice = getReferenceFormationPrice(formation);
-
-  const openContactWidget = () => {
-    if (typeof window === "undefined") return;
-    window.dispatchEvent(new Event("contact-widget:open"));
-  };
 
   // Assets FG (public/FG)
   const heroVideoSrc = "/FG/Video.mp4";
@@ -100,16 +93,8 @@ export default function FormationDetailFG(props: {
                       {referencePrice} €
                     </span>
                   )}
-                  <span className={isAprilPromo ? "text-rose-700 font-semibold" : ""}>
                     {displayedPrice} €
-                  </span>
                 </span>
-
-                {isAprilPromo && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-3 py-1 font-semibold uppercase tracking-[0.16em] text-rose-700 shadow-sm ring-1 ring-rose-200">
-                    Dernieres places avril
-                  </span>
-                )}
 
                 {hasOptions && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-3 py-1 font-medium text-slate-900 shadow-sm ring-1 ring-slate-200">
@@ -118,26 +103,6 @@ export default function FormationDetailFG(props: {
                   </span>
                 )}
               </div>
-
-              {isAprilPromo && (
-                <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-rose-700">
-                    Financement disponible
-                  </p>
-                  <p className="mt-1 text-sm text-slate-800">
-                    Aides possibles + paiement en plusieurs fois. Contacte
-                    l&apos;equipe et on te guide rapidement.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={openContactWidget}
-                    className="mt-3 inline-flex items-center gap-2 rounded-full bg-rose-600 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-white shadow-sm transition hover:bg-rose-500 hover:cursor-pointer"
-                  >
-                    Nous contacter pour le financement
-                    <span className="text-sm">-&gt;</span>
-                  </button>
-                </div>
-              )}
 
               <div className="flex flex-wrap items-center gap-2 pt-1">
                 {/* ✅ Même DA que Appro (bouton violet) */}

@@ -327,24 +327,6 @@ export default function TarifsAidesTab() {
             <div className="grid gap-2">
               <PriceLine label="Formation Générale" value="550 €" />
               <PriceLine label="Approfondissement" value="450 €" />
-              <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 shadow-sm">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-rose-700">
-                  Promo FG avril - dernieres places
-                </p>
-                <p className="mt-1 text-base font-semibold text-slate-900">
-                  <span className="mr-1 text-slate-500 line-through">550 €</span>
-                  500 €
-                </p>
-                <p className="mt-1 text-sm text-slate-700">
-                  Aides possibles et paiement en plusieurs fois. Contacte-nous,
-                  on t&apos;aide rapidement.
-                </p>
-                <div className="mt-2">
-                  <VioletButton onClick={openContactWidget}>
-                    Nous contacter pour le financement <span className="text-sm">-&gt;</span>
-                  </VioletButton>
-                </div>
-              </div>
             </div>
 
             <p className="text-sm leading-6 text-slate-700">

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 
 import ProgrammeTab from "./components/ProgrammeTab";
@@ -16,8 +17,14 @@ export type InfosTab =
   | "lieu"
   | "infopack";
 
+const VALID_TABS: InfosTab[] = ["programme", "inscription", "tarifs", "lieu", "infopack"];
+
 export default function InfosPratiquesPage() {
-  const [tab, setTab] = useState<InfosTab>("programme");
+  const searchParams = useSearchParams();
+  const [tab, setTab] = useState<InfosTab>(() => {
+    const t = searchParams.get("tab");
+    return VALID_TABS.includes(t as InfosTab) ? (t as InfosTab) : "programme";
+  });
   const [fadeIn, setFadeIn] = useState(true);
 
   const tabs = useMemo(

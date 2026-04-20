@@ -6,7 +6,6 @@ import type { Formation } from "@/lib/types";
 import {
   getDisplayedFormationPrice,
   getReferenceFormationPrice,
-  isAprilFgPromoFormation,
 } from "@/lib/offers";
 
 function formatDateRange(start: string, end: string) {
@@ -41,7 +40,6 @@ function formatDateRange(start: string, end: string) {
 export function FormationCard({ formation }: { formation: Formation }) {
   const dateLabel = formatDateRange(formation.startDate, formation.endDate);
   const isFG = formation.type === "formation_generale";
-  const isAprilPromo = isAprilFgPromoFormation(formation);
   const displayedPrice = getDisplayedFormationPrice(formation);
   const referencePrice = getReferenceFormationPrice(formation);
 
@@ -101,11 +99,6 @@ export function FormationCard({ formation }: { formation: Formation }) {
         </div>
 
         <div className="flex flex-col items-end gap-1 text-xs">
-          {isAprilPromo && (
-            <span className="rounded-full bg-rose-100 px-2 py-1 font-semibold uppercase tracking-wide text-rose-700">
-              Dernieres places
-            </span>
-          )}
           <span className="rounded-full bg-sky-600 px-3 py-1 font-semibold text-white shadow-sm whitespace-nowrap">
             {referencePrice && (
               <span className="mr-1 text-sky-100 line-through">{referencePrice} €</span>
@@ -117,12 +110,6 @@ export function FormationCard({ formation }: { formation: Formation }) {
 
       {formation.description && (
         <p className="mt-3 line-clamp-3 text-xs text-slate-700">{formation.description}</p>
-      )}
-
-      {isAprilPromo && (
-        <p className="mt-2 text-xs font-medium text-rose-700">
-          Aides + paiement en plusieurs fois: contacte-nous pour t&apos;aider a financer.
-        </p>
       )}
 
       <div className="mt-4 flex items-center justify-between text-[11px] text-slate-500">

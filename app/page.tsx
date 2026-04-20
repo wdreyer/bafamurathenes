@@ -7,10 +7,8 @@ import { db } from "@/lib/firebase";
 import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
 import type { Formation } from "@/lib/types";
 import {
-  APRIL_FG_PROMO,
   getDisplayedFormationPrice,
   getReferenceFormationPrice,
-  isAprilFgPromoFormation,
 } from "@/lib/offers";
 
 // Helpers dates & labels
@@ -170,14 +168,6 @@ export default function HomePage() {
       ? `${calendarYears[0]}`
       : `${Math.min(...calendarYears)}–${Math.max(...calendarYears)}`;
 
-  const aprilPromoFormation = upcomingFormations.find((f) =>
-    isAprilFgPromoFormation(f)
-  );
-
-  const aprilPromoHref = aprilPromoFormation
-    ? `/formations/${aprilPromoFormation.id}`
-    : "/formations?type=formation_generale";
-
   return (
     <>
       {/* HERO – on ne touche pas */}
@@ -282,7 +272,6 @@ export default function HomePage() {
                               .map((line) => line.trim())
                               .find((line) => line.length > 0) ?? ""
                           : "";
-                      const isAprilPromo = isAprilFgPromoFormation(f);
                       const displayedPrice = getDisplayedFormationPrice(f);
                       const referencePrice = getReferenceFormationPrice(f);
 
@@ -335,11 +324,6 @@ export default function HomePage() {
                               </header>
 
                               <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px]">
-                                {isAprilPromo && (
-                                  <span className="rounded-full bg-rose-400/90 px-2 py-1 font-semibold uppercase tracking-wide text-slate-950">
-                                    Dernieres places
-                                  </span>
-                                )}
                                 <span className="rounded-full bg-white/90 px-2.5 py-1 font-semibold text-slate-900">
                                   {referencePrice && (
                                     <span className="mr-1 text-slate-500 line-through">
@@ -358,12 +342,6 @@ export default function HomePage() {
                                 {firstLine ||
                                   "Une formation BAFA centrée sur la pratique et la vie de colo."}
                               </p>
-                              {isAprilPromo && (
-                                <p className="mt-2 text-[11px] font-medium text-rose-100">
-                                  Aides + paiement en plusieurs fois: contacte-nous pour
-                                  un plan de financement rapide.
-                                </p>
-                              )}
                             </article>
                           </div>
                         </Link>
@@ -373,41 +351,6 @@ export default function HomePage() {
                 )}
               </div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* SECTION 1 : Présentation BAFA – reprise de la DA « infos pratiques » */}
-      <section className="border-t border-slate-200 bg-rose-50/60">
-        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-5 md:flex-row md:items-center md:justify-between md:px-6">
-          <div className="space-y-1">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-rose-700">
-              Session FG avril 2026
-            </p>
-            <h2 className="font-display text-xl font-semibold text-slate-900">
-              Dernieres places: 500 € au lieu de {APRIL_FG_PROMO.regularPrice} €
-            </h2>
-            <p className="text-sm text-slate-700">
-              Aides possibles + paiement en plusieurs fois. Contacte-nous et on
-              te guide rapidement sur le financement.
-            </p>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <Link
-              href={aprilPromoHref}
-              className="inline-flex items-center gap-2 rounded-full bg-rose-600 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-white shadow-sm transition hover:bg-rose-500 hover:cursor-pointer"
-            >
-              Voir la FG avril
-              <span className="text-sm">-&gt;</span>
-            </Link>
-            <button
-              type="button"
-              onClick={openContactWidget}
-              className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-white shadow-sm transition hover:bg-slate-800 hover:cursor-pointer"
-            >
-              Nous contacter pour les aides
-            </button>
           </div>
         </div>
       </section>
@@ -607,7 +550,6 @@ export default function HomePage() {
                         .map((line) => line.trim())
                         .find((line) => line.length > 0) ?? ""
                     : "";
-                const isAprilPromo = isAprilFgPromoFormation(f);
                 const displayedPrice = getDisplayedFormationPrice(f);
                 const referencePrice = getReferenceFormationPrice(f);
 
@@ -656,11 +598,6 @@ export default function HomePage() {
 
                         {/* Prix en pill à droite */}
                         <div className="flex flex-col items-end gap-1 text-xs">
-                          {isAprilPromo && (
-                            <span className="rounded-full bg-rose-100 px-2 py-1 font-semibold uppercase tracking-wide text-rose-700">
-                              Dernieres places
-                            </span>
-                          )}
                           <span className="rounded-full bg-sky-600 px-3 py-1 font-semibold text-white shadow-sm whitespace-nowrap">
                             {referencePrice && (
                               <span className="mr-1 text-sky-100 line-through">
@@ -683,13 +620,6 @@ export default function HomePage() {
                           "La description détaillée de cette formation arrive bientôt."}
                       </p>
 
-                      {/* Lien “voir les détails” */}
-                      {isAprilPromo && (
-                        <p className="mt-2 text-xs font-medium text-rose-700">
-                          Aides + paiement en plusieurs fois: contacte-nous,
-                          on te repond vite.
-                        </p>
-                      )}
                       <div className="mt-4 flex items-center justify-between text-[11px] text-slate-500">
                         <span className="inline-flex items-center gap-1">
                           <span className="h-1.5 w-1.5 rounded-full bg-sky-400 group-hover:bg-sky-500" />
