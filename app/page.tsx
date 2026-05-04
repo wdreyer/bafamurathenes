@@ -86,21 +86,21 @@ const TESTIMONIALS = [
   {
     name: "Jade",
     role: "Bilan · FG avril 2026",
-    photo: "/FGAVRIL2026/IMG_8293.JPG",
+    photo: "/optimized/FGAVRIL2026/IMG_8293.webp",
     quote: `Je mets un solide 10/10 à cette expérience. Je ne retiens de la formation que du positif car c'était bien de rencontrer de potentiels futur.e.s collègues dans l'animation. L'équipe encadrante a été géniale et le séjour n'aurait clairement pas été le même sans un seul de ces éléments, alors merci à tout le monde et big up à Zouzou le Zèbre. 
 - Jade. :)`,
   },
   {
     name: "Stagiaire",
     role: "Bilan · FG avril 2026",
-    photo: "/FGAVRIL2026/IMG_8451.JPG",
+    photo: "/optimized/FGAVRIL2026/IMG_8451.webp",
     quote:
       "C'était vraiment super, limite incroyable, donc je recommande à tout le monde de passer son BAFA avec Lorette, William et Martin à Murathènes !!!",
   },
   {
     name: "Stagiaire",
     role: "Bilan · FG avril 2026",
-    photo: "/FGAVRIL2026/PXL_20260413_135152634.jpg",
+    photo: "/optimized/FGAVRIL2026/PXL_20260413_135152634.webp",
     quote:
       "La formation a était vraiment super grace au formateur qui ont su faire preuves d’une trés grand bienveillance.",
   },
@@ -111,25 +111,25 @@ const PEDAGOGY = [
     num: "01",
     title: "On apprend en faisant.",
     text: "Jeux de rôles, mises en situation, analyses de pratiques, débats, animations. Pas de cours magistraux — le terrain dès le premier jour.",
-    image: "/FGAVRIL2026/IMG_8307.JPG",
+    image: "/optimized/FGAVRIL2026/IMG_8307.webp",
   },
   {
     num: "02",
     title: "Un contenu complet.",
     text: "Animation, vie quotidienne, mais aussi violences sexistes, handicap, neuroatypie, discrimination, responsabilité civile et pénale, réglementation — des bases jusqu'aux problématiques individuelles.",
-    image: "/FGAVRIL2026/PXL_20260413_095337635.MP.jpg",
+    image: "/optimized/FGAVRIL2026/PXL_20260413_095337635.MP.webp",
   },
   {
     num: "03",
     title: "Vie en collectivité 24/7.",
     text: "Veillées, dortoirs, repas partagés — ta formation en internat te prépare à vivre ce que tu vivras ensuite avec ton public.",
-    image: "/FGAVRIL2026/PXL_20260411_155613137.jpg",
+    image: "/optimized/FGAVRIL2026/PXL_20260411_155613137.webp",
   },
   {
     num: "04",
     title: "Au cœur du Cantal.",
     text: "Domaine de Gravières, Lanobre. Forêts, lac, immersion totale — loin de tout sauf de l'essentiel.",
-    image: "/FGAVRIL2026/IMG_8212.JPG",
+    image: "/optimized/FGAVRIL2026/IMG_8212.webp",
   },
 ];
 
@@ -239,8 +239,8 @@ export default function HomePage() {
     <div className="mura-page" style={{ color: INK, background: CREAM }}>
       <section style={{ position: "relative", minHeight: "86svh", overflow: "hidden", background: INK }}>
         <video
-          src="/FGAVRIL2026/hero.mp4"
-          poster="/FGAVRIL2026/IMG_8450.JPG"
+          src="/optimized/videos/home-hero.mp4"
+          poster="/optimized/FGAVRIL2026/IMG_8450.webp"
           autoPlay
           muted
           loop

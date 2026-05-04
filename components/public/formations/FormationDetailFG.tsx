@@ -31,12 +31,12 @@ type TransportOption = {
 };
 
 const FG_GALLERY = [
-  { src: "/FGAVRIL2026/IMG_8193.JPG", alt: "Jeu collectif en extérieur" },
-  { src: "/FGAVRIL2026/IMG_8287.JPG", alt: "Groupe de stagiaires au domaine de Gravières" },
-  { src: "/FGAVRIL2026/PXL_20260411_155613137.jpg", alt: "Temps de travail en salle" },
-  { src: "/FGAVRIL2026/PXL_20260413_095428299.MP.jpg", alt: "Mise en situation d'animation" },
-  { src: "/FGAVRIL2026/IMG_8400.JPG", alt: "Activité de plein air" },
-  { src: "/FGAVRIL2026/IMG_8450.JPG", alt: "Groupe en formation BAFA" },
+  { src: "/optimized/FGAVRIL2026/IMG_8193.webp", alt: "Jeu collectif en extérieur" },
+  { src: "/optimized/FGAVRIL2026/IMG_8287.webp", alt: "Groupe de stagiaires au domaine de Gravières" },
+  { src: "/optimized/FGAVRIL2026/PXL_20260411_155613137.webp", alt: "Temps de travail en salle" },
+  { src: "/optimized/FGAVRIL2026/PXL_20260413_095428299.MP.webp", alt: "Mise en situation d'animation" },
+  { src: "/optimized/FGAVRIL2026/IMG_8400.webp", alt: "Activité de plein air" },
+  { src: "/optimized/FGAVRIL2026/IMG_8450.webp", alt: "Groupe en formation BAFA" },
 ];
 
 const FG_TESTIMONIALS = [
@@ -130,7 +130,7 @@ export default function FormationDetailFG(props: {
         style={{
           backgroundColor: "#8f55bd",
           backgroundImage:
-            'linear-gradient(100deg, rgba(121, 43, 185, 0.44) 0%, rgba(121, 43, 185, 0.28) 48%, rgba(26, 21, 48, 0.18) 100%), linear-gradient(180deg, rgba(255, 248, 236, 0.12) 0%, rgba(26, 21, 48, 0.18) 100%), url("/FGAVRIL2026/IMG_8450.JPG")',
+            'linear-gradient(100deg, rgba(121, 43, 185, 0.44) 0%, rgba(121, 43, 185, 0.28) 48%, rgba(26, 21, 48, 0.18) 100%), linear-gradient(180deg, rgba(255, 248, 236, 0.12) 0%, rgba(26, 21, 48, 0.18) 100%), url("/optimized/FGAVRIL2026/IMG_8450.webp")',
           backgroundSize: "cover",
           backgroundPosition: "center",
           color: CREAM,
@@ -199,17 +199,17 @@ export default function FormationDetailFG(props: {
             <div className="relative hidden md:block" style={{ minHeight: 340 }}>
               <div style={{ border: `3px solid ${INK}`, borderRadius: 10, boxShadow: `4px 4px 0 ${INK}`, transform: "rotate(1deg)", overflow: "hidden" }}>
                 <div style={{ position: "relative", width: "100%", aspectRatio: "4/3" }}>
-                  <Image src="/FGAVRIL2026/IMG_8193.JPG" alt="Formation BAFA Murathènes" fill sizes="(min-width: 768px) 50vw, 100vw" className="object-cover" priority />
+                  <Image src="/optimized/FGAVRIL2026/IMG_8193.webp" alt="Formation BAFA Murathènes" fill sizes="(min-width: 768px) 50vw, 100vw" className="object-cover" priority />
                 </div>
               </div>
               <div style={{ position: "absolute", bottom: -40, left: -30, width: 180, transform: "rotate(-3deg)", border: `3px solid ${INK}`, borderRadius: 8, boxShadow: `2px 2px 0 ${INK}`, overflow: "hidden" }}>
                 <div style={{ position: "relative", width: "100%", aspectRatio: "1/1" }}>
-                  <Image src="/FGAVRIL2026/IMG_8308.JPG" alt="Formation BAFA" fill sizes="180px" className="object-cover" />
+                  <Image src="/optimized/FGAVRIL2026/IMG_8308.webp" alt="Formation BAFA" fill sizes="180px" className="object-cover" />
                 </div>
               </div>
               <div style={{ position: "absolute", top: -28, right: -20, width: 160, transform: "rotate(2.5deg)", border: `3px solid ${INK}`, borderRadius: 8, boxShadow: `2px 2px 0 ${INK}`, overflow: "hidden" }}>
                 <div style={{ position: "relative", width: "100%", aspectRatio: "1/1" }}>
-                  <Image src="/FGAVRIL2026/IMG_8445.JPG" alt="Formation BAFA" fill sizes="160px" className="object-cover" />
+                  <Image src="/optimized/FGAVRIL2026/IMG_8445.webp" alt="Formation BAFA" fill sizes="160px" className="object-cover" />
                 </div>
               </div>
             </div>
@@ -217,7 +217,7 @@ export default function FormationDetailFG(props: {
             {/* Mobile photo */}
             <div className="md:hidden" style={{ border: `3px solid ${INK}`, borderRadius: 10, overflow: "hidden" }}>
               <div style={{ position: "relative", width: "100%", aspectRatio: "16/9" }}>
-                <Image src="/FGAVRIL2026/IMG_8193.JPG" alt="Formation BAFA Murathènes" fill sizes="100vw" className="object-cover" />
+                <Image src="/optimized/FGAVRIL2026/IMG_8193.webp" alt="Formation BAFA Murathènes" fill sizes="100vw" className="object-cover" />
               </div>
             </div>
           </div>

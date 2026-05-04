@@ -28,12 +28,12 @@ type TransportOption = {
 };
 
 const APPRO_GALLERY = [
-  { src: "/FGAVRIL2026/PXL_20260413_134859475.MP.jpg", alt: "Mise en situation de séjour à l'étranger" },
-  { src: "/FGAVRIL2026/PXL_20260413_135002499.MP.jpg", alt: "Jeu de rôle en extérieur" },
-  { src: "/FGAVRIL2026/PXL_20260413_135135129.MP.jpg", alt: "Groupe en situation d'animation" },
-  { src: "/FGAVRIL2026/PXL_20260413_135146909.MP.jpg", alt: "Débrief collectif en extérieur" },
-  { src: "/FGAVRIL2026/IMG_8430.JPG", alt: "Animation préparée par les stagiaires" },
-  { src: "/FGAVRIL2026/IMG_8453.JPG", alt: "Temps collectif au domaine" },
+  { src: "/optimized/FGAVRIL2026/PXL_20260413_134859475.MP.webp", alt: "Mise en situation de séjour à l'étranger" },
+  { src: "/optimized/FGAVRIL2026/PXL_20260413_135002499.MP.webp", alt: "Jeu de rôle en extérieur" },
+  { src: "/optimized/FGAVRIL2026/PXL_20260413_135135129.MP.webp", alt: "Groupe en situation d'animation" },
+  { src: "/optimized/FGAVRIL2026/PXL_20260413_135146909.MP.webp", alt: "Débrief collectif en extérieur" },
+  { src: "/optimized/FGAVRIL2026/IMG_8430.webp", alt: "Animation préparée par les stagiaires" },
+  { src: "/optimized/FGAVRIL2026/IMG_8453.webp", alt: "Temps collectif au domaine" },
 ];
 
 const APPRO_TESTIMONIALS = [
@@ -136,7 +136,7 @@ export default function FormationDetailAppro(props: {
         style={{
           backgroundColor: YELLOW,
           backgroundImage:
-            'linear-gradient(105deg, rgba(245, 239, 114, 0.78) 0%, rgba(255, 248, 236, 0.62) 48%, rgba(121, 43, 185, 0.22) 100%), linear-gradient(180deg, rgba(255, 248, 236, 0.16) 0%, rgba(245, 239, 114, 0.68) 100%), url("/FGAVRIL2026/PXL_20260413_134859475.MP.jpg")',
+            'linear-gradient(105deg, rgba(245, 239, 114, 0.78) 0%, rgba(255, 248, 236, 0.62) 48%, rgba(121, 43, 185, 0.22) 100%), linear-gradient(180deg, rgba(255, 248, 236, 0.16) 0%, rgba(245, 239, 114, 0.68) 100%), url("/optimized/FGAVRIL2026/PXL_20260413_134859475.MP.webp")',
           backgroundSize: "cover",
           backgroundPosition: "center",
           color: INK,
@@ -214,7 +214,7 @@ export default function FormationDetailAppro(props: {
                 </div>
                 <div style={{ overflow: "hidden", borderRadius: 6 }}>
                   <div style={{ position: "relative", width: "100%", aspectRatio: "4/3" }}>
-                    <Image src="/FGAVRIL2026/PXL_20260413_134859475.MP.jpg" alt="Étape 3 approfondissement — séjour international" fill sizes="(min-width: 768px) 50vw, 100vw" className="object-cover" priority />
+                    <Image src="/optimized/FGAVRIL2026/PXL_20260413_134859475.MP.webp" alt="Étape 3 approfondissement — séjour international" fill sizes="(min-width: 768px) 50vw, 100vw" className="object-cover" priority />
                   </div>
                 </div>
                 <div style={{ marginTop: 10, padding: 10, background: PAPER, borderRadius: 6, border: `1px solid ${INK}` }}>
@@ -225,7 +225,7 @@ export default function FormationDetailAppro(props: {
               {/* Small overlapping photo */}
               <div style={{ position: "absolute", bottom: -36, left: -28, width: 140, transform: "rotate(-3.5deg)", border: `3px solid ${INK}`, borderRadius: 6, boxShadow: `2px 2px 0 ${INK}`, overflow: "hidden" }}>
                 <div style={{ position: "relative", width: "100%", aspectRatio: "1/1" }}>
-                  <Image src="/FGAVRIL2026/IMG_8453.JPG" alt="Étape 3 approfondissement" fill sizes="140px" className="object-cover" />
+                  <Image src="/optimized/FGAVRIL2026/IMG_8453.webp" alt="Étape 3 approfondissement" fill sizes="140px" className="object-cover" />
                 </div>
               </div>
               {/* "en français" badge */}
@@ -238,7 +238,7 @@ export default function FormationDetailAppro(props: {
             {/* Mobile photo */}
             <div className="md:hidden" style={{ border: `3px solid ${INK}`, borderRadius: 10, overflow: "hidden" }}>
               <div style={{ position: "relative", width: "100%", aspectRatio: "16/9" }}>
-                <Image src="/FGAVRIL2026/PXL_20260413_134859475.MP.jpg" alt="Étape 3 approfondissement Murathènes" fill sizes="100vw" className="object-cover" />
+                <Image src="/optimized/FGAVRIL2026/PXL_20260413_134859475.MP.webp" alt="Étape 3 approfondissement Murathènes" fill sizes="100vw" className="object-cover" />
               </div>
             </div>
           </div>

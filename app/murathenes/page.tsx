@@ -91,7 +91,7 @@ function MurathenesContent() {
       {/* ═══ HERO ═══ */}
       <section style={{ position: "relative", overflow: "hidden" }}>
         <div style={{ position: "relative", minHeight: "60vh" }}>
-          <Image src="/MT/mew24.jpg" alt="Murathènes — Qui sommes-nous" fill priority className="object-cover object-center" />
+          <Image src="/optimized/MT/mew24.webp" alt="Murathènes — Qui sommes-nous" fill priority className="object-cover object-center" />
           <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg,rgba(26,21,48,.4) 0%,rgba(26,21,48,.88) 100%)" }} />
           <div style={{ position: "relative", zIndex: 10, maxWidth: 1100, margin: "0 auto", padding: "80px 24px 100px", display: "flex", flexDirection: "column", justifyContent: "flex-end", minHeight: "60vh" }} className="md:px-12">
             <div className="space-y-4">

@@ -97,12 +97,12 @@ export default function LieuTransportTab() {
   const mapsLink = useMemo(() => "https://www.google.com/maps/search/?api=1&query=Domaine%20de%20Gravi%C3%A8res%20Lanobre", []);
 
   const pix = useMemo(() => ({
-    domaine: "/PIX/2.jpg",
-    cantal: "/PIX/3.jpg",
-    cuisine: "/PIX/cuisine.jpg",
-    salle: "/PIX/50.jpeg",
-    dehors: "/PIX/60.JPG",
-    domaine1: "/infos.jpg",
+    domaine: "/optimized/PIX/2.webp",
+    cantal: "/optimized/PIX/3.webp",
+    cuisine: "/optimized/PIX/cuisine.webp",
+    salle: "/optimized/PIX/50.webp",
+    dehors: "/optimized/PIX/60.webp",
+    domaine1: "/optimized/infos.webp",
   }), []);
 
   const carouselImages = useMemo(() => [
@@ -145,7 +145,16 @@ export default function LieuTransportTab() {
           </div>
 
           <div style={{ border: `2px solid ${INK}`, borderRadius: 18, overflow: "hidden", background: INK }}>
-            <video src="/Video.mp4" autoPlay muted loop playsInline className="h-full max-h-56 w-full object-cover md:max-h-[380px]" />
+            <video
+              src="/optimized/videos/lieu-transport.mp4"
+              poster="/optimized/PIX/2.webp"
+              autoPlay
+              muted
+              loop
+              playsInline
+              preload="metadata"
+              className="h-full max-h-56 w-full object-cover md:max-h-[380px]"
+            />
           </div>
         </div>
       </header>

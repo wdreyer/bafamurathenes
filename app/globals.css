@@ -336,14 +336,14 @@ select:focus-visible {
   background-image:
     linear-gradient(100deg, rgba(121, 43, 185, 0.44) 0%, rgba(121, 43, 185, 0.28) 48%, rgba(26, 21, 48, 0.18) 100%),
     linear-gradient(180deg, rgba(255, 248, 236, 0.12) 0%, rgba(26, 21, 48, 0.18) 100%),
-    url("/FGAVRIL2026/IMG_8450.JPG");
+    url("/optimized/FGAVRIL2026/IMG_8450.webp");
 }
 
 .formation-detail-hero-appro {
   background-image:
     linear-gradient(105deg, rgba(245, 239, 114, 0.78) 0%, rgba(255, 248, 236, 0.62) 48%, rgba(121, 43, 185, 0.22) 100%),
     linear-gradient(180deg, rgba(255, 248, 236, 0.16) 0%, rgba(245, 239, 114, 0.68) 100%),
-    url("/FGAVRIL2026/PXL_20260413_134859475.MP.jpg");
+    url("/optimized/FGAVRIL2026/PXL_20260413_134859475.MP.webp");
 }
 
 .formation-detail-hero::after {

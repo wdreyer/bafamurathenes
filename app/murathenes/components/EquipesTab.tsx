@@ -111,7 +111,7 @@ export default function EquipesTab() {
               tone="violet"
               role="Coordination"
               name="Lorette Kuc"
-              photoSrc="/lorette10.jpeg"
+              photoSrc="/optimized/lorette10.webp"
               photoAlt="Portrait de Lorette Kuc"
               photoClassName="object-[10%_5%]"
               photoStyle={{ filter: "brightness(1.14) contrast(1.08) saturate(1.06)" }}

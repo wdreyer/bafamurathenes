@@ -26,7 +26,7 @@ export default function BafaPage() {
           HERO
       ═══════════════════════════════════════ */}
       <section style={{ position: "relative", background: INK, minHeight: "60vh", overflow: "hidden" }}>
-        <Image src="/FGAVRIL2026/IMG_8209.JPG" alt="BAFA Murathènes" fill priority className="object-cover object-center" />
+        <Image src="/optimized/FGAVRIL2026/IMG_8209.webp" alt="BAFA Murathènes" fill priority className="object-cover object-center" />
         <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg,rgba(26,21,48,.4) 0%,rgba(26,21,48,.88) 100%)" }} />
         <div style={{ position: "relative", zIndex: 2, maxWidth: 1100, margin: "0 auto", padding: "80px 24px 96px" }} className="md:px-12">
           <div className="mura-mono" style={{ fontSize: 11, letterSpacing: 2.5, color: YELLOW, marginBottom: 24 }}>LE BAFA, C&apos;EST QUOI ?</div>
@@ -83,17 +83,17 @@ export default function BafaPage() {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gridTemplateRows: "auto auto", gap: 12 }}>
             <div style={{ gridColumn: "1/3", border: `2px solid ${INK}`, borderRadius: 16, overflow: "hidden", boxShadow: `3px 3px 0 ${VIOLET}` }}>
               <div style={{ position: "relative", width: "100%", aspectRatio: "16/9" }}>
-                <Image src="/FGAVRIL2026/IMG_8287.JPG" alt="Groupe de stagiaires BAFA au soleil" fill className="object-cover" />
+                <Image src="/optimized/FGAVRIL2026/IMG_8287.webp" alt="Groupe de stagiaires BAFA au soleil" fill className="object-cover" />
               </div>
             </div>
             <div style={{ border: `2px solid ${INK}`, borderRadius: 16, overflow: "hidden", transform: "rotate(-1deg)" }}>
               <div style={{ position: "relative", width: "100%", aspectRatio: "1/1" }}>
-                <Image src="/FGAVRIL2026/IMG_8325.JPG" alt="Stagiaire BAFA en activité extérieure" fill className="object-cover" />
+                <Image src="/optimized/FGAVRIL2026/IMG_8325.webp" alt="Stagiaire BAFA en activité extérieure" fill className="object-cover" />
               </div>
             </div>
             <div style={{ border: `2px solid ${INK}`, borderRadius: 16, overflow: "hidden", transform: "rotate(1deg)" }}>
               <div style={{ position: "relative", width: "100%", aspectRatio: "1/1" }}>
-                <Image src="/FGAVRIL2026/IMG_8451.JPG" alt="Portraits de stagiaires BAFA en extérieur" fill className="object-cover" />
+                <Image src="/optimized/FGAVRIL2026/IMG_8451.webp" alt="Portraits de stagiaires BAFA en extérieur" fill className="object-cover" />
               </div>
             </div>
           </div>
@@ -212,7 +212,7 @@ export default function BafaPage() {
             <div>
               <div style={{ border: `2px solid ${INK}`, borderRadius: 20, overflow: "hidden", boxShadow: `4px 4px 0 ${YELLOW}` }}>
                 <div style={{ position: "relative", width: "100%", aspectRatio: "3/4" }}>
-                  <Image src="/FGAVRIL2026/IMG_8308.JPG" alt="Portrait de stagiaire BAFA Murathènes" fill className="object-cover" />
+                  <Image src="/optimized/FGAVRIL2026/IMG_8308.webp" alt="Portrait de stagiaire BAFA Murathènes" fill className="object-cover" />
                 </div>
               </div>
             </div>
