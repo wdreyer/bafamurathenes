@@ -1,7 +1,7 @@
 // app/layout.tsx
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { Poppins, Nunito, Fraunces, Caveat, JetBrains_Mono } from "next/font/google";
+import { Fraunces, Caveat, JetBrains_Mono } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import Header from "@/components/Header";
@@ -9,17 +9,6 @@ import Footer from "@/components/Footer";
 import ContactWidget from "@/components/ContactWidget";
 import ScrollHint from "@/components/ScrollHint";
 import { getSiteUrl } from "@/lib/siteUrl";
-
-const poppins = Poppins({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-});
-
-const nunito = Nunito({
-  subsets: ["latin"],
-  weight: ["500", "600", "700"],
-  variable: "--font-display",
-});
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -151,16 +140,16 @@ export default function RootLayout({
   return (
     <html
       lang="fr"
-      className={`${geistSans.variable} ${geistMono.variable} ${nunito.variable} ${fraunces.variable} ${caveat.variable} ${jetbrainsMono.variable}`}
+      className={`${geistSans.variable} ${geistMono.variable} ${fraunces.variable} ${caveat.variable} ${jetbrainsMono.variable}`}
     >
       <body
-        className={`${poppins.className} antialiased min-h-screen flex flex-col bg-[#fefcf5] text-[#1a1530]`}
+        className="antialiased min-h-screen flex flex-col bg-[#fefcf5] text-[#1a1530]"
       >
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=AW-17976361031"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
         />
-        <Script id="google-ads-gtag" strategy="afterInteractive">
+        <Script id="google-ads-gtag" strategy="lazyOnload">
           {`
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
@@ -170,7 +159,7 @@ export default function RootLayout({
         </Script>
         <Script
           src="https://scripts.simpleanalyticscdn.com/latest.js"
-          strategy="afterInteractive"
+          strategy="lazyOnload"
         />
         <Script
           id="structured-data"

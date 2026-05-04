@@ -10,8 +10,6 @@ import {
   PhoneCall,
   PlayCircle,
 } from "lucide-react";
-import { db } from "@/lib/firebase";
-import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
 import type { Formation } from "@/lib/types";
 import { getDisplayedFormationPrice, getReferenceFormationPrice, MIN_PRICE_AFTER_AIDS } from "@/lib/offers";
 import { getFormationPublicHref } from "@/lib/formationSlugs";
@@ -189,26 +187,53 @@ const openContact = (mode: "message" | "callback" = "callback") => {
 
 export default function HomePage() {
   const [formations, setFormations] = useState<Formation[]>([]);
+  const [showHeroVideo, setShowHeroVideo] = useState(false);
 
   useEffect(() => {
-    const q = query(collection(db, "formations"), orderBy("startDate", "asc"));
-    const unsub = onSnapshot(q, (snap) => {
-      setFormations(
-        snap.docs.map((doc) => {
-          const data = doc.data() as Omit<Formation, "id" | "startDate" | "endDate"> & {
-            startDate?: unknown;
-            endDate?: unknown;
-          };
-          return {
-            id: doc.id,
-            ...data,
-            startDate: normalizeDate(data.startDate),
-            endDate: normalizeDate(data.endDate),
-          } as Formation;
-        }),
-      );
-    });
-    return () => unsub();
+    let unsubscribe: (() => void) | undefined;
+    let cancelled = false;
+
+    const loadFormations = async () => {
+      const [{ db }, firestore] = await Promise.all([
+        import("@/lib/firebase"),
+        import("firebase/firestore"),
+      ]);
+      if (cancelled) return;
+
+      const q = firestore.query(firestore.collection(db, "formations"), firestore.orderBy("startDate", "asc"));
+      unsubscribe = firestore.onSnapshot(q, (snap) => {
+        setFormations(
+          snap.docs.map((doc) => {
+            const data = doc.data() as Omit<Formation, "id" | "startDate" | "endDate"> & {
+              startDate?: unknown;
+              endDate?: unknown;
+            };
+            return {
+              id: doc.id,
+              ...data,
+              startDate: normalizeDate(data.startDate),
+              endDate: normalizeDate(data.endDate),
+            } as Formation;
+          }),
+        );
+      });
+    };
+
+    const timeout = window.setTimeout(loadFormations, 1800);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timeout);
+      unsubscribe?.();
+    };
+  }, []);
+
+  useEffect(() => {
+    const media = window.matchMedia("(min-width: 768px)");
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+    if (!media.matches || reducedMotion.matches) return;
+
+    const timeout = window.setTimeout(() => setShowHeroVideo(true), 2600);
+    return () => window.clearTimeout(timeout);
   }, []);
 
   const today = new Date();
@@ -238,23 +263,35 @@ export default function HomePage() {
   return (
     <div className="mura-page" style={{ color: INK, background: CREAM }}>
       <section style={{ position: "relative", minHeight: "86svh", overflow: "hidden", background: INK }}>
-        <video
-          src="/optimized/videos/home-hero.mp4"
-          poster="/optimized/FGAVRIL2026/IMG_8450.webp"
-          autoPlay
-          muted
-          loop
-          playsInline
-          preload="metadata"
+        <Image
+          src="/optimized/FGAVRIL2026/home-hero-poster.webp"
+          alt=""
+          fill
+          priority
+          fetchPriority="high"
+          sizes="100vw"
+          className="object-cover"
           aria-hidden="true"
-          style={{
-            position: "absolute",
-            inset: 0,
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-          }}
         />
+        {showHeroVideo && (
+          <video
+            src="/optimized/videos/home-hero.mp4"
+            poster="/optimized/FGAVRIL2026/home-hero-poster.webp"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="none"
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+            }}
+          />
+        )}
         <div
           style={{
             position: "absolute",

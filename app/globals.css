@@ -52,10 +52,6 @@ select:focus-visible {
 }
 
 /* Pour utiliser la police fun facilement dans la page */
-.font-display {
-  font-family: var(--font-display);
-}
-
 /* Design system V6 — polices éditoriales */
 .ed { font-family: var(--font-fraunces), Georgia, serif; }
 .hand { font-family: var(--font-caveat), cursive; font-weight: 600; }
