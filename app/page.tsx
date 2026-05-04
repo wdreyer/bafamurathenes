@@ -86,7 +86,7 @@ const TESTIMONIALS = [
   {
     name: "Jade",
     role: "Bilan · FG avril 2026",
-    photo: "/FGAVRIL2026/IMG_8297.JPG",
+    photo: "/FGAVRIL2026/IMG_8293.JPG",
     quote: `Je mets un solide 10/10 à cette expérience. Je ne retiens de la formation que du positif car c'était bien de rencontrer de potentiels futur.e.s collègues dans l'animation. L'équipe encadrante a été géniale et le séjour n'aurait clairement pas été le même sans un seul de ces éléments, alors merci à tout le monde et big up à Zouzou le Zèbre. 
 - Jade. :)`,
   },
