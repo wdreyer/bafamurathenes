@@ -20,7 +20,7 @@ export default function EditFormationPage() {
       const ref = doc(db, "formations", id);
       const snap = await getDoc(ref);
       if (snap.exists()) {
-        setFormation({ id: snap.id, ...(snap.data() as any) } as Formation);
+        setFormation({ id: snap.id, ...(snap.data() as Omit<Formation, "id">) });
       }
       setLoading(false);
     };

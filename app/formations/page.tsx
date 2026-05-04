@@ -2,7 +2,7 @@ import { FormationCalendar } from "@/components/public/formations/FormationCalen
 
 export default function FormationsPage() {
   return (
-    <main className="bg-slate-50 min-h-screen">
+    <main className="min-h-screen bg-[#fefcf5]">
       <FormationCalendar />
     </main>
   );

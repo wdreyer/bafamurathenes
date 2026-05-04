@@ -3,553 +3,272 @@
 import Image from "next/image";
 import Link from "next/link";
 
+const INK = "#1a1530";
+const PAPER = "#fff8ec";
+const CREAM = "#fefcf5";
+const VIOLET = "#792BB9";
+const VIOLET_SOFT = "#f0e8f8";
+const YELLOW = "#F5EF72";
+const PHONE_DISPLAY = "01 84 21 05 48";
+const PHONE_TEL = "0184210548";
+
+const openContact = (mode: "message" | "callback" = "callback") => {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("contact-widget:open", { detail: { mode } }));
+  }
+};
+
 export default function BafaPage() {
   return (
-    <main className="min-h-screen bg-gradient-to-b from-rose-50/70 via-amber-50/70 to-sky-50/70">
-      {" "}
-      {/* HERO / BANNIÈRE (PHOTO EN LONGUEUR) */}
-      <section className="relative h-[42vh] w-full md:h-[44vh]">
-        
-        {/* TODO PHOTO: bannière en longueur */}
-        <div className="absolute inset-0">
-          <Image
-            src="/pagebafa10.jpg" // ← remplace par ta photo bannière
-            alt="Murathènes — BAFA"
-            fill
-            priority
-            className="object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-br from-slate-950/85 via-slate-900/60 to-slate-900/15" />
-        </div>
+    <div className="mura-page" style={{ color: INK, background: CREAM }}>
 
-        <div className="relative mx-auto flex h-full max-w-6xl flex-col justify-center px-4 md:px-6">
-          <div className="inline-flex items-center gap-2 px-3 py-1 text-[10px] font-medium uppercase tracking-[0.18em] text-slate-100 md:text-xs">
-            Le BAFA, c’est quoi ?
+      {/* ═══════════════════════════════════════
+          HERO
+      ═══════════════════════════════════════ */}
+      <section style={{ position: "relative", background: INK, minHeight: "60vh", overflow: "hidden" }}>
+        <Image src="/FGAVRIL2026/IMG_8209.JPG" alt="BAFA Murathènes" fill priority className="object-cover object-center" />
+        <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg,rgba(26,21,48,.4) 0%,rgba(26,21,48,.88) 100%)" }} />
+        <div style={{ position: "relative", zIndex: 2, maxWidth: 1100, margin: "0 auto", padding: "80px 24px 96px" }} className="md:px-12">
+          <div className="mura-mono" style={{ fontSize: 11, letterSpacing: 2.5, color: YELLOW, marginBottom: 24 }}>LE BAFA, C&apos;EST QUOI ?</div>
+          <h1 style={{ fontSize: 100, fontWeight: 700, letterSpacing: -5, lineHeight: .9, margin: 0, color: CREAM }} className="text-5xl md:text-[100px]">
+            Votre premier pas dans{" "}
+            <span className="ed" style={{ fontStyle: "italic", color: YELLOW }}>l&apos;animation.</span>
+          </h1>
+          <p style={{ fontSize: 18, marginTop: 28, maxWidth: 680, opacity: .9, lineHeight: 1.55, color: CREAM }}>
+            Le Brevet d&apos;Aptitude aux Fonctions d&apos;Animateur·ice. Pour encadrer enfants et ados en colos, centres de loisirs, périscolaire. Avec Murathènes : pédagogie active, engagement, bienveillance.
+          </p>
+          <div style={{ display: "flex", gap: 12, marginTop: 28, flexWrap: "wrap" }}>
+            <Link href="/formations" className="mura-pill mura-cta-secondary">
+              Voir les formations
+            </Link>
+            <a href={`tel:${PHONE_TEL}`} className="mura-pill" style={{ background: CREAM, color: INK, cursor: "pointer", textDecoration: "none" }} aria-label={`Appeler Murathènes au ${PHONE_DISPLAY}`}>
+              {PHONE_DISPLAY}
+            </a>
           </div>
-
-          <div className="mt-3 max-w-2xl space-y-2">
-            <h1 className="font-display text-2xl font-semibold leading-snug text-white md:text-3xl">
-              Le BAFA, ton premier pas dans l’animation
-            </h1>
-            <p className="text-[13px] text-slate-100/85 md:text-sm">
-              Le BAFA te permet d&apos;encadrer des enfants et adolescents en
-              séjours de vacances (colos), centres de loisirs, et périscolaire.
-              Avec Murathènes, tu te formes dans un cadre d’animation concret,
-              engagé et bienveillant.
-            </p>
-          </div>
-
-          <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-medium text-slate-100/90 md:text-xs">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-black/40 px-3 py-1 ring-1 ring-white/10">
-              <span className="text-sm">🎓</span>
-              Formation Jeunesse &amp; Sports
-            </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-black/40 px-3 py-1 ring-1 ring-white/10">
-              <span className="text-sm">✨</span>3 grandes étapes de formation
-            </span>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-black/40 px-3 py-1 ring-1 ring-white/10">
-              <span className="text-sm">📍</span>
-              Cantal – Région AURA
-            </span>
+          <div style={{ display: "flex", gap: 8, marginTop: 24, flexWrap: "wrap" }}>
+            {["🎓 Formation Jeunesse & Sports","✨ 3 grandes étapes","📍 Cantal – Région AURA"].map((t) => (
+              <span key={t} className="mura-mono" style={{ background: "rgba(255,255,255,0.12)", color: CREAM, padding: "7px 14px", borderRadius: 999, fontSize: 11, letterSpacing: 1, border: "1px solid rgba(255,255,255,0.2)" }}>{t}</span>
+            ))}
           </div>
         </div>
       </section>
-      {/* LE BAFA EN QUELQUES MOTS */}
-      <section className="border-t border-slate-200 bg-transparent">
-        <div className="mx-auto flex max-w-6xl flex-col gap-10 px-4 py-12 md:flex-row md:items-start md:justify-between md:px-6">
-          <div className="max-w-xl space-y-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-              Le BAFA en quelques mots
-            </p>
 
-            <h2 className="font-display text-2xl font-semibold text-slate-900 md:text-3xl">
-              Une formation pour encadrer enfants et ados
+      {/* ═══════════════════════════════════════
+          LE BAFA EN QUELQUES MOTS
+      ═══════════════════════════════════════ */}
+      <section style={{ background: CREAM, borderBottom: `1.5px solid ${INK}`, padding: "80px 24px" }} className="md:px-12">
+        <div style={{ maxWidth: 1280, margin: "0 auto", display: "grid", gap: 56 }} className="grid-cols-1 md:grid-cols-2 md:items-start">
+          <div>
+            <div className="mura-mono" style={{ fontSize: 11, letterSpacing: 2.5, color: VIOLET, fontWeight: 700, marginBottom: 14 }}>LE BAFA EN QUELQUES MOTS</div>
+            <h2 style={{ fontSize: 52, fontWeight: 700, letterSpacing: -2, lineHeight: 1, margin: "0 0 28px", color: INK }} className="text-3xl md:text-[52px]">
+              Une formation pour{" "}
+              <span className="ed" style={{ fontStyle: "italic", color: VIOLET }}>encadrer</span>{" "}
+              enfants et ados.
             </h2>
-
-            <p className="text-base text-slate-700">
-              Le{" "}
-              <span className="font-medium">
-                Brevet d&apos;Aptitude aux Fonctions d&apos;Animateur·ice
-              </span>{" "}
-              te permet d&apos;encadrer, à titre occasionnel, des groupes
-              d&apos;enfants et d&apos;adolescents en centres de loisirs,
-              séjours de vacances, camps, périscolaire…
+            <p style={{ fontSize: 16, lineHeight: 1.65, color: INK, opacity: .85, marginBottom: 16 }}>
+              Le Brevet d&apos;Aptitude aux Fonctions d&apos;Animateur·ice te permet d&apos;encadrer, à titre occasionnel, des groupes d&apos;enfants et d&apos;adolescents en centres de loisirs, séjours de vacances, camps, périscolaire…
             </p>
-
-            <p className="text-base text-slate-700">
-              Avec le BAFA, tu donnes vie au collectif : tu construis des
-              projets avec et pour les jeunes, tu crées des souvenirs
-              inoubliables, des moments de vie exceptionnels, en toute sécurité.
+            <p style={{ fontSize: 16, lineHeight: 1.65, color: INK, opacity: .85, marginBottom: 16 }}>
+              Avec le BAFA, tu donnes vie au collectif : tu construis des projets <strong>avec</strong> et <strong>pour</strong> les jeunes. Tu crées des souvenirs inoubliables, des moments de vie exceptionnels, en toute sécurité.
             </p>
-
-            <p className="text-base text-slate-700">
-              Le BAFA, c’est aussi le travail en équipe, la vie en collectivité
-              et la gestion de groupe.
+            <p style={{ fontSize: 16, lineHeight: 1.65, color: INK, opacity: .85, marginBottom: 24 }}>
+              C&apos;est aussi le travail en équipe, la vie en collectivité et la gestion de groupe.
             </p>
-
-            {/* ✅ SUPPRIMÉ: les petites cases “Dès 16 ans / 3 étapes / Vie de séjour” */}
+            <div style={{ display: "inline-flex", alignItems: "center", gap: 10, background: YELLOW, borderRadius: 999, padding: "12px 20px", border: `2px solid ${INK}`, transform: "rotate(-1deg)" }}>
+              <span style={{ fontSize: 20 }}>🎓</span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: INK }}>Inscription dès 16 ans révolus.</span>
+            </div>
           </div>
 
-          {/* PHOTOS */}
-          <div className="flex w-full max-w-md flex-col gap-4 text-sm text-slate-700">
-            {/* TODO PHOTO: grande photo */}
-            <div className="relative h-48 w-full overflow-hidden rounded-2xl bg-slate-200">
-              <Image
-                src="/bafa30.jpg"
-                alt="Photo formation BAFA Murathènes"
-                fill
-                className="object-cover"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              {/* TODO PHOTO */}
-              <div className="relative h-28 overflow-hidden rounded-2xl bg-slate-200">
-                <Image
-                  src="/bafa1.jpg"
-                  alt="Photo formation BAFA Murathènes"
-                  fill
-                  className="object-cover"
-                />
-              </div>
-              {/* TODO PHOTO */}
-              <div className="relative h-28 overflow-hidden rounded-2xl bg-slate-200">
-                <Image
-                  src="/bafa40.jpeg"
-                  alt="Photo formation BAFA Murathènes"
-                  fill
-                  className="object-cover"
-                />
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gridTemplateRows: "auto auto", gap: 12 }}>
+            <div style={{ gridColumn: "1/3", border: `2px solid ${INK}`, borderRadius: 16, overflow: "hidden", boxShadow: `3px 3px 0 ${VIOLET}` }}>
+              <div style={{ position: "relative", width: "100%", aspectRatio: "16/9" }}>
+                <Image src="/FGAVRIL2026/IMG_8287.JPG" alt="Groupe de stagiaires BAFA au soleil" fill className="object-cover" />
               </div>
             </div>
-
-            <p className="text-xs text-slate-700">
-              <span className="font-medium">
-                Tu peux t’inscrire à la formation générale dès tes 16 ans
-                révolus.
-              </span>
-            </p>
+            <div style={{ border: `2px solid ${INK}`, borderRadius: 16, overflow: "hidden", transform: "rotate(-1deg)" }}>
+              <div style={{ position: "relative", width: "100%", aspectRatio: "1/1" }}>
+                <Image src="/FGAVRIL2026/IMG_8325.JPG" alt="Stagiaire BAFA en activité extérieure" fill className="object-cover" />
+              </div>
+            </div>
+            <div style={{ border: `2px solid ${INK}`, borderRadius: 16, overflow: "hidden", transform: "rotate(1deg)" }}>
+              <div style={{ position: "relative", width: "100%", aspectRatio: "1/1" }}>
+                <Image src="/FGAVRIL2026/IMG_8451.JPG" alt="Portraits de stagiaires BAFA en extérieur" fill className="object-cover" />
+              </div>
+            </div>
           </div>
         </div>
       </section>
-      {/* LES 3 ÉTAPES */}
-      <section className="border-t border-slate-200 bg-transparent">
-        {" "}
-        <div className="mx-auto max-w-6xl px-4 py-12 md:px-6">
-          <header className="mb-8 space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-              Les 3 étapes du BAFA
-            </p>
 
-            <h2 className="font-display text-2xl font-semibold text-slate-900 md:text-3xl">
-              Une formation complète, étape par étape
-            </h2>
-
-            <p className="max-w-3xl text-base text-slate-700">
-              Pour obtenir ton BAFA, tu passes par trois grandes phases.
-              Murathènes te propose la formation générale et l’approfondissement
-              “Séjours à l’étranger | Echanges de jeunes”. Tu peux également
-              effectuer ton stage pratique avec Murathènes ou ses partenaires.
-              Un accompagnement du début à la fin, et même au-delà.
-            </p>
-          </header>
-
-          <div className="grid gap-5 md:grid-cols-3 items-stretch">
-            {/* FORMATION GENERALE */}
-            <article className="relative flex h-full flex-col overflow-hidden rounded-3xl bg-white/95 p-5 shadow-sm ring-1 ring-sky-100">
-              <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-sky-50 via-white to-white opacity-95" />
-
-              <div className="relative">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-100 text-sky-900 ring-1 ring-sky-200">
-                    <span className="text-xl font-black">1</span>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-sky-800">
-                      FORMATION GENERALE
-                    </p>
-                  </div>
+      {/* ═══════════════════════════════════════
+          LES 3 ÉTAPES
+      ═══════════════════════════════════════ */}
+      <section style={{ background: VIOLET_SOFT, padding: "80px 24px", borderBottom: `1.5px solid ${INK}` }} className="md:px-12">
+        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+          <div className="mura-mono" style={{ fontSize: 11, letterSpacing: 2.5, color: VIOLET, fontWeight: 700, marginBottom: 14 }}>LES 3 ÉTAPES DU BAFA</div>
+          <h2 style={{ fontSize: 52, fontWeight: 700, letterSpacing: -2, lineHeight: 1, margin: "0 0 48px", color: INK }} className="text-3xl md:text-[52px]">
+            Une formation complète,{" "}
+            <span className="ed" style={{ fontStyle: "italic", color: VIOLET }}>étape par étape.</span>
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-3" style={{ gap: 24 }}>
+            {[
+              {
+                num: "01", color: VIOLET, title: "Formation Générale", duration: "8 jours", progress: "33%",
+                bullets: [
+                  "Créer des animations de A à Z : veillées, grands jeux, ateliers, temps calmes…",
+                  "Comprendre les besoins des différentes tranches d'âge (maternelles, enfance, préadolescence, adolescence)",
+                  "Découvrir le fonctionnement des Accueils Collectifs de Mineurs (centres de loisirs, séjours, périscolaire)",
+                  "Réfléchir à la posture d'animateur·ice : gestion de groupe, bienveillance, autorité, écoute, sécurité",
+                ],
+              },
+              {
+                num: "02", color: YELLOW, title: "Stage pratique", duration: "14 jours", progress: "66%",
+                bullets: [
+                  "Tu rejoins une équipe dans un centre de loisirs, un séjour ou un accueil périscolaire",
+                  "Tu mets en pratique ce que tu as vu en formation : animations, vie quotidienne, sécurité, écoute",
+                  "Tu apprends à travailler avec un·e directeur·rice, des collègues, des partenaires",
+                  "Murathènes t'accompagne dans la recherche de stage via son réseau de structures partenaires",
+                ],
+              },
+              {
+                num: "03", color: VIOLET, title: "Étape 3 · Approfondissement", duration: "8 jours", progress: "100%",
+                bullets: [
+                  "Retours et analyses des stages pratiques — consolider tes acquis",
+                  "Approfondir une thématique : séjour à l'étranger, échanges de jeunes, interculturalité, projets européens",
+                  "Option qualification pour développer une compétence (canoë-kayak, surveillance de baignade…)",
+                ],
+              },
+            ].map((s) => (
+              <div key={s.num} style={{ background: PAPER, border: `2px solid ${INK}`, borderRadius: 24, padding: 28, boxShadow: `3px 3px 0 ${INK}`, display: "flex", flexDirection: "column", gap: 16 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                  <div style={{ width: 52, height: 52, borderRadius: 14, background: s.color, color: s.color === YELLOW ? INK : CREAM, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: 700, border: `2px solid ${INK}` }}>{s.num}</div>
+                  <span className="mura-mono" style={{ fontSize: 11, color: INK, opacity: .6, letterSpacing: 1 }}>{s.duration}</span>
                 </div>
-
-                <div className="mt-4 space-y-2 text-sm text-slate-700">
-                  <p className=" font-semibold">
-                    9 jours pour poser les bases du métier d&apos;anim.
-                  </p>
-                  <p>
-                    Créer des animations de A à Z : veillées, grands jeux,
-                    ateliers, temps calmes…
-                  </p>
-                  <p>
-                    Comprendre les besoins des différentes tranches d&apos;âge
-                    (maternelles, enfance, pré- adolescence, adolescences)
-                  </p>
-                  <p>
-                    Découvrir le fonctionnement des Accueils Collectifs de
-                    Mineurs (centres de loisirs, séjours de vacances,
-                    périscolaire).
-                  </p>
-                  <p>
-                    Réfléchir à la posture d&apos;animateur.ice : Gestion de
-                    groupe, bienveillance, autorité, gestion des conflits,
-                    écoute, sécurité.
-                  </p>
+                <h3 className="ed" style={{ fontSize: 26, fontWeight: 600, letterSpacing: -.8, margin: 0, color: INK, fontStyle: "italic" }}>{s.title}</h3>
+                <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 8 }}>
+                  {s.bullets.map((b) => (
+                    <li key={b} style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 13, lineHeight: 1.55, color: INK, opacity: .78 }}>
+                      <span style={{ flexShrink: 0, marginTop: 3, width: 6, height: 6, borderRadius: "50%", background: s.color === YELLOW ? INK : s.color }} />
+                      {b}
+                    </li>
+                  ))}
+                </ul>
+                {s.num === "03" && (
+                  <Link href="/formations?type=approfondissement" style={{ display: "block", background: `${VIOLET}12`, padding: "12px 16px", borderRadius: 12, border: `1.5px solid ${VIOLET}30`, textDecoration: "none" }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: VIOLET }}>Étape 3 · Approfondissement séjour à l&apos;étranger →</div>
+                    <div style={{ fontSize: 12, color: INK, opacity: .7, marginTop: 4 }}>Interculturalité, échanges de jeunes, projets européens</div>
+                  </Link>
+                )}
+                <div style={{ marginTop: "auto", paddingTop: 12 }}>
+                  <div style={{ height: 8, borderRadius: 999, background: `${INK}11`, overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: s.progress, background: s.color, borderRadius: 999 }} />
+                  </div>
                 </div>
               </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
-              <div className="relative mt-auto pt-5">
-                <div className="h-2 w-full overflow-hidden rounded-full bg-slate-900/5">
-                  <div className="h-full w-1/3 rounded-full bg-sky-400/80" />
-                </div>
-              </div>
-            </article>
+      {/* ═══════════════════════════════════════
+          POURQUOI MURATHÈNES ?
+      ═══════════════════════════════════════ */}
+      <section style={{ background: CREAM, padding: "80px 24px", borderBottom: `1.5px solid ${INK}` }} className="md:px-12">
+        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+          <div className="grid grid-cols-1 md:grid-cols-[1.2fr_0.8fr]" style={{ gap: 56 }}>
+            <div>
+              <div className="mura-mono" style={{ fontSize: 11, letterSpacing: 2.5, color: VIOLET, fontWeight: 700, marginBottom: 14 }}>POURQUOI MURATHÈNES ?</div>
+              <h2 style={{ fontSize: 48, fontWeight: 700, letterSpacing: -1.5, lineHeight: 1.05, margin: "0 0 28px", color: INK }} className="text-3xl md:text-[48px]">
+                Une pédagogie active, engagée,{" "}
+                <span className="ed" style={{ fontStyle: "italic", color: VIOLET }}>tournée vers les jeunes.</span>
+              </h2>
+              <p style={{ fontSize: 16, lineHeight: 1.65, color: INK, opacity: .85, marginBottom: 16 }}>
+                Murathènes est une association d&apos;éducation populaire née en 2019 d&apos;un constat simple : tous les jeunes n&apos;ont pas accès aux mêmes opportunités de loisirs.
+              </p>
+              <p style={{ fontSize: 16, lineHeight: 1.65, color: INK, opacity: .85, marginBottom: 16 }}>
+                Nos formations BAFA sont des espaces d&apos;émancipation : posture professionnelle, mais aussi confiance, esprit critique, créativité, capacité à faire groupe.
+              </p>
+              <p style={{ fontSize: 16, lineHeight: 1.65, color: INK, opacity: .85 }}>
+                Créer des espaces de joie et de paix où chaque jeune existe, compte, est valorisé — peu importe son identité, son genre, ses origines, sa situation.
+              </p>
 
-            {/* STAGE PRATIQUE */}
-            <article className="relative flex h-full flex-col overflow-hidden rounded-3xl bg-white/95 p-5 shadow-sm ring-1 ring-emerald-100">
-              <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-emerald-50 via-white to-white opacity-95" />
-
-              <div className="relative">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-900 ring-1 ring-emerald-200">
-                    <span className="text-xl font-black">2</span>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-800">
-                      STAGE PRATIQUE
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-4 space-y-2 text-sm text-slate-700">
-                  <p className=" font-semibold">
-                    14 jours sur le terrain, auprès d&apos;un vrai public.
-                  </p>
-                  <p>
-                    Tu rejoins une équipe d’animation dans un centre de loisirs,
-                    un séjour ou un accueil périscolaire.
-                  </p>
-                  <p>
-                    Tu mets en pratique ce que tu as vu en formation générale :
-                    animations, vie quotidienne, sécurité, écoute des enfants.
-                  </p>
-                  <p>
-                    Tu apprends à travailler avec un·e directeur·rice, des
-                    collègues, des partenaires.
-                  </p>
-                  <p>
-                    Murathènes t&apos;accompagne dans la recherche de stage
-                    grâce à son réseau de structures partenaires.
-                  </p>
-                </div>
-              </div>
-
-              <div className="relative mt-auto pt-5">
-                <div className="h-2 w-full overflow-hidden rounded-full bg-slate-900/5">
-                  <div className="h-full w-2/3 rounded-full bg-emerald-400/80" />
-                </div>
-              </div>
-            </article>
-
-            {/* APPROFONDISSEMENT / QUALIFICATION */}
-            <article className="relative flex h-full flex-col overflow-hidden rounded-3xl bg-white/95 p-5 shadow-sm ring-1 ring-amber-100">
-              <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-amber-50 via-white to-white opacity-95" />
-
-              <div className="relative">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-100 text-amber-900 ring-1 ring-amber-200">
-                    <span className="text-xl font-black">3</span>
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-800">
-                      APPROFONDISSEMENT / QUALIFICATION
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-4 space-y-2 text-sm text-slate-700">
-                  <p className=" font-semibold">
-                    Une dernière semaine pour aller plus loin et valider ton
-                    BAFA.
-                  </p>
-                  <p>
-                    Retours et analyses des stages pratique. Consolider tes
-                    acquis
-                  </p>
-                  <p>Approfondir une thématique.</p>
-                </div>
-
-                <Link
-                  href="/formations?type=approfondissement"
-                  className="group block mt-4 rounded-2xl bg-amber-50/40 p-3 ring-1 ring-amber-100
-             transition-all hover:-translate-y-0.5 hover:bg-amber-50/60 hover:ring-amber-200"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="min-w-0">
-                      <div className="text-sm font-semibold text-amber-900 leading-snug">
-                        Approfondissement séjour à l’étranger, Echanges de
-                        jeunes
-                      </div>
-
-                      <p className="mt-2 text-xs font-normal text-slate-600 leading-snug">
-                        Interculturalité, préparation de projets à
-                        l&apos;international, voyage et gestion de trajet
-                      </p>
-                    </div>
-
-                    {/* grosse flèche */}
-                    <span
-                      className="shrink-0 text-2xl leading-none text-amber-900
-                 transition-transform duration-200 group-hover:translate-x-1"
-                      aria-hidden="true"
-                    >
-                      →
-                    </span>
-                  </div>
-
-                  {/* petit glow discret */}
-                  <div className="pointer-events-none absolute opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-                </Link>
-
-                <p className="mt-3 text-sm text-slate-700">
-                  Tu peux aussi choisir de faire une qualification pour
-                  développer une compétence (canoë kayak, surveillance de
-                  baignade…)
+              <div style={{ marginTop: 28, padding: "18px 22px", background: PAPER, borderRadius: 16, border: `2px solid ${INK}`, boxShadow: `3px 3px 0 ${VIOLET}` }}>
+                <div className="mura-mono" style={{ fontSize: 10, color: VIOLET, letterSpacing: 1.5, marginBottom: 8 }}>NOTRE APPROCHE</div>
+                <p style={{ fontSize: 14, lineHeight: 1.6, color: INK, opacity: .85, margin: 0 }}>
+                  Une attention particulière est portée sur la connaissance des différents publics, les particularismes de chaque enfant, et sur comment faire groupe avec des jeunes d&apos;horizons variés. L&apos;animation comme outil d&apos;éducation populaire et d&apos;action sociale.
                 </p>
               </div>
 
-              <div className="relative mt-auto pt-5">
-                <div className="h-2 w-full overflow-hidden rounded-full bg-slate-900/5">
-                  <div className="h-full w-full rounded-full bg-amber-400/80" />
+              <div style={{ marginTop: 20, padding: "18px 22px", background: PAPER, borderRadius: 16, border: `2px solid ${INK}`, boxShadow: `3px 3px 0 ${YELLOW}` }}>
+                <div className="mura-mono" style={{ fontSize: 10, color: VIOLET, letterSpacing: 1.5, marginBottom: 8 }}>ET APRÈS LA FORMATION ?</div>
+                <p style={{ fontSize: 14, lineHeight: 1.6, color: INK, opacity: .85, margin: "0 0 10px" }}>
+                  Grâce à notre réseau, on t&apos;aide à trouver un stage pratique, puis à te projeter : engagement associatif, échanges européens, volontariat international, séjours et colos.
+                </p>
+                <p style={{ fontSize: 14, lineHeight: 1.6, color: INK, opacity: .85, margin: 0, fontStyle: "italic" }}>
+                  Tu ne repars pas juste avec un diplôme, mais avec une expérience de groupe forte et des pistes concrètes pour la suite.
+                </p>
+              </div>
+            </div>
+            <div>
+              <div style={{ border: `2px solid ${INK}`, borderRadius: 20, overflow: "hidden", boxShadow: `4px 4px 0 ${YELLOW}` }}>
+                <div style={{ position: "relative", width: "100%", aspectRatio: "3/4" }}>
+                  <Image src="/FGAVRIL2026/IMG_8308.JPG" alt="Portrait de stagiaire BAFA Murathènes" fill className="object-cover" />
                 </div>
               </div>
-            </article>
+            </div>
+          </div>
+
+          {/* 4 mini-cartes */}
+          <div className="grid grid-cols-2 md:grid-cols-4" style={{ gap: 16, marginTop: 48 }}>
+            {[
+              { icon: "🎭", title: "Pédagogie de projet", text: "Création collective en fil rouge de la semaine." },
+              { icon: "🤝", title: "Valeurs fortes", text: "Consentement, mixité, diversité, bienveillance." },
+              { icon: "🏡", title: "Cadre de vie", text: "Internat, vie collective, temps de partage et de respiration." },
+              { icon: "🌍", title: "Ouverture", text: "Échanges de jeunes, séjours à l'étranger, projets européens." },
+            ].map((c) => (
+              <div key={c.title} style={{ background: PAPER, padding: "20px 18px", border: `1.5px solid ${INK}`, borderRadius: 16 }}>
+                <div style={{ fontSize: 26, marginBottom: 10 }}>{c.icon}</div>
+                <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 6, color: INK }}>{c.title}</div>
+                <div style={{ fontSize: 13, color: INK, opacity: .75, lineHeight: 1.5 }}>{c.text}</div>
+              </div>
+            ))}
           </div>
         </div>
       </section>
-      <section className="border-t border-slate-200 bg-transparent">
-        {" "}
-        <div className="mx-auto max-w-6xl px-4 py-12 md:px-6">
-          <div className="mb-8 max-w-3xl space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-              Pourquoi passer ton BAFA avec Murathènes ?
-            </p>
-            <h2 className="font-display text-2xl font-semibold text-slate-900 md:text-3xl">
-              Une pédagogie active, engagée et tournée vers les jeunes
-            </h2>
-          </div>
 
-          {/* 2 colonnes (texte + encart) / (photo + encart) */}
-          <div className="grid items-start gap-8 lg:grid-cols-[1.2fr_0.8fr]">
-            {/* COLONNE GAUCHE */}
-            <div className="space-y-5 text-base text-slate-700">
-              <p>
-                Murathènes est une association d&apos;éducation populaire, de
-                formation et d&apos;échanges internationaux, née en 2019 à
-                partir d&apos;un constat simple : Tous les jeunes n’ont pas
-                accès aux mêmes opportunités de loisirs. Or, ils sont des
-                leviers essentiels et émancipateurs, permettant aux jeunes de
-                développer pleinement leurs capacités et contribuant
-                positivement à leur épanouissement et à leur développement.
-              </p>
-
-              <p>
-                Nos formations BAFA sont pensées comme des espaces
-                d&apos;émancipation : tu y travailles ta posture
-                professionnelle, mais aussi ta confiance, ton esprit critique,
-                ta créativité et ta capacité à faire groupe.
-              </p>
-
-              {/* ✅ Encart super visible */}
-              <div className="relative overflow-hidden rounded-2xl bg-white/95 p-5 shadow-sm ring-1 ring-sky-200">
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-sky-50 via-white to-amber-50 opacity-90" />
-                <div className="relative">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-sky-700">
-                    Notre approche
-                  </p>
-                  <p className="mt-2 text-sm text-slate-700">
-                    Une attention particulière est portée sur la connaissance
-                    des différents publics, les particularismes de chaque
-                    enfant, et sur comment faire groupe avec des jeunes
-                    d’horizons variés. L’animation comme outil d’éducation
-                    populaire et d’action sociale.
-                  </p>
-                </div>
-              </div>
-
-              <p>
-                Murathènes, c’est créer des espaces de joie et de paix où chaque
-                jeune existe, compte et est valorisé — peu importe son identité,
-                son genre, son orientation sexuelle, ses origines, sa situation
-                administrative, économique, scolaire ou professionnelle…
-              </p>
-
-              <p className="pt-1 text-xs text-slate-600">
-                Les formations BAFA Murathènes sont organisées avec le soutien
-                de partenaires institutionnels (DRAJES Auvergne-Rhône-Alpes,
-                Conseil départemental du Cantal, dispositifs
-                d&apos;accompagnement de l&apos;ESS, etc.).
-              </p>
-            </div>
-
-            {/* COLONNE DROITE */}
-            <div className="space-y-5">
-              {/* ✅ Photo + grande */}
-              <div className="relative overflow-hidden rounded-2xl bg-slate-200 shadow-sm ring-1 ring-slate-100">
-                <div className="relative h-72 w-full md:h-[380px]">
-                  <Image
-                    src="/bafa6.PNG"
-                    alt="Photo Murathènes"
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-              </div>
-
-              {/* ✅ Encart "après" bien visible */}
-              <div className="relative overflow-hidden rounded-2xl bg-white/95 p-5 shadow-sm ring-1 ring-amber-200">
-                <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-amber-50 via-white to-sky-50 opacity-90" />
-                <div className="relative">
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-amber-800">
-                    Et après la formation ?
-                  </p>
-                  <p className="mt-2 text-sm text-slate-700">
-                    Grâce à notre réseau dans le monde de l&apos;animation et du
-                    socio-culturel et éducatif en France et en Europe, on t’aide
-                    à trouver un stage pratique, puis à te projeter vers de
-                    nouveaux projets : engagement associatif, échanges de jeunes
-                    européens, volontariat international, séjours et colos…
-                  </p>
-                  <p className="mt-3 text-xs text-slate-600">
-                    Tu ne repars pas juste avec un diplôme, mais avec une
-                    expérience de groupe forte et des pistes concrètes pour la
-                    suite.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* ✅ 4 cases FULL WIDTH (sous les colonnes) */}
-          <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <div className="rounded-2xl bg-white/95 p-5 shadow-sm ring-1 ring-slate-100">
-              <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900/5 text-xl">
-                  🎭
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-slate-900">
-                    Pédagogie de projet
-                  </p>
-                  <p className="mt-1 text-sm text-slate-700">
-                    Création collective (musique, danse, podcast, vidéo, jeu…)
-                    en fil rouge de la semaine.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-2xl bg-white/95 p-5 shadow-sm ring-1 ring-slate-100">
-              <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900/5 text-xl">
-                  🤝
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-slate-900">
-                    Valeurs fortes
-                  </p>
-                  <p className="mt-1 text-sm text-slate-700">
-                    Consentement, mixité, diversité, travail d&apos;équipe,
-                    bienveillance et respect.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-2xl bg-white/95 p-5 shadow-sm ring-1 ring-slate-100">
-              <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900/5 text-xl">
-                  🏡
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-slate-900">
-                    Cadre de vie
-                  </p>
-                  <p className="mt-1 text-sm text-slate-700">
-                    Internat en groupe, vie collective, temps informels, moments
-                    de partage et de respiration.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-2xl bg-white/95 p-5 shadow-sm ring-1 ring-slate-100">
-              <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900/5 text-xl">
-                  🌍
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-slate-900">
-                    Ouverture
-                  </p>
-                  <p className="mt-1 text-sm text-slate-700">
-                    Échanges de jeunes, séjours à l&apos;étranger, projets
-                    européens : mobilité &amp; interculturalité.
-                  </p>
-                </div>
-              </div>
-            </div>
+      {/* ═══════════════════════════════════════
+          CONDITIONS & CTAs
+      ═══════════════════════════════════════ */}
+      <section style={{ background: VIOLET_SOFT, padding: "64px 24px", borderBottom: `1.5px solid ${INK}` }} className="md:px-12">
+        <div style={{ maxWidth: 900, margin: "0 auto" }}>
+          <div className="mura-mono" style={{ fontSize: 11, color: VIOLET, fontWeight: 700, letterSpacing: 2.5, marginBottom: 14 }}>CONDITIONS &amp; ORGANISATION</div>
+          <h2 style={{ fontSize: 40, fontWeight: 700, letterSpacing: -1.5, lineHeight: 1.1, margin: "0 0 24px", color: INK }} className="text-2xl md:text-[40px]">
+            Quelques points à retenir avant de te lancer
+          </h2>
+          <ul style={{ listStyle: "none", padding: 0, margin: "0 0 32px", display: "flex", flexDirection: "column", gap: 10 }}>
+            <li style={{ display: "flex", alignItems: "flex-start", gap: 12, fontSize: 15, color: INK, opacity: .85 }}>
+              <span style={{ flexShrink: 0, marginTop: 2, color: VIOLET, fontWeight: 700 }}>→</span>
+              Tu dois avoir 16 ans révolus au premier jour de ta formation générale.
+            </li>
+            <li style={{ display: "flex", alignItems: "flex-start", gap: 12, fontSize: 15, color: INK, opacity: .85 }}>
+              <span style={{ flexShrink: 0, marginTop: 2, color: VIOLET, fontWeight: 700 }}>→</span>
+              Une attestation de stage pratique d&apos;au moins 14 jours est demandée pour l&apos;étape 3 : l&apos;approfondissement ou la qualification.
+            </li>
+          </ul>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+            <Link href="/formations" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: INK, color: CREAM, padding: "14px 24px", borderRadius: 999, fontSize: 12, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", textDecoration: "none", border: `2px solid ${INK}` }}>
+              🗓️ Voir le calendrier →
+            </Link>
+            <Link href="/infos-pratiques" style={{ display: "inline-flex", alignItems: "center", gap: 8, background: YELLOW, color: INK, padding: "14px 24px", borderRadius: 999, fontSize: 12, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", textDecoration: "none", border: `2px solid ${INK}` }}>
+              ℹ️ Infos pratiques →
+            </Link>
+            <button onClick={() => openContact("message")} style={{ display: "inline-flex", alignItems: "center", gap: 8, background: VIOLET, color: CREAM, padding: "14px 24px", borderRadius: 999, fontSize: 12, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", border: "none", cursor: "pointer", fontFamily: "inherit" }}>
+              ☎ Une question ?
+            </button>
           </div>
         </div>
       </section>
-      {/* CONDITIONS & ORGANISATION */}
-      <section className="border-t border-slate-200 bg-transparent">
-        {" "}
-        <div className="mx-auto max-w-6xl px-4 py-10 md:px-6">
-          <div className="max-w-3xl space-y-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-              Conditions &amp; organisation
-            </p>
 
-            <h2 className="font-display text-2xl font-semibold text-slate-900 md:text-3xl">
-              Quelques points à retenir avant de te lancer
-            </h2>
-
-            <ul className="space-y-2 text-base text-slate-700">
-              <li>
-                • Tu dois avoir 16 ans révolus au premier jour de ta formation
-                générale.
-              </li>
-              <li>
-                • Une attestation de stage pratique d&apos;au moins 14 jours est
-                demandée pour l&apos;inscription à l&apos;approfondissement ou à
-                la qualification.
-              </li>
-            </ul>
-
-            <div className="mt-5 flex flex-wrap gap-3 text-xs">
-              <Link
-                href="/formations"
-                className="inline-flex items-center gap-2 rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-white shadow-sm transition hover:bg-slate-800"
-              >
-                <span className="text-sm">🗓️</span>
-                <span>Voir le calendrier</span>
-              </Link>
-
-              <Link
-                href="/infos-pratiques"
-                className="inline-flex items-center gap-2 rounded-full bg-sky-50 px-4 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-sky-900 shadow-sm ring-1 ring-sky-200 transition hover:bg-sky-100"
-              >
-                <span className="text-sm">ℹ️</span>
-                <span>Voir les infos pratiques</span>
-              </Link>
-            </div>
-
-            {/* TODO PHOTO (si tu veux une photo en bas de page) */}
-            {/* <div className="mt-8 relative h-56 overflow-hidden rounded-2xl bg-slate-200">
-              <Image src="/images/bafa/photo-bottom.jpg" alt="Photo" fill className="object-cover" />
-            </div> */}
-          </div>
-        </div>
-      </section>
-    </main>
+    </div>
   );
 }

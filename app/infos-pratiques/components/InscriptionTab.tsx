@@ -4,8 +4,8 @@ import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 
-const VIOLET = "#6664C5";
-const YELLOW = "#F5EEDA";
+const VIOLET = "#792BB9";
+const YELLOW = "#F5EF72";
 
 function Pill({
   children,
@@ -16,13 +16,13 @@ function Pill({
 }) {
   const cls =
     tone === "amber"
-      ? "bg-amber-100/80 text-amber-900 ring-amber-200"
+      ? "bg-[#F5EF72]/30 text-slate-900 ring-[#F5EF72]/50"
       : tone === "sky"
-      ? "bg-sky-100/80 text-sky-900 ring-sky-200"
+      ? "bg-[#792BB9]/10 text-[#792BB9] ring-[#792BB9]/20"
       : tone === "emerald"
-      ? "bg-emerald-100/80 text-emerald-900 ring-emerald-200"
+      ? "bg-[#F5EF72]/20 text-slate-800 ring-[#F5EF72]/40"
       : tone === "rose"
-      ? "bg-rose-100/80 text-rose-900 ring-rose-200"
+      ? "bg-[#792BB9]/10 text-[#792BB9] ring-[#792BB9]/20"
       : "bg-slate-100/80 text-slate-900 ring-slate-200";
 
   return (
@@ -61,16 +61,16 @@ function VioletButton({
 
 export default function InscriptionTab() {
   return (
-    <section className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen border-t border-slate-200 bg-transparent">
-      <div className="mx-auto max-w-6xl px-4 py-10 md:px-6 md:py-12">
-        <header className="mb-8 max-w-3xl space-y-3">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-            Infos pratiques
+    <section style={{ borderTop: "1.5px solid #1a153022", background: "#fefcf5" }}>
+      <div className="mx-auto max-w-5xl px-4 py-12 md:px-12 md:py-16">
+        <header className="mb-10 max-w-3xl space-y-4">
+          <p className="mura-mono" style={{ fontSize: 11, letterSpacing: 2.5, color: "#792BB9", fontWeight: 700 }}>
+            ✅ INSCRIPTION
           </p>
-          <h2 className="font-display text-2xl font-semibold text-slate-900 md:text-3xl">
-            Comment s’inscrire ?
+          <h2 className="ed" style={{ fontSize: "clamp(32px, 5vw, 52px)", fontWeight: 700, letterSpacing: -2, lineHeight: 1, color: "#1a1530" }}>
+            Comment s&apos;inscrire ?
           </h2>
-          <p className="text-sm leading-6 text-slate-700">
+          <p style={{ fontSize: 16, lineHeight: 1.65, color: "#1a1530", opacity: 0.8 }}>
             Deux étapes : réserver ta place sur Yapla, puis obtenir ton numéro
             Jeunesse &amp; Sport (obligatoire pour commencer la formation).
           </p>
@@ -182,7 +182,7 @@ export default function InscriptionTab() {
                 <li>
                   Va sur{" "}
                   <a
-                    href="http://www.jeunes.gouv.fr/bafa-bafd/"
+                    href="https://www.jeunes.gouv.fr/bafa-bafd/"
                     target="_blank"
                     rel="noreferrer"
                     className="underline decoration-slate-300 underline-offset-4 hover:text-slate-900"
@@ -210,7 +210,7 @@ export default function InscriptionTab() {
 
             <div className="flex flex-wrap gap-2 pt-1">
               <VioletButton
-                href="http://www.jeunes.gouv.fr/bafa-bafd/"
+                href="https://www.jeunes.gouv.fr/bafa-bafd/"
                 external
               >
                 Site Jeunesse &amp; Sports <span className="text-sm">↗</span>

@@ -1,31 +1,6 @@
 "use client";
 
 import React from "react";
-import Image from "next/image";
-
-const VIOLET = "#6664C5";
-const YELLOW = "#F5EEDA";
-
-function VioletButton({
-  href,
-  children,
-  external,
-}: {
-  href: string;
-  children: React.ReactNode;
-  external?: boolean;
-}) {
-  return (
-    <a
-      href={href}
-      {...(external ? { target: "_blank", rel: "noreferrer" } : {})}
-      className="inline-flex cursor-pointer items-center gap-2 rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] shadow-sm transition hover:opacity-95"
-      style={{ backgroundColor: VIOLET, color: YELLOW }}
-    >
-      {children}
-    </a>
-  );
-}
 
 function MiniCard({
   title,
@@ -47,29 +22,19 @@ function MiniCard({
   );
 }
 
-function SoftMedia({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="overflow-hidden rounded-3xl border border-slate-200 bg-white/60 shadow-sm">
-      {children}
-    </div>
-  );
-}
-
 export default function InfoPackTab() {
-  const pdfHref = "/MT/InfoPack.pdf";
-
   return (
-    <section className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen border-t border-slate-200 bg-transparent">
-      <div className="mx-auto max-w-6xl px-4 py-10 md:px-6 md:py-12">
+    <section style={{ borderTop: "1.5px solid #1a153022", background: "#fefcf5" }}>
+      <div className="mx-auto max-w-5xl px-4 py-12 md:px-12 md:py-16">
         {/* Header + image */}
-        <header className="mb-8 grid gap-6 md:grid-cols-[1.1fr_0.9fr] md:items-start">
-          <div className="max-w-3xl space-y-3">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-              Infos pratiques
+        <header className="mb-10 grid gap-6 md:grid-cols-[1.1fr_0.9fr] md:items-start">
+          <div className="max-w-3xl space-y-4">
+            <p className="mura-mono" style={{ fontSize: 11, letterSpacing: 2.5, color: "#792BB9", fontWeight: 700 }}>
+              📦 GUIDE D’ARRIVÉE
             </p>
 
-            <h2 className="font-display text-2xl font-semibold text-slate-900 md:text-3xl">
-              Guide d’arrivée
+            <h2 className="ed" style={{ fontSize: "clamp(32px, 5vw, 52px)", fontWeight: 700, letterSpacing: -2, lineHeight: 1, color: "#1a1530" }}>
+              Guide d&apos;arrivée
             </h2>
           </div>
         </header>

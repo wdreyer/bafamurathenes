@@ -12,7 +12,7 @@ type Props = {
 const typeLabel: Record<string, string> = {
   formation_generale: "Formation générale",
   approfondissement_sejour_etranger:
-    "Approfondissement - Séjour à l'étranger / échange de jeunes",
+    "Étape 3 · Approfondissement - Séjour à l'étranger / échange de jeunes",
 };
 
 const parseDateToTime = (value: string | undefined | null): number => {

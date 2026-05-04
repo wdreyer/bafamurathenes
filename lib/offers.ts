@@ -1,5 +1,7 @@
 import type { Formation } from "@/lib/types";
 
+export const MIN_PRICE_AFTER_AIDS = 150;
+
 export const APRIL_FG_PROMO = {
   year: 2026,
   monthIndex: 3, // April

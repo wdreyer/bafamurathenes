@@ -3,8 +3,15 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { ChevronDown, MessageSquareText, PhoneCall } from "lucide-react";
 
-const FORMS_PURPLE = "#B13A4A";
+const INK = "#1a1530";
+const PAPER = "#fff8ec";
+const CREAM = "#fefcf5";
+const VIOLET = "#792BB9";
+const YELLOW = "#F5EF72";
+const PHONE_DISPLAY = "01 84 21 05 48";
+const PHONE_TEL = "0184210548";
 
 const infosPratiquesItems = [
   { label: "Programme", href: "/infos-pratiques?tab=programme", emoji: "📚" },
@@ -29,132 +36,101 @@ export default function Header() {
     setMobileInfosOpen(false);
     setMobileMuratOpen(false);
   };
+  const openLead = (mode: "message" | "callback") => {
+    closeMenu();
+    window.dispatchEvent(new CustomEvent("contact-widget:open", { detail: { mode } }));
+  };
 
   return (
-    <header className="sticky top-0 z-30 border-b border-sky-100 bg-amber-50/90 backdrop-blur">
-      <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-2 md:py-1">
-        {/* Logo + titre à gauche */}
-        <Link href="/" className="flex items-center gap-3" onClick={closeMenu}>
-          <Image
-            src="/MT.png"
-            alt="Logo BAFA Murathènes"
-            width={50}
-            height={50}
-            className="h-10 w-auto md:h-12 md:w-auto"
-          />
-          <div className="flex flex-col leading-tight">
-            <span className="text-[0.75rem] md:text-xs font-semibold uppercase tracking-[0.08em] text-sky-800">
-              Formations BAFA
-            </span>
-            <span className="text-base md:text-lg font-semibold uppercase text-[#6668C6]">
-              Murathènes
-            </span>
+    <header style={{ position: "sticky", top: 0, zIndex: 30, background: PAPER, borderBottom: `1.5px solid ${INK}` }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", maxWidth: 1400, margin: "0 auto" }} className="px-4 py-3 md:px-12 md:py-4">
+
+        {/* Logo */}
+        <Link href="/" className="flex items-center gap-3" onClick={closeMenu} style={{ textDecoration: "none" }}>
+          <Image src="/MT.png" alt="Logo BAFA Murathènes" width={50} height={50} className="h-10 w-auto md:h-11" />
+          <div style={{ lineHeight: 1 }}>
+            <div className="mura-mono" style={{ fontSize: 10, letterSpacing: 2, color: VIOLET, fontWeight: 600 }}>FORMATIONS BAFA</div>
+            <div style={{ fontSize: 19, fontWeight: 700, letterSpacing: -0.5, color: VIOLET, marginTop: 3, textTransform: "uppercase" }}>Murathènes</div>
           </div>
         </Link>
 
-        {/* Desktop menu */}
-        <div className="hidden items-center gap-6 md:flex">
-          <nav className="flex items-center gap-6 md:gap-8 text-xs md:text-sm font-semibold tracking-[0.08em] uppercase text-slate-700">
-            <Link
-              href="/"
-              className="relative whitespace-nowrap transition hover:text-sky-900 after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-sky-800 after:transition-all after:duration-200 hover:after:w-full"
-            >
-              Accueil
+        {/* Desktop nav */}
+        <nav className="mura-header-nav hidden lg:flex items-center" style={{ gap: 8, fontSize: 11, fontWeight: 800, letterSpacing: 0.9, textTransform: "uppercase", color: INK }}>
+          <Link href="/" style={{ textDecoration: "none", whiteSpace: "nowrap" }} className="mura-header-link">
+            Accueil
+          </Link>
+          <Link href="/bafa" style={{ textDecoration: "none", whiteSpace: "nowrap" }} className="mura-header-link">
+            Le BAFA
+          </Link>
+          <Link href="/formations" style={{ textDecoration: "none", whiteSpace: "nowrap" }} className="mura-header-link mura-header-link-featured">
+            Nos formations 2026
+          </Link>
+
+          {/* Infos pratiques dropdown */}
+          <div className="group relative">
+            <Link href="/infos-pratiques" style={{ textDecoration: "none", whiteSpace: "nowrap" }} className="mura-header-link">
+              Infos pratiques
+              <ChevronDown className="h-3 w-3 transition-transform duration-200 group-hover:rotate-180" aria-hidden="true" />
             </Link>
-
-            <Link
-              href="/bafa"
-              className="relative whitespace-nowrap transition hover:text-sky-900 after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-sky-800 after:transition-all after:duration-200 hover:after:w-full"
-            >
-              Le BAFA
-            </Link>
-
-            <Link
-              href="/formations"
-              className="group relative whitespace-nowrap transition"
-              style={{ color: FORMS_PURPLE }}
-            >
-              Nos formations 2026
-              <span
-                aria-hidden
-                className="pointer-events-none absolute left-0 -bottom-1 h-[2px] w-full origin-left scale-x-0 transition-transform duration-200 group-hover:scale-x-100"
-                style={{ backgroundColor: FORMS_PURPLE }}
-              />
-            </Link>
-
-            {/* Infos pratiques – dropdown */}
-            <div className="group relative">
-              <Link
-                href="/infos-pratiques"
-                className="relative flex items-center gap-1 whitespace-nowrap transition hover:text-sky-900 after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-sky-800 after:transition-all after:duration-200 hover:after:w-full"
-              >
-                Infos pratiques
-                <svg className="h-3 w-3 transition-transform duration-200 group-hover:rotate-180" viewBox="0 0 12 12" fill="currentColor">
-                  <path d="M6 8L1 3h10L6 8z" />
-                </svg>
-              </Link>
-
-              {/* Dropdown panel */}
-              <div className="pointer-events-none absolute left-0 top-full z-50 pt-2 w-52 origin-top-left scale-95 opacity-0 transition-all duration-150 group-hover:pointer-events-auto group-hover:scale-100 group-hover:opacity-100">
-                <div className="rounded-xl border border-sky-100 bg-white shadow-lg ring-1 ring-black/5 overflow-hidden py-1">
+            <div className="pointer-events-none absolute left-0 top-full z-50 pt-2 w-56 origin-top-left scale-95 opacity-0 transition-all duration-150 group-hover:pointer-events-auto group-hover:scale-100 group-hover:opacity-100">
+              <div style={{ background: PAPER, border: `1.5px solid ${INK}`, borderRadius: 12, overflow: "hidden", boxShadow: `3px 3px 0 ${INK}22` }}>
+                {infosPratiquesItems.map((item) => (
                   <Link
-                    href="/infos-pratiques"
-                    className="flex items-center gap-2 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500 hover:bg-sky-50 hover:text-sky-900 transition-colors"
+                    key={item.href}
+                    href={item.href}
+                    style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 16px", color: INK, textDecoration: "none", fontSize: 11, fontWeight: 600, letterSpacing: 1.5 }}
+                    className="mura-dropdown-link"
                   >
-                    Tout voir
+                    <span>{item.emoji}</span>{item.label}
                   </Link>
-                  <div className="my-1 border-t border-slate-100" />
-                  {infosPratiquesItems.map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className="flex items-center gap-2 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-700 hover:bg-sky-50 hover:text-sky-900 transition-colors"
-                    >
-                      <span>{item.emoji}</span>
-                      {item.label}
-                    </Link>
-                  ))}
-                </div>
+                ))}
               </div>
             </div>
+          </div>
 
-            {/* Qui sommes-nous – dropdown */}
-            <div className="group relative">
-              <Link
-                href="/murathenes"
-                className="relative flex items-center gap-1 whitespace-nowrap transition hover:text-sky-900 after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-sky-800 after:transition-all after:duration-200 hover:after:w-full"
-              >
-                Qui sommes-nous ?
-                <svg className="h-3 w-3 transition-transform duration-200 group-hover:rotate-180" viewBox="0 0 12 12" fill="currentColor">
-                  <path d="M6 8L1 3h10L6 8z" />
-                </svg>
-              </Link>
-
-              {/* Dropdown panel */}
-              <div className="pointer-events-none absolute left-0 top-full z-50 pt-2 w-48 origin-top-left scale-95 opacity-0 transition-all duration-150 group-hover:pointer-events-auto group-hover:scale-100 group-hover:opacity-100">
-                <div className="rounded-xl border border-sky-100 bg-white shadow-lg ring-1 ring-black/5 overflow-hidden py-1">
+          {/* Qui sommes-nous dropdown */}
+          <div className="group relative">
+            <Link href="/murathenes" style={{ textDecoration: "none", whiteSpace: "nowrap" }} className="mura-header-link">
+              Qui sommes-nous ?
+              <ChevronDown className="h-3 w-3 transition-transform duration-200 group-hover:rotate-180" aria-hidden="true" />
+            </Link>
+            <div className="pointer-events-none absolute left-0 top-full z-50 pt-2 w-52 origin-top-left scale-95 opacity-0 transition-all duration-150 group-hover:pointer-events-auto group-hover:scale-100 group-hover:opacity-100">
+              <div style={{ background: PAPER, border: `1.5px solid ${INK}`, borderRadius: 12, overflow: "hidden", boxShadow: `3px 3px 0 ${INK}22` }}>
+                {murathènesItems.map((item) => (
                   <Link
-                    href="/murathenes"
-                    className="flex items-center gap-2 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500 hover:bg-sky-50 hover:text-sky-900 transition-colors"
+                    key={item.href}
+                    href={item.href}
+                    style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 16px", color: INK, textDecoration: "none", fontSize: 11, fontWeight: 600, letterSpacing: 1.5 }}
+                    className="mura-dropdown-link"
                   >
-                    Tout voir
+                    <span>{item.emoji}</span>{item.label}
                   </Link>
-                  <div className="my-1 border-t border-slate-100" />
-                  {murathènesItems.map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className="flex items-center gap-2 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-700 hover:bg-sky-50 hover:text-sky-900 transition-colors"
-                    >
-                      <span>{item.emoji}</span>
-                      {item.label}
-                    </Link>
-                  ))}
-                </div>
+                ))}
               </div>
             </div>
-          </nav>
-        </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => openLead("message")}
+              style={{ background: INK, color: CREAM, border: `2px solid ${INK}`, borderRadius: 999, padding: "10px 14px", fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 7, whiteSpace: "nowrap" }}
+              className="mura-header-action"
+            >
+              <MessageSquareText size={14} aria-hidden="true" />
+              Contact
+            </button>
+            <a
+              href={`tel:${PHONE_TEL}`}
+              style={{ background: YELLOW, color: INK, border: `2px solid ${INK}`, borderRadius: 999, padding: "10px 14px", fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 7, whiteSpace: "nowrap", boxShadow: `2px 2px 0 ${INK}` }}
+              className="mura-header-action"
+              aria-label={`Appeler Murathènes au ${PHONE_DISPLAY}`}
+            >
+              <PhoneCall size={14} aria-hidden="true" />
+              {PHONE_DISPLAY}
+            </a>
+          </div>
+        </nav>
 
         {/* Burger mobile */}
         <button
@@ -162,135 +138,74 @@ export default function Header() {
           aria-label="Ouvrir le menu"
           aria-expanded={isOpen}
           onClick={() => setIsOpen((prev) => !prev)}
-          className="inline-flex cursor-pointer h-9 w-9 items-center justify-center rounded-full border border-slate-300 bg-white/70 text-slate-800 shadow-sm transition hover:bg-white md:hidden"
+          style={{ background: "transparent", border: `1.5px solid ${INK}44`, borderRadius: "50%", width: 36, height: 36, cursor: "pointer" }}
+          className="inline-flex items-center justify-center lg:hidden"
         >
           <span className="relative block h-4 w-4">
-            <span
-              className={`absolute left-0 top-0 h-[2px] w-full rounded bg-slate-800 transition-transform duration-200 ${
-                isOpen ? "translate-y-[6px] rotate-45" : ""
-              }`}
-            />
-            <span
-              className={`absolute left-0 top-[6px] h-[2px] w-full rounded bg-slate-800 transition-opacity duration-200 ${
-                isOpen ? "opacity-0" : "opacity-100"
-              }`}
-            />
-            <span
-              className={`absolute left-0 top-[12px] h-[2px] w-full rounded bg-slate-800 transition-transform duration-200 ${
-                isOpen ? "-translate-y-[6px] -rotate-45" : ""
-              }`}
-            />
+            <span className={`absolute left-0 top-0 h-[2px] w-full rounded bg-[#1a1530] transition-transform duration-200 ${isOpen ? "translate-y-[6px] rotate-45" : ""}`} />
+            <span className={`absolute left-0 top-[6px] h-[2px] w-full rounded bg-[#1a1530] transition-opacity duration-200 ${isOpen ? "opacity-0" : "opacity-100"}`} />
+            <span className={`absolute left-0 top-[12px] h-[2px] w-full rounded bg-[#1a1530] transition-transform duration-200 ${isOpen ? "-translate-y-[6px] -rotate-45" : ""}`} />
           </span>
         </button>
       </div>
 
-      {/* Menu mobile déroulant */}
+      {/* Mobile menu */}
       {isOpen && (
-        <div className="md:hidden border-t border-sky-100 bg-amber-50/95 backdrop-blur">
-          <nav className="mx-auto flex max-w-6xl flex-col gap-1 px-4 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-slate-800">
-            <Link href="/" onClick={closeMenu} className="rounded-full px-3 py-2">
-              Accueil
-            </Link>
-
-            <Link href="/bafa" onClick={closeMenu} className="rounded-full px-3 py-2">
-              Le BAFA
-            </Link>
-
-            <Link
-              href="/formations"
-              onClick={closeMenu}
-              className="rounded-full px-3 py-2 ring-1"
-              style={{
-                color: FORMS_PURPLE,
-                borderColor: `${FORMS_PURPLE}55`,
-                background: `${FORMS_PURPLE}10`,
-              }}
-            >
+        <div className="lg:hidden" style={{ borderTop: `1px dashed ${INK}33`, background: PAPER }}>
+          <nav style={{ display: "flex", flexDirection: "column", gap: 2, padding: "12px 16px", fontSize: 12, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", color: INK }}>
+            <Link href="/" onClick={closeMenu} style={{ padding: "10px 12px", color: INK, textDecoration: "none", borderRadius: 8 }} className="hover:bg-[#792BB9]/10">Accueil</Link>
+            <Link href="/bafa" onClick={closeMenu} style={{ padding: "10px 12px", color: INK, textDecoration: "none", borderRadius: 8 }} className="hover:bg-[#792BB9]/10">Le BAFA</Link>
+            <Link href="/formations" onClick={closeMenu} style={{ padding: "10px 14px", background: VIOLET, color: CREAM, borderRadius: 999, textDecoration: "none", display: "inline-block", marginBottom: 4 }}>
               Nos formations 2026
             </Link>
 
-            {/* Infos pratiques mobile */}
+            {/* Infos pratiques */}
             <div>
-              <div className="flex items-center">
-                <Link
-                  href="/infos-pratiques"
-                  onClick={closeMenu}
-                  className="flex-1 rounded-l-full px-3 py-2"
-                >
-                  Infos pratiques
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => setMobileInfosOpen((p) => !p)}
-                  className="flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-sky-100"
-                  aria-label="Développer infos pratiques"
-                >
-                  <svg
-                    className={`h-3 w-3 transition-transform duration-200 ${mobileInfosOpen ? "rotate-180" : ""}`}
-                    viewBox="0 0 12 12"
-                    fill="currentColor"
-                  >
-                    <path d="M6 8L1 3h10L6 8z" />
-                  </svg>
+              <div style={{ display: "flex", alignItems: "center" }}>
+                <Link href="/infos-pratiques" onClick={closeMenu} style={{ flex: 1, padding: "10px 12px", color: INK, textDecoration: "none" }}>Infos pratiques</Link>
+                <button type="button" onClick={() => setMobileInfosOpen((p) => !p)} style={{ background: "none", border: "none", cursor: "pointer", padding: 8, color: INK }}>
+                  <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${mobileInfosOpen ? "rotate-180" : ""}`} aria-hidden="true" />
                 </button>
               </div>
               {mobileInfosOpen && (
-                <div className="ml-4 mt-1 flex flex-col gap-0.5 border-l-2 border-sky-100 pl-3">
+                <div style={{ marginLeft: 16, borderLeft: `2px solid ${VIOLET}44`, paddingLeft: 12, marginBottom: 4 }}>
                   {infosPratiquesItems.map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={closeMenu}
-                      className="flex items-center gap-2 rounded-full px-3 py-1.5 text-[11px] text-slate-700 hover:bg-sky-50"
-                    >
-                      <span>{item.emoji}</span>
-                      {item.label}
+                    <Link key={item.href} href={item.href} onClick={closeMenu} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 12px", color: INK, textDecoration: "none", fontSize: 11, fontWeight: 600 }} className="hover:text-[#792BB9]">
+                      <span>{item.emoji}</span>{item.label}
                     </Link>
                   ))}
                 </div>
               )}
             </div>
 
-            {/* Qui sommes-nous mobile */}
+            {/* Qui sommes-nous */}
             <div>
-              <div className="flex items-center">
-                <Link
-                  href="/murathenes"
-                  onClick={closeMenu}
-                  className="flex-1 rounded-l-full px-3 py-2"
-                >
-                  Qui sommes-nous ?
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => setMobileMuratOpen((p) => !p)}
-                  className="flex h-8 w-8 items-center justify-center rounded-full transition hover:bg-sky-100"
-                  aria-label="Développer qui sommes-nous"
-                >
-                  <svg
-                    className={`h-3 w-3 transition-transform duration-200 ${mobileMuratOpen ? "rotate-180" : ""}`}
-                    viewBox="0 0 12 12"
-                    fill="currentColor"
-                  >
-                    <path d="M6 8L1 3h10L6 8z" />
-                  </svg>
+              <div style={{ display: "flex", alignItems: "center" }}>
+                <Link href="/murathenes" onClick={closeMenu} style={{ flex: 1, padding: "10px 12px", color: INK, textDecoration: "none" }}>Qui sommes-nous ?</Link>
+                <button type="button" onClick={() => setMobileMuratOpen((p) => !p)} style={{ background: "none", border: "none", cursor: "pointer", padding: 8, color: INK }}>
+                  <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${mobileMuratOpen ? "rotate-180" : ""}`} aria-hidden="true" />
                 </button>
               </div>
               {mobileMuratOpen && (
-                <div className="ml-4 mt-1 flex flex-col gap-0.5 border-l-2 border-sky-100 pl-3">
+                <div style={{ marginLeft: 16, borderLeft: `2px solid ${VIOLET}44`, paddingLeft: 12, marginBottom: 4 }}>
                   {murathènesItems.map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      onClick={closeMenu}
-                      className="flex items-center gap-2 rounded-full px-3 py-1.5 text-[11px] text-slate-700 hover:bg-sky-50"
-                    >
-                      <span>{item.emoji}</span>
-                      {item.label}
+                    <Link key={item.href} href={item.href} onClick={closeMenu} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 12px", color: INK, textDecoration: "none", fontSize: 11, fontWeight: 600 }} className="hover:text-[#792BB9]">
+                      <span>{item.emoji}</span>{item.label}
                     </Link>
                   ))}
                 </div>
               )}
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 8 }}>
+              <button type="button" onClick={() => openLead("message")} style={{ padding: "11px 12px", background: INK, color: CREAM, borderRadius: 999, border: `2px solid ${INK}`, textAlign: "center", fontSize: 11, fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
+                <MessageSquareText size={14} aria-hidden="true" />
+                Contact
+              </button>
+              <a href={`tel:${PHONE_TEL}`} style={{ padding: "11px 12px", background: YELLOW, color: INK, borderRadius: 999, border: `2px solid ${INK}`, textAlign: "center", fontSize: 11, fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7, boxShadow: `2px 2px 0 ${INK}`, textDecoration: "none" }} aria-label={`Appeler Murathènes au ${PHONE_DISPLAY}`}>
+                <PhoneCall size={14} aria-hidden="true" />
+                {PHONE_DISPLAY}
+              </a>
             </div>
           </nav>
         </div>

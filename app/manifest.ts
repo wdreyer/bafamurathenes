@@ -2,10 +2,10 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "BAFA Murathenes",
-    short_name: "Murathenes",
+    name: "BAFA Murathènes",
+    short_name: "Murathènes",
     description:
-      "Formations BAFA en Auvergne avec Murathenes : formation generale, approfondissement, infos pratiques et accompagnement.",
+      "Formations BAFA en Auvergne avec Murathènes : formation générale, étape 3 approfondissement, infos pratiques et accompagnement.",
     start_url: "/",
     display: "standalone",
     background_color: "#fffbeb",

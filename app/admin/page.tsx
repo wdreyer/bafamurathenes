@@ -15,7 +15,7 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     const unsubFormations = onSnapshot(collection(db, "formations"), (snap) => {
       const data = snap.docs.map(
-        (doc) => ({ id: doc.id, ...(doc.data() as any) } as Formation),
+        (doc) => ({ id: doc.id, ...(doc.data() as Omit<Formation, "id">) }),
       );
       setFormations(data);
     });
@@ -24,7 +24,7 @@ export default function AdminDashboardPage() {
       collection(db, "inscriptions"),
       (snap) => {
         const data = snap.docs.map(
-          (doc) => ({ id: doc.id, ...(doc.data() as any) } as Inscription),
+          (doc) => ({ id: doc.id, ...(doc.data() as Omit<Inscription, "id">) }),
         );
         setInscriptions(data);
       },
@@ -181,7 +181,7 @@ export default function AdminDashboardPage() {
                     Type:{" "}
                     {f.type === "formation_generale"
                       ? "Formation générale"
-                      : "Approfondissement / séjour à l'étranger"}
+                      : "Étape 3 · Approfondissement / séjour à l'étranger"}
                   </span>
                   <span>Inscrits : {f.inscriptionsCount ?? 0}</span>
                 </div>

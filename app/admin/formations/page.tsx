@@ -16,7 +16,7 @@ export default function FormationsPage() {
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const data: Formation[] = snapshot.docs.map((doc) => {
-        const d = doc.data() as any;
+        const d = doc.data() as Omit<Formation, "id">;
         return {
           id: doc.id,
           ...d,

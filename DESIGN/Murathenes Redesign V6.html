@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <title>Murathènes — Redesign unifié</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    html, body { margin: 0; padding: 0; background: #1a1530; min-height: 100vh; font-family: system-ui, sans-serif; }
+    #root { width: 100vw; height: 100vh; }
+    @import url('https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,800;1,9..144,400;1,9..144,600&family=Caveat:wght@500;700&family=JetBrains+Mono:wght@400;500&display=swap');
+  </style>
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+  <script type="text/babel" src="design-canvas.jsx"></script>
+  <script type="text/babel" src="shared.jsx"></script>
+  <script type="text/babel" src="murathenes-pages-v6.jsx"></script>
+  <script type="text/babel" src="ios-frame.jsx"></script>
+  <script type="text/babel" src="murathenes-mobile-v6.jsx"></script>
+</head>
+<body>
+  <style>body { font-family: 'Familjen Grotesk', sans-serif; }</style>
+  <div id="root"></div>
+  <script type="text/babel" data-presets="react">
+    function App() {
+      return (
+        <DesignCanvas
+          title="Murathènes — V6 institutionnel"
+          subtitle="Sans orange · vouvoiement · ton plus rassurant pour les parents · trust band + agréments"
+        >
+          <DCSection id="all" title="Desktop" subtitle="Palette violet + jaune + sage · vouvoiement · trust band institutionnel">
+            <DCArtboard id="home" label="Accueil" width={1280} height={4700}>
+              <HomePage />
+            </DCArtboard>
+            <DCArtboard id="bafa" label="Le BAFA" width={1280} height={3700}>
+              <BafaPage />
+            </DCArtboard>
+            <DCArtboard id="formation" label="Formation FG (Été)" width={1280} height={1800}>
+              <FormationDetailPage />
+            </DCArtboard>
+            <DCArtboard id="appro" label="Formation Appro" width={1280} height={2100}>
+              <FormationApproPage />
+            </DCArtboard>
+            <DCArtboard id="infos" label="Infos pratiques" width={1280} height={2400}>
+              <InfosPratiquesPage />
+            </DCArtboard>
+            <DCArtboard id="qui" label="Qui sommes-nous" width={1280} height={1800}>
+              <QuiSommesNousPage />
+            </DCArtboard>
+          </DCSection>
+          <DCSection id="mobile" title="Mobile" subtitle="iPhone — touch first, callback sticky + FAB">
+            <DCArtboard id="m-home" label="Accueil" width={460} height={920}>
+              <IOSDevice><MobHome /></IOSDevice>
+            </DCArtboard>
+            <DCArtboard id="m-bafa" label="Le BAFA" width={460} height={920}>
+              <IOSDevice><MobBafa /></IOSDevice>
+            </DCArtboard>
+            <DCArtboard id="m-fg" label="Formation FG" width={460} height={920}>
+              <IOSDevice><MobFormationFG /></IOSDevice>
+            </DCArtboard>
+            <DCArtboard id="m-appro" label="Formation Appro" width={460} height={920}>
+              <IOSDevice><MobFormationAppro /></IOSDevice>
+            </DCArtboard>
+            <DCArtboard id="m-infos" label="Infos pratiques" width={460} height={920}>
+              <IOSDevice><MobInfos /></IOSDevice>
+            </DCArtboard>
+            <DCArtboard id="m-qui" label="Qui sommes-nous" width={460} height={920}>
+              <IOSDevice><MobQui /></IOSDevice>
+            </DCArtboard>
+          </DCSection>
+        </DesignCanvas>
+      );
+    }
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

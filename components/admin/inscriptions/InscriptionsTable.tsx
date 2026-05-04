@@ -18,7 +18,7 @@ type Props = {
 
 export function InscriptionsTable({ inscriptions }: Props) {
   if (!inscriptions.length) {
-    return <p>Aucune inscription pour l'instant.</p>;
+    return <p>Aucune inscription pour l&apos;instant.</p>;
   }
 
   return (

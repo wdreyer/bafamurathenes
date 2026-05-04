@@ -2,103 +2,107 @@
 
 import { useMemo, useState } from "react";
 
+const INK = "#1a1530";
+const PAPER = "#fff8ec";
+const VIOLET = "#792BB9";
+const YELLOW = "#F5EF72";
+
 type Lang = "fr" | "en";
-
-function cx(...v: Array<string | false | null | undefined>) {
-  return v.filter(Boolean).join(" ");
-}
-
-const VIOLET = "#6666C6";
-const VIOLET_SOFT = "rgba(102,102,198,0.12)";
-const YELLOW = "#F5EEDA";
 
 export default function ProjetEducatifTab() {
   const [lang, setLang] = useState<Lang>("fr");
 
   const pdf = useMemo(() => {
-    // fichiers dans public/MT/ (respecter la casse + encoder espaces/accents)
     const fr = "/MT/FRProjet%20%C3%A9ducatif.pdf";
     const en = "/MT/EN%20Projet%20%C3%A9ducatif%20(2).pdf";
     return lang === "fr" ? fr : en;
   }, [lang]);
 
   return (
-    <section className="space-y-0">
-      {/* Header hors cadre */}
-      <header className="mx-auto max-w-6xl px-4 pb-4 md:px-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-         Notre socle commun qui définit l'ensemble de nos actions
+    <section style={{ width: "100%" }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "40px 24px 24px" }} className="md:px-12">
+        <p className="mura-mono" style={{ margin: "0 0 8px", fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: 2.5, color: VIOLET }}>
+          Notre socle commun
         </p>
-        <h1 className="mt-2 font-display text-2xl font-semibold text-slate-900 md:text-3xl">
+        <h2 className="ed" style={{ margin: "0 0 12px", fontSize: "clamp(28px, 4vw, 42px)", fontWeight: 700, lineHeight: 1.1, color: INK, fontStyle: "normal" }}>
           Projet éducatif
-        </h1>
-                <div className="mx-auto max-w-6xl ">
-          <div className="max-w-3xl space-y-2 text-base text-slate-700">
-            <p>
-              Le projet éducatif de Murathènes définit nos valeurs, nos intentions
-              pédagogiques et notre manière d’accompagner les jeunes.
-            </p>
+        </h2>
+        <p style={{ margin: "0 0 20px", maxWidth: 600, fontSize: 14, lineHeight: 1.65, color: INK, opacity: 0.75 }}>
+          Le projet éducatif de Murathènes définit nos valeurs, nos intentions pédagogiques et notre manière d&apos;accompagner les jeunes.
+        </p>
 
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setLang("fr")}
-                className={cx(
-                  "cursor-pointer rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.12em]",
-                  "shadow-sm ring-1 transition",
-                  lang === "fr"
-                    ? "bg-slate-900 text-white ring-slate-900/10"
-                    : "bg-white/90 text-slate-700 ring-slate-200 hover:bg-white"
-                )}
-              >
-                Français
-              </button>
+        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10 }}>
+          <button
+            type="button"
+            onClick={() => setLang("fr")}
+            style={{
+              background: lang === "fr" ? INK : PAPER,
+              color: lang === "fr" ? YELLOW : INK,
+              border: `2px solid ${INK}`,
+              borderRadius: 999,
+              padding: "9px 18px",
+              fontSize: 11,
+              fontWeight: 800,
+              textTransform: "uppercase",
+              letterSpacing: "0.12em",
+              cursor: "pointer",
+              boxShadow: lang === "fr" ? `2px 2px 0 ${VIOLET}` : "none",
+            }}
+          >
+            Français
+          </button>
+          <button
+            type="button"
+            onClick={() => setLang("en")}
+            style={{
+              background: lang === "en" ? INK : PAPER,
+              color: lang === "en" ? YELLOW : INK,
+              border: `2px solid ${INK}`,
+              borderRadius: 999,
+              padding: "9px 18px",
+              fontSize: 11,
+              fontWeight: 800,
+              textTransform: "uppercase",
+              letterSpacing: "0.12em",
+              cursor: "pointer",
+              boxShadow: lang === "en" ? `2px 2px 0 ${VIOLET}` : "none",
+            }}
+          >
+            English
+          </button>
+          <a
+            href={pdf}
+            target="_blank"
+            rel="noreferrer"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              background: VIOLET,
+              color: YELLOW,
+              border: `2px solid ${INK}`,
+              borderRadius: 999,
+              padding: "9px 18px",
+              fontSize: 11,
+              fontWeight: 800,
+              textTransform: "uppercase",
+              letterSpacing: "0.12em",
+              textDecoration: "none",
+              boxShadow: `2px 2px 0 ${INK}`,
+            }}
+          >
+            Ouvrir en plein écran <span>&#8599;</span>
+          </a>
+        </div>
+      </div>
 
-              <button
-                type="button"
-                onClick={() => setLang("en")}
-                className={cx(
-                  "cursor-pointer rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.12em]",
-                  "shadow-sm ring-1 transition",
-                  lang === "en"
-                    ? "bg-slate-900 text-white ring-slate-900/10"
-                    : "bg-white/90 text-slate-700 ring-slate-200 hover:bg-white"
-                )}
-              >
-                English
-              </button>
-
-              <a
-                href={pdf}
-                target="_blank"
-                rel="noreferrer"
-                className={cx(
-                  "inline-flex items-center gap-2 rounded-full px-4 py-2",
-                  "text-[11px] font-semibold uppercase tracking-[0.12em]",
-                  "shadow-sm transition hover:opacity-95 cursor-pointer"
-                )}
-                style={{ backgroundColor: VIOLET, color: YELLOW }}
-              >
-                Ouvrir en plein écran <span className="text-sm">↗</span>
-              </a>
-            </div>
-
-
+      <div style={{ borderTop: `1.5px solid ${INK}18` }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "24px 24px 48px" }} className="md:px-12">
+          <div style={{ border: `2px solid ${INK}`, borderRadius: 18, overflow: "hidden", boxShadow: `4px 4px 0 ${INK}` }}>
+            <iframe title="Projet éducatif" src={pdf} style={{ display: "block", width: "100%", height: "75vh", border: "none" }} />
           </div>
         </div>
-      </header>
-
-      {/* Intro + actions */}
-
-
-      {/* PDF */}
-      <section className="  bg-transparent">
-        <div className="mx-auto max-w-6xl ">
-          <div className="overflow-hidden rounded-2xl bg-white/95 shadow-sm ring-1 ring-slate-200">
-            <iframe title="Projet éducatif" src={pdf} className="h-[75vh] w-full" />
-          </div>
-        </div>
-      </section>
+      </div>
     </section>
   );
 }

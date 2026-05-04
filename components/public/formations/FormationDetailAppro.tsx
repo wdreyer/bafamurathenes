@@ -2,14 +2,23 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
 import type { Formation } from "@/lib/types";
 
 import { ProgrammeModal } from "@/app/infos-pratiques/components/ProgrammeModal";
 import ContenuAppro from "@/app/infos-pratiques/components/contenuAppro";
-import {
-  VIOLET_FG,
-  YELLOW,
-} from "@/app/infos-pratiques/components/ProgrammeParts";
+import AidesLeadForm from "@/components/AidesLeadForm";
+import { MIN_PRICE_AFTER_AIDS } from "@/lib/offers";
+import { FormationGallery } from "@/components/public/formations/FormationGallery";
+
+const INK = "#1a1530";
+const PAPER = "#fff8ec";
+const CREAM = "#fefcf5";
+const VIOLET = "#792BB9";
+const YELLOW = "#F5EF72";
+const PHONE_DISPLAY = "01 84 21 05 48";
+const PHONE_TEL = "0184210548";
 
 type TransportOption = {
   label?: string;
@@ -18,162 +27,54 @@ type TransportOption = {
   price: number;
 };
 
-function formatApproDateLine(start?: string, end?: string) {
-  if (!start || !end) return "";
-  const s = new Date(start);
-  const e = new Date(end);
+const APPRO_GALLERY = [
+  { src: "/FGAVRIL2026/PXL_20260413_134859475.MP.jpg", alt: "Mise en situation de séjour à l'étranger" },
+  { src: "/FGAVRIL2026/PXL_20260413_135002499.MP.jpg", alt: "Jeu de rôle en extérieur" },
+  { src: "/FGAVRIL2026/PXL_20260413_135135129.MP.jpg", alt: "Groupe en situation d'animation" },
+  { src: "/FGAVRIL2026/PXL_20260413_135146909.MP.jpg", alt: "Débrief collectif en extérieur" },
+  { src: "/FGAVRIL2026/IMG_8430.JPG", alt: "Animation préparée par les stagiaires" },
+  { src: "/FGAVRIL2026/IMG_8453.JPG", alt: "Temps collectif au domaine" },
+];
 
-  const sameMonth =
-    s.getMonth() === e.getMonth() && s.getFullYear() === e.getFullYear();
-  if (sameMonth) {
-    const month = s.toLocaleDateString("fr-FR", { month: "long" });
-    return `${s.getDate()}–${e.getDate()} ${month} ${s.getFullYear()}`;
+const APPRO_TESTIMONIALS = [
+  {
+    quote:
+      "Les lieux sont trés agréable, au calme, permettant de realiser des activiters dehors et autre. Le domaine est un des points trés positifs de la formation.",
+    author: "Stagiaire",
+    meta: "Site · FG avril 2026",
+  },
+  {
+    quote:
+      "Les temps théoriques ont était beaucoup plus agréables et interessant que se que j’aurai pensé",
+    author: "Stagiaire",
+    meta: "Contenu · FG avril 2026",
+  },
+  {
+    quote:
+      "L’accueil a était trés agreable, de plus on nous a fait visiter les lieux rapidement se qui nous a permis de nous habituer au domaine rapidement",
+    author: "Stagiaire",
+    meta: "Accueil · FG avril 2026",
+  },
+];
+
+function formatHeroDate(startDate?: string, endDate?: string) {
+  if (!startDate) return { line1: "Dates à venir", line2: null, year: null };
+  const s = new Date(startDate);
+  const e = endDate ? new Date(endDate) : null;
+  const dayS = s.getDate();
+  const monthS = s.toLocaleDateString("fr-FR", { month: "long" });
+  const year = String(s.getFullYear());
+  if (!e) return { line1: `${dayS} ${monthS}`, line2: null, year };
+  const dayE = e.getDate();
+  const monthE = e.toLocaleDateString("fr-FR", { month: "long" });
+  if (s.getMonth() === e.getMonth() && s.getFullYear() === e.getFullYear()) {
+    return { line1: `${dayS}–${dayE}`, line2: monthS, year };
   }
-
-  const sm = s.toLocaleDateString("fr-FR", { month: "long" });
-  const em = e.toLocaleDateString("fr-FR", { month: "long" });
-  return `${s.getDate()} ${sm} ${s.getFullYear()} – ${e.getDate()} ${em} ${e.getFullYear()}`;
+  return { line1: `${dayS} ${monthS}`, line2: `au ${dayE} ${monthE}`, year };
 }
 
-function cx(...v: Array<string | false | null | undefined>) {
-  return v.filter(Boolean).join(" ");
-}
-
-function MiniCarouselCard({
-  fixedTitle,
-  items,
-  index,
-  setIndex,
-}: {
-  fixedTitle: string;
-  items: Array<{ title: string; text: string }>;
-  index: number;
-  setIndex: React.Dispatch<React.SetStateAction<number>>;
-}) {
-  const prev = () => setIndex((i) => (i - 1 + items.length) % items.length);
-  const next = () => setIndex((i) => (i + 1) % items.length);
-
-  // DA blanche + ring slate, accent violet discret
-  const accent = "rgba(102,102,198,0.95)"; // violet doux
-  const ring = "rgba(226,232,240,1)"; // slate-200
-  const dotOn = "rgba(102,102,198,0.75)";
-  const dotOff = "rgba(148,163,184,0.45)";
-
-  return (
-    <div className="relative overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-slate-200">
-      {/* petit cercle violet en haut à droite (style “transport”) */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -right-6 -top-6 h-16 w-16 rounded-full"
-        style={{ background: "rgba(102,102,198,0.14)" }}
-      />
-
-      {/* ✅ Header fixe */}
-      {/* ✅ Header fixe (titre centré, poppins, uppercase) */}
-      <div
-        className="relative px-4 py-4 md:px-6 md:py-5"
-        style={{ borderBottom: `1px solid ${ring}` }}
-      >
-        <p
-          className={[
-            "text-center uppercase",
-            "font-display", // <- si ton font-display = Poppins (sinon remplace par "font-poppins")
-            "text-[11px] md:text-xs",
-            "tracking-[0.22em]",
-            "text-slate-700",
-          ].join(" ")}
-        >
-          {fixedTitle}
-        </p>
-
-        {/* petit trait fonctionnel discret */}
-        <span
-          aria-hidden
-          className="pointer-events-none absolute left-1/2 top-full mt-0.5 h-[2px] w-12 -translate-x-1/2 rounded-full opacity-70"
-          style={{ background: accent }}
-        />
-      </div>
-
-
-      {/* Body */}
-      <div className="relative grid grid-cols-[auto_1fr_auto] items-stretch">
-        {/* left */}
-        <button
-          type="button"
-          onClick={prev}
-          className="group flex w-14 cursor-pointer items-center justify-center transition  md:w-16"
-          aria-label="Précédent"
-        >
-          <span
-            className={cx(
-              "flex h-10 w-10 items-center justify-center rounded-full",
-              "bg-white shadow-sm transition",
-              "text-2xl font-semibold text-slate-800 md:h-11 md:w-11 md:text-3xl"
-            )}
-            style={{
-              border: `1px solid ${ring}`,
-              boxShadow: "0 1px 0 rgba(15,23,42,0.06)",
-            }}
-          >
-            ‹
-          </span>
-        </button>
-
-        {/* content */}
-        <div className="flex min-h-[175px] flex-col justify-center px-4 py-4 md:min-h-[195px] md:px-6 md:py-5">
-          <p
-            className="text-[10px] font-semibold uppercase tracking-[0.18em] md:text-[11px]"
-            style={{ color: accent }}
-          >
-            {items[index].title}
-          </p>
-
-          <p className="mt-2 text-sm leading-relaxed text-slate-700">
-            {items[index].text}
-          </p>
-        </div>
-
-        {/* right */}
-        <button
-          type="button"
-          onClick={next}
-          className="group flex w-14 cursor-pointer items-center justify-center transition md:w-16"
-          aria-label="Suivant"
-        >
-          <span
-            className={cx(
-              "flex h-10 w-10 items-center justify-center rounded-full",
-              "bg-white shadow-sm transition",
-              "text-2xl font-semibold text-slate-800 md:h-11 md:w-11 md:text-3xl"
-            )}
-            style={{
-              border: `1px solid ${ring}`,
-              boxShadow: "0 1px 0 rgba(15,23,42,0.06)",
-            }}
-          >
-            ›
-          </span>
-        </button>
-      </div>
-
-      {/* dots */}
-      <div className="relative flex items-center justify-center gap-2 px-4 pb-4">
-        {items.map((_, i) => (
-          <button
-            key={i}
-            type="button"
-            onClick={() => setIndex(i)}
-            className="h-1.5 rounded-full transition"
-            style={{
-              width: i === index ? 36 : 22,
-              background: i === index ? dotOn : dotOff,
-            }}
-            aria-label={`Aller au point ${i + 1}`}
-          />
-        ))}
-      </div>
-    </div>
-  );
+function openLead(mode: "message" | "callback") {
+  window.dispatchEvent(new CustomEvent("contact-widget:open", { detail: { mode } }));
 }
 
 export default function FormationDetailAppro(props: {
@@ -184,368 +85,402 @@ export default function FormationDetailAppro(props: {
   onBack: () => void;
   onOpenYapla: () => void;
 }) {
-  const { formation, dateLabel, typeText, options, onBack, onOpenYapla } =
-    props;
-
-  const hasOptions = (options?.length ?? 0) > 0;
-
-  // Media
-  const heroVideoSrc = "/APPRO/video.mp4";
-  const heroImg1 = "/APPRO/1.jpeg";
-  const heroImg2 = "/APPRO/2.jpeg";
-
-  const prettyDate = useMemo(() => {
-    const d = formatApproDateLine(formation.startDate, formation.endDate);
-    return d || dateLabel || "";
-  }, [formation.startDate, formation.endDate, dateLabel]);
-
-  const locationText =
-    (formation as any).location ??
-    "Auvergne | Domaine de Gravières, Lanobre, Cantal.";
-
-  const [bafaIndex, setBafaIndex] = useState(0);
-  const [approIndex, setApproIndex] = useState(0);
-
+  const { formation, options, onBack, onOpenYapla } = props;
   const [programmeOpen, setProgrammeOpen] = useState(false);
 
-  const bafaThemes = [
-    {
-      title: "EXPERIMENTER & ANALYSER",
-      text: "Grands jeux, veillées, situations d’animation, projet collectif, organisation de la vie quotidienne.",
-    },
-    {
-      title: "ECHANGER",
-      text: "Avec les autres stagiaires, les formateur·rices expérimenté·es : partage d’expériences et de réflexions.",
-    },
-    {
-      title: "APPROFONDIR & SE QUESTIONNER",
-      text: "Gestion d’un groupe, comment sensibiliser et prévenir, le rôle d’un·e animateur·rice…",
-    },
-  ];
+  const { line1, line2, year } = useMemo(
+    () => formatHeroDate(formation.startDate, formation.endDate),
+    [formation.startDate, formation.endDate]
+  );
 
-  const approThemes = [
-    {
-      title: "GESTION LOGISTIQUE",
-      text: "Transports, réglementation, hébergement, alimentation…",
-    },
-    {
-      title: "ACTIVITÉS SPÉCIFIQUES",
-      text: "Activités multilingues, multiculturelles, découverte d’un lieu inconnu, peu de matériel…",
-    },
-    {
-      title: "PUBLICS & ENVIRONNEMENT DE TRAVAIL",
-      text: "Spécificités des publics adolescents de France et d’Europe, partenaires et collègues du monde entier, préparation à distance.",
-    },
-    {
-      title: "IMMERSION & MISE EN SITUATION PRATIQUE",
-      text: "Élaboration des menus et gestion d’un budget, mise en place d’animations types de séjour à l’étranger, intervenants experts.",
-    },
-  ];
+  const locationText =
+    (formation as Formation & { location?: string }).location ??
+    "Domaine de Gravières · Lanobre, Cantal";
+
+  const transportLine =
+    options.length > 0
+      ? `Transport optionnel (${options.map((o) => `${o.city ?? o.label ?? "?"} ${o.price} €`).join(" · ")})`
+      : null;
 
   return (
     <>
-      {/* HERO */}
-      <section className="relative border-b border-slate-100 bg-transparent">
-        <div className="mx-auto max-w-5xl px-4 pt-7 pb-8 md:px-6 md:pt-9 md:pb-10">
-          <div className="flex flex-col gap-8 md:flex-row md:items-center">
-            {/* Text */}
-            <div className="flex-1 space-y-4">
-              <div className="flex flex-wrap items-center gap-2">
-                <p className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-600 shadow-sm ring-1 ring-slate-200">
-                  <span className="text-base">🎓</span>
-                  <span>{typeText}</span>
-                </p>
+      {/* ═══ BREADCRUMB ═══ */}
+      <div
+        className="mura-mono"
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          padding: "12px 24px",
+          fontSize: 11,
+          color: INK,
+          opacity: 0.6,
+          borderBottom: `1px dashed ${INK}`,
+          background: PAPER,
+        }}
+      >
+        <button
+          type="button"
+          onClick={onBack}
+          style={{ cursor: "pointer", background: "none", border: "none", color: "inherit", fontSize: "inherit", fontFamily: "inherit", letterSpacing: "inherit", padding: 0 }}
+          className="hover:opacity-100 transition-opacity"
+        >
+          ← FORMATIONS / ÉTAPE 3
+        </button>
+        <span className="hidden md:block">ÉTAPE 3 DU BAFA · APPROFONDISSEMENT 2026</span>
+      </div>
 
-                {prettyDate && (
-                  <span className="inline-flex items-center rounded-full bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-700 shadow-sm ring-1 ring-slate-200">
-                    {prettyDate}
-                  </span>
-                )}
+      {/* ═══ HERO — yellow ═══ */}
+      <div
+        className="formation-detail-hero formation-detail-hero-appro"
+        style={{
+          backgroundColor: YELLOW,
+          backgroundImage:
+            'linear-gradient(105deg, rgba(245, 239, 114, 0.78) 0%, rgba(255, 248, 236, 0.62) 48%, rgba(121, 43, 185, 0.22) 100%), linear-gradient(180deg, rgba(255, 248, 236, 0.16) 0%, rgba(245, 239, 114, 0.68) 100%), url("/FGAVRIL2026/PXL_20260413_134859475.MP.jpg")',
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          color: INK,
+          borderBottom: `2px solid ${INK}`,
+        }}
+      >
+        <div style={{ maxWidth: 1200, margin: "0 auto" }} className="formation-detail-hero-content px-6 py-12 md:px-12 md:py-16">
+          <div className="grid grid-cols-1 gap-10 md:grid-cols-[1.1fr_1fr] items-center">
+
+            {/* Left — date + CTA */}
+            <div>
+              <div style={{ display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap" }}>
+                <span style={{ background: VIOLET, color: CREAM, padding: "5px 14px", borderRadius: 999, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, border: `2px solid ${INK}` }}>
+                  ÉTAPE 3 DU BAFA
+                </span>
+                <span style={{ background: CREAM, color: INK, padding: "5px 14px", borderRadius: 999, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, border: `2px solid ${INK}` }}>
+                  APPROFONDISSEMENT · SÉJOUR À L&apos;ÉTRANGER
+                </span>
               </div>
 
-              <h1 className="font-display text-2xl md:text-3xl font-semibold text-slate-900">
-                {formation.title}
+              <div className="hand" style={{ fontSize: 34, color: VIOLET, marginBottom: -10, transform: "rotate(-1.5deg)" }}>du</div>
+              <h1 style={{ fontWeight: 700, letterSpacing: -5, lineHeight: 0.9, margin: 0 }} className="text-[56px] md:text-[100px]">
+                {line1}
+                {line2 && (
+                  <>
+                    <br />
+                    <span className="ed text-[36px] md:text-[60px]" style={{ fontStyle: "italic" }}>{line2}</span>
+                  </>
+                )}
+                {year && <><br />{year}</>}
               </h1>
 
-              <div className="flex flex-wrap items-center gap-2 text-xs">
-                <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-3 py-1 font-medium text-slate-900 shadow-sm ring-1 ring-slate-200">
-                  <span className="text-base">💶</span>
-                  {formation.price} €
-                </span>
+              <p style={{ fontSize: 16, marginTop: 24, maxWidth: 540, lineHeight: 1.55, opacity: 0.85 }}>
+                L&apos;approfondissement est l&apos;étape 3 du BAFA : pour les futur·es animateur·rices qui veulent encadrer des séjours à l&apos;étranger, des échanges interculturels et des projets européens.
+              </p>
 
-                {hasOptions && (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-white/90 px-3 py-1 font-medium text-slate-900 shadow-sm ring-1 ring-slate-200">
-                    <span className="text-base">🚌</span>
-                    {options.length} option{options.length > 1 ? "s" : ""}{" "}
-                    transport
-                  </span>
-                )}
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2 pt-1">
+              <div style={{ display: "flex", gap: 12, marginTop: 28, flexWrap: "wrap" }}>
+                <button
+                  type="button"
+                  onClick={() => document.getElementById("section-aides")?.scrollIntoView({ behavior: "smooth" })}
+                  style={{ background: CREAM, color: INK, border: `2px solid ${INK}`, borderRadius: 999, padding: "16px 26px", fontSize: 14, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}
+                >
+                  Estimer mes aides
+                </button>
                 <button
                   type="button"
                   onClick={onOpenYapla}
-                  className="inline-flex items-center cursor-pointer gap-2 rounded-full px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] shadow-sm transition hover:opacity-95"
-                  style={{ backgroundColor: VIOLET_FG, color: YELLOW }}
+                  style={{ background: INK, color: YELLOW, border: "none", borderRadius: 999, padding: "16px 26px", fontSize: 14, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer", boxShadow: `2px 2px 0 ${CREAM}` }}
                 >
-                  Je m&apos;inscris <span className="text-sm">→</span>
+                  S&apos;inscrire directement →
                 </button>
-
                 <button
                   type="button"
-                  onClick={() =>
-                    document
-                      .getElementById("contenu")
-                      ?.scrollIntoView({ behavior: "smooth" })
-                  }
-                  className="inline-flex items-center cursor-pointer gap-2 rounded-full bg-white/80 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-900 shadow-sm ring-1 ring-slate-200 transition hover:bg-white"
+                  onClick={() => document.getElementById("contenu-appro")?.scrollIntoView({ behavior: "smooth" })}
+                  style={{ background: CREAM, color: INK, border: `2px solid ${INK}`, borderRadius: 999, padding: "16px 26px", fontSize: 14, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}
                 >
-                  Découvrir le programme <span className="text-sm">↓</span>
+                  Voir le contenu ↓
                 </button>
-              </div>
-
-              <div className="pt-1">
-                <button
-                  onClick={onBack}
-                  className="inline-flex items-center gap-2 text-xs font-medium cursor-pointer underline text-slate-700 underline-offset-4 hover:text-slate-900"
+                <a
+                  href={`tel:${PHONE_TEL}`}
+                  style={{ background: VIOLET, color: CREAM, border: `2px solid ${INK}`, borderRadius: 999, padding: "16px 26px", fontSize: 14, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer", textDecoration: "none" }}
+                  aria-label={`Appeler Murathènes au ${PHONE_DISPLAY}`}
                 >
-                  ← Retour au calendrier des formations
-                </button>
+                  {PHONE_DISPLAY}
+                </a>
               </div>
             </div>
 
-            {/* Media */}
-            <div className="flex-1">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="flex flex-col gap-4">
-                  <div className="overflow-hidden rounded bg-white/80 shadow-sm">
-                    <img
-                      src={heroImg1}
-                      alt="Photo de la formation (1)"
-                      className="h-full max-h-32 w-full object-cover md:max-h-34"
-                      loading="lazy"
-                    />
-                  </div>
-                  <div className="overflow-hidden rounded bg-white/80 shadow-sm">
-                    <img
-                      src={heroImg2}
-                      alt="Photo de la formation (2)"
-                      className="h-full max-h-28 w-full object-cover md:max-h-34"
-                      loading="lazy"
-                    />
+            {/* Right — passeport card visual */}
+            <div className="relative hidden md:block">
+              <div style={{ background: CREAM, padding: 14, borderRadius: 12, border: `3px dashed ${INK}`, boxShadow: `4px 4px 0 ${INK}`, transform: "rotate(1deg)" }}>
+                <div className="mura-mono" style={{ fontSize: 10, color: INK, opacity: 0.6, letterSpacing: 1.5, marginBottom: 8, display: "flex", justifyContent: "space-between" }}>
+                  <span>★ PASSEPORT MURATHÈNES</span>
+                  <span>FR · 2026</span>
+                </div>
+                <div style={{ overflow: "hidden", borderRadius: 6 }}>
+                  <div style={{ position: "relative", width: "100%", aspectRatio: "4/3" }}>
+                    <Image src="/FGAVRIL2026/PXL_20260413_134859475.MP.jpg" alt="Étape 3 approfondissement — séjour international" fill sizes="(min-width: 768px) 50vw, 100vw" className="object-cover" priority />
                   </div>
                 </div>
+                <div style={{ marginTop: 10, padding: 10, background: PAPER, borderRadius: 6, border: `1px solid ${INK}` }}>
+                  <div className="hand" style={{ fontSize: 20, color: VIOLET, lineHeight: 1, transform: "rotate(-1deg)" }}>destination : ailleurs</div>
+                  <div className="mura-mono" style={{ fontSize: 10, color: INK, opacity: 0.6, letterSpacing: 1, marginTop: 4 }}>★★★ INTERCULTURALITÉ · MOBILITÉ · LANGUES ★★★</div>
+                </div>
+              </div>
+              {/* Small overlapping photo */}
+              <div style={{ position: "absolute", bottom: -36, left: -28, width: 140, transform: "rotate(-3.5deg)", border: `3px solid ${INK}`, borderRadius: 6, boxShadow: `2px 2px 0 ${INK}`, overflow: "hidden" }}>
+                <div style={{ position: "relative", width: "100%", aspectRatio: "1/1" }}>
+                  <Image src="/FGAVRIL2026/IMG_8453.JPG" alt="Étape 3 approfondissement" fill sizes="140px" className="object-cover" />
+                </div>
+              </div>
+              {/* "en français" badge */}
+              <div style={{ position: "absolute", top: -22, right: -30, transform: "rotate(4deg)", width: 90, height: 90, borderRadius: "50%", background: VIOLET, color: CREAM, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", border: `3px solid ${INK}`, boxShadow: `2px 2px 0 ${INK}`, textAlign: "center" }}>
+                <span className="hand" style={{ fontSize: 16, lineHeight: 1 }}>en</span>
+                <span style={{ fontSize: 18, fontWeight: 700, letterSpacing: -1, lineHeight: 1 }}>FRANÇAIS</span>
+              </div>
+            </div>
 
-                <div className="overflow-hidden rounded bg-white/70 shadow-sm">
-                  <video
-                    src={heroVideoSrc}
-                    autoPlay
-                    muted
-                    loop
-                    playsInline
-                    className="h-full max-h-60 w-full object-cover scale-[1.06] md:max-h-72"
-                  />
-                </div>
+            {/* Mobile photo */}
+            <div className="md:hidden" style={{ border: `3px solid ${INK}`, borderRadius: 10, overflow: "hidden" }}>
+              <div style={{ position: "relative", width: "100%", aspectRatio: "16/9" }}>
+                <Image src="/FGAVRIL2026/PXL_20260413_134859475.MP.jpg" alt="Étape 3 approfondissement Murathènes" fill sizes="100vw" className="object-cover" />
               </div>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* CONTENT */}
-      <section
-        id="contenu"
-        className="mx-auto max-w-5xl px-4 py-8 md:px-6 md:py-10"
-      >
-        <div className="grid gap-8 md:grid-cols-[minmax(0,2fr)_minmax(0,1.4fr)]">
-          {/* Left */}
-          <div className="space-y-5">
-            <div className="space-y-2">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                Le contenu de la formation
-              </p>
-
-              <h2 className="font-display text-xl font-semibold text-slate-900">
-                Ce que tu vas vivre pendant cette semaine
-              </h2>
-
-              {/* ✅ Carrousel “BAFA” (titre fixe dans la case) */}
-              <div className="mt-3">
-                <MiniCarouselCard
-                  fixedTitle="Affiner ta posture d’animateur·rice et approfondir les acquis de la Formation Générale."
-                  items={bafaThemes}
-                  index={bafaIndex}
-                  setIndex={setBafaIndex}
-                />
-              </div>
-
-              {/* ✅ Carrousel “Appro” (titre fixe dans la case) */}
-              <div className="pt-4">
-                <MiniCarouselCard
-                  fixedTitle="Comprendre les enjeux d’un séjour à l’étranger / échanges de jeunes."
-                  items={approThemes}
-                  index={approIndex}
-                  setIndex={setApproIndex}
-                />
-              </div>
-
-              {/* Description Firebase (inchangée) */}
-              {formation.description && (
-                <div className="pt-2">
-                  <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-slate-800">
-                    {formation.description}
-                  </p>
-                </div>
-              )}
-
-              {/* ✅ Gros bouton violet => ouvre modale Appro */}
-{/* ✅ Bouton compact & smooth (ouvre la modale Approfondissement) */}
-<div className="pt-4">
-  <button
-    type="button"
-    onClick={() => setProgrammeOpen(true)}
-    className={[
-      "group relative w-full cursor-pointer select-none overflow-hidden",
-      "rounded-full px-4 py-3 md:px-5 md:py-3.5",
-      "shadow-sm ring-1 ring-black/5",
-      "transition-all duration-200 ease-out",
-      "hover:-translate-y-0.5 hover:shadow-md",
-      "active:translate-y-0 active:shadow-sm active:scale-[0.99]",
-      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
-    ].join(" ")}
-    style={{
-      backgroundColor: VIOLET_FG,
-      color: YELLOW,
-      outlineColor: YELLOW,
-    }}
-  >
-    {/* petit halo doux */}
-    <span
-      aria-hidden
-      className="pointer-events-none absolute -left-10 -top-10 h-40 w-40 rounded-full opacity-0 blur-2xl transition-opacity duration-300 group-hover:opacity-25"
-      style={{ background: YELLOW }}
-    />
-
-    {/* sheen qui glisse */}
-    <span
-      aria-hidden
-      className="pointer-events-none absolute inset-0 translate-x-[-120%] opacity-0 transition-all duration-500 group-hover:translate-x-[120%] group-hover:opacity-20"
-      style={{
-        background:
-          "linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent)",
-      }}
-    />
-
-    <div className="relative flex items-center justify-between gap-3">
-      <div className="min-w-0 text-left">
-        <div className="text-[10px] font-semibold uppercase tracking-[0.18em] opacity-90">
-          Approfondissement
-        </div>
-
-        <div className="mt-0.5 text-sm md:text-[15px] font-semibold leading-snug">
-          Programme détaillé
-          <span className="hidden md:inline opacity-85 font-normal">
-            {" "}
-            · déroulé complet
-          </span>
         </div>
       </div>
 
-      {/* icône + micro-anim */}
-      <span
-        className={[
-          "inline-flex h-9 w-9 flex-none items-center justify-center rounded-full",
-          "bg-white/10 ring-1 ring-white/15",
-          "transition-all duration-200 ease-out",
-          "group-hover:bg-white/15 group-hover:scale-[1.03]",
-          "group-active:scale-[0.98]",
-        ].join(" ")}
-      >
-        <span className="text-[18px] transition-transform duration-200 group-hover:translate-x-[1px]">
-          ›
-        </span>
-      </span>
-    </div>
-  </button>
-</div>
-
+      {/* ═══ PRÉ-REQUIS BAND ═══ */}
+      <div style={{ background: INK, color: CREAM, borderBottom: `2px solid ${INK}` }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto" }} className="px-6 py-8 md:px-12">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-[auto_1fr_auto] items-center">
+            <div className="mura-mono" style={{ fontSize: 11, letterSpacing: 2.5, color: YELLOW, fontWeight: 700, whiteSpace: "nowrap" }}>PRÉ-REQUIS</div>
+            <div style={{ fontSize: 16, lineHeight: 1.5 }}>
+              Cette formation est <strong>l&apos;étape 3 du BAFA</strong>. Vous devez avoir validé votre{" "}
+              <span style={{ color: YELLOW, fontWeight: 600 }}>formation générale</span> et un{" "}
+              <span style={{ color: YELLOW, fontWeight: 600 }}>stage pratique d&apos;au moins 14 jours</span>{" "}
+              pour vous inscrire.
             </div>
+            <Link href="/formations" style={{ color: YELLOW, fontSize: 13, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", borderBottom: `2px solid ${YELLOW}`, paddingBottom: 2, cursor: "pointer", textDecoration: "none", whiteSpace: "nowrap" }}>
+              Voir la FG →
+            </Link>
           </div>
+        </div>
+      </div>
 
-          {/* Right (quasi inchangé, juste cohérence DA si tu veux après) */}
-          <aside className="space-y-4 text-xs text-slate-700">
-            <div className="group relative overflow-hidden rounded-2xl bg-white/90 px-4 py-4 shadow-sm">
-              <div className="absolute -right-6 -top-6 h-16 w-16 rounded-full bg-slate-100/80" />
-              <div className="relative space-y-2">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">
-                  Infos pratiques
-                </p>
-                <p className="font-display text-sm font-semibold text-slate-900">
-                  Immersion dans la vie d’un séjour collectif
-                </p>
+      {/* ═══ CONTENT + SIDEBAR ═══ */}
+      <div id="contenu-appro" style={{ background: CREAM, borderBottom: `1.5px solid ${INK}` }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto" }} className="px-6 py-16 md:px-12 md:py-24">
+          <div className="grid grid-cols-1 gap-12 md:grid-cols-[1.4fr_1fr] items-start">
 
-                <div className="space-y-1.5 text-xs">
-                  <p>
-                    <span className="font-semibold text-slate-900">
-                      Durée :
-                    </span>{" "}
-                    6 jours (arrivée le dimanche, départ le samedi suivant).
-                  </p>
-                  <p>
-                    <span className="font-semibold text-slate-900">
-                      Hébergement :
-                    </span>{" "}
-                    Internat en pension complète, dortoirs avec sdb privative.
-                  </p>
-                  <p>
-                    <span className="font-semibold text-slate-900">Lieu :</span>{" "}
-                    {locationText}
-                  </p>
+            {/* Left — A+B content blocks */}
+            <div>
+              <div className="mura-mono" style={{ fontSize: 11, color: VIOLET, letterSpacing: 2.5, fontWeight: 700, marginBottom: 14 }}>A — LE CONTENU</div>
+              <h2 style={{ fontWeight: 700, letterSpacing: -2, lineHeight: 1, margin: 0, marginBottom: 24 }} className="text-[36px] md:text-[52px]">
+                Deux faces, <span className="ed" style={{ fontStyle: "italic", color: VIOLET }}>une formation.</span>
+              </h2>
+              <p style={{ fontSize: 16, lineHeight: 1.6, opacity: 0.85, marginBottom: 36 }}>
+              Étape 3 du BAFA : vous approfondissez vos acquis <strong>tout en</strong> vous spécialisant sur les enjeux d&apos;un séjour à l&apos;étranger / échange de jeunes.
+              </p>
+
+              {/* Bloc A */}
+              <div style={{ background: PAPER, border: `2px solid ${INK}`, borderRadius: 24, padding: 28, marginBottom: 24, boxShadow: `3px 3px 0 ${VIOLET}` }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 18 }}>
+                  <div style={{ width: 44, height: 44, borderRadius: 12, background: VIOLET, color: CREAM, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: 700, border: `2px solid ${INK}` }}>A</div>
+                  <h3 className="ed" style={{ fontSize: 24, fontWeight: 600, fontStyle: "italic", margin: 0, letterSpacing: -0.5 }}>Affiner votre posture d&apos;animateur·rice</h3>
+                </div>
+                <p style={{ fontSize: 14, lineHeight: 1.6, opacity: 0.85, marginBottom: 18 }}>Approfondir les acquis de la Formation Générale.</p>
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                  {[
+                    { t: "Expérimenter & analyser", d: "Grands jeux, veillées, situations d'animation, projets collectifs." },
+                    { t: "Échanger", d: "Avec les stagiaires et les formateur·rices : partage d'expériences." },
+                    { t: "Approfondir & questionner", d: "Gestion de groupe, sensibiliser, prévenir, rôle d'anim." },
+                  ].map((it, i) => (
+                    <div key={i} style={{ background: CREAM, padding: 14, borderRadius: 10, border: `1.5px solid ${INK}` }}>
+                      <div className="mura-mono" style={{ fontSize: 10, color: VIOLET, fontWeight: 700, letterSpacing: 1.5, marginBottom: 6 }}>0{i + 1}.</div>
+                      <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 4 }}>{it.t}</div>
+                      <div style={{ fontSize: 12, opacity: 0.75, lineHeight: 1.5 }}>{it.d}</div>
+                    </div>
+                  ))}
                 </div>
               </div>
-            </div>
 
-
-
-            <div className="rounded-2xl bg-white/90 px-4 py-3 text-[11px] text-slate-600 shadow-sm ring-1 ring-slate-200">
-              <div className="mb-2 flex items-center gap-2">
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-lg">
-                  <span className="translate-y-[1px] text-white">📩</span>
-                </span>
-                <p className="font-display text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-800">
-                  Inscription & convocation
-                </p>
+              {/* Bloc B */}
+              <div style={{ background: PAPER, border: `2px solid ${INK}`, borderRadius: 24, padding: 28, boxShadow: `3px 3px 0 ${YELLOW}` }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 18 }}>
+                  <div style={{ width: 44, height: 44, borderRadius: 12, background: YELLOW, color: INK, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: 700, border: `2px solid ${INK}` }}>B</div>
+                  <h3 className="ed" style={{ fontSize: 24, fontWeight: 600, fontStyle: "italic", margin: 0, letterSpacing: -0.5 }}>Comprendre les enjeux d&apos;un séjour à l&apos;étranger</h3>
+                </div>
+                <p style={{ fontSize: 14, lineHeight: 1.6, opacity: 0.85, marginBottom: 18 }}>Spécialisation interculturelle et internationale.</p>
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  {[
+                    { t: "Gestion logistique", d: "Transports, réglementation, hébergement, alimentation, budget." },
+                    { t: "Activités spécifiques", d: "Multilingues, multiculturelles, peu de matériel, terrain inconnu." },
+                    { t: "Publics & partenaires", d: "Spécificités ados France/Europe, partenaires du monde entier, prépa à distance." },
+                    { t: "Immersion pratique", d: "Élaboration menus, animations types séjour, intervenants experts." },
+                  ].map((it, i) => (
+                    <div key={i} style={{ background: CREAM, padding: 14, borderRadius: 10, border: `1.5px solid ${INK}` }}>
+                      <div className="mura-mono" style={{ fontSize: 10, color: YELLOW, fontWeight: 700, letterSpacing: 1.5, marginBottom: 6, filter: "brightness(0.8)" }}>0{i + 1}.</div>
+                      <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 4 }}>{it.t}</div>
+                      <div style={{ fontSize: 12, opacity: 0.75, lineHeight: 1.5 }}>{it.d}</div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
-              <p>
-                L&apos;inscription et le paiement se font via un formulaire
-                sécurisé (Yapla). Une fois ton inscription validée, tu recevras
-                un mail avec la convocation, les horaires précis et l’info pack.
-              </p>
+              {formation.description && (
+                <p style={{ marginTop: 28, fontSize: 15, lineHeight: 1.65, opacity: 0.8, whiteSpace: "pre-line" }}>{formation.description}</p>
+              )}
 
               <button
                 type="button"
-                onClick={onOpenYapla}
-                className="mt-3 inline-flex cursor-pointer items-center gap-1 rounded-full px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] shadow-sm transition hover:opacity-95"
-                style={{ backgroundColor: VIOLET_FG, color: YELLOW }}
+                onClick={() => setProgrammeOpen(true)}
+                style={{ marginTop: 28, width: "100%", background: VIOLET, color: YELLOW, border: "none", borderRadius: 999, padding: "16px 24px", fontSize: 13, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", cursor: "pointer" }}
               >
-                Ouvrir le formulaire <span className="text-xs">↗</span>
+                Voir le programme détaillé complet →
               </button>
             </div>
-          </aside>
+
+            {/* Right — sticky violet sidebar */}
+            <div style={{ position: "sticky", top: 100, alignSelf: "flex-start" }}>
+              <div style={{ background: VIOLET, color: CREAM, padding: 32, borderRadius: 24, border: `2px solid ${INK}`, boxShadow: `4px 4px 0 ${INK}` }}>
+                <div className="mura-mono" style={{ fontSize: 11, letterSpacing: 2.5, fontWeight: 700, color: YELLOW, marginBottom: 20 }}>📋 EN PRATIQUE</div>
+
+                {[
+                  { k: "Durée", v: "6 jours · arrivée dimanche, départ samedi suivant" },
+                  { k: "Hébergement", v: "Internat en pension complète, dortoirs avec sdb privative" },
+                  { k: "Lieu", v: locationText },
+                  { k: "Tarif", v: `Peut descendre jusqu'à ${MIN_PRICE_AFTER_AIDS} € selon votre situation — tarif plein : ${formation.price} €${transportLine ? ` — ${transportLine}` : ""}` },
+                  { k: "Étape 3 · pré-requis", v: "Formation générale + 14 jours de stage pratique validés" },
+                ].map((row) => (
+                  <div key={row.k} style={{ borderBottom: `1.5px dashed ${CREAM}44`, paddingBottom: 12, marginBottom: 12 }}>
+                    <div className="mura-mono" style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", color: YELLOW, opacity: 0.85, marginBottom: 4 }}>{row.k}</div>
+                    <div style={{ fontSize: 14, lineHeight: 1.4 }}>{row.v}</div>
+                  </div>
+                ))}
+
+                <button
+                  type="button"
+                  onClick={() => document.getElementById("section-aides")?.scrollIntoView({ behavior: "smooth" })}
+                  style={{ width: "100%", marginTop: 20, background: CREAM, color: INK, border: `1.5px solid ${CREAM}44`, borderRadius: 999, padding: "12px", fontSize: 12, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", cursor: "pointer" }}
+                >
+                  Estimer mes aides
+                </button>
+                <button
+                  type="button"
+                  onClick={onOpenYapla}
+                  style={{ width: "100%", marginTop: 8, background: YELLOW, color: INK, border: "none", borderRadius: 999, padding: "12px", fontSize: 12, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", cursor: "pointer" }}
+                >
+                  S&apos;inscrire directement ↗
+                </button>
+
+                <div style={{ marginTop: 16, padding: 14, background: INK, color: CREAM, borderRadius: 12 }}>
+                  <div className="mura-mono" style={{ fontSize: 10, color: YELLOW, letterSpacing: 1, marginBottom: 6 }}>⚡ DES QUESTIONS ?</div>
+                  <div style={{ fontSize: 13, marginBottom: 10 }}>L&apos;approfondissement, c&apos;est l&apos;étape 3 du BAFA : appelez-nous au {PHONE_DISPLAY} pour poser vos questions.</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 8 }}>
+                    <button
+                      type="button"
+                      onClick={() => openLead("message")}
+                      style={{ display: "block", width: "100%", background: CREAM, color: INK, border: "none", borderRadius: 999, padding: "10px", fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", cursor: "pointer", textAlign: "center", boxSizing: "border-box" }}
+                    >
+                      Envoyer un message
+                    </button>
+                    <a
+                      href={`tel:${PHONE_TEL}`}
+                      style={{ display: "block", width: "100%", background: YELLOW, color: INK, border: "none", borderRadius: 999, padding: "10px", fontSize: 11, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", cursor: "pointer", textAlign: "center", boxSizing: "border-box", textDecoration: "none" }}
+                      aria-label={`Appeler Murathènes au ${PHONE_DISPLAY}`}
+                    >
+                      {PHONE_DISPLAY}
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ═══ PHOTOS + TÉMOIGNAGES ═══ */}
+      <section style={{ background: PAPER, borderBottom: `1.5px solid ${INK}` }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto" }} className="px-6 py-16 md:px-12 md:py-20">
+          <div className="grid grid-cols-1 gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
+            <div>
+              <div className="mura-mono" style={{ fontSize: 11, color: VIOLET, letterSpacing: 2.5, fontWeight: 700, marginBottom: 14 }}>
+                B — IMMERSION
+              </div>
+              <h2 style={{ fontWeight: 700, lineHeight: 1, margin: 0 }} className="text-[36px] md:text-[52px]">
+                Des mises en situation pour préparer <span className="ed" style={{ fontStyle: "italic", color: VIOLET }}>l&apos;ailleurs.</span>
+              </h2>
+              <p style={{ marginTop: 18, fontSize: 16, lineHeight: 1.6, opacity: 0.82 }}>
+                L&apos;étape 3 approfondissement travaille les déplacements, le quotidien, l&apos;interculturalité et l&apos;animation avec des cas concrets.
+              </p>
+            </div>
+
+            <FormationGallery photos={APPRO_GALLERY} accentColor={YELLOW} shadowColor={VIOLET} />
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3" style={{ marginTop: 34 }}>
+            {APPRO_TESTIMONIALS.map((item, index) => (
+              <article
+                key={`${item.author}-${index}`}
+                className="mura-interactive-card"
+                style={{ background: CREAM, border: `2px solid ${INK}`, borderRadius: 16, padding: 22, boxShadow: `4px 4px 0 ${INK}` }}
+              >
+                <p className="ed" style={{ margin: 0, fontSize: 17, lineHeight: 1.5, fontStyle: "italic", whiteSpace: "pre-line" }}>
+                  “{item.quote}”
+                </p>
+                <div style={{ marginTop: 18, paddingTop: 12, borderTop: `1.5px dashed ${INK}66` }}>
+                  <div style={{ fontSize: 14, fontWeight: 700 }}>{item.author}</div>
+                  <div className="mura-mono" style={{ marginTop: 3, color: VIOLET, fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>
+                    {item.meta}
+                  </div>
+                </div>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* ✅ MODALE APPRO */}
+      {/* ═══ ESTIMATION AIDES ═══ */}
+      <section style={{ background: CREAM, borderBottom: `1.5px solid ${INK}` }}>
+        <div style={{ maxWidth: 1200, margin: "0 auto" }} className="px-6 py-16 md:px-12">
+          <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_1.1fr] items-start">
+            <div>
+              <div className="mura-mono" style={{ fontSize: 11, color: VIOLET, letterSpacing: 2.5, fontWeight: 700, marginBottom: 14 }}>
+                Financement & aides
+              </div>
+              <h2 style={{ fontWeight: 700, letterSpacing: -1, lineHeight: 1.05, margin: "0 0 16px" }} className="text-[28px] md:text-[38px]">
+                Quel sera votre{" "}
+                <span className="ed" style={{ fontStyle: "italic", color: VIOLET }}>reste à charge ?</span>
+              </h2>
+              <p style={{ fontSize: 14, lineHeight: 1.7, opacity: 0.78, marginBottom: 20 }}>
+                Le tarif de l&apos;approfondissement est de {formation.price} €. Grâce aux aides CAF, Conseil Régional et locales, votre reste à charge peut descendre <strong>jusqu&apos;à {MIN_PRICE_AFTER_AIDS} € selon votre situation</strong>. Laissez vos coordonnées — nous vous recontactons avec les montants disponibles.
+              </p>
+              {[
+                "CAF nationale : 200 € (tous les stagiaires)",
+                "CAF départementale : jusqu'à 300 € selon le QF",
+                "Conseil Régional AURA : 80 – 120 €",
+              ].map((item) => (
+                <div key={item} style={{ display: "flex", alignItems: "flex-start", gap: 10, marginBottom: 8, fontSize: 13, opacity: 0.75 }}>
+                  <span style={{ marginTop: 2, flexShrink: 0, width: 18, height: 18, borderRadius: "50%", background: VIOLET, display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: 10, color: CREAM, fontWeight: 800 }}>✓</span>
+                  {item}
+                </div>
+              ))}
+            </div>
+            <div id="section-aides" style={{ background: PAPER, border: `2px solid ${INK}`, borderRadius: 20, padding: "28px 28px 24px", boxShadow: `4px 4px 0 ${INK}` }}>
+              <div className="mura-mono" style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", color: VIOLET, marginBottom: 18 }}>
+                Estimation gratuite
+              </div>
+              <AidesLeadForm source={`Étape 3 Approfondissement — ${formation.title || "Appro"}`} />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══ MODAL PROGRAMME ═══ */}
       <ProgrammeModal
         open={programmeOpen}
         onClose={() => setProgrammeOpen(false)}
         tone="appro"
-        titleTop="Approfondissement"
-        title="Séjours à l’étranger | Echanges de jeunes"
+        titleTop="Étape 3 · Approfondissement"
+        title="Séjours à l'étranger | Échanges de jeunes"
         duration="6 jours"
-        summary="Encadrer des séjours à l’étranger, gérer les déplacements, animer en contexte interculturel et organiser le quotidien (budget, repas, vie de groupe)."
+        summary="Encadrer des séjours à l'étranger, gérer les déplacements, animer en contexte interculturel et organiser le quotidien (budget, repas, vie de groupe)."
       >
         <ContenuAppro />
       </ProgrammeModal>

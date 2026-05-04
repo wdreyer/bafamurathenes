@@ -4,9 +4,8 @@ import React from "react";
 
 export type BlockKey = "fg" | "appro";
 
-/** Violet FG (un peu plus clair que #6666C6) */
-export const VIOLET_FG = "#7A7AE8";
-export const YELLOW = "#F5EEDA";
+export const VIOLET_FG = "#792BB9";
+export const YELLOW = "#F5EF72";
 
 export function Line({
   title,

@@ -22,7 +22,7 @@ export async function POST(req: Request) {
     const to = "bafa@murathenes.org";
     const from = process.env.CONTACT_FROM || "onboarding@resend.dev";
 
-    const subject = `[Murathenes BAFA] Message de ${String(name).trim()}`;
+    const subject = `[Murathènes BAFA] Message de ${String(name).trim()}`;
     const html = `
       <div style="font-family: ui-sans-serif, system-ui; line-height: 1.5">
         <h2>Nouveau message (widget)</h2>

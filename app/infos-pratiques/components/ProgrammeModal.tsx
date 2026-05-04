@@ -56,23 +56,23 @@ export function ProgrammeModal({
         type="button"
         aria-label="Fermer"
         onClick={onClose}
-        className="absolute inset-0 cursor-pointer bg-black/40 backdrop-blur-[2px] cursor-pointer"
+        className="absolute inset-0 cursor-pointer bg-black/45 backdrop-blur-[2px]"
       />
 
       {/* Dialog */}
       <div
         role="dialog"
         aria-modal="true"
-        className="relative w-full max-w-4xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl max-h-[calc(100dvh-2rem)] md:max-h-[calc(100dvh-4rem)]"
+        className="relative flex max-h-[calc(100dvh-2rem)] w-full max-w-5xl flex-col overflow-hidden rounded-[20px] border-2 border-[#1a1530] bg-white shadow-2xl md:max-h-[calc(100dvh-4rem)]"
       >
         <div
-          className="relative px-5 py-5 text-center md:px-8"
+          className="relative px-5 py-5 text-center md:px-8 md:py-6"
           style={{ backgroundColor: headerBg, color: headerFg }}
         >
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] opacity-95">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.16em] opacity-95">
             {titleTop}
           </p>
-          <h3 className="mt-1 font-display text-2xl font-semibold md:text-3xl">
+          <h3 className="mt-1 text-2xl font-semibold leading-tight md:text-3xl">
             {title}
           </h3>
 
@@ -100,7 +100,7 @@ export function ProgrammeModal({
             type="button"
             onClick={onClose}
             aria-label="Fermer la fenêtre"
-            className="cursor-pointer absolute right-3 top-3 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-[14px] font-semibold transition hover:bg-white/25"
+            className="absolute right-3 top-3 inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-white/15 text-[14px] font-semibold transition hover:bg-white/25"
             style={{
               border: `1px solid ${
                 isFG ? "rgba(255,255,255,0.22)" : "rgba(0,0,0,0.12)"
@@ -111,15 +111,15 @@ export function ProgrammeModal({
           </button>
         </div>
 
-        <div className="max-h-[70vh] overflow-y-auto bg-white px-4 py-4 md:px-8 md:py-6">
+        <div className="min-h-0 flex-1 overflow-y-auto bg-white px-4 py-4 md:px-8 md:py-6">
           {children}
         </div>
 
-        <div className="flex items-center justify-end gap-2 border-t border-slate-100 bg-white px-4 py-3 md:px-8">
+        <div className="flex items-center justify-end gap-2 border-t border-[#1a1530]/10 bg-white px-4 py-3 md:px-8">
           <button
             type="button"
             onClick={onClose}
-            className=" cursor-pointer rounded-full px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+            className="cursor-pointer rounded-full px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
           >
             Fermer
           </button>

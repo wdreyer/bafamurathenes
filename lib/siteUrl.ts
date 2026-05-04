@@ -1,4 +1,4 @@
-const FALLBACK_SITE_URL = "https://murathenes.org";
+const FALLBACK_SITE_URL = "https://bafa.murathenes.org";
 
 export function getSiteUrl(): string {
   const raw =

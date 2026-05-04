@@ -1,7 +1,7 @@
 // app/layout.tsx
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { Poppins, Nunito } from "next/font/google";
+import { Poppins, Nunito, Fraunces, Caveat, JetBrains_Mono } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import Header from "@/components/Header";
@@ -31,6 +31,28 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  weight: ["400", "600", "800"],
+  style: ["normal", "italic"],
+  variable: "--font-fraunces",
+  display: "swap",
+});
+
+const caveat = Caveat({
+  subsets: ["latin"],
+  weight: ["500", "700"],
+  variable: "--font-caveat",
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "700"],
+  variable: "--font-jetbrains",
+  display: "swap",
+});
+
 const siteUrl = getSiteUrl();
 const socialImagePath = "/hero-bafa.jpg";
 const socialImageUrl = `${siteUrl}${socialImagePath}`;
@@ -38,26 +60,26 @@ const socialImageUrl = `${siteUrl}${socialImagePath}`;
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "BAFA Murathenes | Formations en Auvergne",
-    template: "%s | BAFA Murathenes",
+    default: "BAFA Murathènes | Formations en Auvergne",
+    template: "%s | BAFA Murathènes",
   },
   description:
-    "Formations BAFA en Auvergne avec Murathenes : formation generale, approfondissement, infos pratiques et accompagnement.",
+    "Formations BAFA en Auvergne avec Murathènes : formation générale, étape 3 approfondissement, infos pratiques et accompagnement.",
   alternates: {
     canonical: "/",
   },
-  applicationName: "BAFA Murathenes",
+  applicationName: "BAFA Murathènes",
   keywords: [
     "BAFA",
     "formation BAFA",
     "BAFA Auvergne",
-    "Murathenes",
+    "Murathènes",
     "animateur",
     "animation jeunesse",
   ],
-  authors: [{ name: "Murathenes" }],
-  creator: "Murathenes",
-  publisher: "Murathenes",
+  authors: [{ name: "Murathènes" }],
+  creator: "Murathènes",
+  publisher: "Murathènes",
   referrer: "origin-when-cross-origin",
   robots: {
     index: true,
@@ -74,24 +96,24 @@ export const metadata: Metadata = {
     type: "website",
     locale: "fr_FR",
     url: siteUrl,
-    siteName: "BAFA Murathenes",
-    title: "BAFA Murathenes | Formations en Auvergne",
+    siteName: "BAFA Murathènes",
+    title: "BAFA Murathènes | Formations en Auvergne",
     description:
-      "Formations BAFA en Auvergne avec Murathenes : formation generale, approfondissement, infos pratiques et accompagnement.",
+      "Formations BAFA en Auvergne avec Murathènes : formation générale, étape 3 approfondissement, infos pratiques et accompagnement.",
     images: [
       {
         url: socialImagePath,
         width: 1200,
         height: 630,
-        alt: "Groupe en formation BAFA Murathenes",
+        alt: "Groupe en formation BAFA Murathènes",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "BAFA Murathenes | Formations en Auvergne",
+    title: "BAFA Murathènes | Formations en Auvergne",
     description:
-      "Formations BAFA en Auvergne avec Murathenes : formation generale, approfondissement et infos pratiques.",
+      "Formations BAFA en Auvergne avec Murathènes : formation générale, étape 3 approfondissement et infos pratiques.",
     images: [socialImageUrl],
   },
   icons: {
@@ -111,7 +133,7 @@ export default function RootLayout({
     {
       "@context": "https://schema.org",
       "@type": "EducationalOrganization",
-      name: "Murathenes",
+      name: "Murathènes",
       url: siteUrl,
       logo: `${siteUrl}/icons/icon-512.png`,
       email: "bafa@murathenes.org",
@@ -120,7 +142,7 @@ export default function RootLayout({
     {
       "@context": "https://schema.org",
       "@type": "WebSite",
-      name: "BAFA Murathenes",
+      name: "BAFA Murathènes",
       url: siteUrl,
       inLanguage: "fr-FR",
     },
@@ -129,10 +151,10 @@ export default function RootLayout({
   return (
     <html
       lang="fr"
-      className={`${geistSans.variable} ${geistMono.variable} ${nunito.variable}`}
+      className={`${geistSans.variable} ${geistMono.variable} ${nunito.variable} ${fraunces.variable} ${caveat.variable} ${jetbrainsMono.variable}`}
     >
       <body
-        className={`${poppins.className} antialiased min-h-screen flex flex-col bg-amber-50 text-slate-900`}
+        className={`${poppins.className} antialiased min-h-screen flex flex-col bg-[#fefcf5] text-[#1a1530]`}
       >
         <Script
           src="https://www.googletagmanager.com/gtag/js?id=AW-17976361031"
@@ -159,7 +181,7 @@ export default function RootLayout({
         </Script>
 
         <Header />
-        <main className="flex-1 bg-gradient-to-b from-rose-50/70 via-amber-50/70 to-sky-50/70">
+        <main className="flex-1">
           {children}
         </main>
         <Footer />

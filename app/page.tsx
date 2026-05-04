@@ -1,77 +1,32 @@
-"use client";
+﻿﻿"use client";
 
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import {
+  ArrowRight,
+  CalendarDays,
+  MessageSquareText,
+  PhoneCall,
+  PlayCircle,
+} from "lucide-react";
 import { db } from "@/lib/firebase";
 import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
 import type { Formation } from "@/lib/types";
-import {
-  getDisplayedFormationPrice,
-  getReferenceFormationPrice,
-} from "@/lib/offers";
+import { getDisplayedFormationPrice, getReferenceFormationPrice, MIN_PRICE_AFTER_AIDS } from "@/lib/offers";
+import { getFormationPublicHref } from "@/lib/formationSlugs";
+import { AidesLeadSection } from "@/components/AidesLeadForm";
 
-// Helpers dates & labels
-const normalizeDate = (value: unknown): string => {
-  if (!value) return "";
-  if (typeof value === "string") return value;
+const INK = "#1a1530";
+const PAPER = "#fff8ec";
+const CREAM = "#fefcf5";
+const VIOLET = "#792BB9";
+const VIOLET_SOFT = "#f0e8f8";
+const YELLOW = "#F5EF72";
+const PHONE_DISPLAY = "01 84 21 05 48";
+const PHONE_TEL = "0184210548";
 
-  if (
-    typeof value === "object" &&
-    value !== null &&
-    "toDate" in value &&
-    typeof (value as { toDate?: () => Date }).toDate === "function"
-  ) {
-    const d = (value as { toDate: () => Date }).toDate();
-    return d.toISOString().slice(0, 10);
-  }
-
-  if (value instanceof Date) {
-    return value.toISOString().slice(0, 10);
-  }
-
-  return String(value);
-};
-
-const parseDateSafe = (value: string | undefined | null): Date | null => {
-  if (!value) return null;
-  const d = new Date(value);
-  return Number.isNaN(d.getTime()) ? null : d;
-};
-
-const formatDateRangeFr = (start?: string, end?: string): string => {
-  const dStart = parseDateSafe(start ?? "");
-  const dEnd = parseDateSafe(end ?? "");
-  if (!dStart || !dEnd) return "";
-
-  const dayStart = String(dStart.getDate()).padStart(2, "0");
-  const dayEnd = String(dEnd.getDate()).padStart(2, "0");
-
-  const sameMonth =
-    dStart.getMonth() === dEnd.getMonth() &&
-    dStart.getFullYear() === dEnd.getFullYear();
-
-  if (sameMonth) {
-    const monthLabel = monthNamesFr[dStart.getMonth()];
-    const year = dStart.getFullYear();
-    // ✅ 05–12 avril 2026
-    return `${dayStart}–${dayEnd} ${monthLabel} ${year}`;
-  }
-
-  // si ça traverse un mois : 28 mars – 02 avril 2026 (et si année diff, on l'affiche)
-  const startMonth = monthNamesFr[dStart.getMonth()];
-  const endMonth = monthNamesFr[dEnd.getMonth()];
-  const startYear = dStart.getFullYear();
-  const endYear = dEnd.getFullYear();
-
-  if (startYear === endYear) {
-    return `${dayStart} ${startMonth} – ${dayEnd} ${endMonth} ${startYear}`;
-  }
-  return `${dayStart} ${startMonth} ${startYear} – ${dayEnd} ${endMonth} ${endYear}`;
-};
-
-
-const monthNamesFr = [
+const MONTHS_FR = [
   "janvier",
   "février",
   "mars",
@@ -86,651 +41,904 @@ const monthNamesFr = [
   "décembre",
 ];
 
-const getMonthYearLabelFr = (dateStr?: string): string => {
-  const d = parseDateSafe(dateStr ?? "");
-  if (!d) return "";
-  return `${monthNamesFr[d.getMonth()]} ${d.getFullYear()}`;
+type HomeSession = {
+  id: string;
+  href: string;
+  type: Formation["type"];
+  title: string;
+  startDate: string;
+  endDate: string;
+  price: number;
+  referencePrice?: number | null;
 };
 
-const typeShortLabel: Record<string, string> = {
-  formation_generale: "BAFA FG",
-  approfondissement_sejour_etranger: "BAFA Appro",
+const FALLBACK_SESSIONS: HomeSession[] = [
+  {
+    id: "fg-juin-2026",
+    href: "/formations",
+    type: "formation_generale",
+    title: "Formation Générale",
+    startDate: "2026-06-26",
+    endDate: "2026-07-04",
+    price: 550,
+  },
+  {
+    id: "appro-juin-2026",
+    href: "/formations",
+    type: "approfondissement_sejour_etranger",
+    title: "Étape 3 · Approfondissement séjour à l'étranger",
+    startDate: "2026-06-28",
+    endDate: "2026-07-04",
+    price: 450,
+  },
+  {
+    id: "fg-octobre-2026",
+    href: "/formations",
+    type: "formation_generale",
+    title: "Formation Générale",
+    startDate: "2026-10-24",
+    endDate: "2026-10-31",
+    price: 550,
+  },
+];
+
+const TESTIMONIALS = [
+  {
+    name: "Jade",
+    role: "Bilan · FG avril 2026",
+    photo: "/FGAVRIL2026/IMG_8297.JPG",
+    quote: `Je mets un solide 10/10 à cette expérience. Je ne retiens de la formation que du positif car c'était bien de rencontrer de potentiels futur.e.s collègues dans l'animation. L'équipe encadrante a été géniale et le séjour n'aurait clairement pas été le même sans un seul de ces éléments, alors merci à tout le monde et big up à Zouzou le Zèbre. 
+- Jade. :)`,
+  },
+  {
+    name: "Stagiaire",
+    role: "Bilan · FG avril 2026",
+    photo: "/FGAVRIL2026/IMG_8451.JPG",
+    quote:
+      "C'était vraiment super, limite incroyable, donc je recommande à tout le monde de passer son BAFA avec Lorette, William et Martin à Murathènes !!!",
+  },
+  {
+    name: "Stagiaire",
+    role: "Bilan · FG avril 2026",
+    photo: "/FGAVRIL2026/PXL_20260413_135152634.jpg",
+    quote:
+      "La formation a était vraiment super grace au formateur qui ont su faire preuves d’une trés grand bienveillance.",
+  },
+];
+
+const PEDAGOGY = [
+  {
+    num: "01",
+    title: "On apprend en faisant.",
+    text: "Jeux de rôles, mises en situation, analyses de pratiques, débats, animations. Pas de cours magistraux — le terrain dès le premier jour.",
+    image: "/FGAVRIL2026/IMG_8307.JPG",
+  },
+  {
+    num: "02",
+    title: "Un contenu complet.",
+    text: "Animation, vie quotidienne, mais aussi violences sexistes, handicap, neuroatypie, discrimination, responsabilité civile et pénale, réglementation — des bases jusqu'aux problématiques individuelles.",
+    image: "/FGAVRIL2026/PXL_20260413_095337635.MP.jpg",
+  },
+  {
+    num: "03",
+    title: "Vie en collectivité 24/7.",
+    text: "Veillées, dortoirs, repas partagés — ta formation en internat te prépare à vivre ce que tu vivras ensuite avec ton public.",
+    image: "/FGAVRIL2026/PXL_20260411_155613137.jpg",
+  },
+  {
+    num: "04",
+    title: "Au cœur du Cantal.",
+    text: "Domaine de Gravières, Lanobre. Forêts, lac, immersion totale — loin de tout sauf de l'essentiel.",
+    image: "/FGAVRIL2026/IMG_8212.JPG",
+  },
+];
+
+const normalizeDate = (value: unknown): string => {
+  if (!value) return "";
+  if (typeof value === "string") return value;
+  if (
+    typeof value === "object" &&
+    value !== null &&
+    "toDate" in value &&
+    typeof (value as { toDate?: () => Date }).toDate === "function"
+  ) {
+    return (value as { toDate: () => Date }).toDate().toISOString().slice(0, 10);
+  }
+  if (value instanceof Date) return value.toISOString().slice(0, 10);
+  return String(value);
 };
 
-const typeLongLabel: Record<string, string> = {
-  formation_generale: "Formation générale",
-  approfondissement_sejour_etranger:
-    "Approfondissement séjour à l'étranger / échange de jeunes",
+const parseDateSafe = (value: string | undefined | null): Date | null => {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
 };
 
-const openContactWidget = () => {
-  if (typeof window === "undefined") return;
-  window.dispatchEvent(new Event("contact-widget:open"));
+const formatRange = (start?: string, end?: string): string => {
+  const s = parseDateSafe(start ?? "");
+  const e = parseDateSafe(end ?? "");
+  if (!s || !e) return "";
+
+  const ds = String(s.getDate()).padStart(2, "0");
+  const de = String(e.getDate()).padStart(2, "0");
+
+  if (s.getMonth() === e.getMonth() && s.getFullYear() === e.getFullYear()) {
+    return `${ds}–${de} ${MONTHS_FR[s.getMonth()]} ${s.getFullYear()}`;
+  }
+  if (s.getFullYear() === e.getFullYear()) {
+    return `${ds} ${MONTHS_FR[s.getMonth()]} – ${de} ${MONTHS_FR[e.getMonth()]} ${s.getFullYear()}`;
+  }
+  return `${ds} ${MONTHS_FR[s.getMonth()]} ${s.getFullYear()} – ${de} ${MONTHS_FR[e.getMonth()]} ${e.getFullYear()}`;
+};
+
+const isFg = (session: Pick<HomeSession, "type">) => session.type === "formation_generale";
+
+const sessionLabel = (session: Pick<HomeSession, "type" | "title">) =>
+  isFg(session)
+    ? "Formation Générale"
+    : "Étape 3 · Approfondissement séjour à l'étranger";
+
+const sessionTag = (session: Pick<HomeSession, "type">) => (isFg(session) ? "FG" : "ÉTAPE 3");
+const sessionStep = (session: Pick<HomeSession, "type">) => (isFg(session) ? "ÉTAPE 1" : "APPROFONDISSEMENT");
+
+const openContact = (mode: "message" | "callback" = "callback") => {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("contact-widget:open", { detail: { mode } }));
+  }
 };
 
 export default function HomePage() {
   const [formations, setFormations] = useState<Formation[]>([]);
 
-  // Récupérer les formations depuis Firestore
   useEffect(() => {
     const q = query(collection(db, "formations"), orderBy("startDate", "asc"));
-
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const data: Formation[] = snapshot.docs.map((doc) => {
-        const d = doc.data() as Omit<Formation, "id" | "startDate" | "endDate"> & {
-          startDate?: unknown;
-          endDate?: unknown;
-        };
-        return {
-          id: doc.id,
-          ...d,
-          startDate: normalizeDate(d.startDate),
-          endDate: normalizeDate(d.endDate),
-        } as Formation;
-      });
-
-      setFormations(data);
+    const unsub = onSnapshot(q, (snap) => {
+      setFormations(
+        snap.docs.map((doc) => {
+          const data = doc.data() as Omit<Formation, "id" | "startDate" | "endDate"> & {
+            startDate?: unknown;
+            endDate?: unknown;
+          };
+          return {
+            id: doc.id,
+            ...data,
+            startDate: normalizeDate(data.startDate),
+            endDate: normalizeDate(data.endDate),
+          } as Formation;
+        }),
+      );
     });
-
-    return () => unsubscribe();
+    return () => unsub();
   }, []);
 
-  // filtrer sur les prochaines formations (>= aujourd'hui)
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
-  const upcomingFormations = formations
-    .map((f) => {
-      const d = parseDateSafe(f.startDate);
-      return { ...f, _startDateObj: d };
-    })
-    .filter((f) => f._startDateObj && f._startDateObj >= today)
-    .sort(
-      (a, b) =>
-        (a._startDateObj?.getTime() ?? 0) - (b._startDateObj?.getTime() ?? 0)
-    );
+  const upcoming = formations
+    .map((formation) => ({ ...formation, _d: parseDateSafe(formation.startDate) }))
+    .filter((formation) => formation._d && formation._d >= today)
+    .sort((a, b) => (a._d?.getTime() ?? 0) - (b._d?.getTime() ?? 0));
 
-  const heroFormations = upcomingFormations.slice(0, 2);
-  const calendarFormations = upcomingFormations.slice(0, 4);
+  const sessions: HomeSession[] = upcoming.slice(0, 4).map((formation) => ({
+    id: formation.id,
+    href: getFormationPublicHref(formation),
+    type: formation.type,
+    title: formation.title,
+    startDate: formation.startDate,
+    endDate: formation.endDate,
+    price: getDisplayedFormationPrice(formation),
+    referencePrice: getReferenceFormationPrice(formation),
+  }));
 
-  const calendarYears = Array.from(
-    new Set(
-      calendarFormations
-        .map((f) => parseDateSafe(f.startDate)?.getFullYear())
-        .filter(Boolean)
-    )
-  ) as number[];
-
-  const calendarYearLabel =
-    calendarYears.length === 0
-      ? ""
-      : calendarYears.length === 1
-      ? `${calendarYears[0]}`
-      : `${Math.min(...calendarYears)}–${Math.max(...calendarYears)}`;
+  const displaySessions = sessions.length > 0 ? sessions : FALLBACK_SESSIONS;
+  const heroSessions = displaySessions.slice(0, 2);
+  const nextDate = parseDateSafe(displaySessions[0]?.startDate ?? "");
+  const nextMonth = nextDate ? MONTHS_FR[nextDate.getMonth()] : "";
 
   return (
-    <>
-      {/* HERO – on ne touche pas */}
-      <section
-        id="hero"
-        className="relative w-full  min-h-[50vh] md:min-h-[50vh]"
-      >
-        {/* Image de fond */}
-        <Image
-          src="/bafa.jpg"
-          alt="Jeunes en formation BAFA dans un cadre nature"
-          fill
-          priority
-          className="object-cover"
+    <div className="mura-page" style={{ color: INK, background: CREAM }}>
+      <section style={{ position: "relative", minHeight: "86svh", overflow: "hidden", background: INK }}>
+        <video
+          src="/FGAVRIL2026/hero.mp4"
+          poster="/FGAVRIL2026/IMG_8450.JPG"
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+          }}
+        />
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background:
+              "linear-gradient(90deg, rgba(26,21,48,.58) 0%, rgba(26,21,48,.34) 50%, rgba(26,21,48,.12) 100%), linear-gradient(180deg, rgba(26,21,48,.05) 0%, rgba(26,21,48,.48) 100%)",
+          }}
         />
 
-        {/* Dégradé + voile sombre */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-slate-950/70 via-slate-950/40 to-slate-900/10" />
-
-        {/* Contenu */}
-        <div className="relative z-10  mx-auto flex h-full max-w-6xl items-center px-4 py-12 md:px-6">
-          <div className="flex w-full flex-col gap-10 md:flex-row md:items-start md:justify-between">
-            {/* Colonne gauche : intro */}
-            <div className="max-w-md space-y-5">
-              <div className="inline-flex items-center gap-2 rounded-full bg-sky-500/15 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.22em] text-sky-100 ring-1 ring-sky-400/40 backdrop-blur">
-                <span className="h-1.5 w-1.5 rounded-full bg-sky-300" />
-                Formations BAFA en AURA
-              </div>
-
-              <div className="space-y-3">
-                <h1 className="font-display text-3xl md:text-4xl font-semibold leading-tight text-white">
-                  <Image
-                    src="/bafa.png"
-                    alt="BAFA Murathènes"
-                    width={530}
-                    height={120}
-                    className="w-[230px] md:w-[320px] h-auto"
-                  />
-                  <span className="sr-only">BAFA Murathènes</span>
-                </h1>
-
-                <p className="text-sm md:text-base text-slate-100/90">
-                  Formations BAFA dans le Cantal au domaine de Gravières
-                </p>
-              </div>
-
-              <div className="mt-4 flex flex-col w-1/2  flex-wrap gap-3 text-xs text-slate-100/80">
-                <div className="inline-flex items-center gap-2 rounded-full bg-black/40 px-3 py-1.5 ring-1 ring-white/10">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                  <span>Education populaire</span>
-                </div>
-                <div className="inline-flex items-center gap-2 rounded-full bg-black/40 px-3 py-1.5 ring-1 ring-white/10">
-                  <span className="h-1.5 w-1.5 rounded-full bg-sky-400" />
-                  <span>Vie en collectivité</span>
-                </div>
-                <div className="inline-flex items-center gap-2 rounded-full bg-black/40 px-3 py-1.5 ring-1 ring-white/10">
-                  <span className="h-1.5 w-1.5 rounded-full bg-amber-300" />
-                  <span>Pedagogie émancipatrice</span>
-                </div>
-              </div>
+        <div
+          className="grid grid-cols-1 gap-8 px-6 py-24 md:px-12 lg:grid-cols-[minmax(0,1fr)_420px] lg:py-32"
+          style={{
+            position: "relative",
+            zIndex: 1,
+            maxWidth: 1280,
+            minHeight: "86svh",
+            margin: "0 auto",
+            alignItems: "center",
+          }}
+        >
+          <div style={{ width: "100%", maxWidth: 720, minWidth: 0, color: CREAM }}>
+            <div
+              className="mura-mono"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                width: "fit-content",
+                marginBottom: 18,
+                padding: "8px 14px",
+                borderRadius: 999,
+                background: YELLOW,
+                color: INK,
+                fontSize: 11,
+                fontWeight: 800,
+                textTransform: "uppercase",
+              }}
+            >
+              <PlayCircle size={15} strokeWidth={2.4} />
+              Formations BAFA en AURA · 2026
             </div>
 
-            {/* Colonne droite : timeline des prochaines sessions */}
-            <div className="mt-4 max-w-md md:mt-0">
-              <h2 className="font-display text-lg md:text-xl font-semibold text-white">
-                Les prochaines formations
-              </h2>
-              <p className="mt-2 text-xs text-slate-100/85">
-                {heroFormations.length > 0
-                  ? "Voici les prochaines dates de formation générale et d'approfondissement."
-                  : "Les prochaines dates arrivent très bientôt."}
-              </p>
-
-              <div className="mt-6">
-                {heroFormations.length === 0 && (
-                  <article className="rounded-xl bg-black/55 px-4 py-3 backdrop-blur-md ring-1 ring-white/10">
-                    <p className="text-xs text-slate-100/85">
-                      Le calendrier des formations sera mis en ligne très
-                      prochainement. Tu peux déjà jeter un œil aux infos
-                      générales plus bas.
-                    </p>
-                  </article>
-                )}
-
-                {heroFormations.length > 0 && (
-                  <div className="space-y-4">
-                    {heroFormations.map((f, index) => {
-                      const isFG = f.type === "formation_generale";
-                      const badgeColor = isFG
-                        ? "text-sky-200"
-                        : "text-amber-200";
-
-                      // Tous les boutons = style jaune (comme le 2e) + pointer
-                      const buttonClasses =
-                        "shrink-0 rounded-md border border-amber-300/80 bg-amber-400/90 px-4 py-1.5 text-xs font-semibold text-slate-900 transition hover:bg-amber-300 cursor-pointer hover:cursor-pointer";
-
-                      const rawDescription = f.description ?? "";
-                      const firstLine =
-                        typeof rawDescription === "string"
-                          ? rawDescription
-                              .split("\n")
-                              .map((line) => line.trim())
-                              .find((line) => line.length > 0) ?? ""
-                          : "";
-                      const displayedPrice = getDisplayedFormationPrice(f);
-                      const referencePrice = getReferenceFormationPrice(f);
-
-                      const isLast = index === heroFormations.length - 1;
-                      const isSecond = index === 1;
-
-                      return (
-                        <Link
-                          key={f.id}
-                          href={`/formations/${f.id}`}
-                          className="block group"
-                        >
-                          <div className="flex gap-4">
-                            {/* Colonne timeline */}
-                            <div className="relative flex flex-col items-center pt-1">
-                              {!isLast && (
-                                <div className="timeline-line absolute top-5 bottom-[-18px] w-[2px] bg-gradient-to-b from-sky-300/80 via-sky-200/60 to-sky-100/20" />
-                              )}
-
-                              {isSecond && (
-                                <div className="timeline-segment absolute top-5 h-24 w-[2px] rounded-full bg-gradient-to-b from-sky-300/90 via-sky-200/70 to-transparent" />
-                              )}
-
-                              <span className="timeline-dot-wrapper relative z-10 flex h-5 w-5 items-center justify-center rounded-full bg-sky-400 shadow-[0_0_0_3px_rgba(15,23,42,0.85)] ring-2 ring-sky-200">
-                                <span className="timeline-dot h-2.5 w-2.5 rounded-full bg-white" />
-                              </span>
-                            </div>
-
-                            {/* Carte session */}
-                            <article className="flex-1 rounded-xl bg-black/55 px-4 py-3 backdrop-blur-md ring-1 ring-white/10 transition-transform duration-200 ease-out hover:-translate-y-0.5 hover:bg-black/70 hover:shadow-xl">
-                              <header className="mb-2 flex items-center justify-between gap-3">
-                                <div className="space-y-0.5">
-                                  <p
-                                    className={`text-[11px] font-semibold uppercase tracking-wide ${badgeColor}`}
-                                  >
-                                    {getMonthYearLabelFr(f.startDate)} ·{" "}
-                                    {typeShortLabel[f.type] ?? f.type}
-                                  </p>
-                                  <p className="text-sm font-semibold text-white">
-                                    {typeLongLabel[f.type] ?? f.type}
-                                  </p>
-                                </div>
-                                <button
-                                  className={buttonClasses}
-                                  type="button"
-                                  
-                                >
-                                  Voir les détails
-                                </button>
-                              </header>
-
-                              <div className="mb-2 flex flex-wrap items-center gap-2 text-[11px]">
-                                <span className="rounded-full bg-white/90 px-2.5 py-1 font-semibold text-slate-900">
-                                  {referencePrice && (
-                                    <span className="mr-1 text-slate-500 line-through">
-                                      {referencePrice} €
-                                    </span>
-                                  )}
-                                  {displayedPrice} €
-                                </span>
-                              </div>
-
-                              <p className="text-xs text-slate-100/85">
-                                <span className="font-medium">
-                                  {formatDateRangeFr(f.startDate, f.endDate)}
-                                </span>
-                                <br />
-                                {firstLine ||
-                                  "Une formation BAFA centrée sur la pratique et la vie de colo."}
-                              </p>
-                            </article>
-                          </div>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
+            <div className="hand" style={{ fontSize: 32, color: YELLOW, marginBottom: -4 }}>
+              passez votre
             </div>
-          </div>
-        </div>
-      </section>
+            <h1
+              className="text-[64px] md:text-[112px]"
+              style={{
+                margin: 0,
+                maxWidth: 760,
+                color: CREAM,
+                fontWeight: 800,
+                lineHeight: 0.9,
+                letterSpacing: 0,
+              }}
+            >
+              BAFA <span className="ed block md:inline" style={{ color: YELLOW, fontStyle: "italic", fontWeight: 650 }}>cet été.</span>
+            </h1>
 
-      <section id="programme" className="relative border-t border-slate-200   ">
-        <div className="pointer-events-none absolute -top-6 left-0 right-0 bg-[radial-gradient(ellipse_at_top,_rgba(15,23,42,0.12),_transparent)]" />
-
-        <div className="relative mx-auto flex max-w-6xl flex-col gap-8 px-4 py-10 md:flex-row md:items-start md:justify-between md:px-6">
-          <div className="max-w-xl space-y-4">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-              Le BAFA avec Murathènes
-            </p>
-            <h2 className="font-display text-xl md:text-2xl font-semibold text-slate-900">
-              Le BAFA dans un environnement incroyable et une pédagogie
-              émancipatrice
-            </h2>
-            <p className="text-base text-slate-700">
-              Murathènes, défend des principes d&apos;éducation populaire à
-              travers l&apos;utilisation de{" "}
-              <span className="font-semibold">
-                pédagogies actives et émancipatrices
-              </span>
-              . Animations, grands jeux, veillées, débats, chaque module et
-              chaque temps de la formation est réfléchi pour qu&apos;il{" "}
-              <span className="font-semibold">
-                favorise l&apos;apprentissage
-              </span>
-              . Nous proposons tout au long de l&apos;année des{" "}
-              <span className="font-semibold">formations générales</span> et des{" "}
-              <span className="font-semibold">
-                approfondissements &quot;échanges de jeunes et séjours à
-                l&apos;étranger&quot;
-              </span>
-              .
+            <p style={{ margin: "22px 0 0", maxWidth: 560, color: CREAM, fontSize: 18, lineHeight: 1.55, overflowWrap: "break-word" }}>
+              Formations BAFA dans le Cantal au domaine de Gravières.
             </p>
 
-            <div className="flex flex-wrap gap-3 text-sm text-slate-700">
-              <span className="inline-flex items-center gap-2 rounded-full bg-white/90 px-3 py-1 shadow-sm ring-1 ring-emerald-100">
-                <span className="text-base">🤝</span>
-                Approche bienveillante
-              </span>
-              <span className="inline-flex items-center gap-2 rounded-full bg-white/90 px-3 py-1 shadow-sm ring-1 ring-sky-100">
-                <span className="text-base">🌈</span>
-                Cohésion de groupe et entraide
-              </span>
-            </div>
-
-            <div className="pt-2">
-              <Link
-                href="/bafa"
-                className="group relative inline-flex items-center gap-2 whitespace-nowrap text-sm font-semibold uppercase tracking-wide text-sky-900 hover:text-sky-700"
+            <figure
+              className="home-hero-manifesto"
+              style={{
+                margin: "26px 0 0",
+                maxWidth: 640,
+                color: CREAM,
+              }}
+            >
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "auto minmax(0, 1fr)",
+                  gap: 14,
+                  alignItems: "start",
+                }}
               >
-                En savoir plus sur le BAFA
-                <span className="transition-transform duration-300 group-hover:translate-x-1">
-                  →
+                <span
+                  className="ed"
+                  aria-hidden="true"
+                  style={{
+                    color: YELLOW,
+                    fontSize: 76,
+                    fontStyle: "italic",
+                    fontWeight: 600,
+                    lineHeight: 0.72,
+                  }}
+                >
+                  &ldquo;
                 </span>
+                <div style={{ borderLeft: `3px solid ${YELLOW}`, paddingLeft: 16 }}>
+                  <figcaption
+                    className="mura-mono"
+                    style={{
+                      marginBottom: 8,
+                      color: YELLOW,
+                      fontSize: 10,
+                      fontWeight: 850,
+                      letterSpacing: 2.2,
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Manifeste Murathènes
+                  </figcaption>
+                  <blockquote style={{ margin: 0 }}>
+                    <p
+                      className="ed"
+                      style={{
+                        margin: 0,
+                        color: CREAM,
+                        fontSize: 21,
+                        fontStyle: "italic",
+                        fontWeight: 650,
+                        lineHeight: 1.28,
+                      }}
+                    >
+                      Créer des espaces de joie et de paix où chaque jeune existe, compte et est valorisé.
+                    </p>
+                  </blockquote>
+                </div>
+              </div>
+            </figure>
+
+            <div className="home-hero-actions" style={{ marginTop: 28 }}>
+              <Link href="/formations" className="mura-pill mura-cta-secondary">
+                <CalendarDays size={17} strokeWidth={2.5} />
+                Voir les formations
               </Link>
+              <button
+                type="button"
+                onClick={() => openContact("message")}
+                className="mura-pill"
+                style={{ background: CREAM, color: INK, cursor: "pointer" }}
+              >
+                <MessageSquareText size={17} strokeWidth={2.5} />
+                Remplir le formulaire
+              </button>
+              <a
+                href={`tel:${PHONE_TEL}`}
+                className="mura-pill"
+                style={{ background: YELLOW, color: INK, cursor: "pointer" }}
+                aria-label={`Appeler Murathènes au ${PHONE_DISPLAY}`}
+              >
+                <PhoneCall size={17} strokeWidth={2.5} />
+                {PHONE_DISPLAY}
+              </a>
+            </div>
+
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 24 }}>
+              {["Éducation populaire", "Vie en collectivité", "Pédagogie émancipatrice"].map((tag) => (
+                <span
+                  key={tag}
+                  style={{
+                    border: `1.5px solid ${CREAM}`,
+                    borderRadius: 999,
+                    padding: "7px 14px",
+                    background: "rgba(255,255,255,.08)",
+                    color: CREAM,
+                    fontSize: 13,
+                    fontWeight: 700,
+                  }}
+                >
+                  {tag}
+                </span>
+              ))}
             </div>
           </div>
 
-          {/* Cartes pédagogie dans la même DA que "infos pratiques" */}
-          <div className="grid w-full max-w-md gap-4 text-sm text-slate-700 md:text-sm">
-            <div className="group relative overflow-hidden rounded-2xl border border-sky-100 bg-white/90 px-4 py-4 shadow-sm transition-transform duration-200 hover:-translate-y-1 hover:border-sky-300 hover:shadow-md">
-              <div className="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-sky-100/80" />
-              <div className="relative flex items-start gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-sky-500 text-lg">
-                  <span className="translate-y-[1px] text-white">🎲</span>
-                </div>
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-sky-700">
-                    Pédagogie active
-                  </p>
-                  <p className="mt-1 text-sm font-medium text-slate-900">
-                    On apprend en faisant, et en experimentant.
-                  </p>
-                  <p className="mt-1 text-xs text-slate-700">
-                    Jeux de rôles, mises en situation, analyses de pratiques,
-                    supports vidéos et audio, débats, animations seront au
-                    programme de ton stage.
-                  </p>
-                </div>
-              </div>
+          <aside
+            className="home-hero-sessions"
+            style={{
+              width: "100%",
+              maxWidth: "100%",
+              minWidth: 0,
+              boxSizing: "border-box",
+              border: `2px solid ${INK}`,
+              borderRadius: 18,
+              background: PAPER,
+              color: INK,
+              boxShadow: `8px 8px 0 ${YELLOW}`,
+              overflow: "hidden",
+            }}
+          >
+            <div
+              style={{ padding: "20px 20px 16px", borderBottom: `2px solid ${INK}` }}
+            >
+              <h2 className="ed" style={{ margin: "6px 0 0", fontSize: 28, fontWeight: 700, fontStyle: "italic", lineHeight: 1 }}>
+                Prochaines formations
+              </h2>
             </div>
 
-            <div className="group relative overflow-hidden rounded-2xl border border-emerald-100 bg-white/90 px-4 py-4 shadow-sm transition-transform duration-200 hover:-translate-y-1 hover:border-emerald-300 hover:shadow-md">
-              <div className="absolute -right-5 -top-5 h-16 w-16 rounded-full bg-emerald-100/80" />
-              <div className="relative flex items-start gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-500 text-lg">
-                  <span className="translate-y-[1px] text-white">🛟</span>
-                </div>
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700">
-                    Un contenu diversifié
-                  </p>
-                  <p className="mt-1 text-sm font-medium text-slate-900">
-                    Des bases de l&apos;animation jusqu&apos;aux problématiques
-                    individuelles de chaque enfant
-                  </p>
-                  <p className="mt-1 text-xs text-slate-700">
-                    Animation, vie quotidienne, mais également lutte contre les
-                    violences sexistes et sexuelles, maltraitance, handicap,
-                    responsabilité civile et pénal, discrimination,
-                    réglementation et bien d&apos;autres sujets seront au programme
-                    de ta semaine.
-                  </p>
-                </div>
-              </div>
+            <div style={{ display: "grid" }}>
+              {heroSessions.map((session, index) => (
+                <Link
+                  key={session.id}
+                  href={session.href}
+                  className="home-hero-session-link"
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "minmax(0, 1fr)",
+                    gap: 12,
+                    padding: "16px 20px",
+                    color: INK,
+                    textDecoration: "none",
+                    borderBottom: index < heroSessions.length - 1 ? `1.5px dashed ${INK}55` : undefined,
+                  }}
+                >
+                  <div>
+                    <span
+                      className="mura-mono"
+                      style={{
+                        display: "inline-flex",
+                        marginBottom: 8,
+                        borderRadius: 999,
+                        padding: "4px 9px",
+                        background: isFg(session) ? VIOLET : INK,
+                        color: CREAM,
+                        fontSize: 10,
+                        fontWeight: 800,
+                      }}
+                    >
+                      {sessionTag(session)}
+                    </span>
+                    <span
+                      className="mura-mono"
+                      style={{
+                        display: "inline-flex",
+                        marginLeft: 6,
+                        borderRadius: 999,
+                        padding: "4px 9px",
+                        background: isFg(session) ? "#f0e8f8" : "#F5EF72",
+                        color: "#1a1530",
+                        fontSize: 10,
+                        fontWeight: 800,
+                      }}
+                    >
+                      {sessionStep(session)}
+                    </span>
+                    <div style={{ fontSize: 22, fontWeight: 800, lineHeight: 1.05 }}>{formatRange(session.startDate, session.endDate)}</div>
+                    <div style={{ marginTop: 5, fontSize: 13, opacity: 0.72 }}>{sessionLabel(session)}</div>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                    <div>
+                      {session.referencePrice && (
+                        <div style={{ marginBottom: 2, fontSize: 11, opacity: 0.5, textDecoration: "line-through" }}>
+                          {session.referencePrice} €
+                        </div>
+                      )}
+                      <div style={{ fontSize: 20, fontWeight: 800 }}>dès {MIN_PRICE_AFTER_AIDS} €</div>
+                      <div className="mura-mono" style={{ fontSize: 9, opacity: 0.55, marginTop: 1 }}>tarif plein : {session.price} €</div>
+                    </div>
+                    <ArrowRight size={18} strokeWidth={2.5} style={{ flex: "0 0 auto" }} />
+                  </div>
+                </Link>
+              ))}
             </div>
+          </aside>
+        </div>
+      </section>
 
-            <div className="group relative overflow-hidden rounded-2xl border border-amber-100 bg-white/90 px-4 py-4 shadow-sm transition-transform duration-200 hover:-translate-y-1 hover:border-amber-300 hover:shadow-md">
-              <div className="absolute -right-6 -top-6 h-16 w-16 rounded-full bg-amber-100/80" />
-              <div className="relative flex items-start gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-400 text-lg">
-                  <span className="translate-y-[1px] text-slate-900">🏕️</span>
+      <section style={{ background: INK, padding: "70px 24px", borderBottom: `2px solid ${INK}` }} className="md:px-12">
+        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+          <div style={{ marginBottom: 34 }}>
+            <h2
+              className="home-testimonials-title"
+              style={{
+                margin: 0,
+                color: CREAM,
+                fontSize: "clamp(22px, 6vw, 54px)",
+                fontWeight: 850,
+                lineHeight: 1,
+                whiteSpace: "nowrap",
+              }}
+            >
+              <span className="ed" style={{ fontStyle: "italic" }}>Ils &amp; elles</span>{" "}
+              <span style={{ color: YELLOW }}>l&apos;ont fait</span>{" "}
+              <span className="hand" style={{ fontWeight: 600 }}>avant vous.</span>
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3" style={{ gap: 22 }}>
+            {TESTIMONIALS.map((testimonial) => (
+              <article
+                key={`${testimonial.name}-${testimonial.photo}`}
+                className="home-testimonial-card mura-interactive-card"
+                style={{
+                  overflow: "hidden",
+                  border: `2px solid ${INK}`,
+                  borderRadius: 18,
+                  background: PAPER,
+                  color: INK,
+                  boxShadow: `5px 5px 0 ${YELLOW}`,
+                }}
+              >
+                <div style={{ position: "relative", width: "100%", aspectRatio: "4/3" }}>
+                  <Image src={testimonial.photo} alt={testimonial.role} fill sizes="(min-width: 768px) 33vw, 100vw" className="object-cover" />
                 </div>
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-amber-700">
-                    Vie collective
+                <div style={{ padding: 20 }}>
+                  <p className="ed" style={{ margin: "0 0 18px", fontSize: 17, fontStyle: "italic", lineHeight: 1.5, whiteSpace: "pre-line" }}>
+                    &ldquo;{testimonial.quote}&rdquo;
                   </p>
-                  <p className="mt-1 text-sm font-medium text-slate-900">
-                    Au delà de la formation, la vie en collectivité !
-                  </p>
-                  <p className="mt-1 text-xs text-slate-700">
-                    Veillées, vie quotidienne en groupe, ta formation en
-                    internat te permet de vivre ce que tu vivras ensuite avec le
-                    public. Mais également des rencontres et un cadre favorisant
-                    l&apos;apprentissage
-                  </p>
+                  <div style={{ borderTop: `1.5px dashed ${INK}66`, paddingTop: 12 }}>
+                    <div style={{ fontSize: 14, fontWeight: 800 }}>{testimonial.name}</div>
+                    <div className="mura-mono" style={{ marginTop: 3, fontSize: 10, color: VIOLET, fontWeight: 800, textTransform: "uppercase" }}>
+                      {testimonial.role}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
+              </article>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* SECTION 2 : Calendrier dynamique – version pastel */}
-      <section
-        id="timeline"
-        className="relative border-t border-slate-200  "
-      >
-        <div className="pointer-events-none absolute -top-6 left-0 right-0 bg-[radial-gradient(ellipse_at_top,_rgba(15,23,42,0.10),_transparent)]" />
-
-        <div className="relative mx-auto max-w-6xl px-4 py-10 md:px-6">
-          {/* HEADER */}
-          <header className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+      <section style={{ background: CREAM, padding: "64px 24px 76px", borderBottom: `2px solid ${INK}` }} className="md:px-12">
+        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr)", gap: 22, marginBottom: 34 }} className="lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 whitespace-nowrap">
-                Calendrier {calendarYearLabel || "des formations"}
-              </p>
-              <h2 className="font-display text-2xl md:text-3xl font-semibold text-slate-900">
-                Les prochaines sessions en un coup d&apos;œil
+              <div className="mura-mono" style={{ color: VIOLET, fontSize: 11, fontWeight: 800, textTransform: "uppercase" }}>
+                Calendrier 2026
+              </div>
+              <h2 className="home-title-mixed" style={{ margin: "10px 0 0", color: INK }}>
+                <span className="ed" style={{ fontStyle: "italic", color: VIOLET }}>Les prochaines dates,</span>{" "}
+                <span className="hand" style={{ color: INK }}>en un coup d&apos;oeil.</span>
               </h2>
-              <p className="mt-1 max-w-xl text-base text-slate-700">
-                Un aperçu rapide des prochaines dates. Pour tous les détails
-                (programme, lieu, transport), tu peux ouvrir chaque formation ou
-                consulter le calendrier complet.
-              </p>
             </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+              <button
+                type="button"
+                onClick={() => openContact("message")}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                  border: `2px solid ${INK}`,
+                  borderRadius: 999,
+                  background: PAPER,
+                  color: INK,
+                  padding: "13px 18px",
+                  fontSize: 12,
+                  fontWeight: 800,
+                  textTransform: "uppercase",
+                  cursor: "pointer",
+                }}
+              >
+                <MessageSquareText size={16} />
+                Formulaire
+              </button>
+              <a
+                href={`tel:${PHONE_TEL}`}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 8,
+                  border: `2px solid ${INK}`,
+                  borderRadius: 999,
+                  background: VIOLET,
+                  color: CREAM,
+                  padding: "13px 18px",
+                  fontSize: 12,
+                  fontWeight: 800,
+                  textTransform: "uppercase",
+                  cursor: "pointer",
+                  textDecoration: "none",
+                }}
+                aria-label={`Appeler Murathènes au ${PHONE_DISPLAY}`}
+              >
+                <PhoneCall size={16} />
+                {PHONE_DISPLAY}
+              </a>
+            </div>
+          </div>
 
+          <div className="grid grid-cols-1 md:grid-cols-2" style={{ gap: 18 }}>
+            {displaySessions.map((session, index) => {
+              const featured = index === 0;
+              return (
+                <Link key={session.id} href={session.href} style={{ textDecoration: "none", color: "inherit" }}>
+                  <article
+                    className="home-session-card mura-interactive-card"
+                    style={{
+                      minHeight: 190,
+                      display: "grid",
+                      gridTemplateColumns: "minmax(0,1fr) auto",
+                      gap: 18,
+                      alignItems: "center",
+                      border: `2px solid ${INK}`,
+                      borderRadius: 18,
+                      background: featured ? VIOLET : PAPER,
+                      color: featured ? CREAM : INK,
+                      padding: "24px 22px",
+                      boxShadow: featured ? `6px 6px 0 ${YELLOW}` : `5px 5px 0 ${INK}`,
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
+                        <span
+                          className="mura-mono"
+                          style={{
+                            borderRadius: 999,
+                            padding: "5px 12px",
+                            background: featured ? YELLOW : isFg(session) ? VIOLET : INK,
+                            color: featured ? INK : CREAM,
+                            fontSize: 10,
+                            fontWeight: 800,
+                          }}
+                        >
+                          {sessionTag(session)}
+                        </span>
+                        <span
+                          className="mura-mono"
+                          style={{
+                            borderRadius: 999,
+                            padding: "5px 12px",
+                            background: featured ? "rgba(26,21,48,0.15)" : isFg(session) ? "#f0e8f8" : "#F5EF72",
+                            color: featured ? "#fefcf5" : "#1a1530",
+                            fontSize: 10,
+                            fontWeight: 800,
+                          }}
+                        >
+                          {sessionStep(session)}
+                        </span>
+                        {featured && (
+                          <span
+                            className="mura-mono"
+                            style={{
+                              borderRadius: 999,
+                              padding: "5px 12px",
+                              background: CREAM,
+                              color: INK,
+                              fontSize: 10,
+                              fontWeight: 800,
+                            }}
+                          >
+                            Prochaine session
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ fontSize: 32, fontWeight: 850, lineHeight: 1.05 }}>{formatRange(session.startDate, session.endDate)}</div>
+                      <h3 className="ed" style={{ margin: "8px 0 0", fontSize: 20, fontWeight: 650, fontStyle: "italic", lineHeight: 1.2 }}>
+                        {sessionLabel(session)}
+                      </h3>
+                      {!isFg(session) && (
+                        <p className="mura-mono" style={{ margin: "6px 0 0", fontSize: 10, color: featured ? "rgba(254,252,245,0.7)" : "#1a1530", opacity: 0.7, letterSpacing: 1.5 }}>
+                          ÉTAPE 3 DU BAFA
+                        </p>
+                      )}
+                    </div>
+                    <div style={{ textAlign: "right" }}>
+                      {session.referencePrice && (
+                        <div style={{ marginBottom: 2, fontSize: 12, opacity: 0.5, textDecoration: "line-through" }}>
+                          {session.referencePrice} €
+                        </div>
+                      )}
+                      <div style={{ fontSize: 30, fontWeight: 850, lineHeight: 1 }}>dès {MIN_PRICE_AFTER_AIDS} €</div>
+                      <div className="mura-mono" style={{ fontSize: 10, opacity: 0.55, marginTop: 3 }}>tarif plein : {session.price} €</div>
+                      <span
+                        data-session-arrow
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          marginTop: 14,
+                          width: 42,
+                          height: 42,
+                          borderRadius: "50%",
+                          background: featured ? YELLOW : INK,
+                          color: featured ? INK : CREAM,
+                        }}
+                        aria-hidden="true"
+                      >
+                        <ArrowRight size={19} strokeWidth={2.6} />
+                      </span>
+                    </div>
+                  </article>
+                </Link>
+              );
+            })}
+          </div>
+
+        </div>
+      </section>
+
+      <div id="aides-lead-section">
+        <AidesLeadSection theme="light" source="Page d'accueil" />
+      </div>
+
+      <section style={{ background: PAPER, borderBottom: `1.5px solid ${INK}22`, padding: "30px 24px" }}>
+        <div className="grid grid-cols-2 md:grid-cols-4" style={{ maxWidth: 1280, margin: "0 auto", gap: "22px 28px" }}>
+          {[
+            { num: "100%", label: "encadrement diplômé BAFD / BPJEPS" },
+            { num: "Agréé", label: "Jeunesse & Sports · DRAJES Auvergne-Rhône-Alpes" },
+            { num: "Cantal", label: "formations au domaine de Gravières" },
+            { num: "AURA", label: "sessions en Auvergne-Rhône-Alpes" },
+          ].map((item) => (
+            <div key={item.label} className="mura-stat-card">
+              <div style={{ color: VIOLET, fontSize: 30, fontWeight: 850, lineHeight: 1 }}>{item.num}</div>
+              <div className="mura-mono" style={{ marginTop: 6, color: INK, fontSize: 10, lineHeight: 1.45, opacity: 0.7, textTransform: "uppercase" }}>
+                {item.label}
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section style={{ background: VIOLET_SOFT, padding: "76px 24px", borderBottom: `2px solid ${INK}` }} className="md:px-12">
+        <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+          <div style={{ marginBottom: 34 }}>
+            <div className="mura-mono" style={{ color: VIOLET, fontSize: 11, fontWeight: 800, textTransform: "uppercase" }}>
+              Le BAFA avec Murathènes
+            </div>
+            <h2 className="home-title-mixed home-title-wide" style={{ margin: "10px 0 0", maxWidth: 980, color: INK }}>
+              Un environnement <span className="ed" style={{ color: VIOLET, fontStyle: "italic", fontWeight: 650 }}>incroyable</span>{" "}
+              <span style={{ color: INK }}>&amp; une pédagogie qui</span>{" "}
+              <span className="hand" style={{ color: VIOLET, fontSize: "1.18em" }}>émancipe</span>.
+            </h2>
+          </div>
+
+          {/* Intro + tags */}
+          <div style={{ marginBottom: 40, maxWidth: 780 }}>
+            <p style={{ fontSize: 16, lineHeight: 1.8, color: INK, opacity: 0.85, marginBottom: 24, marginTop: 0 }}>
+              Murathènes défend des principes d&apos;éducation populaire à travers l&apos;utilisation de pédagogies actives et émancipatrices. Animations, grands jeux, veillées, débats — chaque module est réfléchi pour favoriser l&apos;apprentissage. Nous proposons tout au long de l&apos;année des formations générales et des approfondissements <em>&quot;échanges de jeunes et séjours à l&apos;étranger&quot;</em>.
+            </p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+              {["🤝 Approche bienveillante", "🌈 Cohésion de groupe et entraide", "🎲 Pédagogie active"].map((tag) => (
+                <span
+                  key={tag}
+                  style={{ background: CREAM, border: `1.5px solid ${INK}33`, borderRadius: 999, padding: "9px 16px", fontSize: 13, fontWeight: 600, color: INK }}
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4" style={{ gap: 18 }}>
+            {PEDAGOGY.map((item) => (
+              <article
+                key={item.num}
+                className="home-pedagogy-card mura-interactive-card"
+                style={{
+                  overflow: "hidden",
+                  border: `2px solid ${INK}`,
+                  borderRadius: 18,
+                  background: CREAM,
+                  boxShadow: `4px 4px 0 ${INK}`,
+                }}
+              >
+                <div style={{ position: "relative", width: "100%", aspectRatio: "4/3", borderBottom: `2px solid ${INK}` }}>
+                  <Image src={item.image} alt={item.title} fill sizes="(min-width: 1024px) 25vw, (min-width: 768px) 50vw, 100vw" className="object-cover" />
+                </div>
+                <div style={{ padding: 20 }}>
+                  <div className="ed" style={{ color: VIOLET, fontSize: 34, fontStyle: "italic", lineHeight: 1, marginBottom: 12 }}>
+                    {item.num}.
+                  </div>
+                  <h3 className="ed" style={{ margin: 0, color: INK, fontSize: 21, fontWeight: 700, lineHeight: 1.15 }}>
+                    {item.title}
+                  </h3>
+                  <p style={{ margin: "10px 0 0", color: INK, fontSize: 14, lineHeight: 1.6, opacity: 0.78 }}>{item.text}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+
+          <div style={{ marginTop: 30, display: "flex", justifyContent: "center" }}>
+            <Link
+              href="/bafa"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                border: `2px solid ${INK}`,
+                borderRadius: 999,
+                background: INK,
+                color: CREAM,
+                padding: "14px 24px",
+                fontSize: 12,
+                fontWeight: 800,
+                textTransform: "uppercase",
+                textDecoration: "none",
+              }}
+            >
+              En savoir plus sur le BAFA
+              <ArrowRight size={16} />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <section style={{ background: YELLOW, padding: "76px 24px", borderBottom: `2px solid ${INK}` }} className="md:px-12">
+        <div
+          style={{
+            maxWidth: 900,
+            margin: "0 auto",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            textAlign: "center",
+          }}
+        >
+          <div className="hand" style={{ color: INK, fontSize: 30, marginBottom: 4 }}>
+            alors,
+          </div>
+          <h2
+            style={{
+              margin: 0,
+              color: INK,
+              fontSize: "clamp(48px, 8vw, 92px)",
+              fontWeight: 850,
+              lineHeight: 0.95,
+              letterSpacing: 0,
+            }}
+          >
+            On se voit {nextMonth ? `en ${nextMonth}` : "bientôt"} ?
+          </h2>
+          <div style={{ marginTop: 30, display: "flex", justifyContent: "center", flexWrap: "wrap", gap: 12 }}>
             <Link
               href="/formations"
-              className="mt-2 inline-flex items-center gap-2 whitespace-nowrap rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-slate-50 shadow-sm transition hover:bg-slate-800 hover:cursor-pointer"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                border: `2px solid ${INK}`,
+                borderRadius: 999,
+                background: INK,
+                color: CREAM,
+                padding: "15px 24px",
+                fontSize: 13,
+                fontWeight: 800,
+                textTransform: "uppercase",
+                textDecoration: "none",
+              }}
             >
               Voir le calendrier complet
-              <span className="text-sm">→</span>
+              <ArrowRight size={16} />
             </Link>
-          </header>
-
-          {calendarFormations.length === 0 ? (
-            <p className="text-sm text-slate-600">
-              Les prochaines dates seront affichées ici dès qu&apos;elles sont
-              confirmées.
-            </p>
-          ) : (
-            <div className="grid gap-5 md:grid-cols-2">
-              {calendarFormations.map((f) => {
-                const isFG = f.type === "formation_generale";
-
-                const typeShort = isFG
-                  ? "Formation générale"
-                  : "Approfondissement";
-                const typePillClasses = isFG
-                  ? "bg-sky-50 text-sky-800 border border-slate-200"
-                  : "bg-amber-50 text-amber-900 border border-amber-200";
-
-                const icon = isFG ? "🎲" : "🌍";
-
-                const cardHoverClasses = isFG
-                  ? "hover:bg-sky-50 hover:ring-sky-200"
-                  : "hover:bg-amber-50 hover:ring-amber-200";
-
-                const rawDescription = f.description ?? "";
-                const firstLine =
-                  typeof rawDescription === "string"
-                    ? rawDescription
-                        .split("\n")
-                        .map((line) => line.trim())
-                        .find((line) => line.length > 0) ?? ""
-                    : "";
-                const displayedPrice = getDisplayedFormationPrice(f);
-                const referencePrice = getReferenceFormationPrice(f);
-
-                return (
-                  <Link
-                    key={f.id}
-                    href={`/formations/${f.id}`}
-                    className="group"
-                  >
-                    <article
-                      className={[
-                        "flex h-full flex-col justify-between rounded-2xl bg-white/95 p-4 text-sm shadow-[0_8px_18px_rgba(15,23,42,0.04)]",
-                        "ring-1 ring-slate-100 transition-transform transition-shadow transition-colors duration-200",
-                        "hover:-translate-y-1 hover:shadow-[0_16px_32px_rgba(15,23,42,0.10)]",
-                        cardHoverClasses,
-                      ].join(" ")}
-                    >
-                      {/* En-tête : icône + type + mois + titre + prix */}
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="space-y-1.5">
-                          {/* Icône + pill type */}
-                          <div className="flex items-center gap-2">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-50">
-                              <span className="text-xl">{icon}</span>
-                            </div>
-
-                            <span
-                              className={[
-                                "inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-semibold uppercase tracking-[0.12em]",
-                                typePillClasses,
-                              ].join(" ")}
-                            >
-                              <span className="h-1.5 w-1.5 rounded-full bg-sky-400" />
-                              {typeShort}
-                            </span>
-                          </div>
-
-                          {/* Mois + titre */}
-                          <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                            {getMonthYearLabelFr(f.startDate)}
-                          </p>
-                          <h3 className="font-display text-sm md:text-base font-semibold text-slate-900">
-                            {typeLongLabel[f.type] ?? f.type}
-                          </h3>
-                        </div>
-
-                        {/* Prix en pill à droite */}
-                        <div className="flex flex-col items-end gap-1 text-xs">
-                          <span className="rounded-full bg-sky-600 px-3 py-1 font-semibold text-white shadow-sm whitespace-nowrap">
-                            {referencePrice && (
-                              <span className="mr-1 text-sky-100 line-through">
-                                {referencePrice} €
-                              </span>
-                            )}
-                            {displayedPrice} €
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Dates bien visibles */}
-                      <p className="mt-3 text-sm font-medium text-slate-800">
-                        📅 {formatDateRangeFr(f.startDate, f.endDate)}
-                      </p>
-
-                      {/* Début du vrai texte de la formation */}
-                      <p className="mt-1 text-sm text-slate-600">
-                        {firstLine ||
-                          "La description détaillée de cette formation arrive bientôt."}
-                      </p>
-
-                      <div className="mt-4 flex items-center justify-between text-[11px] text-slate-500">
-                        <span className="inline-flex items-center gap-1">
-                          <span className="h-1.5 w-1.5 rounded-full bg-sky-400 group-hover:bg-sky-500" />
-                          <span className="font-medium">
-                            Voir le détail de la session
-                          </span>
-                        </span>
-                        <span className="text-base transition-transform group-hover:translate-x-1">
-                          →
-                        </span>
-                      </div>
-                    </article>
-                  </Link>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* SECTION 3 : Infos pratiques */}
-      <section
-        id="infos"
-        className="relative border-t border-slate-200"
-      >
-        <div className="pointer-events-none absolute -top-6 left-0 right-0 bg-[radial-gradient(ellipse_at_top,_rgba(15,23,42,0.12),_transparent)]" />
-
-        <div className="relative mx-auto max-w-6xl px-4 py-10 md:px-6">
-          <div className="mb-8 flex flex-col gap-6 md:flex-row md:items-stretch md:justify-between">
-            {/* Colonne gauche : texte */}
-            <div className="max-w-xl space-y-4">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                Infos pratiques
-              </p>
-              <h2 className="font-display text-2xl md:text-3xl font-semibold text-slate-900">
-                Une formation accessible pour tous et toutes
-              </h2>
-              <p className="text-base text-slate-700">
-                Nos formations se déroulent dans le Cantal{" "}
-                <span className="font-semibold">au domaine de Gravières</span> ,
-                ce qui a beaucoup d&apos;avantages, mais demande un peu
-                d&apos;organisation. Pour plus de facilité , nous proposons{" "}
-                <span className="font-medium text-slate-900">
-                  un transport organisé
-                </span>
-                . Sur place, l&apos;hébergement et la restauration sont pensés
-                pour te mettre dans les meilleures conditions
-                d&apos;apprentissage.
-              </p>
-
-              <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-medium text-slate-700">
-                <span className="inline-flex items-center gap-1 rounded-full bg-white/80 px-3 py-1 shadow-sm ring-1 ring-sky-200">
-                  <span className="text-base">🚌</span>
-                  Départs groupés depuis Lyon & Paris
-                </span>
-                <span className="inline-flex items-center gap-1 rounded-full bg-white/80 px-3 py-1 shadow-sm ring-1 ring-emerald-200">
-                  <span className="text-base">🍽️</span>
-                  Pension complète sur place
-                </span>
-                <span className="inline-flex items-center gap-1 rounded-full bg-white/80 px-3 py-1 shadow-sm ring-1 ring-amber-200">
-                  <span className="text-base">🛏️</span>
-                  Chambres tout confort
-                </span>
-              </div>
-
-              <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-rose-700">
-                  Frein budget ? On t&apos;aide
-                </p>
-                <p className="mt-1 text-sm text-slate-800">
-                  Aides CAF/locales + paiement en plusieurs fois possible.
-                  Contacte-nous et on regarde ta situation avec toi.
-                </p>
-                <button
-                  type="button"
-                  onClick={openContactWidget}
-                  className="mt-3 inline-flex items-center gap-2 rounded-full bg-rose-600 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-white shadow-sm transition hover:bg-rose-500 hover:cursor-pointer"
-                >
-                  Nous contacter pour le financement
-                  <span className="text-sm">-&gt;</span>
-                </button>
-              </div>
-
-              <div className="pt-4">
-                <Link
-                  href="/infos-pratiques"
-                  className="inline-flex items-center gap-2 rounded-full bg-amber-500 px-4 py-2 text-[11px] font-semibold uppercase tracking-[0.16em] text-gray-900 shadow-sm transition hover:bg-amber-400"
-                >
-                  Voir les modalités d&apos;inscription
-                  <span className="text-sm">→</span>
-                </Link>
-              </div>
-            </div>
-
-            {/* Colonne droite : photo plein pot */}
-            {/* Colonne droite : photo plein pot */}
-            <div className="relative w-full max-w-md md:flex-1">
-              <div className="relative h-72 md:h-96 lg:h-[26rem] w-full overflow-hidden  ring-1 ring-slate-100">
-                <Image
-                  src="/fanion.jpg"
-                  alt="Vie de colo au Domaine de Gravières"
-                  fill
-                  className="object-cover"
-                  sizes="(min-width: 1024px) 440px, (min-width: 768px) 360px, 100vw"
-                  priority={false}
-                />
-              </div>
-            </div>
+            <button
+              type="button"
+              onClick={() => openContact("message")}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                border: `2px solid ${INK}`,
+                borderRadius: 999,
+                background: CREAM,
+                color: INK,
+                padding: "15px 24px",
+                fontSize: 13,
+                fontWeight: 800,
+                textTransform: "uppercase",
+                cursor: "pointer",
+              }}
+            >
+              <MessageSquareText size={16} />
+              Une question ?
+            </button>
+            <a
+              href={`tel:${PHONE_TEL}`}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 8,
+                border: `2px solid ${INK}`,
+                borderRadius: 999,
+                background: VIOLET,
+                color: CREAM,
+                padding: "15px 24px",
+                fontSize: 13,
+                fontWeight: 800,
+                textTransform: "uppercase",
+                cursor: "pointer",
+                textDecoration: "none",
+              }}
+              aria-label={`Appeler Murathènes au ${PHONE_DISPLAY}`}
+            >
+              <PhoneCall size={16} />
+              {PHONE_DISPLAY}
+            </a>
           </div>
         </div>
       </section>
-    </>
+    </div>
   );
 }

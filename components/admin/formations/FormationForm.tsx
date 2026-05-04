@@ -30,7 +30,7 @@ const TYPES: { value: FormationType; label: string }[] = [
   { value: "formation_generale", label: "Formation générale" },
   {
     value: "approfondissement_sejour_etranger",
-    label: "Approfondissement Séjours à l'étranger / échanges de jeunes",
+    label: "Étape 3 · Approfondissement séjours à l'étranger / échanges de jeunes",
   },
 ];
 
@@ -166,7 +166,7 @@ export function FormationForm({ initialData, formationId, onSaved }: Props) {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             required
-            placeholder="Ex: Formation BAFA approfondissement surf"
+            placeholder="Ex: Étape 3 BAFA approfondissement séjour à l'étranger"
           />
         </div>
 

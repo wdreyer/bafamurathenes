@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutDashboard, GraduationCap, Users } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
@@ -19,13 +19,11 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   // 🔒 Guard
-  const [isAllowed, setIsAllowed] = useState(false);
+  const [isAllowed, setIsAllowed] = useState(
+    () => typeof window !== "undefined" && sessionStorage.getItem(STORAGE_KEY) === "1",
+  );
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    setIsAllowed(sessionStorage.getItem(STORAGE_KEY) === "1");
-  }, []);
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();

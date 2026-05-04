@@ -1,10 +1,15 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { BlockKey, YELLOW } from "./ProgrammeParts";
+import { BlockKey } from "./ProgrammeParts";
 import { ProgrammeModal } from "./ProgrammeModal";
 import ContenuFG from "./contenuFG";
 import ContenuAppro from "./contenuAppro";
+
+const INK = "#1a1530";
+const CREAM = "#fefcf5";
+const VIOLET = "#792BB9";
+const YELLOW = "#F5EF72";
 
 function TrainingCard({
   tone,
@@ -23,97 +28,60 @@ function TrainingCard({
 }) {
   const isFG = tone === "fg";
 
-  // Palette plus douce + plus moderne
-  const fgVioletA = "#5B5AF7"; // violet smooth
-  const fgVioletB = "#7C7BFF"; // highlight
-  const fgYellowA = "#F6E7A6"; // jaune un peu moins agressif
-  const fgYellowB = "#FFF3C4";
-
-  const fg = isFG ? YELLOW : "#2A2A66"; // texte (garde YELLOW côté FG)
-
-  const pillBg = isFG ? "rgba(255,255,255,0.14)" : "rgba(0,0,0,0.06)";
-  const pillBorder = isFG ? "rgba(255,255,255,0.22)" : "rgba(0,0,0,0.12)";
-
-  const background = isFG
-    ? `linear-gradient(135deg, ${fgVioletA} 0%, ${fgVioletB} 100%)`
-    : `linear-gradient(135deg, ${fgYellowA} 0%, ${fgYellowB} 100%)`;
-
   return (
-    <section
-      className={[
-        "shadow-sm transition-all duration-200 ease-out",
-        "h-full overflow-hidden rounded-2xl",
-        "hover:-translate-y-0.5 hover:shadow-md",
-      ].join(" ")}
+    <button
+      type="button"
+      onClick={onOpen}
+      style={{
+        background: isFG ? VIOLET : YELLOW,
+        color: isFG ? CREAM : INK,
+        border: `2px solid ${INK}`,
+        borderRadius: 24,
+        padding: 32,
+        boxShadow: isFG ? `6px 6px 0 ${INK}` : `6px 6px 0 ${VIOLET}`,
+        cursor: "pointer",
+        textAlign: "left",
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+        gap: 16,
+        transition: "transform 0.15s ease, box-shadow 0.15s ease",
+      }}
+      className="hover:-translate-y-1 hover:shadow-xl active:translate-y-0"
     >
-      <button
-        type="button"
-        onClick={onOpen}
-        className="group relative h-full w-full cursor-pointer text-left"
-        style={{ color: fg, background }}
-      >
-        {/* halo doux */}
-        <span
-          aria-hidden
-          className="pointer-events-none absolute -left-12 -top-12 h-44 w-44 rounded-full opacity-0 blur-2xl transition-opacity duration-300 group-hover:opacity-25"
-          style={{ background: isFG ? YELLOW : "#FFFFFF" }}
-        />
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+        <span style={{
+          background: isFG ? `${CREAM}22` : `${INK}11`,
+          border: `1.5px solid ${isFG ? CREAM + "44" : INK + "22"}`,
+          color: isFG ? CREAM : INK,
+          padding: "4px 12px",
+          borderRadius: 999,
+          fontSize: 11,
+          fontWeight: 700,
+          letterSpacing: 1.5,
+          textTransform: "uppercase",
+        }}>
+          {titleTop}
+        </span>
+        <span className="mura-mono" style={{ fontSize: 11, opacity: 0.6, letterSpacing: 1 }}>{duration}</span>
+      </div>
 
-        {/* sheen */}
-        <span
-          aria-hidden
-          className="pointer-events-none absolute inset-0 translate-x-[-120%] opacity-0 transition-all duration-500 group-hover:translate-x-[120%] group-hover:opacity-20"
-          style={{
-            background:
-              "linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent)",
-          }}
-        />
+      <h3 className="ed" style={{ fontSize: 28, fontWeight: 600, fontStyle: "italic", margin: 0, letterSpacing: -1, lineHeight: 1.1 }}>{title}</h3>
 
-        <div className="relative flex h-full min-h-[260px] flex-col px-4 py-5 md:min-h-[280px] md:px-6 md:py-7">
-          <div className="flex-1 text-center">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] opacity-90">
-              {titleTop}
-            </p>
+      <p style={{ fontSize: 14, lineHeight: 1.6, margin: 0, opacity: 0.85 }}>{summary}</p>
 
-            <h3 className="mt-1 font-display text-xl font-semibold md:text-2xl">
-              {title}
-            </h3>
-
-            <div className="mt-3 flex justify-center">
-              <span
-                className="inline-flex items-center rounded-full px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em]"
-                style={{
-                  backgroundColor: pillBg,
-                  border: `1px solid ${pillBorder}`,
-                }}
-              >
-                Durée · {duration}
-              </span>
-            </div>
-
-            <p className="mx-auto mt-3 max-w-3xl text-sm opacity-95">
-              {summary}
-            </p>
-          </div>
-
-          <div className="mt-5 flex justify-center">
-            <span
-              className={[
-                "inline-flex items-center gap-2 rounded-full px-3 py-1",
-                "text-[10px] font-semibold uppercase tracking-[0.12em]",
-                "transition-transform duration-200 group-hover:translate-x-[1px]",
-              ].join(" ")}
-              style={{
-                backgroundColor: pillBg,
-                border: `1px solid ${pillBorder}`,
-              }}
-            >
-              Voir le programme <span className="text-base leading-none">›</span>
-            </span>
-          </div>
-        </div>
-      </button>
-    </section>
+      <div style={{
+        marginTop: "auto",
+        paddingTop: 16,
+        borderTop: `1.5px dashed ${isFG ? CREAM + "44" : INK + "33"}`,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+      }}>
+        <span className="mura-mono" style={{ fontSize: 10, letterSpacing: 1.5, opacity: 0.75, textTransform: "uppercase" }}>Voir le programme</span>
+        <span style={{ fontSize: 18 }}>›</span>
+      </div>
+    </button>
   );
 }
 
@@ -127,16 +95,14 @@ export default function ProgrammeTab() {
         titleTop: "BAFA",
         title: "Formation Générale",
         duration: "8 jours",
-        summary:
-          "Découvrir les ACM, organiser des activités, assurer la sécurité, gérer la vie quotidienne et préparer ton stage pratique.",
+        summary: "Découvrir les ACM, organiser des activités, assurer la sécurité, gérer la vie quotidienne et préparer ton stage pratique.",
       },
       appro: {
         tone: "appro" as const,
-        titleTop: "Approfondissement",
-        title: "Séjours à l’étranger | Echanges de jeunes",
+        titleTop: "Étape 3 · Approfondissement",
+        title: "Séjours à l'étranger | Echanges de jeunes",
         duration: "6 jours",
-        summary:
-          "Encadrer des séjours à l’étranger, gérer les déplacements, animer en contexte interculturel et organiser le quotidien (budget, repas, vie de groupe).",
+        summary: "Encadrer des séjours à l'étranger, gérer les déplacements, animer en contexte interculturel et organiser le quotidien (budget, repas, vie de groupe).",
       },
     };
   }, []);
@@ -146,30 +112,21 @@ export default function ProgrammeTab() {
 
   return (
     <>
-      {/* ✅ Full width + border pleine largeur */}
-      <section className="relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw] w-screen border-t border-slate-200 bg-transparent">
-        <div className="mx-auto max-w-6xl px-4 py-10 md:px-6 md:py-12">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                Infos pratiques
-              </p>
-              <h2 className="font-display text-2xl font-semibold text-slate-900 md:text-3xl">
-                Programme
-              </h2>
+      <section style={{ borderTop: `1.5px solid ${INK}22`, background: CREAM }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto" }} className="px-4 py-12 md:px-12 md:py-16">
+          <div className="mura-mono" style={{ fontSize: 11, color: VIOLET, letterSpacing: 2.5, fontWeight: 700, marginBottom: 14 }}>📚 PROGRAMME</div>
+          <h2 style={{ fontWeight: 700, letterSpacing: -2, lineHeight: 1, margin: 0, marginBottom: 16 }} className="text-[36px] md:text-[56px]">
+            8 jours pour comprendre les{" "}
+            <span className="ed" style={{ fontStyle: "italic", color: VIOLET }}>rôles & fonctions</span>{" "}
+            de l&apos;animateur·rice.
+          </h2>
+          <p style={{ fontSize: 16, lineHeight: 1.65, color: INK, opacity: 0.8, marginBottom: 40, maxWidth: 640 }}>
+            Deux temps de formation : la Formation Générale, puis l&apos;étape 3 · Approfondissement «&nbsp;Échanges de jeunes et séjours à l&apos;étranger&nbsp;». Cliquez pour voir le programme complet.
+          </p>
 
-              <p className="max-w-3xl text-sm leading-6 text-slate-700">
-                A Murathènes, nous vous proposons deux types de formations : la
-                formation générale, et l&apos;approfondissement “Echanges de
-                jeunes et séjours à l&apos;étranger”. Pour en savoir plus,
-                cliquez sur la formation qui vous intéresse.
-              </p>
-            </div>
-
-            <div className="grid items-stretch gap-4 md:grid-cols-2 md:gap-5">
-              <TrainingCard {...data.fg} onOpen={() => setActive("fg")} />
-              <TrainingCard {...data.appro} onOpen={() => setActive("appro")} />
-            </div>
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+            <TrainingCard {...data.fg} onOpen={() => setActive("fg")} />
+            <TrainingCard {...data.appro} onOpen={() => setActive("appro")} />
           </div>
         </div>
       </section>

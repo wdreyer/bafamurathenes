@@ -1,8 +1,14 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import useEmblaCarousel from "embla-carousel-react";
+
+const INK = "#1a1530";
+const PAPER = "#fff8ec";
+const CREAM = "#fefcf5";
+const VIOLET = "#792BB9";
+const YELLOW = "#F5EF72";
 
 type Project = {
   id: string;
@@ -11,22 +17,11 @@ type Project = {
   title: string;
   partner?: string;
   paragraphs: string[];
-  image: string; // public/MT/...
+  image: string;
 };
 
-function cx(...v: Array<string | false | null | undefined>) {
-  return v.filter(Boolean).join(" ");
-}
-
 function ProjectsCarousel({ items }: { items: Project[] }) {
-  const [emblaRef, emblaApi] = useEmblaCarousel({
-    loop: true,
-    align: "center",
-    dragFree: false,
-    skipSnaps: false,
-    containScroll: "trimSnaps",
-  });
-
+  const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, align: "center", containScroll: "trimSnaps" });
   const [selected, setSelected] = useState(0);
 
   const onSelect = useCallback(() => {
@@ -36,321 +31,182 @@ function ProjectsCarousel({ items }: { items: Project[] }) {
 
   useEffect(() => {
     if (!emblaApi) return;
-    onSelect();
     emblaApi.on("select", onSelect);
     emblaApi.on("reInit", onSelect);
-    return () => {
-      emblaApi.off("select", onSelect);
-      emblaApi.off("reInit", onSelect);
-    };
+    return () => { emblaApi.off("select", onSelect); emblaApi.off("reInit", onSelect); };
   }, [emblaApi, onSelect]);
 
   const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
   const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
 
   return (
-    <div className="w-full">
-      {/* Navigation desktop - au dessus sur mobile */}
-      <div className="flex items-center justify-center gap-4 mb-4 md:hidden">
-        <button
-          type="button"
-          onClick={scrollPrev}
-          className={cx(
-            "cursor-pointer shrink-0",
-            "h-10 w-10 rounded-full",
-            "bg-white/95 shadow-sm ring-1 ring-slate-200",
-            "grid place-items-center transition hover:bg-white active:scale-[0.98]"
-          )}
-          aria-label="Projet précédent"
-        >
-          <span className="text-2xl leading-none">‹</span>
+    <div style={{ width: "100%" }}>
+      {/* Mobile nav */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, marginBottom: 16 }} className="md:hidden">
+        <button type="button" onClick={scrollPrev} aria-label="Projet precedent" style={{ width: 40, height: 40, borderRadius: "50%", border: `2px solid ${INK}`, background: PAPER, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, color: INK }}>
+          ‹
         </button>
-        
-        {/* Indicateurs de pagination */}
-        <div className="flex gap-1.5">
+        <div style={{ display: "flex", gap: 6 }}>
           {items.map((_, i) => (
-            <div
-              key={i}
-              className={cx(
-                "h-1.5 rounded-full transition-all duration-300",
-                i === selected 
-                  ? "w-6 bg-slate-800" 
-                  : "w-1.5 bg-slate-300"
-              )}
-            />
+            <div key={i} style={{ height: 6, borderRadius: 999, background: i === selected ? VIOLET : `${INK}33`, width: i === selected ? 24 : 6, transition: "all 0.3s" }} />
           ))}
         </div>
-        
-        <button
-          type="button"
-          onClick={scrollNext}
-          className={cx(
-            "cursor-pointer shrink-0",
-            "h-10 w-10 rounded-full",
-            "bg-white/95 shadow-sm ring-1 ring-slate-200",
-            "grid place-items-center transition hover:bg-white active:scale-[0.98]"
-          )}
-          aria-label="Projet suivant"
-        >
-          <span className="text-2xl leading-none">›</span>
+        <button type="button" onClick={scrollNext} aria-label="Projet suivant" style={{ width: 40, height: 40, borderRadius: "50%", border: `2px solid ${INK}`, background: PAPER, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, color: INK }}>
+          ›
         </button>
       </div>
 
-      <div className="flex items-center gap-3">
-        {/* Bouton précédent - caché sur mobile */}
-        <button
-          type="button"
-          onClick={scrollPrev}
-          className={cx(
-            "cursor-pointer shrink-0 hidden md:grid",
-            "h-14 w-14 rounded-full",
-            "bg-white/95 shadow-sm ring-1 ring-slate-200",
-            "place-items-center transition hover:bg-white active:scale-[0.98]"
-          )}
-          aria-label="Projet précédent"
-        >
-          <span className="text-3xl leading-none">‹</span>
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        <button type="button" onClick={scrollPrev} aria-label="Projet precedent" style={{ width: 52, height: 52, borderRadius: "50%", border: `2px solid ${INK}`, background: PAPER, cursor: "pointer", display: "none", alignItems: "center", justifyContent: "center", fontSize: 24, color: INK, flexShrink: 0, boxShadow: `3px 3px 0 ${INK}` }} className="hidden md:flex">
+          ‹
         </button>
 
-        <div ref={emblaRef} className="relative w-full overflow-hidden rounded-2xl md:rounded-3xl cursor-grab active:cursor-grabbing">
-          <div className="flex">
+        <div ref={emblaRef} style={{ flex: 1, overflow: "hidden", borderRadius: 22, cursor: "grab" }}>
+          <div style={{ display: "flex" }}>
             {items.map((p, i) => {
               const active = i === selected;
-
               return (
                 <article
                   key={p.id}
-                  className={cx(
-                    "shrink-0 select-none",
-                    "basis-[92%] sm:basis-[75%] md:basis-[560px]",
-                    "px-1 sm:px-2 md:px-3"
-                  )}
+                  style={{
+                    flexShrink: 0,
+                    width: "100%",
+                    padding: "0 8px",
+                    transition: "transform 0.3s, opacity 0.3s",
+                    transform: active ? "scale(1)" : "scale(0.98)",
+                    opacity: active ? 1 : 0.45,
+                  }}
+                  className="md:w-[920px]"
                 >
-                  <div
-                    className={cx(
-                      "rounded-2xl md:rounded-3xl overflow-hidden bg-white/95 shadow-sm ring-1 ring-slate-200",
-                      "transition-transform duration-300",
-                      active ? "md:scale-[1.03]" : "opacity-80 md:scale-[0.93]"
-                    )}
-                  >
-                    <div className="relative h-44 sm:h-52 md:h-72 w-full bg-slate-100">
+                  <div className="grid grid-cols-1 lg:grid-cols-[1.18fr_0.82fr]" style={{ border: `2px solid ${INK}`, borderRadius: 22, overflow: "hidden", background: PAPER, boxShadow: active ? `6px 6px 0 ${VIOLET}` : `2px 2px 0 ${INK}44` }}>
+                    <div style={{ position: "relative", minHeight: "clamp(340px, 45vw, 540px)", background: INK }}>
                       <Image src={p.image} alt={p.title} fill className="object-cover" />
-                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-black/10 to-black/0" />
-
-                      <div className="absolute bottom-2 left-2 right-2 md:bottom-3 md:left-3 md:right-3">
-                        <div className="rounded-xl md:rounded-2xl bg-white/85 backdrop-blur px-2.5 py-1.5 md:px-3 md:py-2 ring-1 ring-white/40">
-                          <p className="text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.16em] md:tracking-[0.18em] text-slate-600">
-                            {p.datePlace}
-                          </p>
-                          <p className="mt-0.5 text-[10px] md:text-[11px] font-semibold uppercase tracking-[0.14em] md:tracking-[0.16em] text-slate-600">
-                            {p.theme}
-                          </p>
+                      <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(26,21,48,.42), transparent 48%)" }} />
+                      <div style={{ position: "absolute", bottom: 16, left: 16, right: 16, display: "flex", flexWrap: "wrap", gap: 8 }}>
+                        <div style={{ background: YELLOW, border: `2px solid ${INK}`, borderRadius: 999, padding: "8px 13px", boxShadow: `2px 2px 0 ${INK}` }}>
+                          <p className="mura-mono" style={{ margin: 0, fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1.5, color: VIOLET }}>{p.datePlace}</p>
+                        </div>
+                        <div style={{ background: "rgba(254,252,245,0.94)", border: `2px solid ${INK}`, borderRadius: 999, padding: "8px 13px", boxShadow: `2px 2px 0 ${INK}` }}>
+                          <p className="mura-mono" style={{ margin: 0, fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1.2, color: INK, opacity: 0.78 }}>{p.theme}</p>
                         </div>
                       </div>
                     </div>
-
-                    <div className="px-4 py-4 md:px-5 md:py-5">
-                      <h4 className="font-display text-base sm:text-lg md:text-2xl font-semibold text-slate-900">
-                        {p.title}
-                      </h4>
-
-                      <div className="mt-2 md:mt-3 space-y-1.5 md:space-y-2 text-[13px] md:text-sm leading-[1.6] md:leading-6 text-slate-700">
+                    <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "28px 26px" }}>
+                      <p className="mura-mono" style={{ margin: "0 0 14px", fontSize: 10, fontWeight: 850, textTransform: "uppercase", letterSpacing: 2, color: VIOLET }}>
+                        Projet {String(i + 1).padStart(2, "0")} / {String(items.length).padStart(2, "0")}
+                      </p>
+                      <h4 className="ed" style={{ margin: "0 0 16px", fontSize: "clamp(28px, 3.8vw, 44px)", fontWeight: 700, color: INK, lineHeight: 1, letterSpacing: -1.3 }}>{p.title}</h4>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                         {p.paragraphs.map((t, idx) => (
-                          <p key={idx}>{t}</p>
+                          <p key={idx} style={{ margin: 0, fontSize: 14, lineHeight: 1.7, color: INK, opacity: 0.82 }}>{t}</p>
                         ))}
                       </div>
-
-                      {p.partner ? (
-                        <p className="mt-2 md:mt-3 text-[11px] md:text-xs font-semibold text-slate-600">
+                      {p.partner && (
+                        <p className="mura-mono" style={{ margin: "18px 0 0", paddingTop: 14, borderTop: `1.5px dashed ${INK}33`, fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1.5, color: VIOLET }}>
                           Partenaire : {p.partner}
                         </p>
-                      ) : null}
+                      )}
                     </div>
                   </div>
                 </article>
               );
             })}
           </div>
-
-          {/* fades - plus subtils sur mobile */}
-          <div className="pointer-events-none absolute inset-y-0 left-0 w-4 md:w-10 bg-gradient-to-r from-white/60 md:from-white/80 to-white/0" />
-          <div className="pointer-events-none absolute inset-y-0 right-0 w-4 md:w-10 bg-gradient-to-l from-white/60 md:from-white/80 to-white/0" />
         </div>
 
-        {/* Bouton suivant - caché sur mobile */}
-        <button
-          type="button"
-          onClick={scrollNext}
-          className={cx(
-            "cursor-pointer shrink-0 hidden md:grid",
-            "h-14 w-14 rounded-full",
-            "bg-white/95 shadow-sm ring-1 ring-slate-200",
-            "place-items-center transition hover:bg-white active:scale-[0.98]"
-          )}
-          aria-label="Projet suivant"
-        >
-          <span className="text-3xl leading-none">›</span>
+        <button type="button" onClick={scrollNext} aria-label="Projet suivant" style={{ width: 52, height: 52, borderRadius: "50%", border: `2px solid ${INK}`, background: PAPER, cursor: "pointer", display: "none", alignItems: "center", justifyContent: "center", fontSize: 24, color: INK, flexShrink: 0, boxShadow: `3px 3px 0 ${INK}` }} className="hidden md:flex">
+          ›
         </button>
+      </div>
+
+      <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-7">
+        {items.map((p, i) => {
+          const active = i === selected;
+          return (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => emblaApi?.scrollTo(i)}
+              aria-label={`Voir le projet ${p.title}`}
+              style={{
+                position: "relative",
+                minHeight: 92,
+                overflow: "hidden",
+                border: `2px solid ${active ? VIOLET : INK}`,
+                borderRadius: 14,
+                background: INK,
+                padding: 0,
+                cursor: "pointer",
+                boxShadow: active ? `3px 3px 0 ${YELLOW}` : "none",
+              }}
+            >
+              <Image src={p.image} alt="" fill sizes="160px" className="object-cover" />
+              <span style={{ position: "absolute", inset: 0, background: active ? "rgba(121,43,185,0.02)" : "rgba(26,21,48,0.38)" }} />
+              <span className="mura-mono" style={{ position: "absolute", left: 8, right: 8, bottom: 8, color: CREAM, fontSize: 9, fontWeight: 850, letterSpacing: 1, lineHeight: 1.2, textAlign: "left", textTransform: "uppercase", textShadow: "0 1px 6px rgba(0,0,0,0.55)" }}>
+                {p.datePlace.split("·")[0].trim()}
+              </span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
 }
 
 export default function AssociationTab() {
-  const projects = useMemo<Project[]>(
-    () => [
-      {
-        id: "mew-2019",
-        datePlace: "Avril 2019 · ATHENS",
-        theme: "chant · instruments · pop · musique trad",
-        title: "Première “Murathens European Week”",
-        partner: "Project Elea (Greece)",
-        image: "/MT/mew19.jpg",
-        paragraphs: [
-          "30 jeunes du Cantal (lycées pro et généraux, musiciens et non musiciens), 30 jeunes résidents du camp de réfugiés Eleonas, à Athènes (origines afghanes, syriennes, congolaises, entre autres).",
-          "Musiciens et non musiciens ont préparé pendant 6 mois et à distance un programme musical commun. Ils ont partagé une semaine ensemble durant laquelle ils ont enregistré leurs morceaux, rejoint des ensembles musicaux locaux, vécu une excursion sur une île grecque, se sont amusés et ont créé des liens et des souvenirs inoubliables.",
-          "Une semaine magique, un projet émouvant qui a donné à chacun une place et une voix, dans un collectif uni par la musique et les rires.",
-        ],
-      },
-      {
-        id: "mew-2022",
-        datePlace: "Avril 2022 · ATHENS",
-        theme: "chant · pop",
-        title: "“Murathens European Week 2022”",
-        image: "/MT/mew22.jpeg",
-        paragraphs: [
-          "On prend les mêmes et on recommence !",
-          "Le renouvellement du partenariat avec l’ONG Project Elea, gestionnaire des bénévoles du camp de réfugiés Eleonas à Athènes, a permis d’aller plus loin encore dans l'expérience : plus de préparation, plus d’opportunités.",
-          "La semaine de rencontre fût exceptionnelle grâce notamment à de nombreux nouveaux partenaires associatifs internationaux (Pandora Project, El Sistema Greece, Make Some Noiz…) et à une équipe d’animation et de coordination toujours plus engagée.",
-        ],
-      },
-      {
-        id: "euroteam-2023",
-        datePlace: "Août 2023 · MARAMUREș",
-        theme: "Interculturalité · ruralité européenne",
-        title: "“EUROTEAM Cantal - Maramureș”",
-        partner: "Team For Youth (Roumanie)",
-        image: "/MT/euroteam.JPG",
-        paragraphs: [
-          "Une dizaine de cantalien.nes, une dizaine de jeunes de la région du Maramures, en Roumanie.",
-          "Pour s’y rendre, la dizaine de jeunes français, accompagnés de 2 membres de l’équipe Murathènes, ont traversé l’Europe en train : Suisse, Autriche, Hongrie, Roumanie.",
-          "Sur place : parenthèse culturelle saisissante (visites, randonnées, thermes, présentations culinaires, danses et langue), le tout au rythme des jeunes et de leurs besoins.",
-        ],
-      },
-      {
-        id: "mew-2024",
-        datePlace: "Avril 2024 · CYPRUS",
-        theme: "instruments · orchestre symphonique · chant",
-        title: "“Murathens European Week 2024”",
-        image: "/MT/mew24.jpg",
-        paragraphs: [
-          "20 jeunes musiciens du Cantal, 10 jeunes résidents d’un foyer chypriote pour mineurs non-accompagnés (Syrie, Congo, Somalie) et 30 jeunes élèves de Sistema Cyprus.",
-          "Les jeunes ont choisi un programme pour orchestre symphonique et ont répété toute l’année pour le concert final au théâtre municipal de Nicosie : salle comble et souvenirs magiques.",
-          "Un petit chœur a aussi composé et chanté ; l’une des chansons, en arabe syrien, est devenue l’hymne du séjour.",
-        ],
-      },
-      {
-        id: "matal-2024",
-        datePlace: "Août 2024 · DOMAINE DE GRAVIèRES",
-        theme: "Interculturalité · ruralité européenne",
-        title: "“MATAL Youth Cultural Odyssey”",
-        image: "/MT/matal.JPG",
-        paragraphs: [
-          "Après s’être rencontrés en août 2023 en Roumanie (EUROTEAM), il était temps pour les français d’accueillir les roumains dans le Cantal : MA(ramures-can)TAL.",
-          "Les adolescents roumains et français ont écrit eux-même le dossier de demande de subvention européenne, accompagné par l’association Murathènes, en anglais et à distance. Ils ont obtenu le financement puis organisé entièrement le projet : un véritable succès !",
-          "Une semaine basée sur la découverte du territoire, des cultures, activités culinaires, jeux sportifs, activités manuelles, rencontres intergénérationnelles… et surtout, création et organisation d’un bal trad.",
-        ],
-      },
-      {
-        id: "mew-2025",
-        datePlace: "Fév & Juillet 2025 · DOMAINE DE GRAVIèRES",
-        theme: "Création Rap · Hip-Hop · R’n’B · Pop",
-        title: "“Murathens European Week 2025 — 4 KILTI”",
-        image: "/MT/mew25.png",
-        paragraphs: [
-          "Manifestation des richesses de la jeunesse francophone : Belgique, France, Guadeloupe, Cantal… Cinquantaine de jeunes de 16 à 26 ans, dont des résidents francophones du CADA de St Flour.",
-          "2 étapes : résidence artistique en février au domaine de Gravières, puis concerts à Paris et Bruxelles en juillet.",
-          "Projet porté par 4 associations (Autarcie Production Paris, Moody Bruxelles, CKB Guadeloupe, Murathènes Cantal) pour rendre audible la jeunesse via des projets émancipateurs, artistiques et de mobilité.",
-        ],
-      },
-      {
-        id: "curious-birds-2025",
-        datePlace: "2025 · DOMAINE DE GRAVIèRES",
-        theme: "Composition musicale · pop instrumentale · théâtre",
-        title: "“Curious Birds”",
-        image: "/MT/curiousbird10.png",
-        paragraphs: [
-          "Une vingtaine de jeunes tchèques et une vingtaine de français ont créé pendant plusieurs mois une création artistique unique mêlant composition musicale et théâtrale.",
-          "À distance : histoire, mots, notes, percussions et la hâte de se retrouver. En juillet 2025 : rencontre et représentation au festival.",
-          "Une aventure accompagnée (Jean-Noel Godard, coordinatrices de Na Slunci, animateurs.rices et équipes de Murathènes).",
-        ],
-      },
-    ],
-    []
-  );
+  const projects = useMemo<Project[]>(() => [
+    { id: "mew-2019", datePlace: "Avril 2019 · Athènes", theme: "chant · instruments · pop · musique trad", title: "Première Murathènes European Week", partner: "Project Elea (Grèce)", image: "/MT/mew19.jpg", paragraphs: ["30 jeunes du Cantal (lycées professionnels et généraux, musicien·nes et non musicien·nes), 30 jeunes résident·es du camp de réfugié·es Eleonas, à Athènes (origines afghanes, syriennes, congolaises, entre autres).", "Musicien·nes et non musicien·nes ont préparé pendant 6 mois et à distance un programme musical commun. Ils ont partagé une semaine ensemble durant laquelle ils ont enregistré leurs morceaux, rejoint des ensembles musicaux locaux et vécu une excursion sur une île grecque.", "Une semaine magique, un projet émouvant qui a donné à chacun·e une place et une voix, dans un collectif uni par la musique et les rires."] },
+    { id: "mew-2022", datePlace: "Avril 2022 · Athènes", theme: "chant · pop", title: "Murathènes European Week 2022", image: "/MT/mew22.jpeg", paragraphs: ["On prend les mêmes et on recommence !", "Le renouvellement du partenariat avec l'ONG Project Elea a permis d'aller plus loin encore dans l'expérience : plus de préparation, plus d'opportunités.", "La semaine de rencontre fut exceptionnelle grâce à de nombreux nouveaux partenaires associatifs internationaux."] },
+    { id: "euroteam-2023", datePlace: "Août 2023 · Maramureș", theme: "interculturalité · ruralité européenne", title: "EUROTEAM Cantal - Maramureș", partner: "Team For Youth (Roumanie)", image: "/MT/euroteam.JPG", paragraphs: ["Une dizaine de jeunes du Cantal, une dizaine de jeunes de la région du Maramureș, en Roumanie.", "Pour s'y rendre, les jeunes français ont traversé l'Europe en train : Suisse, Autriche, Hongrie, Roumanie.", "Sur place : parenthèse culturelle saisissante, danses, langue, activités culinaires, randonnées."] },
+    { id: "mew-2024", datePlace: "Avril 2024 · Chypre", theme: "instruments · orchestre symphonique · chant", title: "Murathènes European Week 2024", image: "/MT/mew24.jpg", paragraphs: ["20 jeunes musicien·nes du Cantal, 10 jeunes résident·es d'un foyer chypriote et 30 élèves de Sistema Cyprus.", "Les jeunes ont répété toute l'année pour le concert final au théâtre municipal de Nicosie : salle comble et souvenirs magiques.", "Un petit chœur a aussi composé et chanté ; l'une des chansons, en arabe syrien, est devenue l'hymne du séjour."] },
+    { id: "matal-2024", datePlace: "Août 2024 · Domaine de Gravières", theme: "interculturalité · ruralité européenne", title: "MATAL Youth Cultural Odyssey", image: "/MT/matal.JPG", paragraphs: ["Après s'être rencontré·es en 2023 en Roumanie, il était temps pour les Français·es d'accueillir les Roumain·es dans le Cantal.", "Les adolescent·es ont écrit eux-mêmes le dossier de subvention européenne, obtenu le financement, puis organisé entièrement le projet.", "Une semaine de découverte, d'échanges, d'activités culinaires, de jeux — et surtout, la création et l'organisation d'un bal trad."] },
+    { id: "mew-2025", datePlace: "Février & juillet 2025 · Domaine de Gravières", theme: "création rap · hip-hop · RnB · pop", title: "Murathènes European Week 2025 — 4 KILTI", image: "/MT/mew25.png", paragraphs: ["Manifestation des richesses de la jeunesse francophone : Belgique, France, Guadeloupe, Cantal… Une cinquantaine de jeunes.", "2 étapes : résidence artistique en février au domaine de Gravières, puis concerts à Paris et Bruxelles en juillet.", "Projet porté par 4 associations pour rendre audible la jeunesse via des projets émancipateurs."] },
+    { id: "curious-birds-2025", datePlace: "2025 · Domaine de Gravières", theme: "composition musicale · pop instrumentale · théâtre", title: "Curious Birds", image: "/MT/curiousbird10.png", paragraphs: ["Une vingtaine de jeunes tchèques et une vingtaine de jeunes français ont créé une œuvre artistique unique mêlant composition musicale et théâtre.", "À distance : histoire, mots, notes, percussions et la hâte de se retrouver. En juillet 2025 : rencontre et représentation.", "Une aventure accompagnée par Jean-Noël Godard, les coordinatrices de Na Slunci et les équipes de Murathènes."] },
+  ], []);
 
   return (
-    <section className="space-y-0">
-      {/* HEADER hors cadre */}
-      <header className="mx-auto max-w-6xl px-4 pb-8 md:px-6">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-          L’association
+    <section style={{ width: "100%" }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "40px 24px 16px" }} className="md:px-12">
+        <p className="mura-mono" style={{ margin: "0 0 8px", fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: 2.5, color: VIOLET }}>
+          L&apos;association
         </p>
-        <h1 className="mt-2 font-display text-2xl font-semibold text-slate-900 md:text-3xl">
-          Association loi 1901 d’éducation populaire
-        </h1>
-      </header>
+        <h2 className="ed" style={{ margin: "0 0 28px", fontSize: "clamp(28px, 4vw, 42px)", fontWeight: 700, lineHeight: 1.1, color: INK, fontStyle: "normal" }}>
+          Association loi 1901 d&apos;éducation populaire
+        </h2>
+      </div>
 
-      {/* INTRO (section border-t) */}
-   <section className="border-t border-slate-200">
-  <div className="mx-auto max-w-6xl px-4 py-10 md:px-6">
-          <div className="max-w-4xl space-y-4 text-base text-slate-700">
-            <p>
-              Fondée en 2019, l’association Murathènes est une association
-              d’éducation populaire visant à promouvoir les rencontres
-              interculturelles, le patrimoine, le vivre-ensemble et l’émancipation
-              à des échelles locales, nationales, européennes et internationales.
-              L’association promeut l’art et la musique comme vecteurs sociaux
-              d’insertion et de cohésion.
+      {/* Intro */}
+      <div style={{ borderTop: `1.5px solid ${INK}18` }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 24px" }} className="md:px-12">
+          <div style={{ maxWidth: 800, display: "flex", flexDirection: "column", gap: 14 }}>
+            <p style={{ margin: 0, fontSize: 15, lineHeight: 1.7, color: INK, opacity: 0.82 }}>
+              Fondée en 2019, l&apos;association Murathènes est une association d&apos;éducation populaire visant à promouvoir les rencontres interculturelles, le patrimoine, le vivre-ensemble et l&apos;émancipation à des échelles locales, nationales, européennes et internationales. L&apos;association promeut l&apos;art et la musique comme vecteurs sociaux d&apos;insertion et de cohésion.
             </p>
-            <p>
-              L’association organise des activités de loisirs permettant aux
-              jeunes de se rencontrer, d’échanger, par delà les cadres limitants
-              et coercitifs qu’elles et ils peuvent rencontrer dans leurs
-              quotidiens.
+            <p style={{ margin: 0, fontSize: 15, lineHeight: 1.7, color: INK, opacity: 0.82 }}>
+              L&apos;association organise des activités de loisirs permettant aux jeunes de se rencontrer, d&apos;échanger, par-delà les cadres limitants et coercitifs qu&apos;elles et ils peuvent rencontrer dans leurs quotidiens.
             </p>
-            <p>
-              Murathènes est née pour donner suite au constat de l’isolement
-              culturel et social de certains publics isolés ou marginalisés et des
-              inégalités d’accès aux opportunités et aux infrastructures notamment
-              dans les secteurs de la jeunesse. Murathènes, c’est la jeunesse en
-              action, pour que chaque jeune ait droit de se rencontrer et de vivre
-              ensemble des expériences extra-ordinaires.
+            <p style={{ margin: 0, fontSize: 15, lineHeight: 1.7, color: INK, opacity: 0.82 }}>
+              Murathènes, c&apos;est la jeunesse en action, pour que chaque jeune ait droit de se rencontrer et de vivre ensemble des expériences extra-ordinaires.
             </p>
           </div>
         </div>
-      </section>
+      </div>
 
-      {/* ERASMUS + CAROUSEL (section border-t) */}
-      <section className="border-t border-slate-200 bg-transparent">
-        <div className="mx-auto max-w-6xl px-4 py-10 md:px-6 md:py-12">
-          <header className="mb-6 max-w-3xl space-y-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
-              Accréditation Erasmus+
-            </p>
-            <h2 className="font-display text-2xl font-semibold text-slate-900 md:text-3xl">
-              Échanges de jeunes
-            </h2>
-            <p className="text-base text-slate-700">
-              L’association organise chaque année plusieurs échanges de jeunes
-              Erasmus+. Entre 20 et 60 jeunes européens se rencontrent pendant 1 à 2
-              semaines pour réaliser un projet commun.
-            </p>
-          </header>
-
+      {/* Erasmus + carousel */}
+      <div style={{ borderTop: `1.5px solid ${INK}18` }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 24px 40px" }} className="md:px-12">
+          <p className="mura-mono" style={{ margin: "0 0 8px", fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: 2.5, color: VIOLET }}>
+            Accréditation Erasmus+
+          </p>
+          <h3 className="ed" style={{ margin: "0 0 10px", fontSize: "clamp(22px, 3vw, 32px)", fontWeight: 700, color: INK, fontStyle: "normal" }}>
+            Échanges de jeunes
+          </h3>
+          <p style={{ margin: "0 0 28px", maxWidth: 640, fontSize: 14, lineHeight: 1.65, color: INK, opacity: 0.75 }}>
+            L&apos;association organise chaque année plusieurs échanges de jeunes Erasmus+. Entre 20 et 60 jeunes européens se rencontrent pendant 1 à 2 semaines pour réaliser un projet commun.
+          </p>
           <ProjectsCarousel items={projects} />
         </div>
-      </section>
+      </div>
     </section>
   );
 }

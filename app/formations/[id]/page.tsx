@@ -1,181 +1,204 @@
-// app/formations/[id]/page.tsx
-"use client";
-
-import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { db } from "@/lib/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 import type { Formation } from "@/lib/types";
+import {
+  getFormationLegacySlugs,
+  getFormationSlug,
+  normalizeSlugSegment,
+} from "@/lib/formationSlugs";
+import FormationDetailPageClient from "@/components/public/formations/FormationDetailPageClient";
+import { getSiteUrl } from "@/lib/siteUrl";
 
-import FormationDetailFG from "@/components/public/formations/FormationDetailFG";
-import FormationDetailAppro from "@/components/public/formations/FormationDetailAppro";
-
-const typeLabel: Record<Formation["type"], string> = {
-  formation_generale: "Formation générale",
-  approfondissement_sejour_etranger:
-    "Approfondissement — Séjour à l'étranger / échanges de jeunes",
+type FirestoreValue = {
+  stringValue?: string;
+  integerValue?: string;
+  doubleValue?: number;
+  booleanValue?: boolean;
+  timestampValue?: string;
+  arrayValue?: { values?: FirestoreValue[] };
+  mapValue?: { fields?: Record<string, FirestoreValue> };
+  nullValue?: null;
 };
 
-function formatDateRange(start: string, end: string) {
-  if (!start || !end) return "";
-  const startDate = new Date(start);
-  const endDate = new Date(end);
-
-  const sameMonth =
-    startDate.getMonth() === endDate.getMonth() &&
-    startDate.getFullYear() === endDate.getFullYear();
-
-  if (sameMonth) {
-    return `${startDate.toLocaleDateString("fr-FR", {
-      day: "numeric",
-    })}–${endDate.toLocaleDateString("fr-FR", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    })}`;
-  }
-
-  return `${startDate.toLocaleDateString("fr-FR", {
-    day: "numeric",
-    month: "long",
-  })} – ${endDate.toLocaleDateString("fr-FR", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  })}`;
-}
-
-type TransportOption = {
-  label?: string;
-  city?: string;
-  time?: string;
-  price: number;
+type FirestoreDocument = {
+  name: string;
+  fields?: Record<string, FirestoreValue>;
 };
 
-export default function FormationDetailPage() {
-  const params = useParams();
-  const router = useRouter();
-  const id = params?.id as string;
+type FirestoreListResponse = {
+  documents?: FirestoreDocument[];
+};
 
-  const [formation, setFormation] = useState<Formation | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isYaplaOpen, setIsYaplaOpen] = useState(false);
+type PageParams = {
+  params: Promise<{ id: string }> | { id: string };
+};
 
-  useEffect(() => {
-    const fetchFormation = async () => {
-      if (!id) return;
-      const ref = doc(db, "formations", id);
-      const snap = await getDoc(ref);
-      if (snap.exists()) {
-        setFormation({ id: snap.id, ...(snap.data() as any) } as Formation);
-      } else {
-        setFormation(null);
-      }
-      setLoading(false);
-    };
+const FIRESTORE_BASE_URL = `https://firestore.googleapis.com/v1/projects/${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}/databases/(default)/documents/formations`;
 
-    fetchFormation();
-  }, [id]);
-
-  if (loading) {
-    return (
-      <main className="min-h-screen bg-gradient-to-b from-rose-50/70 via-amber-50/70 to-sky-50/70">
-        <div className="mx-auto max-w-5xl px-4 py-10 text-sm text-slate-600">
-          Chargement de la formation…
-        </div>
-      </main>
+function readFirestoreValue(value: FirestoreValue): unknown {
+  if ("stringValue" in value) return value.stringValue ?? "";
+  if ("integerValue" in value) return Number(value.integerValue ?? 0);
+  if ("doubleValue" in value) return value.doubleValue ?? 0;
+  if ("booleanValue" in value) return value.booleanValue ?? false;
+  if ("timestampValue" in value) return value.timestampValue ?? "";
+  if ("arrayValue" in value) return (value.arrayValue?.values ?? []).map(readFirestoreValue);
+  if ("mapValue" in value) {
+    return Object.fromEntries(
+      Object.entries(value.mapValue?.fields ?? {}).map(([key, nestedValue]) => [
+        key,
+        readFirestoreValue(nestedValue),
+      ]),
     );
   }
+  return null;
+}
+
+function normalizeDate(value: unknown): string {
+  if (!value) return "";
+  if (typeof value === "string") return value.slice(0, 10);
+  if (value instanceof Date) return value.toISOString().slice(0, 10);
+  return String(value).slice(0, 10);
+}
+
+function mapFirestoreDocument(document: FirestoreDocument): Formation {
+  const id = document.name.split("/").pop() ?? "";
+  const data = Object.fromEntries(
+    Object.entries(document.fields ?? {}).map(([key, value]) => [key, readFirestoreValue(value)]),
+  ) as Record<string, unknown>;
+
+  return {
+    ...data,
+    id,
+    startDate: normalizeDate(data.startDate),
+    endDate: normalizeDate(data.endDate),
+  } as Formation;
+}
+
+async function fetchFirestoreDocument(id: string): Promise<Formation | null> {
+  const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+  if (!apiKey) return null;
+
+  const response = await fetch(`${FIRESTORE_BASE_URL}/${encodeURIComponent(id)}?key=${apiKey}`, {
+    cache: "no-store",
+  });
+
+  if (!response.ok) return null;
+
+  return mapFirestoreDocument((await response.json()) as FirestoreDocument);
+}
+
+async function fetchAllFormations(): Promise<Formation[]> {
+  const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+  if (!apiKey) return [];
+
+  const response = await fetch(`${FIRESTORE_BASE_URL}?key=${apiKey}`, {
+    cache: "no-store",
+  });
+
+  if (!response.ok) return [];
+
+  const data = (await response.json()) as FirestoreListResponse;
+  return (data.documents ?? []).map(mapFirestoreDocument);
+}
+
+async function resolveFormation(idOrSlug: string): Promise<Formation | null> {
+  const directFormation = await fetchFirestoreDocument(idOrSlug);
+  if (directFormation) return directFormation;
+
+  const normalizedSlug = normalizeSlugSegment(idOrSlug);
+  const formations = await fetchAllFormations();
+  return (
+    formations.find((formation) =>
+      [getFormationSlug(formation), ...getFormationLegacySlugs(formation)].includes(normalizedSlug),
+    ) ?? null
+  );
+}
+
+function formatDateLabel(startDate?: string, endDate?: string): string {
+  const start = startDate ? new Date(startDate) : null;
+  const end = endDate ? new Date(endDate) : null;
+
+  if (!start || !end || Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+    return "";
+  }
+
+  return `du ${start.toLocaleDateString("fr-FR", { day: "numeric", month: "long" })} au ${end.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" })}`;
+}
+
+export async function generateMetadata({ params }: PageParams): Promise<Metadata> {
+  const { id } = await params;
+  const formation = await resolveFormation(id);
+
+  if (!formation) {
+    return {
+      title: "Formation introuvable",
+      robots: { index: false, follow: false },
+    };
+  }
+
+  const siteUrl = getSiteUrl();
+  const canonical = `/formations/${getFormationSlug(formation)}`;
+  const dateLabel = formatDateLabel(formation.startDate, formation.endDate);
+  const title = `${formation.title} | BAFA Murathènes`;
+  const description = [
+    formation.title,
+    dateLabel,
+    formation.price ? `tarif plein ${formation.price} €` : "",
+    "formation BAFA avec Murathènes en Auvergne.",
+  ].filter(Boolean).join(" — ");
+
+  return {
+    title,
+    description,
+    alternates: {
+      canonical,
+    },
+    openGraph: {
+      type: "website",
+      url: `${siteUrl}${canonical}`,
+      title,
+      description,
+      siteName: "BAFA Murathènes",
+      images: [
+        {
+          url: "/hero-bafa.jpg",
+          width: 1200,
+          height: 630,
+          alt: "Formation BAFA Murathènes",
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [`${siteUrl}/hero-bafa.jpg`],
+    },
+  };
+}
+
+export default async function FormationDetailPage({ params }: PageParams) {
+  const { id } = await params;
+  const formation = await resolveFormation(id);
 
   if (!formation) {
     return (
-      <main className="min-h-screen bg-gradient-to-b from-rose-50/70 via-amber-50/70 to-sky-50/70">
-        <div className="mx-auto max-w-5xl px-4 py-10 space-y-4 text-sm">
-          <p className="text-red-600">Formation introuvable.</p>
-          <button
-            onClick={() => router.push("/formations")}
-            className="text-sky-800 underline underline-offset-2"
-          >
+      <main style={{ minHeight: "100vh", background: "#fefcf5" }}>
+        <div style={{ maxWidth: 800, margin: "0 auto", padding: "80px 24px" }}>
+          <p style={{ color: "#B13A4A", marginBottom: 16 }}>Formation introuvable.</p>
+          <Link href="/formations" style={{ color: "#792BB9", textDecoration: "underline", fontSize: 14 }}>
             ← Revenir au calendrier des formations
-          </button>
+          </Link>
         </div>
       </main>
     );
   }
 
-  const dateLabel = formatDateRange(formation.startDate, formation.endDate);
+  const canonicalSlug = getFormationSlug(formation);
+  if (normalizeSlugSegment(id) !== canonicalSlug) {
+    redirect(`/formations/${canonicalSlug}`);
+  }
 
-  const options = (formation.transportOptions ?? []) as TransportOption[];
-  const typeText = typeLabel[formation.type] ?? "Formation BAFA";
-
-  // ✅ Yapla est maintenant dans imageUrl
-  const yaplaUrl =
-    (formation as any).imageUrl ?? "https://murathenes.s2.yapla.com/fr/event-100366";
-
-  const commonProps = {
-    formation,
-    dateLabel,
-    typeText,
-    options,
-    onBack: () => router.push("/formations"),
-    onOpenYapla: () => setIsYaplaOpen(true),
-  };
-
-  const isFG = formation.type === "formation_generale";
-
-  return (
-    <main className="min-h-screen bg-gradient-to-b from-rose-50/70 via-amber-50/70 to-sky-50/70">
-      {isFG ? <FormationDetailFG {...commonProps} /> : <FormationDetailAppro {...commonProps} />}
-
-      {/* MODALE YAPLA (commune) */}
-      {isYaplaOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 px-2">
-          <div className="relative w-full max-w-4xl overflow-hidden rounded-2xl bg-white shadow-2xl">
-            <div className="flex items-center justify-between gap-3 border-b border-slate-200 px-4 py-3">
-              <div className="space-y-0.5">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
-                  Inscription en ligne
-                </p>
-                <p className="text-xs font-medium text-slate-800">{formation.title}</p>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <p className="hidden text-[10px] font-medium text-slate-500 sm:block text-right">
-                  Paiement sécurisé via <span className="font-semibold">Yapla</span> · solution
-                  associative <span className="font-semibold">Crédit Agricole</span>
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setIsYaplaOpen(false)}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-700 hover:bg-slate-200"
-                  aria-label="Fermer la fenêtre d'inscription"
-                >
-                  ✕
-                </button>
-              </div>
-            </div>
-
-            <div className="relative h-[70vh] w-full">
-              <iframe
-                src={yaplaUrl}
-                title="Formulaire d'inscription"
-                className="absolute inset-0 h-full w-full border-0"
-              />
-            </div>
-
-            <div className="border-t border-slate-200 bg-slate-50 px-4 py-2">
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-  <p className="text-sm leading-relaxed text-slate-700">
-    💡 Sur la page Yapla, la ligne <span className="font-semibold">«Contribution suggérée»</span> apparaît.
-    Pour la désactiver : cliquez sur <span className="font-semibold">«Modifier»</span>, puis choisissez
-    <span className="font-semibold"> «Je ne souhaite pas apporter mon soutien»</span>.
-  </p>
-</div>
-
-            </div>
-          </div>
-        </div>
-      )}
-    </main>
-  );
+  return <FormationDetailPageClient formation={formation} />;
 }

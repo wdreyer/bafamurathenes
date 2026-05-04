@@ -2,8 +2,14 @@
 "use client";
 
 import { Suspense, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
+
+const INK = "#1a1530";
+const PAPER = "#fff8ec";
+const CREAM = "#fefcf5";
+const VIOLET = "#792BB9";
+const YELLOW = "#F5EF72";
 
 import AssociationTab from "./components/AssociationTab";
 import ProjetEducatifTab from "./components/ProjetEducatifTab";
@@ -12,6 +18,16 @@ import EquipesTab from "./components/EquipesTab";
 export type MurathenesTab = "association" | "projet" | "equipes";
 
 const VALID_TABS: MurathenesTab[] = ["association", "projet", "equipes"];
+const PHONE_DISPLAY = "01 84 21 05 48";
+const PHONE_TEL = "0184210548";
+
+function getValidTab(value: string | null): MurathenesTab {
+  return VALID_TABS.includes(value as MurathenesTab) ? (value as MurathenesTab) : "association";
+}
+
+function openLead(mode: "message" | "callback") {
+  window.dispatchEvent(new CustomEvent("contact-widget:open", { detail: { mode } }));
+}
 
 export default function MurathenesPage() {
   return (
@@ -22,11 +38,11 @@ export default function MurathenesPage() {
 }
 
 function MurathenesContent() {
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [tab, setTab] = useState<MurathenesTab>(() => {
-    const t = searchParams.get("tab");
-    return VALID_TABS.includes(t as MurathenesTab) ? (t as MurathenesTab) : "association";
-  });
+  const requestedTab = getValidTab(searchParams.get("tab"));
+  const tab = requestedTab;
   const [fadeIn, setFadeIn] = useState(true);
 
   const tabs = useMemo(
@@ -54,103 +70,130 @@ function MurathenesContent() {
     []
   );
 
-  const TAB_DOT: Record<MurathenesTab, string> = {
-    association: "bg-rose-400",
-    projet: "bg-amber-300",
-    equipes: "bg-sky-400",
-  };
-
   useEffect(() => {
-    setFadeIn(false);
-    const t = setTimeout(() => setFadeIn(true), 40);
-    return () => clearTimeout(t);
+    const off = window.setTimeout(() => setFadeIn(false), 0);
+    const on = window.setTimeout(() => setFadeIn(true), 40);
+    return () => {
+      window.clearTimeout(off);
+      window.clearTimeout(on);
+    };
   }, [tab]);
 
+  const selectTab = (nextTab: MurathenesTab) => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", nextTab);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  };
+
   return (
-    <main className="min-h-screen bg-gradient-to-b from-rose-50/70 via-amber-50/70 to-sky-50/70">
-      {/* HERO */}
-      <section className="relative w-full">
-        <div className="relative h-[42vh] w-full md:h-[44vh]">
-          <Image
-            src="/MT/mew24.jpg"
-            alt="Murathènes — Qui sommes-nous"
-            fill
-            priority
-            className="object-cover"
-          />
+    <div className="mura-page" style={{ color: INK, background: CREAM }}>
 
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-slate-950/85 via-slate-950/50 to-slate-900/20" />
-
-          <div className="relative z-10 mx-auto flex h-full max-w-6xl items-end px-4 pb-22 pt-10 md:px-6 md:pb-24">
-            <div className="max-w-2xl space-y-5">
-              <div className="inline-flex items-center gap-2 rounded-full bg-sky-500/15 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.22em] text-sky-100 ring-1 ring-sky-400/40 backdrop-blur">
-                <span className="h-1.5 w-1.5 rounded-full bg-sky-300" />
-                Murathènes
-              </div>
-
-              <div className="space-y-3">
-                <h1 className="font-display text-3xl font-semibold leading-tight text-white md:text-4xl">
-                  Qui sommes-nous ?
-                </h1>
-                <p className="max-w-2xl text-sm text-slate-100/90 md:text-base">
-                  Une association d’éducation populaire qui crée des projets
-                  interculturels, artistiques et émancipateurs — en France et en
-                  Europe.
-                </p>
+      {/* ═══ HERO ═══ */}
+      <section style={{ position: "relative", overflow: "hidden" }}>
+        <div style={{ position: "relative", minHeight: "60vh" }}>
+          <Image src="/MT/mew24.jpg" alt="Murathènes — Qui sommes-nous" fill priority className="object-cover object-center" />
+          <div style={{ position: "absolute", inset: 0, background: "linear-gradient(180deg,rgba(26,21,48,.4) 0%,rgba(26,21,48,.88) 100%)" }} />
+          <div style={{ position: "relative", zIndex: 10, maxWidth: 1100, margin: "0 auto", padding: "80px 24px 100px", display: "flex", flexDirection: "column", justifyContent: "flex-end", minHeight: "60vh" }} className="md:px-12">
+            <div className="space-y-4">
+              <div className="mura-mono" style={{ fontSize: 11, letterSpacing: 2.5, color: YELLOW, marginBottom: 8 }}>MURATHÈNES</div>
+              <h1 style={{ fontSize: 100, fontWeight: 700, letterSpacing: -5, lineHeight: .9, margin: 0, color: CREAM }} className="text-5xl md:text-[100px]">
+                Qui sommes{" "}
+                <span className="ed" style={{ fontStyle: "italic", color: YELLOW }}>-nous ?</span>
+              </h1>
+              <p style={{ fontSize: 17, opacity: .9, maxWidth: 640, color: CREAM, lineHeight: 1.5 }}>
+                Une association d’éducation populaire qui crée des projets interculturels, artistiques et émancipateurs — en France et en Europe.
+              </p>
+              <div style={{ display: "flex", gap: 12, marginTop: 26, flexWrap: "wrap" }}>
+                <button type="button" onClick={() => openLead("message")} className="mura-pill" style={{ background: CREAM, color: INK, cursor: "pointer" }}>
+                  Envoyer un message
+                </button>
+                <a href={`tel:${PHONE_TEL}`} className="mura-pill mura-cta-secondary" style={{ cursor: "pointer", textDecoration: "none" }} aria-label={`Appeler Murathènes au ${PHONE_DISPLAY}`}>
+                  {PHONE_DISPLAY}
+                </a>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* MENU DANS LE BAS DE L’IMAGE */}
-          <div className="absolute inset-x-0 bottom-0 z-20">
-            <div className="mx-auto max-w-6xl px-4 pb-4 md:px-6">
-              <nav className="flex flex-wrap gap-2 text-[11px]">
-                {tabs.map(([key, label, emoji]) => {
-                  const active = tab === key;
-                  return (
-                    <button
-                      key={key}
-                      type="button"
-                      onClick={() => setTab(key)}
-                      className={[
-                        "inline-flex items-center gap-2 cursor-pointer rounded-full px-3 py-1.5 transition shadow-sm",
-                        active
-                          ? "bg-[#6664C5] text-white"
-                          : "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50",
-                      ].join(" ")}
-                    >
-                      <span
-                        className={[
-                          "h-1.5 w-1.5 rounded-full",
-                          TAB_DOT[key],
-                        ].join(" ")}
-                      />
-                      <span className="text-sm leading-none">{emoji}</span>
-                      <span className="font-semibold tracking-[0.12em] uppercase">
-                        {label}
-                      </span>
-                    </button>
-                  );
-                })}
-              </nav>
-            </div>
+        {/* Onglets nav */}
+        <div style={{ background: CREAM, borderBottom: `1.5px solid ${INK}` }}>
+          <div style={{ maxWidth: 1100, margin: "0 auto", padding: "14px 24px" }} className="md:px-12">
+            <nav className="flex flex-wrap gap-2">
+              {tabs.map(([key, label, emoji]) => {
+                const active = tab === key;
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => selectTab(key)}
+                    style={{
+                      background: active ? VIOLET : "transparent",
+                      color: active ? CREAM : INK,
+                      border: active ? "none" : `1.5px solid ${INK}33`,
+                      padding: "10px 18px",
+                      borderRadius: 999,
+                      fontSize: 12,
+                      fontWeight: 700,
+                      letterSpacing: 1.2,
+                      textTransform: "uppercase",
+                      cursor: "pointer",
+                      fontFamily: "inherit",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 8,
+                    }}
+                  >
+                    <span style={{ fontSize: 14 }}>{emoji}</span>
+                    {label}
+                  </button>
+                );
+              })}
+            </nav>
           </div>
         </div>
       </section>
 
-      {/* ✅ CONTENT : full width (les séparateurs/bordures des tabs peuvent aller de bord à bord) */}
-      <section className="w-full py-8">
-        <div
-          className={[
-            "transition-opacity duration-200 ease-out",
-            fadeIn ? "opacity-100" : "opacity-0",
-          ].join(" ")}
-        >
+      {/* ═══ CONTENU ONGLETS ═══ */}
+      <section id="murathenes-content" className="w-full">
+        <div className={["transition-opacity duration-200 ease-out", fadeIn ? "opacity-100" : "opacity-0"].join(" ")}>
           {tab === "association" && <AssociationTab />}
           {tab === "projet" && <ProjetEducatifTab />}
           {tab === "equipes" && <EquipesTab />}
         </div>
       </section>
-    </main>
+
+      {/* ═══ MANIFESTE ═══ */}
+      <section style={{ background: VIOLET, color: CREAM, padding: "80px 24px", borderBottom: `1.5px solid ${INK}`, position: "relative", overflow: "hidden" }} className="md:px-12">
+        <div style={{ position: "relative", maxWidth: 1000, margin: "0 auto" }}>
+          <div className="mura-mono" style={{ fontSize: 11, color: YELLOW, letterSpacing: 2.5, marginBottom: 28 }}>NOTRE PARTI PRIS</div>
+          <p className="ed" style={{ fontSize: 52, fontWeight: 400, lineHeight: 1.1, letterSpacing: -1.5, margin: 0, fontStyle: "italic" }} >
+            &ldquo;Murathènes défend des principes{" "}
+            <span style={{ background: YELLOW, color: INK, padding: "0 10px", fontStyle: "normal", fontWeight: 600 }}>d’éducation populaire</span>{" "}
+            à travers une pédagogie active et émancipatrice. Chaque temps est pensé pour favoriser{" "}
+            <span style={{ textDecoration: "underline", textDecorationThickness: 3, textUnderlineOffset: 8, textDecorationColor: YELLOW }}>l’apprentissage par le faire</span>.&rdquo;
+          </p>
+          <div style={{ marginTop: 36, display: "flex", alignItems: "center", gap: 14 }}>
+            <div style={{ width: 48, height: 1, background: CREAM, opacity: .5 }} />
+            <span className="mura-mono" style={{ fontSize: 11, letterSpacing: 1.5, opacity: .8 }}>L’ÉQUIPE PÉDAGOGIQUE — DEPUIS 2019</span>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══ STATS ═══ */}
+      <section style={{ background: CREAM, padding: "64px 24px", borderBottom: `1.5px solid ${INK}` }} className="md:px-12">
+        <div style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 20 }} className="grid-cols-1 md:grid-cols-3">
+          {[
+            { num: "7 ans", label: "d’expérience BAFA", color: YELLOW },
+            { num: "12+", label: "partenaires institutionnels", color: VIOLET },
+            { num: "AURA", label: "projets en Auvergne-Rhône-Alpes", color: VIOLET },
+          ].map((s, i) => (
+            <div key={i} style={{ background: PAPER, border: `2px solid ${INK}`, borderRadius: 24, padding: 32, textAlign: "center", boxShadow: `3px 3px 0 ${INK}` }}>
+              <div className="ed" style={{ fontSize: 72, fontWeight: 600, fontStyle: "italic", color: s.color, lineHeight: 1, letterSpacing: -3 }}>{s.num}</div>
+              <div className="mura-mono" style={{ fontSize: 11, color: INK, opacity: .7, letterSpacing: 1.5, marginTop: 10, textTransform: "uppercase" }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
   );
 }
