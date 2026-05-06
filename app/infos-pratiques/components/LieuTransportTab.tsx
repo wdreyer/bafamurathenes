@@ -112,10 +112,10 @@ export default function LieuTransportTab() {
   ], [pix]);
 
   const driveTimes = [
-    { city: "Clermont-Ferrand", time: "≈ 1h15", km: "74 km" },
-    { city: "Aurillac", time: "≈ 1h30", km: "≈ 84 km" },
-    { city: "Ussel", time: "≈ 30 min", km: "≈ 29 km" },
-    { city: "Lyon", time: "≈ 3h30", km: "≈ 290 km" },
+    { city: "Clermont-Ferrand", dept: "Puy-de-Dôme (63)", time: "≈ 1h15", km: "74 km" },
+    { city: "Ussel", dept: "Corrèze (19)", time: "≈ 30 min", km: "≈ 29 km" },
+    { city: "Aurillac", dept: "Cantal (15)", time: "≈ 1h30", km: "≈ 84 km" },
+    { city: "Lyon", dept: "Métropole", time: "≈ 3h30", km: "≈ 290 km" },
   ];
 
   return (
@@ -133,7 +133,7 @@ export default function LieuTransportTab() {
               </h1>
             </div>
             <p style={{ margin: 0, maxWidth: 500, fontSize: 14, lineHeight: 1.65, color: INK, opacity: 0.75 }}>
-              Nos formations BAFA se déroulent au Domaine de Gravières, un lieu mis à la disposition de l&apos;association Murathènes.
+              Nos formations BAFA se déroulent au Domaine de Gravières, un lieu mis à la disposition de l&apos;association Murathènes. Facilement accessible depuis les départements voisins : <strong>Puy-de-Dôme</strong>, <strong>Corrèze</strong>, <strong>Allier</strong> et <strong>Haute-Loire</strong>.
             </p>
             <address style={{ fontStyle: "normal", fontSize: 14, lineHeight: 1.6, color: INK }}>
               <strong>Domaine de Gravières</strong><br />
@@ -212,7 +212,10 @@ export default function LieuTransportTab() {
                   </div>
                   {driveTimes.map((t, i) => (
                     <div key={t.city} style={{ display: "grid", gridTemplateColumns: "1.4fr 0.8fr 0.8fr", padding: "10px 16px", borderBottom: i < driveTimes.length - 1 ? `1px solid ${INK}12` : undefined }}>
-                      <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: INK }}>{t.city}</p>
+                      <div>
+                        <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: INK }}>{t.city}</p>
+                        <p style={{ margin: 0, fontSize: 10, color: VIOLET, fontWeight: 700, opacity: 0.85 }}>{t.dept}</p>
+                      </div>
                       <p style={{ margin: 0, fontSize: 13, color: INK, opacity: 0.8 }}>{t.time}</p>
                       <p style={{ margin: 0, fontSize: 13, color: INK, opacity: 0.6 }}>{t.km}</p>
                     </div>

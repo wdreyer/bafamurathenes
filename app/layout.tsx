@@ -53,7 +53,7 @@ export const metadata: Metadata = {
     template: "%s | BAFA Murathènes",
   },
   description:
-    "Formations BAFA en Auvergne avec Murathènes : formation générale, étape 3 approfondissement, infos pratiques et accompagnement.",
+    "Formations BAFA dans le Cantal au domaine de Gravières avec Murathènes : formation générale, approfondissement séjour à l'étranger, dans un cadre unique !",
   alternates: {
     canonical: "/",
   },
@@ -61,10 +61,15 @@ export const metadata: Metadata = {
   keywords: [
     "BAFA",
     "formation BAFA",
+    "BAFA Cantal",
     "BAFA Auvergne",
+    "BAFA Puy-de-Dôme",
+    "BAFA Corrèze",
     "Murathènes",
+    "domaine de Gravières",
     "animateur",
     "animation jeunesse",
+    "BAFA Lanobre",
   ],
   authors: [{ name: "Murathènes" }],
   creator: "Murathènes",
@@ -88,7 +93,7 @@ export const metadata: Metadata = {
     siteName: "BAFA Murathènes",
     title: "BAFA Murathènes | Formations en Auvergne",
     description:
-      "Formations BAFA en Auvergne avec Murathènes : formation générale, étape 3 approfondissement, infos pratiques et accompagnement.",
+      "Formations BAFA dans le Cantal au domaine de Gravières avec Murathènes : formation générale, approfondissement séjour à l'étranger, dans un cadre unique !",
     images: [
       {
         url: socialImagePath,
@@ -102,7 +107,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "BAFA Murathènes | Formations en Auvergne",
     description:
-      "Formations BAFA en Auvergne avec Murathènes : formation générale, étape 3 approfondissement et infos pratiques.",
+      "Formations BAFA dans le Cantal au domaine de Gravières avec Murathènes : formation générale, approfondissement séjour à l'étranger, dans un cadre unique !",
     images: [socialImageUrl],
   },
   icons: {
