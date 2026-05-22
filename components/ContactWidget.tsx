@@ -60,11 +60,12 @@ type WindowWithGtag = Window & {
       send_to: string;
       value: number;
       currency: string;
+      user_data?: { email?: string; phone_number?: string };
     },
   ) => void;
 };
 
-function reportLeadConversion() {
+function reportLeadConversion(email: string, phone: string) {
   if (typeof window === "undefined") return;
   const gtag = (window as WindowWithGtag).gtag;
   if (!gtag) return;
@@ -73,6 +74,10 @@ function reportLeadConversion() {
     send_to: GOOGLE_ADS_LEAD_CONVERSION,
     value: 1.0,
     currency: "EUR",
+    user_data: {
+      ...(email && { email }),
+      ...(phone && { phone_number: phone }),
+    },
   });
 }
 
@@ -177,7 +182,7 @@ export default function ContactWidget() {
       });
 
       if (!res.ok) throw new Error("Failed");
-      reportLeadConversion();
+      reportLeadConversion(form.email.trim(), form.phone.trim());
       setStatus("sent");
       setForm(EMPTY_FORM);
     } catch {

@@ -150,11 +150,7 @@ export default function RootLayout({
       <body
         className="antialiased min-h-screen flex flex-col bg-[#fefcf5] text-[#1a1530]"
       >
-        <Script
-          src="https://www.googletagmanager.com/gtag/js?id=AW-17976361031"
-          strategy="lazyOnload"
-        />
-        <Script id="google-ads-gtag" strategy="lazyOnload">
+        <Script id="google-ads-gtag" strategy="afterInteractive">
           {`
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
@@ -162,6 +158,10 @@ export default function RootLayout({
             gtag('config', 'AW-17976361031');
           `}
         </Script>
+        <Script
+          src="https://www.googletagmanager.com/gtag/js?id=AW-17976361031"
+          strategy="lazyOnload"
+        />
         <Script
           src="https://scripts.simpleanalyticscdn.com/latest.js"
           strategy="lazyOnload"

@@ -77,11 +77,12 @@ type WindowWithGtag = Window & {
       value: number;
       currency: string;
       event_callback?: () => void;
+      user_data?: { email?: string; phone_number?: string };
     },
   ) => void;
 };
 
-function reportEstimationConversion() {
+function reportEstimationConversion(email: string, phone: string) {
   if (typeof window === "undefined") return;
   const gtag = (window as WindowWithGtag).gtag;
   if (!gtag) return;
@@ -90,6 +91,10 @@ function reportEstimationConversion() {
     send_to: GOOGLE_ADS_ESTIMATION_CONVERSION,
     value: 1.0,
     currency: "EUR",
+    user_data: {
+      ...(email && { email }),
+      ...(phone && { phone_number: phone }),
+    },
   });
 }
 
@@ -127,7 +132,7 @@ export default function AidesLeadForm({ theme = "light", source }: AidesLeadForm
         }),
       });
       if (res.ok) {
-        reportEstimationConversion();
+        reportEstimationConversion(email.trim(), telephone.trim());
         setStatus("success");
       } else {
         setStatus("error");
