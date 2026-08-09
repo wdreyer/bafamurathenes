@@ -27,6 +27,7 @@ export type Formation = {
 export type Inscription = {
   id: string;
   formationId: string;
+  formationTitle?: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -34,4 +35,29 @@ export type Inscription = {
   paymentMethod: "card" | "transfer" | "cash" | "other";
   paid: boolean;
   createdAt?: Date;
+};
+
+export type ProspectStatus = "new" | "to_contact" | "contacted" | "registered" | "closed";
+
+export type Prospect = {
+  id: string;
+  origin: "contact_form" | "aides_form" | "yapla" | "manual" | "inscription";
+  leadType: string;
+  name?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  message?: string;
+  pageUrl?: string;
+  source?: string;
+  department?: string;
+  quotient?: string;
+  formationId?: string;
+  formationTitle?: string;
+  yaplaUrl?: string;
+  status?: ProspectStatus;
+  notes?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 };

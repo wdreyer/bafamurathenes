@@ -162,10 +162,9 @@ export default function ContactWidget() {
 
     try {
       setStatus("sending");
-      const endpoint = "https://formsubmit.co/ajax/df5c9ad1c007276c6796deff3fcc7887";
-      const res = await fetch(endpoint, {
+      const res = await fetch("/api/contact", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: form.name.trim(),
           email: form.email.trim(),
@@ -173,11 +172,7 @@ export default function ContactWidget() {
           message,
           pageUrl,
           leadType: isCallback ? "Contact téléphone" : "Message formulaire",
-          _subject: isCallback
-            ? "[Murathènes BAFA] Contact téléphone"
-            : "[Murathènes BAFA] Nouveau message",
-          _template: "table",
-          _captcha: "false",
+          callbackMoment: isCallback ? form.callbackMoment : "",
         }),
       });
 

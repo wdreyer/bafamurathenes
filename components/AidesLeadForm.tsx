@@ -115,20 +115,17 @@ export default function AidesLeadForm({ theme = "light", source }: AidesLeadForm
     setStatus("loading");
     const pageUrl = typeof window !== "undefined" ? window.location.href : "";
     try {
-      const res = await fetch("https://formsubmit.co/ajax/df5c9ad1c007276c6796deff3fcc7887", {
+      const res = await fetch("/api/aides-lead", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           prenom: prenom.trim(),
           nom: nom.trim(),
           email: email.trim(),
           telephone: telephone.trim(),
           departement,
-          "quotient_familial_CAF": quotient,
-          "page_source": source || pageUrl,
-          _subject: `[BAFA] Demande d'estimation aides — ${prenom.trim()} ${nom.trim()}`,
-          _template: "table",
-          _captcha: "false",
+          quotient,
+          source: source || pageUrl,
         }),
       });
       if (res.ok) {

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 function escapeHtml(input: string) {
   return input
@@ -12,21 +14,27 @@ function escapeHtml(input: string) {
 
 export async function POST(req: Request) {
   try {
-    const apiKey = process.env.RESEND_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: "Missing RESEND_API_KEY" },
-        { status: 500 }
-      );
-    }
-
-    const resend = new Resend(apiKey);
-
     const { prenom, nom, email, telephone, departement, quotient, source } = await req.json();
 
     if (!prenom || !nom || !email || !telephone || !departement || !quotient) {
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     }
+
+    await addDoc(collection(db, "prospects"), {
+      origin: "aides_form",
+      leadType: "Demande d'estimation aides",
+      firstName: String(prenom).trim(),
+      lastName: String(nom).trim(),
+      name: `${String(prenom).trim()} ${String(nom).trim()}`.trim(),
+      email: String(email).trim(),
+      phone: String(telephone).trim(),
+      department: String(departement),
+      quotient: String(quotient),
+      source: source ? String(source) : "Formulaire aides",
+      status: "new",
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
 
     const to = "bafa@murathenes.org";
     const from = process.env.CONTACT_FROM || "onboarding@resend.dev";
@@ -67,19 +75,23 @@ export async function POST(req: Request) {
       </div>
     `;
 
-    const { data, error } = await resend.emails.send({
-      from,
-      to,
-      subject,
-      html,
-    });
+    const apiKey = process.env.RESEND_API_KEY;
+    if (apiKey) {
+      const resend = new Resend(apiKey);
+      const { data, error } = await resend.emails.send({
+        from,
+        to,
+        subject,
+        html,
+      });
 
-    if (error) {
-      console.error("[aides-lead] Resend error:", JSON.stringify(error));
-      return NextResponse.json({ error: error.message ?? JSON.stringify(error) }, { status: 500 });
+      if (error) {
+        console.error("[aides-lead] Resend error:", JSON.stringify(error));
+      } else {
+        console.log("[aides-lead] Email sent:", data?.id);
+      }
     }
 
-    console.log("[aides-lead] Email sent:", data?.id);
     return NextResponse.json({ ok: true });
   } catch (err) {
     console.error("[aides-lead] Caught exception:", err);

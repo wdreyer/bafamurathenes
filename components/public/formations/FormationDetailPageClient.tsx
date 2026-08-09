@@ -58,13 +58,30 @@ export default function FormationDetailPageClient({ formation }: { formation: Fo
   const dateLabel = formatDateRange(formation.startDate, formation.endDate);
   const yaplaUrl = formation.imageUrl ?? "https://murathenes.s2.yapla.com/fr/event-100366";
 
+  function openYapla() {
+    setIsYaplaOpen(true);
+
+    fetch("/api/yapla-lead", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        formationId: formation.id,
+        formationTitle: formation.title,
+        yaplaUrl,
+        pageUrl: typeof window !== "undefined" ? window.location.href : "",
+      }),
+    }).catch((error) => {
+      console.error("[yapla-lead] Tracking failed:", error);
+    });
+  }
+
   const commonProps = {
     formation,
     dateLabel,
     typeText,
     options,
     onBack: () => router.push("/formations"),
-    onOpenYapla: () => setIsYaplaOpen(true),
+    onOpenYapla: openYapla,
   };
 
   const isFG = formation.type === "formation_generale";

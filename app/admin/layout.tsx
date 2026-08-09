@@ -3,12 +3,13 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, GraduationCap, Users } from "lucide-react";
+import { LayoutDashboard, GraduationCap, UserRoundSearch, Users } from "lucide-react";
 import { useState } from "react";
 
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/formations", label: "Formations", icon: GraduationCap },
+  { href: "/admin/prospects", label: "Prospects", icon: UserRoundSearch },
   { href: "/admin/inscriptions", label: "Inscriptions", icon: Users },
 ];
 
@@ -83,7 +84,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-3">
           <div>
             <div className="text-sm font-semibold tracking-tight">Admin</div>
-            <p className="text-xs text-slate-500">Formations & inscriptions</p>
+            <p className="text-xs text-slate-500">Formations, prospects & inscriptions</p>
           </div>
 
           <div className="flex items-center gap-4">

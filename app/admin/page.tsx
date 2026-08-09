@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { db } from "@/lib/firebase";
 import { collection, onSnapshot } from "firebase/firestore";
-import type { Formation, Inscription } from "@/lib/types";
+import type { Formation, Inscription, Prospect } from "@/lib/types";
 import Link from "next/link";
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
@@ -11,6 +11,7 @@ const MS_PER_DAY = 1000 * 60 * 60 * 24;
 export default function AdminDashboardPage() {
   const [formations, setFormations] = useState<Formation[]>([]);
   const [inscriptions, setInscriptions] = useState<Inscription[]>([]);
+  const [prospects, setProspects] = useState<Prospect[]>([]);
 
   useEffect(() => {
     const unsubFormations = onSnapshot(collection(db, "formations"), (snap) => {
@@ -30,9 +31,17 @@ export default function AdminDashboardPage() {
       },
     );
 
+    const unsubProspects = onSnapshot(collection(db, "prospects"), (snap) => {
+      const data = snap.docs.map(
+        (doc) => ({ id: doc.id, ...(doc.data() as Omit<Prospect, "id">) }),
+      );
+      setProspects(data);
+    });
+
     return () => {
       unsubFormations();
       unsubInscriptions();
+      unsubProspects();
     };
   }, []);
 
@@ -42,9 +51,15 @@ export default function AdminDashboardPage() {
     nextFormation,
     daysBeforeNext,
     upcomingFormations,
+    totalProspects,
+    prospectsToContact,
   } = useMemo(() => {
     const totalFormations = formations.length;
     const totalInscriptions = inscriptions.length;
+    const totalProspects = prospects.length;
+    const prospectsToContact = prospects.filter((prospect) =>
+      ["new", "to_contact"].includes(prospect.status || "new"),
+    ).length;
 
     const today = new Date();
     const startOfToday = new Date(
@@ -83,8 +98,10 @@ export default function AdminDashboardPage() {
       nextFormation,
       daysBeforeNext,
       upcomingFormations: upcoming.slice(0, 5),
+      totalProspects,
+      prospectsToContact,
     };
-  }, [formations, inscriptions]);
+  }, [formations, inscriptions, prospects]);
 
   return (
     <main className="space-y-8">
@@ -93,11 +110,11 @@ export default function AdminDashboardPage() {
           Tableau de bord
         </h1>
         <p className="mt-1 text-sm text-slate-500">
-          Aperçu rapide des formations et des inscriptions.
+          Aperçu rapide des formations, prospects et inscriptions.
         </p>
       </header>
 
-      <section className="grid gap-6 md:grid-cols-3">
+      <section className="grid gap-6 md:grid-cols-4">
         <div>
           <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
             Total formations
@@ -120,6 +137,24 @@ export default function AdminDashboardPage() {
           <p className="mt-1 text-xs text-slate-500">
             Comptabilisation de toutes les inscriptions.
           </p>
+        </div>
+
+        <div>
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+            Prospects a suivre
+          </p>
+          <p className="mt-1 text-3xl font-semibold text-slate-900">
+            {prospectsToContact}
+          </p>
+          <p className="mt-1 text-xs text-slate-500">
+            Sur {totalProspects} contacts enregistres.
+          </p>
+          <Link
+            href="/admin/prospects"
+            className="mt-2 inline-block text-xs text-slate-500 underline underline-offset-2 hover:text-slate-800"
+          >
+            Ouvrir le suivi
+          </Link>
         </div>
 
         <div>
