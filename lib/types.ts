@@ -32,9 +32,26 @@ export type Inscription = {
   lastName: string;
   email: string;
   phone: string;
-  paymentMethod: "card" | "transfer" | "cash" | "other";
+  paymentMethod: "card" | "transfer" | "cash" | "check" | "installments" | "other";
+  paymentStatus?: "pending" | "partial" | "paid" | "refunded" | "cancelled";
   paid: boolean;
+  validationStatus?: "pending" | "validated" | "cancelled";
+  amount?: number;
+  totalPrice?: number;
+  amountPaid?: number;
+  cafAid?: boolean;
+  cafAidAmount?: number;
+  otherAidAmount?: number;
+  installmentPlan?: boolean;
+  installmentCount?: number;
+  installmentAmount?: number;
+  nextPaymentDate?: string;
+  notes?: string;
+  source?: string;
+  tariff?: string;
+  yaplaStatus?: string;
   createdAt?: Date;
+  updatedAt?: Date;
 };
 
 export type ProspectStatus = "new" | "to_contact" | "contacted" | "registered" | "closed";
