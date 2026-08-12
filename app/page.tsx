@@ -324,9 +324,6 @@ export default function HomePage() {
               Formations BAFA en AURA · 2026
             </div>
 
-            <div className="hand" style={{ fontSize: 32, color: YELLOW, marginBottom: -4 }}>
-              passez votre
-            </div>
             <h1
               className="text-[64px] md:text-[112px]"
               style={{
@@ -338,11 +335,12 @@ export default function HomePage() {
                 letterSpacing: 0,
               }}
             >
-              BAFA <span className="ed block md:inline" style={{ color: YELLOW, fontStyle: "italic", fontWeight: 650 }}>cet automne.</span>
+              Passez votre BAFA{" "}
+              <span className="ed block md:inline" style={{ color: YELLOW, fontStyle: "italic", fontWeight: 650 }}>à l&apos;automne.</span>
             </h1>
 
             <p style={{ margin: "22px 0 0", maxWidth: 560, color: CREAM, fontSize: 18, lineHeight: 1.55, overflowWrap: "break-word" }}>
-              Formations BAFA dans le Cantal au domaine de Gravières.
+              Une semaine en internat dans le Cantal pour apprendre, animer et repartir prêt pour le terrain.
             </p>
 
             <figure
