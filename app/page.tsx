@@ -13,6 +13,7 @@ import {
 import type { Formation } from "@/lib/types";
 import { getDisplayedFormationPrice, getReferenceFormationPrice, MIN_PRICE_AFTER_AIDS } from "@/lib/offers";
 import { getFormationPublicHref } from "@/lib/formationSlugs";
+import { cleanFormationTitle } from "@/lib/formationTitles";
 import { AidesLeadSection } from "@/components/AidesLeadForm";
 
 const INK = "#1a1530";
@@ -238,7 +239,7 @@ export default function HomePage() {
     id: formation.id,
     href: getFormationPublicHref(formation),
     type: formation.type,
-    title: formation.title,
+    title: cleanFormationTitle(formation.title),
     startDate: formation.startDate,
     endDate: formation.endDate,
     price: getDisplayedFormationPrice(formation),

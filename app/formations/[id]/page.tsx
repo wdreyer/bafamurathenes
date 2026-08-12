@@ -7,6 +7,7 @@ import {
   getFormationSlug,
   normalizeSlugSegment,
 } from "@/lib/formationSlugs";
+import { cleanFormationTitle } from "@/lib/formationTitles";
 import FormationDetailPageClient from "@/components/public/formations/FormationDetailPageClient";
 import { getSiteUrl } from "@/lib/siteUrl";
 
@@ -140,13 +141,14 @@ export async function generateMetadata({ params }: PageParams): Promise<Metadata
   const siteUrl = getSiteUrl();
   const canonical = `/formations/${getFormationSlug(formation)}`;
   const dateLabel = formatDateLabel(formation.startDate, formation.endDate);
-  const title = `${formation.title} | BAFA Murathènes`;
+  const formationTitle = cleanFormationTitle(formation.title);
+  const title = `${formationTitle} | BAFA Murathènes`;
   const description = [
-    formation.title,
+    formationTitle,
     dateLabel,
     formation.price ? `tarif plein ${formation.price} €` : "",
     "formation BAFA avec Murathènes en Auvergne.",
-  ].filter(Boolean).join(" — ");
+  ].filter(Boolean).join(" - ");
 
   return {
     title,

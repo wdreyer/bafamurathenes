@@ -9,6 +9,7 @@ import {
   MIN_PRICE_AFTER_AIDS,
 } from "@/lib/offers";
 import { getFormationPublicHref } from "@/lib/formationSlugs";
+import { cleanFormationTitle } from "@/lib/formationTitles";
 
 const INK = "#1a1530";
 const PAPER = "#fff8ec";
@@ -50,6 +51,7 @@ export function FormationCard({ formation }: { formation: Formation }) {
   const isFG = formation.type === "formation_generale";
   const displayedPrice = getDisplayedFormationPrice(formation);
   const referencePrice = getReferenceFormationPrice(formation);
+  const title = cleanFormationTitle(formation.title);
 
   const typeShortLabel = isFG ? "Formation générale" : "Étape 3 · Approfondissement";
   const icon = isFG ? "FG" : "ÉT. 3";
@@ -94,7 +96,7 @@ export function FormationCard({ formation }: { formation: Formation }) {
           </div>
 
           <h3 className="ed text-lg font-semibold italic leading-tight md:text-xl" style={{ color: INK }}>
-            {formation.title}
+            {title}
           </h3>
 
           {!isFG && (

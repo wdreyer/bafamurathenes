@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Formation } from "@/lib/types";
+import { cleanFormationTitle } from "@/lib/formationTitles";
 
 import FormationDetailFG from "@/components/public/formations/FormationDetailFG";
 import FormationDetailAppro from "@/components/public/formations/FormationDetailAppro";
@@ -10,7 +11,7 @@ import FormationDetailAppro from "@/components/public/formations/FormationDetail
 const typeLabel: Record<Formation["type"], string> = {
   formation_generale: "Formation générale",
   approfondissement_sejour_etranger:
-    "Étape 3 du BAFA — Approfondissement séjour à l'étranger / échanges de jeunes",
+    "Étape 3 du BAFA - Approfondissement séjour à l'étranger / échanges de jeunes",
 };
 
 type TransportOption = {
@@ -32,7 +33,7 @@ function formatDateRange(start: string, end: string) {
   if (sameMonth) {
     return `${startDate.toLocaleDateString("fr-FR", {
       day: "numeric",
-    })}–${endDate.toLocaleDateString("fr-FR", {
+    })}-${endDate.toLocaleDateString("fr-FR", {
       day: "numeric",
       month: "long",
       year: "numeric",
@@ -42,7 +43,7 @@ function formatDateRange(start: string, end: string) {
   return `${startDate.toLocaleDateString("fr-FR", {
     day: "numeric",
     month: "long",
-  })} – ${endDate.toLocaleDateString("fr-FR", {
+  })} - ${endDate.toLocaleDateString("fr-FR", {
     day: "numeric",
     month: "long",
     year: "numeric",
@@ -57,6 +58,7 @@ export default function FormationDetailPageClient({ formation }: { formation: Fo
   const typeText = typeLabel[formation.type] ?? "Formation BAFA";
   const dateLabel = formatDateRange(formation.startDate, formation.endDate);
   const yaplaUrl = formation.imageUrl ?? "https://murathenes.s2.yapla.com/fr/event-100366";
+  const title = cleanFormationTitle(formation.title);
 
   function openYapla() {
     setIsYaplaOpen(true);
@@ -66,7 +68,7 @@ export default function FormationDetailPageClient({ formation }: { formation: Fo
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         formationId: formation.id,
-        formationTitle: formation.title,
+        formationTitle: title,
         yaplaUrl,
         pageUrl: typeof window !== "undefined" ? window.location.href : "",
       }),
@@ -76,7 +78,7 @@ export default function FormationDetailPageClient({ formation }: { formation: Fo
   }
 
   const commonProps = {
-    formation,
+    formation: { ...formation, title },
     dateLabel,
     typeText,
     options,
@@ -98,7 +100,7 @@ export default function FormationDetailPageClient({ formation }: { formation: Fo
                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                   Inscription en ligne
                 </p>
-                <p className="text-xs font-medium text-slate-800">{formation.title}</p>
+                <p className="text-xs font-medium text-slate-800">{title}</p>
               </div>
 
               <div className="flex items-center gap-3">

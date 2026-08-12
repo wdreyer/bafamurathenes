@@ -22,6 +22,7 @@ import {
   Search,
 } from "lucide-react";
 import { db } from "@/lib/firebase";
+import { cleanFormationTitle } from "@/lib/formationTitles";
 import type { Inscription } from "@/lib/types";
 
 type PaymentMethod = Inscription["paymentMethod"];
@@ -193,7 +194,7 @@ export function InscriptionsTable() {
   const formations = useMemo(
     () =>
       Array.from(
-        new Set(inscriptions.map((item) => item.formationTitle).filter(Boolean)),
+        new Set(inscriptions.map((item) => cleanFormationTitle(item.formationTitle)).filter(Boolean)),
       ).sort() as string[],
     [inscriptions],
   );
@@ -211,7 +212,7 @@ export function InscriptionsTable() {
           contactName(inscription),
           inscription.email,
           inscription.phone,
-          inscription.formationTitle,
+          cleanFormationTitle(inscription.formationTitle),
           inscription.tariff,
           inscription.transferReference,
           inscription.notes,
@@ -221,7 +222,7 @@ export function InscriptionsTable() {
       );
 
       return (
-        (formation === "all" || inscription.formationTitle === formation) &&
+        (formation === "all" || cleanFormationTitle(inscription.formationTitle) === formation) &&
         (paymentStatus === "all" || currentPaymentStatus === paymentStatus) &&
         (paymentMethod === "all" || currentMethod === paymentMethod) &&
         (cafStatus === "all" || currentCaf === cafStatus) &&
@@ -232,7 +233,7 @@ export function InscriptionsTable() {
 
     return rows.sort((a, b) => {
       if (sort === "name_asc") return contactName(a).localeCompare(contactName(b));
-      if (sort === "formation_asc") return (a.formationTitle || "").localeCompare(b.formationTitle || "");
+      if (sort === "formation_asc") return cleanFormationTitle(a.formationTitle).localeCompare(cleanFormationTitle(b.formationTitle));
       if (sort === "remaining_desc") return financials(b).remainingFamily - financials(a).remainingFamily;
       if (sort === "caf_remaining_desc") return financials(b).remainingCaf - financials(a).remainingCaf;
       return (dateFromUnknown(b.createdAt)?.getTime() || 0) - (dateFromUnknown(a.createdAt)?.getTime() || 0);
@@ -456,7 +457,7 @@ export function InscriptionsTable() {
 
                   <TD>
                     <div className="max-w-[240px] truncate font-medium text-slate-900">
-                      {inscription.formationTitle || "-"}
+                      {cleanFormationTitle(inscription.formationTitle) || "-"}
                     </div>
                     {inscription.tariff && <div className="mt-1 text-xs text-slate-500">{inscription.tariff}</div>}
                   </TD>
@@ -574,7 +575,7 @@ function InscriptionDetailsModal({
               {contactName(inscription) || "Inscription sans nom"}
             </h3>
             <p className="mt-1 text-sm text-slate-500">
-              {inscription.formationTitle || "Formation non renseignée"} · inscrit le {formatDate(inscription.createdAt)}
+              {cleanFormationTitle(inscription.formationTitle) || "Formation non renseignée"} · inscrit le {formatDate(inscription.createdAt)}
             </p>
           </div>
           <button

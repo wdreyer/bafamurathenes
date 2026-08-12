@@ -25,6 +25,7 @@ import {
   UserRoundCheck,
 } from "lucide-react";
 import { db } from "@/lib/firebase";
+import { cleanFormationTitle } from "@/lib/formationTitles";
 import type { Inscription, Prospect, ProspectStatus } from "@/lib/types";
 
 type PaymentStatus = NonNullable<Inscription["paymentStatus"]>;
@@ -217,7 +218,7 @@ function prospectToRow(prospect: Prospect): Row {
     email: prospect.email,
     phone: prospect.phone,
     formationId: prospect.formationId,
-    formationTitle: prospect.formationTitle,
+    formationTitle: cleanFormationTitle(prospect.formationTitle),
     status: prospect.status || "new",
     priority: prospect.priority || "normal",
     qualification: prospect.qualification || "warm",
@@ -260,7 +261,7 @@ function inscriptionToRow(inscription: Inscription): Row {
     email: inscription.email,
     phone: inscription.phone,
     formationId: inscription.formationId,
-    formationTitle: inscription.formationTitle,
+    formationTitle: cleanFormationTitle(inscription.formationTitle),
     status:
       validationStatus === "cancelled"
         ? "closed"
@@ -483,7 +484,7 @@ export function ProspectsTracker() {
       name: newLead.name.trim(),
       email: newLead.email.trim(),
       phone: newLead.phone.trim(),
-      formationTitle: newLead.formationTitle.trim(),
+      formationTitle: cleanFormationTitle(newLead.formationTitle.trim()),
       notes: newLead.notes.trim(),
       status: "to_contact",
       priority: "normal",
