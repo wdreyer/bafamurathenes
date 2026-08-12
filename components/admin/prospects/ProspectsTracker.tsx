@@ -79,10 +79,10 @@ type Row = {
 
 const STATUS_LABELS: Record<ProspectStatus, string> = {
   new: "Nouveau",
-  to_contact: "A recontacter",
-  contacted: "Contacte",
+  to_contact: "À recontacter",
+  contacted: "Contacté",
   registered: "Inscrit",
-  closed: "Cloture",
+  closed: "Clôturé",
 };
 
 const ORIGIN_LABELS: Record<Prospect["origin"], string> = {
@@ -96,26 +96,26 @@ const ORIGIN_LABELS: Record<Prospect["origin"], string> = {
 const PAYMENT_STATUSES: Record<PaymentStatus, string> = {
   pending: "En attente",
   partial: "Partiel",
-  paid: "Paye",
-  refunded: "Rembourse",
-  cancelled: "Annule",
+  paid: "Payé",
+  refunded: "Remboursé",
+  cancelled: "Annulé",
 };
 
 const PAYMENT_METHODS: Record<PaymentMethod, string> = {
   card: "Carte",
   transfer: "Virement",
-  cash: "Especes",
-  check: "Cheque",
+  cash: "Espèces",
+  check: "Chèque",
   installments: "Plusieurs fois",
   other: "Autre",
 };
 
 const CAF_STATUSES: Record<CafStatus, string> = {
   not_requested: "Pas de CAF",
-  requested: "Demandee",
-  approved: "Accordee",
-  paid: "Versee",
-  rejected: "Refusee",
+  requested: "Demandée",
+  approved: "Accordée",
+  paid: "Versée",
+  rejected: "Refusée",
 };
 
 const PRIORITY_LABELS: Record<NonNullable<Prospect["priority"]>, string> = {
@@ -126,7 +126,7 @@ const PRIORITY_LABELS: Record<NonNullable<Prospect["priority"]>, string> = {
 
 const QUALIFICATION_LABELS: Record<NonNullable<Prospect["qualification"]>, string> = {
   cold: "Froid",
-  warm: "Tiede",
+  warm: "Tiède",
   hot: "Chaud",
 };
 
@@ -308,6 +308,7 @@ export function ProspectsTracker() {
   const [sort, setSort] = useState<SortKey>("date_desc");
   const [showAdd, setShowAdd] = useState(false);
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
   const [newLead, setNewLead] = useState({
     name: "",
     email: "",
@@ -418,6 +419,10 @@ export function ProspectsTracker() {
     });
   }, [cafFilter, formation, origin, paymentStatus, rows, search, sort, status]);
 
+  const selectedRow = selectedRowId
+    ? rows.find((row) => row.rowId === selectedRowId) ?? null
+    : null;
+
   const stats = useMemo(() => {
     const openProspects = rows.filter((row) =>
       ["new", "to_contact", "contacted"].includes(row.status),
@@ -504,12 +509,12 @@ export function ProspectsTracker() {
       "Formation",
       "Paiement",
       "Prix net",
-      "Paye",
+      "Payé",
       "Reste",
       "CAF",
       "Statut CAF",
       "Montant CAF",
-      "CAF versee",
+      "CAF versée",
       "Relance",
       "Notes",
     ];
@@ -552,7 +557,7 @@ export function ProspectsTracker() {
     <div className="space-y-6">
       <section className="grid gap-px overflow-hidden rounded-md border border-slate-200 bg-slate-200 md:grid-cols-4">
         <Metric icon={UserRoundCheck} label="Contacts suivis" value={stats.total.toString()} detail={`${stats.open} prospects ouverts`} />
-        <Metric icon={CalendarClock} label="A relancer" value={stats.toContact.toString()} detail="Nouveaux + a recontacter" />
+        <Metric icon={CalendarClock} label="À relancer" value={stats.toContact.toString()} detail="Nouveaux + à recontacter" />
         <Metric icon={CheckCircle2} label="Inscriptions en cours" value={stats.ongoingInscriptions.toString()} detail={`${stats.paid} payes, ${stats.partial} partiels`} />
         <Metric icon={Euro} label="Reste a encaisser" value={euro(stats.remaining)} detail={`${stats.caf} dossiers CAF coches`} />
       </section>
@@ -583,7 +588,7 @@ export function ProspectsTracker() {
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Rechercher nom, email, telephone, formation, note..."
+              placeholder="Rechercher nom, email, téléphone, formation, note..."
               className="h-10 w-full rounded-md border border-slate-200 pl-9 pr-3 text-sm outline-none focus:border-slate-400"
             />
           </label>
@@ -622,7 +627,7 @@ export function ProspectsTracker() {
             </FilterSelect>
 
             <FilterSelect value={sort} onChange={(value) => setSort(value as SortKey)}>
-              <option value="date_desc">Plus recent</option>
+              <option value="date_desc">Plus récent</option>
               <option value="date_asc">Plus ancien</option>
               <option value="name_asc">Nom A-Z</option>
               <option value="formation_asc">Formation A-Z</option>
@@ -717,6 +722,7 @@ export function ProspectsTracker() {
                   key={row.rowId}
                   row={row}
                   saving={savingId === row.rowId}
+                  onOpen={() => setSelectedRowId(row.rowId)}
                   onUpdateProspect={updateProspect}
                   onUpdateInscription={updateInscription}
                 />
@@ -725,6 +731,15 @@ export function ProspectsTracker() {
           </tbody>
         </table>
       </section>
+      {selectedRow && (
+        <LeadDetailsModal
+          row={selectedRow}
+          saving={savingId === selectedRow.rowId}
+          onClose={() => setSelectedRowId(null)}
+          onUpdateProspect={updateProspect}
+          onUpdateInscription={updateInscription}
+        />
+      )}
     </div>
   );
 }
@@ -732,23 +747,25 @@ export function ProspectsTracker() {
 function LeadRow({
   row,
   saving,
+  onOpen,
   onUpdateProspect,
   onUpdateInscription,
 }: {
   row: Row;
   saving: boolean;
+  onOpen: () => void;
   onUpdateProspect: (id: string, patch: Partial<Prospect>) => Promise<void>;
   onUpdateInscription: (id: string, patch: Partial<Inscription>) => Promise<void>;
 }) {
   const isInscription = row.kind === "inscription";
 
   return (
-    <tr className="align-top">
-      <td className="border-b border-slate-100 px-3 py-3">
-        <div className="flex items-start gap-3">
+    <tr className="cursor-pointer align-middle transition hover:bg-slate-50" onClick={onOpen}>
+      <td className="border-b border-slate-100 px-3 py-2.5">
+        <div className="flex items-center gap-3">
           <span
             className={[
-              "mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-xs font-bold",
+              "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-xs font-bold",
               isInscription ? "bg-emerald-100 text-emerald-800" : "bg-violet-100 text-violet-800",
             ].join(" ")}
           >
@@ -756,289 +773,317 @@ function LeadRow({
           </span>
           <div className="min-w-0">
             <div className="font-semibold text-slate-900">{row.name}</div>
-            <div className="mt-1 text-xs text-slate-500">
-              {ORIGIN_LABELS[row.origin]} · {formatDate(row.createdAt, true)}
-            </div>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {row.email && <ContactButton href={`mailto:${row.email}`} icon={Mail} label="Email" />}
-              {row.phone && <ContactButton href={`tel:${row.phone.replace(/\s/g, "")}`} icon={Phone} label="Appel" />}
+            <div className="mt-0.5 text-xs text-slate-500">
+              {ORIGIN_LABELS[row.origin]} ? {formatDate(row.createdAt, true)}
             </div>
           </div>
         </div>
       </td>
 
-      <td className="border-b border-slate-100 px-3 py-3">
-        <FieldLabel>Statut</FieldLabel>
-        <select
-          value={row.status}
-          disabled={saving || isInscription}
-          onChange={(event) =>
-            onUpdateProspect(row.id, { status: event.target.value as ProspectStatus })
-          }
-          className="h-9 w-36 rounded-md border border-slate-200 px-2 text-xs outline-none disabled:bg-slate-50"
-        >
-          {Object.entries(STATUS_LABELS).map(([value, label]) => (
-            <option key={value} value={value}>
-              {label}
-            </option>
-          ))}
-        </select>
-
-        <div className="mt-2 grid grid-cols-2 gap-2">
-          <InlineSelect
-            label="Priorite"
-            value={row.priority || "normal"}
-            disabled={saving || isInscription}
-            onChange={(value) => onUpdateProspect(row.id, { priority: value as Prospect["priority"] })}
-            options={PRIORITY_LABELS}
-          />
-          <InlineSelect
-            label="Qualif."
-            value={row.qualification || "warm"}
-            disabled={saving || isInscription}
-            onChange={(value) =>
-              onUpdateProspect(row.id, { qualification: value as Prospect["qualification"] })
-            }
-            options={QUALIFICATION_LABELS}
-          />
+      <td className="border-b border-slate-100 px-3 py-2.5">
+        <div className="flex flex-wrap gap-1">
+          <StatusPill>{STATUS_LABELS[row.status]}</StatusPill>
+          {!isInscription && row.priority && <StatusPill>{PRIORITY_LABELS[row.priority]}</StatusPill>}
+          {!isInscription && row.qualification && <StatusPill>{QUALIFICATION_LABELS[row.qualification]}</StatusPill>}
         </div>
       </td>
 
-      <td className="border-b border-slate-100 px-3 py-3">
-        <div className="max-w-[210px] font-medium text-slate-900">
+      <td className="border-b border-slate-100 px-3 py-2.5">
+        <div className="max-w-[240px] truncate font-medium text-slate-900">
           {row.formationTitle || row.department || "-"}
         </div>
-        {row.quotient && <div className="mt-1 text-xs text-slate-500">QF CAF : {row.quotient}</div>}
-        <div className="mt-1 text-xs text-slate-500">{row.leadType}</div>
-        {row.source && <div className="mt-1 text-xs text-slate-400">{row.source}</div>}
+        <div className="mt-0.5 text-xs text-slate-500">{row.leadType}</div>
       </td>
 
-      <td className="border-b border-slate-100 px-3 py-3">
+      <td className="border-b border-slate-100 px-3 py-2.5">
         {isInscription ? (
-          <div className="space-y-2">
-            <select
-              value={row.paymentStatus || "pending"}
-              disabled={saving}
-              onChange={(event) =>
-                onUpdateInscription(row.id, {
-                  paymentStatus: event.target.value as PaymentStatus,
-                  paid: event.target.value === "paid",
-                })
-              }
-              className="h-9 w-32 rounded-md border border-slate-200 px-2 text-xs outline-none"
-            >
-              {Object.entries(PAYMENT_STATUSES).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-            <select
-              value={row.paymentMethod || "other"}
-              disabled={saving}
-              onChange={(event) =>
-                onUpdateInscription(row.id, {
-                  paymentMethod: event.target.value as PaymentMethod,
-                  installmentPlan: event.target.value === "installments",
-                })
-              }
-              className="h-9 w-32 rounded-md border border-slate-200 px-2 text-xs outline-none"
-            >
-              {Object.entries(PAYMENT_METHODS).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-            <div className="text-xs leading-5 text-slate-600">
-              <div>Net : <b>{euro(row.netPrice)}</b></div>
-              <div>Paye : <b>{euro(row.amountPaid)}</b></div>
-              <div>Reste : <b className={row.remaining > 0 ? "text-rose-700" : "text-emerald-700"}>{euro(row.remaining)}</b></div>
-              {row.paymentMethod === "transfer" && (
-                <div className="mt-1 text-slate-500">
-                  Virement {row.transferReceivedAt ? `recu le ${row.transferReceivedAt}` : "a suivre"}
-                  {row.transferReference ? ` · ${row.transferReference}` : ""}
-                </div>
-              )}
-            </div>
+          <div className="text-xs leading-5 text-slate-600">
+            <div className="font-medium text-slate-900">{PAYMENT_STATUSES[row.paymentStatus || "pending"]}</div>
+            <div>{PAYMENT_METHODS[row.paymentMethod || "other"]}</div>
+            <div>Pay? : <b>{euro(row.amountPaid)}</b></div>
+            <div>Reste : <b className={row.remaining > 0 ? "text-rose-700" : "text-emerald-700"}>{euro(row.remaining)}</b></div>
           </div>
         ) : (
           <span className="text-xs text-slate-400">Pas encore inscrit</span>
         )}
       </td>
 
-      <td className="border-b border-slate-100 px-3 py-3">
+      <td className="border-b border-slate-100 px-3 py-2.5">
         {isInscription ? (
-          <div className="space-y-2">
-            <FieldLabel>CAF</FieldLabel>
-            <select
-              value={row.cafStatus || "not_requested"}
-              disabled={saving}
-              onChange={(event) => {
-                const next = event.target.value as CafStatus;
-                onUpdateInscription(row.id, {
-                  cafStatus: next,
-                  cafAid: next !== "not_requested",
-                  cafPaidAmount:
-                    next === "paid" ? row.cafPaidAmount || row.cafAidAmount : row.cafPaidAmount,
-                });
-              }}
-              className="h-9 w-32 rounded-md border border-slate-200 px-2 text-xs outline-none"
-            >
-              {Object.entries(CAF_STATUSES).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-            <label className="flex items-center gap-2 text-xs text-slate-700">
-              <input
-                type="checkbox"
-                checked={row.cafAid}
-                disabled={saving}
-                onChange={(event) =>
-                  onUpdateInscription(row.id, {
-                    cafAid: event.target.checked,
-                    cafAidAmount: event.target.checked ? row.cafAidAmount : 0,
-                  })
-                }
-              />
-              Aide CAF
-            </label>
-            <NumberInput
-              label="CAF attendue"
-              value={row.cafAidAmount}
-              disabled={saving || !row.cafAid}
-              onCommit={(value) =>
-                onUpdateInscription(row.id, { cafAid: value > 0, cafAidAmount: value })
-              }
-            />
-            <NumberInput
-              label="CAF versee"
-              value={row.cafPaidAmount}
-              disabled={saving || !row.cafAid}
-              onCommit={(value) =>
-                onUpdateInscription(row.id, {
-                  cafPaidAmount: value,
-                  cafStatus: value > 0 ? "paid" : row.cafStatus,
-                })
-              }
-            />
-            <NumberInput
-              label="Autres"
-              value={row.otherAidAmount}
-              disabled={saving}
-              onCommit={(value) => onUpdateInscription(row.id, { otherAidAmount: value })}
-            />
+          <div className="text-xs leading-5 text-slate-600">
+            <div className="font-medium text-slate-900">{row.cafAid ? "CAF oui" : "CAF non"}</div>
+            {row.cafAid && <div>{euro(row.cafPaidAmount)} / {euro(row.cafAidAmount)}</div>}
+            {row.otherAidAmount > 0 && <div>Autres aides : {euro(row.otherAidAmount)}</div>}
           </div>
         ) : (
-          <div className="text-xs text-slate-500">
-            {row.department || row.quotient ? "Demande aides a qualifier" : "-"}
-          </div>
+          <div className="text-xs text-slate-500">{row.department || row.quotient ? "Aides ? qualifier" : "-"}</div>
         )}
       </td>
 
-      <td className="border-b border-slate-100 px-3 py-3">
-        {isInscription ? (
-          <div className="space-y-2">
-            <label className="flex items-center gap-2 text-xs text-slate-700">
-              <input
-                type="checkbox"
-                checked={row.installmentPlan}
-                disabled={saving}
-                onChange={(event) =>
-                  onUpdateInscription(row.id, {
-                    installmentPlan: event.target.checked,
-                    paymentMethod: event.target.checked ? "installments" : row.paymentMethod,
-                  })
-                }
-              />
-              Plusieurs fois
-            </label>
-            <div className="text-xs text-slate-600">
-              {row.installmentPlan
-                ? `${row.installmentCount || "-"} x ${euro(row.installmentAmount || 0)}`
-                : "Paiement simple"}
-            </div>
-            <DateInput
-              value={row.nextPaymentDate || ""}
-              disabled={saving}
-              onCommit={(value) => onUpdateInscription(row.id, { nextPaymentDate: value })}
-            />
-          </div>
-        ) : (
-          <DateInput
-            value={row.nextFollowUpDate || ""}
-            disabled={saving}
-            onCommit={(value) => onUpdateProspect(row.id, { nextFollowUpDate: value })}
-          />
-        )}
+      <td className="border-b border-slate-100 px-3 py-2.5 text-xs text-slate-600">
+        {row.nextFollowUpDate || row.nextPaymentDate || "-"}
       </td>
 
-      <td className="border-b border-slate-100 px-3 py-3">
-        {row.message && (
-          <p className="mb-2 max-w-[260px] text-xs leading-relaxed text-slate-600 line-clamp-3">
-            {row.message}
-          </p>
-        )}
-        <textarea
-          defaultValue={row.notes || ""}
-          disabled={saving}
-          onBlur={(event) => {
-            if ((row.notes || "") === event.target.value) return;
-            if (isInscription) {
-              onUpdateInscription(row.id, { notes: event.target.value });
-            } else {
-              onUpdateProspect(row.id, { notes: event.target.value });
-            }
-          }}
-          placeholder="Infos, relances, decision, documents CAF..."
-          className="h-24 w-64 resize-none rounded-md border border-slate-200 px-2 py-1.5 text-xs outline-none"
-        />
+      <td className="border-b border-slate-100 px-3 py-2.5">
+        <div className="max-w-[300px] truncate text-xs text-slate-600">
+          {row.notes || row.message || "-"}
+        </div>
       </td>
 
-      <td className="border-b border-slate-100 px-3 py-3">
-        <div className="flex flex-col gap-2">
+      <td className="border-b border-slate-100 px-3 py-2.5">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              onOpen();
+            }}
+            className="h-8 rounded-md border border-slate-200 px-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
+          >
+            D?tails
+          </button>
           {isInscription ? (
             <button
               type="button"
               disabled={saving}
-              onClick={() =>
+              onClick={(event) => {
+                event.stopPropagation();
                 onUpdateInscription(row.id, {
                   paymentStatus: "paid",
                   paid: true,
                   amountPaid: row.netPrice,
                   validationStatus: "validated",
-                })
-              }
+                });
+              }}
               className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 text-xs font-medium text-emerald-800 hover:bg-emerald-100 disabled:opacity-50"
             >
               <CheckCircle2 className="h-3.5 w-3.5" />
-              Valider paye
+              Valider
             </button>
           ) : (
-            <>
-              <button
-                type="button"
-                disabled={saving}
-                onClick={() => onUpdateProspect(row.id, { status: "contacted" })}
-                className="h-8 rounded-md border border-slate-200 px-2 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-              >
-                Marquer contacte
-              </button>
-              <button
-                type="button"
-                disabled={saving}
-                onClick={() => onUpdateProspect(row.id, { status: "registered" })}
-                className="h-8 rounded-md border border-emerald-200 bg-emerald-50 px-2 text-xs font-medium text-emerald-800 hover:bg-emerald-100 disabled:opacity-50"
-              >
-                Marquer inscrit
-              </button>
-            </>
+            <button
+              type="button"
+              disabled={saving}
+              onClick={(event) => {
+                event.stopPropagation();
+                onUpdateProspect(row.id, { status: "contacted" });
+              }}
+              className="h-8 rounded-md border border-slate-200 px-2 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+            >
+              Contact?
+            </button>
           )}
         </div>
       </td>
     </tr>
+  );
+}
+
+function LeadDetailsModal({
+  row,
+  saving,
+  onClose,
+  onUpdateProspect,
+  onUpdateInscription,
+}: {
+  row: Row;
+  saving: boolean;
+  onClose: () => void;
+  onUpdateProspect: (id: string, patch: Partial<Prospect>) => Promise<void>;
+  onUpdateInscription: (id: string, patch: Partial<Inscription>) => Promise<void>;
+}) {
+  const isInscription = row.kind === "inscription";
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4 py-6">
+      <div className="max-h-[92vh] w-full max-w-5xl overflow-y-auto rounded-md border border-slate-200 bg-white shadow-xl">
+        <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-slate-200 bg-white px-5 py-4">
+          <div>
+            <h3 className="text-lg font-semibold text-slate-900">{row.name}</h3>
+            <p className="mt-1 text-sm text-slate-500">
+              {ORIGIN_LABELS[row.origin]} · {row.formationTitle || row.department || "Formation non renseignée"}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="h-8 rounded-md border border-slate-200 px-3 text-xs font-medium text-slate-700 hover:bg-slate-50"
+          >
+            Fermer
+          </button>
+        </div>
+
+        <div className="grid gap-4 p-5 lg:grid-cols-3">
+          <section className="rounded-md border border-slate-200 p-4">
+            <h4 className="text-sm font-semibold text-slate-900">Contact</h4>
+            <div className="mt-3 space-y-2 text-sm text-slate-600">
+              <div>Email : {row.email || "-"}</div>
+              <div>Téléphone : {row.phone || "-"}</div>
+              <div>Date : {formatDate(row.createdAt, true)}</div>
+              <div>Source : {row.source || "-"}</div>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {row.email && <ContactButton href={`mailto:${row.email}`} icon={Mail} label="Email" />}
+              {row.phone && <ContactButton href={`tel:${row.phone.replace(/\s/g, "")}`} icon={Phone} label="Appel" />}
+            </div>
+          </section>
+
+          <section className="rounded-md border border-slate-200 p-4">
+            <h4 className="text-sm font-semibold text-slate-900">Suivi</h4>
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              <label className="col-span-2">
+                <FieldLabel>Statut</FieldLabel>
+                <select
+                  value={row.status}
+                  disabled={saving || isInscription}
+                  onChange={(event) => onUpdateProspect(row.id, { status: event.target.value as ProspectStatus })}
+                  className="h-9 w-full rounded-md border border-slate-200 px-2 text-xs outline-none disabled:bg-slate-50"
+                >
+                  {Object.entries(STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                </select>
+              </label>
+              {!isInscription && (
+                <>
+                  <InlineSelect label="Priorité" value={row.priority || "normal"} disabled={saving} onChange={(value) => onUpdateProspect(row.id, { priority: value as Prospect["priority"] })} options={PRIORITY_LABELS} />
+                  <InlineSelect label="Qualif." value={row.qualification || "warm"} disabled={saving} onChange={(value) => onUpdateProspect(row.id, { qualification: value as Prospect["qualification"] })} options={QUALIFICATION_LABELS} />
+                </>
+              )}
+            </div>
+          </section>
+
+          <section className="rounded-md border border-slate-200 p-4">
+            <h4 className="text-sm font-semibold text-slate-900">Formation</h4>
+            <div className="mt-3 space-y-2 text-sm text-slate-600">
+              <div>{row.formationTitle || "-"}</div>
+              <div>{row.leadType || "-"}</div>
+              {row.department && <div>Département : {row.department}</div>}
+              {row.quotient && <div>QF CAF : {row.quotient}</div>}
+            </div>
+          </section>
+
+          {isInscription && (
+            <>
+              <section className="rounded-md border border-slate-200 p-4">
+                <h4 className="text-sm font-semibold text-slate-900">Paiement</h4>
+                <div className="mt-3 grid grid-cols-2 gap-3">
+                  <label>
+                    <FieldLabel>Statut</FieldLabel>
+                    <select
+                      value={row.paymentStatus || "pending"}
+                      disabled={saving}
+                      onChange={(event) => {
+                        const status = event.target.value as PaymentStatus;
+                        onUpdateInscription(row.id, { paymentStatus: status, paid: status === "paid" });
+                      }}
+                      className="h-9 w-full rounded-md border border-slate-200 px-2 text-xs outline-none"
+                    >
+                      {Object.entries(PAYMENT_STATUSES).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                    </select>
+                  </label>
+                  <label>
+                    <FieldLabel>Mode</FieldLabel>
+                    <select
+                      value={row.paymentMethod || "other"}
+                      disabled={saving}
+                      onChange={(event) => onUpdateInscription(row.id, { paymentMethod: event.target.value as PaymentMethod, installmentPlan: event.target.value === "installments" })}
+                      className="h-9 w-full rounded-md border border-slate-200 px-2 text-xs outline-none"
+                    >
+                      {Object.entries(PAYMENT_METHODS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                    </select>
+                  </label>
+                  <NumberInput label="Payé" value={row.amountPaid} disabled={saving} onCommit={(value) => onUpdateInscription(row.id, { amountPaid: value, paymentStatus: value <= 0 ? "pending" : value >= row.netPrice ? "paid" : "partial", paid: value >= row.netPrice })} />
+                  <NumberInput label="Autres aides" value={row.otherAidAmount} disabled={saving} onCommit={(value) => onUpdateInscription(row.id, { otherAidAmount: value })} />
+                </div>
+                <div className="mt-3 rounded-md bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-700">
+                  <div>Prix net : <b>{euro(row.netPrice)}</b></div>
+                  <div>Reste : <b className={row.remaining > 0 ? "text-rose-700" : "text-emerald-700"}>{euro(row.remaining)}</b></div>
+                </div>
+              </section>
+
+              <section className="rounded-md border border-slate-200 p-4">
+                <h4 className="text-sm font-semibold text-slate-900">CAF</h4>
+                <div className="mt-3 space-y-3">
+                  <label className="flex items-center gap-2 text-xs text-slate-700">
+                    <input type="checkbox" checked={row.cafAid} disabled={saving} onChange={(event) => onUpdateInscription(row.id, { cafAid: event.target.checked, cafAidAmount: event.target.checked ? row.cafAidAmount : 0 })} />
+                    Aide CAF
+                  </label>
+                  <label>
+                    <FieldLabel>Statut CAF</FieldLabel>
+                    <select
+                      value={row.cafStatus || "not_requested"}
+                      disabled={saving}
+                      onChange={(event) => {
+                        const next = event.target.value as CafStatus;
+                        onUpdateInscription(row.id, { cafStatus: next, cafAid: next !== "not_requested", cafPaidAmount: next === "paid" ? row.cafPaidAmount || row.cafAidAmount : row.cafPaidAmount });
+                      }}
+                      className="h-9 w-full rounded-md border border-slate-200 px-2 text-xs outline-none"
+                    >
+                      {Object.entries(CAF_STATUSES).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                    </select>
+                  </label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <NumberInput label="CAF attendue" value={row.cafAidAmount} disabled={saving || !row.cafAid} onCommit={(value) => onUpdateInscription(row.id, { cafAid: value > 0, cafAidAmount: value })} />
+                    <NumberInput label="CAF versée" value={row.cafPaidAmount} disabled={saving || !row.cafAid} onCommit={(value) => onUpdateInscription(row.id, { cafPaidAmount: value, cafStatus: value > 0 ? "paid" : row.cafStatus })} />
+                  </div>
+                </div>
+              </section>
+
+              <section className="rounded-md border border-slate-200 p-4">
+                <h4 className="text-sm font-semibold text-slate-900">Échéance</h4>
+                <div className="mt-3 space-y-3">
+                  <label className="flex items-center gap-2 text-xs text-slate-700">
+                    <input type="checkbox" checked={row.installmentPlan} disabled={saving} onChange={(event) => onUpdateInscription(row.id, { installmentPlan: event.target.checked, paymentMethod: event.target.checked ? "installments" : row.paymentMethod })} />
+                    Plusieurs fois
+                  </label>
+                  <DateInput value={row.nextPaymentDate || ""} disabled={saving} onCommit={(value) => onUpdateInscription(row.id, { nextPaymentDate: value })} />
+                </div>
+              </section>
+            </>
+          )}
+
+          <section className="rounded-md border border-slate-200 p-4 lg:col-span-3">
+            <h4 className="text-sm font-semibold text-slate-900">Notes et message</h4>
+            {row.message && <p className="mt-3 rounded-md bg-slate-50 px-3 py-2 text-sm leading-6 text-slate-600">{row.message}</p>}
+            <textarea
+              defaultValue={row.notes || ""}
+              disabled={saving}
+              onBlur={(event) => {
+                if ((row.notes || "") === event.target.value) return;
+                if (isInscription) onUpdateInscription(row.id, { notes: event.target.value });
+                else onUpdateProspect(row.id, { notes: event.target.value });
+              }}
+              placeholder="Infos, relances, décision, documents CAF..."
+              className="mt-3 h-28 w-full resize-none rounded-md border border-slate-200 px-3 py-2 text-sm outline-none"
+            />
+            <div className="mt-3 flex flex-wrap gap-2">
+              {isInscription ? (
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={() => onUpdateInscription(row.id, { paymentStatus: "paid", paid: true, amountPaid: row.netPrice, validationStatus: "validated" })}
+                  className="h-9 rounded-md border border-emerald-200 bg-emerald-50 px-3 text-xs font-medium text-emerald-800 hover:bg-emerald-100 disabled:opacity-50"
+                >
+                  Valider l&apos;inscription
+                </button>
+              ) : (
+                <>
+                  <button type="button" disabled={saving} onClick={() => onUpdateProspect(row.id, { status: "contacted" })} className="h-9 rounded-md border border-slate-200 px-3 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50">Marquer contacté</button>
+                  <button type="button" disabled={saving} onClick={() => onUpdateProspect(row.id, { status: "registered" })} className="h-9 rounded-md border border-emerald-200 bg-emerald-50 px-3 text-xs font-medium text-emerald-800 hover:bg-emerald-100 disabled:opacity-50">Marquer inscrit</button>
+                </>
+              )}
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function StatusPill({ children }: { children: ReactNode }) {
+  return (
+    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-700">
+      {children}
+    </span>
   );
 }
 

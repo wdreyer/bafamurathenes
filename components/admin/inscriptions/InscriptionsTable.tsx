@@ -35,8 +35,8 @@ type SortKey = "date_desc" | "name_asc" | "formation_asc" | "remaining_desc" | "
 const PAYMENT_METHODS: Record<PaymentMethod, string> = {
   card: "Carte",
   transfer: "Virement",
-  cash: "Especes",
-  check: "Cheque",
+  cash: "Espèces",
+  check: "Chèque",
   installments: "Plusieurs fois",
   other: "Autre",
 };
@@ -44,30 +44,30 @@ const PAYMENT_METHODS: Record<PaymentMethod, string> = {
 const PAYMENT_STATUSES: Record<PaymentStatus, string> = {
   pending: "En attente",
   partial: "Partiel",
-  paid: "Paye",
-  refunded: "Rembourse",
-  cancelled: "Annule",
+  paid: "Payé",
+  refunded: "Remboursé",
+  cancelled: "Annulé",
 };
 
 const VALIDATION_STATUSES: Record<ValidationStatus, string> = {
-  pending: "A valider",
-  validated: "Valide",
-  cancelled: "Annule",
+  pending: "À valider",
+  validated: "Validé",
+  cancelled: "Annulé",
 };
 
 const CAF_STATUSES: Record<CafStatus, string> = {
   not_requested: "Pas de CAF",
-  requested: "Demandee",
-  approved: "Accordee",
-  paid: "Versee",
-  rejected: "Refusee",
+  requested: "Demandée",
+  approved: "Accordée",
+  paid: "Versée",
+  rejected: "Refusée",
 };
 
 const PAYMENT_SCHEDULES: Record<PaymentSchedule, string> = {
   one_time: "1 fois",
   two_times: "2 fois",
   three_times: "3 fois",
-  custom: "Personnalise",
+  custom: "Personnalisé",
 };
 
 function numberValue(value: unknown) {
@@ -171,6 +171,7 @@ export function InscriptionsTable() {
   const [view, setView] = useState<TableView>("validated");
   const [sort, setSort] = useState<SortKey>("date_desc");
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [selectedInscriptionId, setSelectedInscriptionId] = useState<string | null>(null);
 
   useEffect(() => {
     const q = query(collection(db, "inscriptions"), orderBy("createdAt", "desc"));
@@ -249,6 +250,9 @@ export function InscriptionsTable() {
   );
 
   const displayRows = view === "validated" ? validatedRows : view === "ongoing" ? ongoingRows : filtered;
+  const selectedInscription = selectedInscriptionId
+    ? inscriptions.find((inscription) => inscription.id === selectedInscriptionId) ?? null
+    : null;
 
   const totals = useMemo(() => {
     return filtered.reduce(
@@ -283,13 +287,6 @@ export function InscriptionsTable() {
     }
   }
 
-  function patchPaymentStatus(status: PaymentStatus): Partial<Inscription> {
-    return {
-      paymentStatus: status,
-      paid: status === "paid",
-    };
-  }
-
   if (!inscriptions.length) {
     return (
       <div className="border border-dashed border-slate-200 bg-slate-50 p-6 text-sm text-slate-500">
@@ -303,8 +300,8 @@ export function InscriptionsTable() {
       <section className="grid gap-px overflow-hidden rounded-md border border-slate-200 bg-slate-200 md:grid-cols-5">
         <Metric icon={FileText} label="Inscriptions" value={filtered.length.toString()} detail={`${inscriptions.length} au total`} />
         <Metric icon={CreditCard} label="Prix total" value={euro(totals.total)} detail="Avant aides" />
-        <Metric icon={HandCoins} label="CAF attendue" value={euro(totals.cafExpected)} detail={`${euro(totals.cafRemaining)} non versee`} />
-        <Metric icon={Banknote} label="Familles paye" value={euro(totals.familyPaid)} detail="Reglements recus" />
+        <Metric icon={HandCoins} label="CAF attendue" value={euro(totals.cafExpected)} detail={`${euro(totals.cafRemaining)} non versée`} />
+        <Metric icon={Banknote} label="Familles payées" value={euro(totals.familyPaid)} detail="Règlements reçus" />
         <Metric icon={Banknote} label="Reste famille" value={euro(totals.familyRemaining)} detail="Hors CAF attendue" />
       </section>
 
@@ -338,13 +335,13 @@ export function InscriptionsTable() {
             ))}
           </FilterSelect>
           <FilterSelect value={schedule} onChange={(value) => setSchedule(value as "all" | PaymentSchedule)}>
-            <option value="all">Toutes echeances</option>
+            <option value="all">Toutes échéances</option>
             {Object.entries(PAYMENT_SCHEDULES).map(([value, label]) => (
               <option key={value} value={value}>{label}</option>
             ))}
           </FilterSelect>
           <FilterSelect value={sort} onChange={(value) => setSort(value as SortKey)}>
-            <option value="date_desc">Tri : plus recent</option>
+            <option value="date_desc">Tri : plus récent</option>
             <option value="name_asc">Tri : nom A-Z</option>
             <option value="formation_asc">Tri : formation</option>
             <option value="remaining_desc">Tri : reste famille</option>
@@ -387,10 +384,10 @@ export function InscriptionsTable() {
         <div className="flex flex-col gap-2 border-b border-slate-200 px-4 py-3 md:flex-row md:items-center md:justify-between" style={{ background: "#fff8ec" }}>
           <div>
             <p className="mura-mono text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
-              {view === "validated" ? "Tableau des dossiers finalises" : view === "ongoing" ? "Tableau des dossiers a suivre" : "Tous les dossiers"}
+              {view === "validated" ? "Tableau des dossiers finalisés" : view === "ongoing" ? "Tableau des dossiers à suivre" : "Tous les dossiers"}
             </p>
             <h2 className="mt-1 text-lg font-semibold text-slate-900">
-              {view === "validated" ? "Inscriptions validees" : view === "ongoing" ? "Inscriptions en cours" : "Toutes les inscriptions"}
+              {view === "validated" ? "Inscriptions validées" : view === "ongoing" ? "Inscriptions en cours" : "Toutes les inscriptions"}
             </h2>
           </div>
           <div className="text-sm font-semibold text-slate-700">
@@ -398,17 +395,18 @@ export function InscriptionsTable() {
           </div>
         </div>
         <div className="overflow-x-auto">
-        <table className="min-w-[1720px] w-full border-collapse text-sm">
+        <table className="min-w-[1120px] w-full border-collapse text-sm">
           <thead>
             <tr className="bg-slate-50 text-left text-xs font-semibold uppercase text-slate-500">
               <TH>Inscrit</TH>
+              <TH>Contact</TH>
               <TH>Formation</TH>
-              <TH>Prix & reste</TH>
+              <TH>Total</TH>
+              <TH>Payé</TH>
+              <TH>Reste</TH>
               <TH>CAF</TH>
-              <TH>Reglement famille</TH>
-              <TH>Echeances</TH>
-              <TH>Statuts</TH>
-              <TH>Notes</TH>
+              <TH>Règlement</TH>
+              <TH>Statut</TH>
               <TH>Actions</TH>
             </tr>
           </thead>
@@ -435,7 +433,11 @@ export function InscriptionsTable() {
                     : "bg-white";
 
               return (
-                <tr key={inscription.id} className={`align-top ${rowTone}`}>
+                <tr
+                  key={inscription.id}
+                  className={`cursor-pointer align-middle transition hover:bg-slate-50 ${rowTone}`}
+                  onClick={() => setSelectedInscriptionId(inscription.id)}
+                >
                   <TD>
                     <div className="font-medium text-slate-900">
                       {contactName(inscription) || "Sans nom"}
@@ -443,252 +445,73 @@ export function InscriptionsTable() {
                     <div className="mt-1 text-xs text-slate-500">
                       Inscrit le {formatDate(inscription.createdAt)}
                     </div>
-                    <div className="mt-2 flex gap-2">
-                      {inscription.email && <IconLink href={`mailto:${inscription.email}`} icon={Mail} label="Email" />}
-                      {inscription.phone && <IconLink href={`tel:${inscription.phone.replace(/\s/g, "")}`} icon={Phone} label="Appeler" />}
+                  </TD>
+
+                  <TD>
+                    <div className="space-y-1 text-xs text-slate-600">
+                      {inscription.email && <div>{inscription.email}</div>}
+                      {inscription.phone && <div>{inscription.phone}</div>}
                     </div>
-                    <div className="mt-3 flex flex-wrap gap-1">
+                  </TD>
+
+                  <TD>
+                    <div className="max-w-[240px] truncate font-medium text-slate-900">
+                      {inscription.formationTitle || "-"}
+                    </div>
+                    {inscription.tariff && <div className="mt-1 text-xs text-slate-500">{inscription.tariff}</div>}
+                  </TD>
+
+                  <TD>
+                    <b>{euro(values.totalPrice)}</b>
+                  </TD>
+
+                  <TD>
+                    <b>{euro(values.amountPaid)}</b>
+                  </TD>
+
+                  <TD>
+                    <b className={values.remainingTotal > 0 ? "text-rose-700" : "text-emerald-700"}>
+                      {euro(values.remainingTotal)}
+                    </b>
+                  </TD>
+
+                  <TD>
+                    <StatusBadge label={CAF_STATUSES[currentCafStatus]} tone={currentCafStatus === "paid" ? "green" : currentCafStatus === "not_requested" ? "yellow" : "rose"} />
+                    {values.cafExpected > 0 && (
+                      <div className="mt-1 text-xs text-slate-500">{euro(values.cafPaidAmount)} / {euro(values.cafExpected)}</div>
+                    )}
+                  </TD>
+
+                  <TD>
+                    <div className="font-medium text-slate-900">{PAYMENT_METHODS[inscription.paymentMethod || "other"]}</div>
+                    <div className="mt-1 text-xs text-slate-500">{PAYMENT_SCHEDULES[currentSchedule]}</div>
+                  </TD>
+
+                  <TD>
+                    <div className="flex flex-wrap gap-1">
                       <StatusBadge label={VALIDATION_STATUSES[currentValidationStatus]} tone={currentValidationStatus === "validated" ? "green" : "yellow"} />
                       <StatusBadge label={PAYMENT_STATUSES[currentPaymentStatus]} tone={currentPaymentStatus === "paid" ? "green" : currentPaymentStatus === "partial" ? "yellow" : "rose"} />
                     </div>
                   </TD>
 
                   <TD>
-                    <div className="max-w-[190px] font-medium text-slate-900">
-                      {inscription.formationTitle || "-"}
-                    </div>
-                    {inscription.tariff && <div className="mt-1 text-xs text-slate-500">{inscription.tariff}</div>}
-                    {inscription.source && <div className="mt-1 text-xs text-slate-400">{inscription.source}</div>}
-                  </TD>
-
-                  <TD>
-                    <NumberInput
-                      label="Prix total"
-                      value={values.totalPrice}
-                      disabled={disabled}
-                      onCommit={(value) => updateInscription(inscription.id, { totalPrice: value, amount: value })}
-                    />
-                    <NumberInput
-                      label="Famille paye"
-                      value={values.amountPaid}
-                      disabled={disabled || currentPaymentStatus === "paid"}
-                      onCommit={(value) =>
-                        updateInscription(inscription.id, {
-                          amountPaid: value,
-                          paymentStatus:
-                            value <= 0
-                              ? "pending"
-                              : value >= values.expectedTotal
-                                ? "paid"
-                                : "partial",
-                          paid: value >= values.expectedTotal,
-                        })
-                      }
-                    />
-                    <div className="mt-2 rounded-md bg-slate-50 px-2 py-1.5 text-xs leading-5 text-slate-700">
-                      <div>Part famille : <b>{euro(values.expectedTotal)}</b></div>
-                      <div>Reste famille : <b className={values.remainingFamily > 0 ? "text-rose-700" : "text-emerald-700"}>{euro(values.remainingFamily)}</b></div>
-                    </div>
-                  </TD>
-
-                  <TD>
-                    <FieldLabel>Statut CAF</FieldLabel>
-                    <select
-                      value={currentCafStatus}
-                      disabled={disabled}
-                      onChange={(event) => {
-                        const next = event.target.value as CafStatus;
-                        updateInscription(inscription.id, {
-                          cafStatus: next,
-                          cafAid: next !== "not_requested",
-                          cafPaidAmount:
-                            next === "paid"
-                              ? numberValue(inscription.cafPaidAmount || inscription.cafApprovedAmount || inscription.cafAidAmount)
-                              : numberValue(inscription.cafPaidAmount),
-                        });
-                      }}
-                      className="h-9 w-36 rounded-md border border-slate-200 px-2 text-xs outline-none"
-                    >
-                      {Object.entries(CAF_STATUSES).map(([value, label]) => (
-                        <option key={value} value={value}>{label}</option>
-                      ))}
-                    </select>
-                    <div className="mt-2 grid grid-cols-2 gap-2">
-                      <NumberInput
-                        label="Demande"
-                        value={numberValue(inscription.cafRequestedAmount || inscription.cafAidAmount)}
-                        disabled={disabled || currentCafStatus === "not_requested"}
-                        onCommit={(value) => updateInscription(inscription.id, { cafAid: value > 0, cafRequestedAmount: value, cafAidAmount: value })}
-                      />
-                      <NumberInput
-                        label="Accord"
-                        value={numberValue(inscription.cafApprovedAmount || inscription.cafAidAmount)}
-                        disabled={disabled || currentCafStatus === "not_requested"}
-                        onCommit={(value) => updateInscription(inscription.id, { cafAid: value > 0, cafApprovedAmount: value, cafAidAmount: value })}
-                      />
-                      <NumberInput
-                        label="Verse"
-                        value={values.cafPaidAmount}
-                        disabled={disabled || currentCafStatus === "not_requested"}
-                        onCommit={(value) => updateInscription(inscription.id, { cafPaidAmount: value, cafStatus: value > 0 ? "paid" : currentCafStatus })}
-                      />
-                      <DateInput
-                        label="Date CAF"
-                        value={inscription.cafPaymentDate || ""}
-                        disabled={disabled || currentCafStatus !== "paid"}
-                        onCommit={(value) => updateInscription(inscription.id, { cafPaymentDate: value })}
-                      />
-                    </div>
-                    <div className="mt-2 text-xs text-slate-600">
-                      CAF restante : <b>{euro(values.remainingCaf)}</b>
-                    </div>
-                  </TD>
-
-                  <TD>
-                    <FieldLabel>Mode</FieldLabel>
-                    <select
-                      value={inscription.paymentMethod || "other"}
-                      disabled={disabled}
-                      onChange={(event) =>
-                        updateInscription(inscription.id, {
-                          paymentMethod: event.target.value as PaymentMethod,
-                          installmentPlan: event.target.value === "installments",
-                        })
-                      }
-                      className="h-9 w-36 rounded-md border border-slate-200 px-2 text-xs outline-none"
-                    >
-                      {Object.entries(PAYMENT_METHODS).map(([value, label]) => (
-                        <option key={value} value={value}>{label}</option>
-                      ))}
-                    </select>
-                    {(inscription.paymentMethod || "other") === "transfer" && (
-                      <div className="mt-2 space-y-2">
-                        <TextInput
-                          label="Ref. virement"
-                          value={inscription.transferReference || ""}
-                          disabled={disabled}
-                          onCommit={(value) => updateInscription(inscription.id, { transferReference: value })}
-                        />
-                        <DateInput
-                          label="Recu le"
-                          value={inscription.transferReceivedAt || ""}
-                          disabled={disabled}
-                          onCommit={(value) => updateInscription(inscription.id, { transferReceivedAt: value })}
-                        />
-                      </div>
-                    )}
-                    <NumberInput
-                      label="Autres aides"
-                      value={values.otherAidAmount}
-                      disabled={disabled}
-                      onCommit={(value) => updateInscription(inscription.id, { otherAidAmount: value })}
-                    />
-                  </TD>
-
-                  <TD>
-                    <FieldLabel>Plan</FieldLabel>
-                    <select
-                      value={currentSchedule}
-                      disabled={disabled}
-                      onChange={(event) => {
-                        const next = event.target.value as PaymentSchedule;
-                        updateInscription(inscription.id, {
-                          paymentSchedule: next,
-                          installmentPlan: next !== "one_time",
-                          installmentCount:
-                            next === "two_times" ? 2 : next === "three_times" ? 3 : next === "one_time" ? 1 : numberValue(inscription.installmentCount),
-                          paymentMethod: next === "one_time" ? inscription.paymentMethod : "installments",
-                        });
-                      }}
-                      className="h-9 w-36 rounded-md border border-slate-200 px-2 text-xs outline-none"
-                    >
-                      {Object.entries(PAYMENT_SCHEDULES).map(([value, label]) => (
-                        <option key={value} value={value}>{label}</option>
-                      ))}
-                    </select>
-                    <div className="mt-2 grid grid-cols-3 gap-2">
-                      <InstallmentBox
-                        index={1}
-                        amount={numberValue(inscription.installment1Amount || (currentSchedule === "one_time" ? values.expectedTotal : 0))}
-                        paid={!!inscription.installment1Paid}
-                        date={inscription.installment1Date || ""}
-                        disabled={disabled}
-                        onUpdate={(patch) => updateInscription(inscription.id, patch)}
-                      />
-                      {currentSchedule !== "one_time" && (
-                        <InstallmentBox
-                          index={2}
-                          amount={numberValue(inscription.installment2Amount)}
-                          paid={!!inscription.installment2Paid}
-                          date={inscription.installment2Date || ""}
-                          disabled={disabled}
-                          onUpdate={(patch) => updateInscription(inscription.id, patch)}
-                        />
-                      )}
-                      {(currentSchedule === "three_times" || currentSchedule === "custom") && (
-                        <InstallmentBox
-                          index={3}
-                          amount={numberValue(inscription.installment3Amount)}
-                          paid={!!inscription.installment3Paid}
-                          date={inscription.installment3Date || ""}
-                          disabled={disabled}
-                          onUpdate={(patch) => updateInscription(inscription.id, patch)}
-                        />
-                      )}
-                    </div>
-                  </TD>
-
-                  <TD>
-                    <FieldLabel>Paiement</FieldLabel>
-                    <select
-                      value={currentPaymentStatus}
-                      disabled={disabled}
-                      onChange={(event) =>
-                        updateInscription(inscription.id, patchPaymentStatus(event.target.value as PaymentStatus))
-                      }
-                      className="h-9 w-32 rounded-md border border-slate-200 px-2 text-xs outline-none"
-                    >
-                      {Object.entries(PAYMENT_STATUSES).map(([value, label]) => (
-                        <option key={value} value={value}>{label}</option>
-                      ))}
-                    </select>
-                    <FieldLabel className="mt-2">Validation</FieldLabel>
-                    <select
-                      value={currentValidationStatus}
-                      disabled={disabled}
-                      onChange={(event) =>
-                        updateInscription(inscription.id, {
-                          validationStatus: event.target.value as ValidationStatus,
-                        })
-                      }
-                      className="h-9 w-32 rounded-md border border-slate-200 px-2 text-xs outline-none"
-                    >
-                      {Object.entries(VALIDATION_STATUSES).map(([value, label]) => (
-                        <option key={value} value={value}>{label}</option>
-                      ))}
-                    </select>
-                  </TD>
-
-                  <TD>
-                    <textarea
-                      defaultValue={inscription.notes || ""}
-                      disabled={disabled}
-                      onBlur={(event) => {
-                        if ((inscription.notes || "") !== event.target.value) {
-                          updateInscription(inscription.id, { notes: event.target.value });
-                        }
-                      }}
-                      placeholder="CAF, virement, relances, accord de paiement..."
-                      className="h-32 w-56 resize-none rounded-md border border-slate-200 px-2 py-1.5 text-xs outline-none"
-                    />
-                  </TD>
-
-                  <TD>
-                    <div className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
                       <button
                         type="button"
                         disabled={disabled}
-                        onClick={() =>
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setSelectedInscriptionId(inscription.id);
+                        }}
+                        className="h-8 rounded-md border border-slate-200 px-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                      >
+                        Détails
+                      </button>
+                      <button
+                        type="button"
+                        disabled={disabled}
+                        onClick={(event) => {
+                          event.stopPropagation();
                           updateInscription(inscription.id, {
                             paymentStatus: "paid",
                             paid: true,
@@ -697,27 +520,12 @@ export function InscriptionsTable() {
                             installment1Paid: true,
                             installment2Paid: currentSchedule !== "one_time" ? true : inscription.installment2Paid,
                             installment3Paid: currentSchedule === "three_times" || currentSchedule === "custom" ? true : inscription.installment3Paid,
-                          })
-                        }
+                          });
+                        }}
                         className="inline-flex h-8 items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 text-xs font-medium text-emerald-800 hover:bg-emerald-100 disabled:opacity-50"
                       >
                         <Check className="h-3.5 w-3.5" />
-                        Famille payee
-                      </button>
-                      <button
-                        type="button"
-                        disabled={disabled}
-                        onClick={() =>
-                          updateInscription(inscription.id, {
-                            cafStatus: "paid",
-                            cafAid: true,
-                            cafPaidAmount: values.cafExpected,
-                            cafPaymentDate: new Date().toISOString().slice(0, 10),
-                          })
-                        }
-                        className="inline-flex h-8 items-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-                      >
-                        CAF versee
+                        Payé
                       </button>
                     </div>
                   </TD>
@@ -728,6 +536,250 @@ export function InscriptionsTable() {
         </table>
         </div>
       </section>
+      {selectedInscription && (
+        <InscriptionDetailsModal
+          inscription={selectedInscription}
+          saving={savingId === selectedInscription.id}
+          onClose={() => setSelectedInscriptionId(null)}
+          onUpdate={(patch) => updateInscription(selectedInscription.id, patch)}
+        />
+      )}
+    </div>
+  );
+}
+
+function InscriptionDetailsModal({
+  inscription,
+  saving,
+  onClose,
+  onUpdate,
+}: {
+  inscription: Inscription;
+  saving: boolean;
+  onClose: () => void;
+  onUpdate: (patch: Partial<Inscription>) => void;
+}) {
+  const values = financials(inscription);
+  const currentPaymentStatus = inscription.paymentStatus || (inscription.paid ? "paid" : "pending");
+  const currentValidationStatus = inscription.validationStatus || "pending";
+  const currentCafStatus = getCafStatus(inscription);
+  const currentSchedule = getSchedule(inscription);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4 py-6">
+      <div className="max-h-[92vh] w-full max-w-5xl overflow-y-auto rounded-md border border-slate-200 bg-white shadow-xl">
+        <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-slate-200 bg-white px-5 py-4">
+          <div>
+            <h3 className="text-lg font-semibold text-slate-900">
+              {contactName(inscription) || "Inscription sans nom"}
+            </h3>
+            <p className="mt-1 text-sm text-slate-500">
+              {inscription.formationTitle || "Formation non renseignée"} · inscrit le {formatDate(inscription.createdAt)}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="h-8 rounded-md border border-slate-200 px-3 text-xs font-medium text-slate-700 hover:bg-slate-50"
+          >
+            Fermer
+          </button>
+        </div>
+
+        <div className="grid gap-4 p-5 lg:grid-cols-3">
+          <section className="rounded-md border border-slate-200 p-4">
+            <h4 className="text-sm font-semibold text-slate-900">Contact</h4>
+            <div className="mt-3 space-y-2 text-sm text-slate-600">
+              <div>Email : {inscription.email || "-"}</div>
+              <div>Téléphone : {inscription.phone || "-"}</div>
+              <div>Tarif : {inscription.tariff || "-"}</div>
+              <div>Source : {inscription.source || "-"}</div>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              {inscription.email && <IconLink href={`mailto:${inscription.email}`} icon={Mail} label="Email" />}
+              {inscription.phone && <IconLink href={`tel:${inscription.phone.replace(/\s/g, "")}`} icon={Phone} label="Appeler" />}
+            </div>
+          </section>
+
+          <section className="rounded-md border border-slate-200 p-4">
+            <h4 className="text-sm font-semibold text-slate-900">Montants</h4>
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              <NumberInput label="Prix total" value={values.totalPrice} disabled={saving} onCommit={(value) => onUpdate({ totalPrice: value, amount: value })} />
+              <NumberInput
+                label="Famille payée"
+                value={values.amountPaid}
+                disabled={saving || currentPaymentStatus === "paid"}
+                onCommit={(value) =>
+                  onUpdate({
+                    amountPaid: value,
+                    paymentStatus: value <= 0 ? "pending" : value >= values.expectedTotal ? "paid" : "partial",
+                    paid: value >= values.expectedTotal,
+                  })
+                }
+              />
+              <NumberInput label="Autres aides" value={values.otherAidAmount} disabled={saving} onCommit={(value) => onUpdate({ otherAidAmount: value })} />
+            </div>
+            <div className="mt-3 rounded-md bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-700">
+              <div>Part famille : <b>{euro(values.expectedTotal)}</b></div>
+              <div>Reste famille : <b className={values.remainingFamily > 0 ? "text-rose-700" : "text-emerald-700"}>{euro(values.remainingFamily)}</b></div>
+              <div>Reste CAF : <b className={values.remainingCaf > 0 ? "text-rose-700" : "text-emerald-700"}>{euro(values.remainingCaf)}</b></div>
+            </div>
+          </section>
+
+          <section className="rounded-md border border-slate-200 p-4">
+            <h4 className="text-sm font-semibold text-slate-900">Statuts</h4>
+            <div className="mt-3 grid grid-cols-2 gap-3">
+              <label>
+                <FieldLabel>Paiement</FieldLabel>
+                <select
+                  value={currentPaymentStatus}
+                  disabled={saving}
+                  onChange={(event) => {
+                    const status = event.target.value as PaymentStatus;
+                    onUpdate({ paymentStatus: status, paid: status === "paid" });
+                  }}
+                  className="h-9 w-full rounded-md border border-slate-200 px-2 text-xs outline-none"
+                >
+                  {Object.entries(PAYMENT_STATUSES).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                </select>
+              </label>
+              <label>
+                <FieldLabel>Validation</FieldLabel>
+                <select
+                  value={currentValidationStatus}
+                  disabled={saving}
+                  onChange={(event) => onUpdate({ validationStatus: event.target.value as ValidationStatus })}
+                  className="h-9 w-full rounded-md border border-slate-200 px-2 text-xs outline-none"
+                >
+                  {Object.entries(VALIDATION_STATUSES).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                </select>
+              </label>
+            </div>
+          </section>
+
+          <section className="rounded-md border border-slate-200 p-4 lg:col-span-2">
+            <h4 className="text-sm font-semibold text-slate-900">CAF</h4>
+            <div className="mt-3 grid gap-3 md:grid-cols-5">
+              <label>
+                <FieldLabel>Statut CAF</FieldLabel>
+                <select
+                  value={currentCafStatus}
+                  disabled={saving}
+                  onChange={(event) => {
+                    const next = event.target.value as CafStatus;
+                    onUpdate({
+                      cafStatus: next,
+                      cafAid: next !== "not_requested",
+                      cafPaidAmount: next === "paid" ? numberValue(inscription.cafPaidAmount || inscription.cafApprovedAmount || inscription.cafAidAmount) : numberValue(inscription.cafPaidAmount),
+                    });
+                  }}
+                  className="h-9 w-full rounded-md border border-slate-200 px-2 text-xs outline-none"
+                >
+                  {Object.entries(CAF_STATUSES).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                </select>
+              </label>
+              <NumberInput label="Demandé" value={numberValue(inscription.cafRequestedAmount || inscription.cafAidAmount)} disabled={saving || currentCafStatus === "not_requested"} onCommit={(value) => onUpdate({ cafAid: value > 0, cafRequestedAmount: value, cafAidAmount: value })} />
+              <NumberInput label="Accordé" value={numberValue(inscription.cafApprovedAmount || inscription.cafAidAmount)} disabled={saving || currentCafStatus === "not_requested"} onCommit={(value) => onUpdate({ cafAid: value > 0, cafApprovedAmount: value, cafAidAmount: value })} />
+              <NumberInput label="Versé" value={values.cafPaidAmount} disabled={saving || currentCafStatus === "not_requested"} onCommit={(value) => onUpdate({ cafPaidAmount: value, cafStatus: value > 0 ? "paid" : currentCafStatus })} />
+              <DateInput label="Date CAF" value={inscription.cafPaymentDate || ""} disabled={saving || currentCafStatus !== "paid"} onCommit={(value) => onUpdate({ cafPaymentDate: value })} />
+            </div>
+          </section>
+
+          <section className="rounded-md border border-slate-200 p-4">
+            <h4 className="text-sm font-semibold text-slate-900">Règlement famille</h4>
+            <div className="mt-3 space-y-3">
+              <label>
+                <FieldLabel>Mode</FieldLabel>
+                <select
+                  value={inscription.paymentMethod || "other"}
+                  disabled={saving}
+                  onChange={(event) => onUpdate({ paymentMethod: event.target.value as PaymentMethod, installmentPlan: event.target.value === "installments" })}
+                  className="h-9 w-full rounded-md border border-slate-200 px-2 text-xs outline-none"
+                >
+                  {Object.entries(PAYMENT_METHODS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                </select>
+              </label>
+              {(inscription.paymentMethod || "other") === "transfer" && (
+                <div className="grid grid-cols-2 gap-2">
+                  <TextInput label="Réf. virement" value={inscription.transferReference || ""} disabled={saving} onCommit={(value) => onUpdate({ transferReference: value })} />
+                  <DateInput label="Reçu le" value={inscription.transferReceivedAt || ""} disabled={saving} onCommit={(value) => onUpdate({ transferReceivedAt: value })} />
+                </div>
+              )}
+            </div>
+          </section>
+
+          <section className="rounded-md border border-slate-200 p-4 lg:col-span-2">
+            <h4 className="text-sm font-semibold text-slate-900">Échéances</h4>
+            <div className="mt-3">
+              <label>
+                <FieldLabel>Plan</FieldLabel>
+                <select
+                  value={currentSchedule}
+                  disabled={saving}
+                  onChange={(event) => {
+                    const next = event.target.value as PaymentSchedule;
+                    onUpdate({
+                      paymentSchedule: next,
+                      installmentPlan: next !== "one_time",
+                      installmentCount: next === "two_times" ? 2 : next === "three_times" ? 3 : next === "one_time" ? 1 : numberValue(inscription.installmentCount),
+                      paymentMethod: next === "one_time" ? inscription.paymentMethod : "installments",
+                    });
+                  }}
+                  className="h-9 w-48 rounded-md border border-slate-200 px-2 text-xs outline-none"
+                >
+                  {Object.entries(PAYMENT_SCHEDULES).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+                </select>
+              </label>
+              <div className="mt-3 grid gap-2 md:grid-cols-3">
+                <InstallmentBox index={1} amount={numberValue(inscription.installment1Amount || (currentSchedule === "one_time" ? values.expectedTotal : 0))} paid={!!inscription.installment1Paid} date={inscription.installment1Date || ""} disabled={saving} onUpdate={onUpdate} />
+                {currentSchedule !== "one_time" && <InstallmentBox index={2} amount={numberValue(inscription.installment2Amount)} paid={!!inscription.installment2Paid} date={inscription.installment2Date || ""} disabled={saving} onUpdate={onUpdate} />}
+                {(currentSchedule === "three_times" || currentSchedule === "custom") && <InstallmentBox index={3} amount={numberValue(inscription.installment3Amount)} paid={!!inscription.installment3Paid} date={inscription.installment3Date || ""} disabled={saving} onUpdate={onUpdate} />}
+              </div>
+            </div>
+          </section>
+
+          <section className="rounded-md border border-slate-200 p-4 lg:col-span-3">
+            <h4 className="text-sm font-semibold text-slate-900">Notes</h4>
+            <textarea
+              defaultValue={inscription.notes || ""}
+              disabled={saving}
+              onBlur={(event) => {
+                if ((inscription.notes || "") !== event.target.value) onUpdate({ notes: event.target.value });
+              }}
+              placeholder="CAF, virement, relances, accord de paiement..."
+              className="mt-3 h-28 w-full resize-none rounded-md border border-slate-200 px-3 py-2 text-sm outline-none"
+            />
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                disabled={saving}
+                onClick={() =>
+                  onUpdate({
+                    paymentStatus: "paid",
+                    paid: true,
+                    amountPaid: values.expectedTotal,
+                    validationStatus: "validated",
+                    installment1Paid: true,
+                    installment2Paid: currentSchedule !== "one_time" ? true : inscription.installment2Paid,
+                    installment3Paid: currentSchedule === "three_times" || currentSchedule === "custom" ? true : inscription.installment3Paid,
+                  })
+                }
+                className="h-9 rounded-md border border-emerald-200 bg-emerald-50 px-3 text-xs font-medium text-emerald-800 hover:bg-emerald-100 disabled:opacity-50"
+              >
+                Famille payée
+              </button>
+              <button
+                type="button"
+                disabled={saving}
+                onClick={() => onUpdate({ cafStatus: "paid", cafAid: true, cafPaidAmount: values.cafExpected, cafPaymentDate: new Date().toISOString().slice(0, 10) })}
+                className="h-9 rounded-md border border-slate-200 px-3 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+              >
+                CAF versée
+              </button>
+            </div>
+          </section>
+        </div>
+      </div>
     </div>
   );
 }
@@ -1068,7 +1120,7 @@ function InstallmentBox({
           disabled={disabled}
           onChange={(event) => onUpdate({ [paidKey]: event.target.checked })}
         />
-        Paye
+        Payé
       </label>
       <input
         key={`${index}-${date}`}

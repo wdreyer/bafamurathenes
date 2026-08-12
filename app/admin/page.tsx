@@ -180,7 +180,7 @@ export default function AdminDashboardPage() {
       <section className="mt-5 grid gap-px overflow-hidden rounded-md border border-slate-200 bg-slate-200 md:grid-cols-2 xl:grid-cols-4">
         <Metric
           icon={CheckCircle2}
-          label="Inscriptions validees"
+          label="Inscriptions validées"
           value={dashboard.validated.length.toString()}
           detail={`${dashboard.ongoing.length} dossier(s) en cours`}
           tone="green"
@@ -201,7 +201,7 @@ export default function AdminDashboardPage() {
         />
         <Metric
           icon={HandCoins}
-          label="CAF non versee"
+          label="CAF non versée"
           value={money(dashboard.moneyStats.cafRemaining)}
           detail="Montants CAF attendus"
           tone="rose"
