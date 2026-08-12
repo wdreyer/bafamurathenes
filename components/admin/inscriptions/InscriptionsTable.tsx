@@ -300,7 +300,7 @@ export function InscriptionsTable() {
 
   return (
     <div className="space-y-6">
-      <section className="grid gap-4 md:grid-cols-5">
+      <section className="grid gap-px overflow-hidden rounded-md border border-slate-200 bg-slate-200 md:grid-cols-5">
         <Metric icon={FileText} label="Inscriptions" value={filtered.length.toString()} detail={`${inscriptions.length} au total`} />
         <Metric icon={CreditCard} label="Prix total" value={euro(totals.total)} detail="Avant aides" />
         <Metric icon={HandCoins} label="CAF attendue" value={euro(totals.cafExpected)} detail={`${euro(totals.cafRemaining)} non versee`} />
@@ -308,7 +308,7 @@ export function InscriptionsTable() {
         <Metric icon={Banknote} label="Reste famille" value={euro(totals.familyRemaining)} detail="Hors CAF attendue" />
       </section>
 
-      <section className="space-y-3 border border-slate-200 bg-white p-4">
+      <section className="space-y-3 rounded-md border border-slate-200 bg-white p-3">
         <div className="flex flex-col gap-3 xl:flex-row xl:items-center">
           <label className="relative min-w-0 flex-1">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -319,14 +319,6 @@ export function InscriptionsTable() {
               className="h-10 w-full rounded-md border border-slate-200 pl-9 pr-3 text-sm outline-none focus:border-slate-400"
             />
           </label>
-          <FilterSelect value={formation} onChange={setFormation}>
-            <option value="all">Toutes formations</option>
-            {formations.map((title) => (
-              <option key={title} value={title}>
-                {title}
-              </option>
-            ))}
-          </FilterSelect>
           <FilterSelect value={paymentStatus} onChange={(value) => setPaymentStatus(value as "all" | PaymentStatus)}>
             <option value="all">Tous paiements</option>
             {Object.entries(PAYMENT_STATUSES).map(([value, label]) => (
@@ -360,6 +352,12 @@ export function InscriptionsTable() {
           </FilterSelect>
         </div>
 
+        <FormationChips
+          value={formation}
+          formations={formations}
+          onChange={setFormation}
+        />
+
         <div className="flex flex-wrap gap-2 border-t border-slate-100 pt-3">
           <ViewButton
             active={view === "validated"}
@@ -385,13 +383,13 @@ export function InscriptionsTable() {
         </div>
       </section>
 
-      <section className="border-2 bg-white" style={{ borderColor: "#1a1530", boxShadow: "4px 4px 0 #792BB9" }}>
-        <div className="flex flex-col gap-2 border-b-2 px-4 py-4 md:flex-row md:items-end md:justify-between" style={{ borderColor: "#1a1530", background: "#fff8ec" }}>
+      <section className="overflow-hidden rounded-md border border-slate-200 bg-white">
+        <div className="flex flex-col gap-2 border-b border-slate-200 px-4 py-3 md:flex-row md:items-center md:justify-between" style={{ background: "#fff8ec" }}>
           <div>
             <p className="mura-mono text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
               {view === "validated" ? "Tableau des dossiers finalises" : view === "ongoing" ? "Tableau des dossiers a suivre" : "Tous les dossiers"}
             </p>
-            <h2 className="ed mt-1 text-3xl font-semibold italic text-slate-900">
+            <h2 className="mt-1 text-lg font-semibold text-slate-900">
               {view === "validated" ? "Inscriptions validees" : view === "ongoing" ? "Inscriptions en cours" : "Toutes les inscriptions"}
             </h2>
           </div>
@@ -746,18 +744,73 @@ function Metric({
   detail: string;
 }) {
   return (
-    <div className="border border-slate-200 bg-white p-4">
+    <div className="bg-white px-3 py-2.5">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</p>
-          <p className="mt-1 text-2xl font-semibold text-slate-900">{value}</p>
-          <p className="mt-1 text-xs text-slate-500">{detail}</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{label}</p>
+          <p className="mt-0.5 text-lg font-semibold text-slate-900">{value}</p>
+          <p className="text-[11px] text-slate-500">{detail}</p>
         </div>
-        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-md bg-slate-100 text-slate-700">
-          <Icon className="h-4 w-4" />
+        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-slate-100 text-slate-600">
+          <Icon className="h-3.5 w-3.5" />
         </span>
       </div>
     </div>
+  );
+}
+
+function FormationChips({
+  value,
+  formations,
+  onChange,
+}: {
+  value: string;
+  formations: string[];
+  onChange: (value: string) => void;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+        Formation
+      </span>
+      <ChipButton active={value === "all"} onClick={() => onChange("all")}>
+        Toutes
+      </ChipButton>
+      {formations.map((title) => (
+        <ChipButton
+          key={title}
+          active={value === title}
+          onClick={() => onChange(value === title ? "all" : title)}
+        >
+          {title}
+        </ChipButton>
+      ))}
+    </div>
+  );
+}
+
+function ChipButton({
+  active,
+  children,
+  onClick,
+}: {
+  active: boolean;
+  children: ReactNode;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={[
+        "h-8 rounded-md border px-3 text-xs font-medium transition",
+        active
+          ? "border-slate-900 bg-slate-900 text-white"
+          : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
+      ].join(" ")}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -794,26 +847,30 @@ function ViewButton({
   tone: "green" | "yellow" | "violet";
   onClick: () => void;
 }) {
-  const colors = {
-    green: { bg: "#ecfdf5", fg: "#065f46", shadow: "#10b981" },
-    yellow: { bg: "#fef9c3", fg: "#713f12", shadow: "#f5ef72" },
-    violet: { bg: "#f0e8f8", fg: "#1a1530", shadow: "#792BB9" },
+  const countClass = {
+    green: "bg-emerald-50 text-emerald-700",
+    yellow: "bg-yellow-50 text-yellow-700",
+    violet: "bg-violet-50 text-violet-700",
   }[tone];
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex h-10 items-center gap-2 border-2 px-3 text-xs font-extrabold uppercase tracking-[0.1em] transition hover:-translate-y-0.5"
-      style={{
-        borderColor: active ? "#1a1530" : "rgba(26,21,48,.18)",
-        background: active ? colors.bg : "#fff8ec",
-        color: active ? colors.fg : "#1a1530",
-        boxShadow: active ? `3px 3px 0 ${colors.shadow}` : "none",
-      }}
+      className={[
+        "inline-flex h-9 items-center gap-2 rounded-md border px-3 text-xs font-semibold transition",
+        active
+          ? "border-slate-900 bg-slate-900 text-white"
+          : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
+      ].join(" ")}
     >
       {label}
-      <span className="rounded-full bg-white px-2 py-0.5 text-[10px]" style={{ color: colors.fg }}>
+      <span
+        className={[
+          "rounded-full px-2 py-0.5 text-[10px]",
+          active ? "bg-white/15 text-white" : countClass,
+        ].join(" ")}
+      >
         {count}
       </span>
     </button>

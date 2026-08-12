@@ -18,12 +18,6 @@ import type { Formation, Inscription, Prospect } from "@/lib/types";
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
-const INK = "#1a1530";
-const CREAM = "#fefcf5";
-const PAPER = "#fff8ec";
-const VIOLET = "#792BB9";
-const YELLOW = "#F5EF72";
-
 function money(value: number) {
   return new Intl.NumberFormat("fr-FR", {
     style: "currency",
@@ -164,24 +158,14 @@ export default function AdminDashboardPage() {
 
   return (
     <main className="mura-page -mx-6 -my-6 min-h-[calc(100vh-65px)] px-6 py-6">
-      <section
-        className="overflow-hidden border-2 px-6 py-6 md:px-8"
-        style={{
-          borderColor: INK,
-          background: INK,
-          color: CREAM,
-          boxShadow: `6px 6px 0 ${YELLOW}`,
-        }}
-      >
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+      <section className="rounded-md border border-slate-200 bg-white px-4 py-4">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="mura-mono text-[11px] font-bold uppercase tracking-[0.22em]" style={{ color: YELLOW }}>
+            <p className="mura-mono text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
               Admin Murathenes
             </p>
-            <h1 className="ed mt-3 text-4xl font-semibold italic leading-none md:text-6xl">
-              Pilotage BAFA
-            </h1>
-            <p className="mt-4 max-w-2xl text-sm leading-6" style={{ color: "rgba(254,252,245,.78)" }}>
+            <h1 className="mt-1 text-2xl font-semibold tracking-tight text-slate-900">Pilotage BAFA</h1>
+            <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-500">
               Vue rapide des inscriptions, prospects, paiements familles et dossiers CAF.
             </p>
           </div>
@@ -193,7 +177,7 @@ export default function AdminDashboardPage() {
         </div>
       </section>
 
-      <section className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <section className="mt-5 grid gap-px overflow-hidden rounded-md border border-slate-200 bg-slate-200 md:grid-cols-2 xl:grid-cols-4">
         <Metric
           icon={CheckCircle2}
           label="Inscriptions validees"
@@ -224,20 +208,20 @@ export default function AdminDashboardPage() {
         />
       </section>
 
-      <section className="mt-8 grid gap-6 xl:grid-cols-[1.15fr_.85fr]">
-        <div className="border-2 bg-white p-5" style={{ borderColor: INK, boxShadow: `4px 4px 0 ${VIOLET}` }}>
+      <section className="mt-5 grid gap-4 xl:grid-cols-[1.15fr_.85fr]">
+        <div className="rounded-md border border-slate-200 bg-white p-4">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="mura-mono text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: VIOLET }}>
+              <p className="mura-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                 Prochaine session
               </p>
               <h2 className="mt-2 text-2xl font-semibold text-slate-900">
                 {dashboard.nextFormation?.title ?? "Aucune formation a venir"}
               </h2>
             </div>
-            <div className="rounded-md px-3 py-2 text-center" style={{ background: YELLOW, color: INK }}>
-              <div className="text-2xl font-black">{dashboard.daysBeforeNext ?? "-"}</div>
-              <div className="mura-mono text-[9px] font-bold uppercase">jours</div>
+            <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-center text-slate-900">
+              <div className="text-2xl font-semibold">{dashboard.daysBeforeNext ?? "-"}</div>
+              <div className="mura-mono text-[9px] font-semibold uppercase text-slate-500">jours</div>
             </div>
           </div>
 
@@ -246,8 +230,7 @@ export default function AdminDashboardPage() {
               <Link
                 key={formation.id}
                 href={`/admin/formations/${formation.id}`}
-                className="grid gap-3 border px-4 py-3 text-sm transition hover:-translate-y-0.5 hover:shadow-[3px_3px_0_#792BB9] md:grid-cols-[1fr_auto]"
-                style={{ borderColor: "rgba(26,21,48,.18)", background: PAPER }}
+                className="grid gap-3 rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-sm transition hover:bg-slate-100 md:grid-cols-[1fr_auto]"
               >
                 <div>
                   <div className="font-semibold text-slate-900">{formation.title}</div>
@@ -261,10 +244,10 @@ export default function AdminDashboardPage() {
           </div>
         </div>
 
-        <div className="border-2 bg-white p-5" style={{ borderColor: INK, boxShadow: `4px 4px 0 ${YELLOW}` }}>
+        <div className="rounded-md border border-slate-200 bg-white p-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <p className="mura-mono text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: VIOLET }}>
+              <p className="mura-mono text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-500">
                 Alertes paiement
               </p>
               <h2 className="mt-2 text-2xl font-semibold text-slate-900">A suivre</h2>
@@ -323,8 +306,7 @@ function AdminAction({
   return (
     <Link
       href={href}
-      className="inline-flex items-center justify-center gap-2 border-2 px-3 py-2 text-xs font-extrabold uppercase tracking-[0.12em] no-underline transition hover:-translate-y-0.5"
-      style={{ borderColor: CREAM, background: YELLOW, color: INK }}
+      className="inline-flex items-center justify-center gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold uppercase tracking-[0.08em] text-slate-700 no-underline transition hover:bg-slate-100"
     >
       <Icon className="h-4 w-4" />
       {label}
@@ -354,17 +336,17 @@ function Metric({
   }[tone];
 
   return (
-    <div className="border-2 bg-white p-4" style={{ borderColor: INK, boxShadow: `4px 4px 0 ${INK}` }}>
+    <div className="bg-white px-3 py-2.5">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="mura-mono text-[10px] font-bold uppercase tracking-[0.16em] text-slate-500">
+          <p className="mura-mono text-[10px] font-semibold uppercase tracking-wide text-slate-500">
             {label}
           </p>
-          <p className="mt-2 text-3xl font-black text-slate-900">{value}</p>
-          <p className="mt-1 text-xs text-slate-500">{detail}</p>
+          <p className="mt-0.5 text-lg font-semibold text-slate-900">{value}</p>
+          <p className="text-[11px] text-slate-500">{detail}</p>
         </div>
-        <span className={`grid h-10 w-10 place-items-center rounded-md ${toneClass}`}>
-          <Icon className="h-5 w-5" />
+        <span className={`grid h-7 w-7 shrink-0 place-items-center rounded-md ${toneClass}`}>
+          <Icon className="h-3.5 w-3.5" />
         </span>
       </div>
     </div>
