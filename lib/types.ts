@@ -60,6 +60,10 @@ export type Prospect = {
   id: string;
   origin: "contact_form" | "aides_form" | "yapla" | "manual" | "inscription";
   leadType: string;
+  priority?: "low" | "normal" | "high";
+  preferredContact?: "email" | "phone" | "any";
+  nextFollowUpDate?: string;
+  qualification?: "cold" | "warm" | "hot";
   name?: string;
   firstName?: string;
   lastName?: string;

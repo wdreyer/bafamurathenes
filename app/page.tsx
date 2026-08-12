@@ -52,31 +52,22 @@ type HomeSession = {
 
 const FALLBACK_SESSIONS: HomeSession[] = [
   {
-    id: "fg-juin-2026",
+    id: "fg-toussaint-2026",
     href: "/formations",
     type: "formation_generale",
-    title: "Formation Générale",
-    startDate: "2026-06-26",
-    endDate: "2026-07-04",
+    title: "Formation Générale Toussaint",
+    startDate: "2026-10-17",
+    endDate: "2026-10-25",
     price: 550,
   },
   {
-    id: "appro-juin-2026",
+    id: "appro-toussaint-2026",
     href: "/formations",
     type: "approfondissement_sejour_etranger",
-    title: "Étape 3 · Approfondissement séjour à l'étranger",
-    startDate: "2026-06-28",
-    endDate: "2026-07-04",
+    title: "Approfondissement Toussaint",
+    startDate: "2026-10-19",
+    endDate: "2026-10-25",
     price: 450,
-  },
-  {
-    id: "fg-octobre-2026",
-    href: "/formations",
-    type: "formation_generale",
-    title: "Formation Générale",
-    startDate: "2026-10-24",
-    endDate: "2026-10-31",
-    price: 550,
   },
 ];
 
@@ -219,10 +210,9 @@ export default function HomePage() {
       });
     };
 
-    const timeout = window.setTimeout(loadFormations, 1800);
+    loadFormations();
     return () => {
       cancelled = true;
-      window.clearTimeout(timeout);
       unsubscribe?.();
     };
   }, []);
@@ -348,7 +338,7 @@ export default function HomePage() {
                 letterSpacing: 0,
               }}
             >
-              BAFA <span className="ed block md:inline" style={{ color: YELLOW, fontStyle: "italic", fontWeight: 650 }}>cet été.</span>
+              BAFA <span className="ed block md:inline" style={{ color: YELLOW, fontStyle: "italic", fontWeight: 650 }}>cet automne.</span>
             </h1>
 
             <p style={{ margin: "22px 0 0", maxWidth: 560, color: CREAM, fontSize: 18, lineHeight: 1.55, overflowWrap: "break-word" }}>
