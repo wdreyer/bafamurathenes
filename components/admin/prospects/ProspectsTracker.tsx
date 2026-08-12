@@ -29,6 +29,7 @@ import type { Inscription, Prospect, ProspectStatus } from "@/lib/types";
 
 type PaymentStatus = NonNullable<Inscription["paymentStatus"]>;
 type PaymentMethod = Inscription["paymentMethod"];
+type CafStatus = NonNullable<Inscription["cafStatus"]>;
 type SortKey = "date_desc" | "date_asc" | "name_asc" | "formation_asc" | "remaining_desc";
 type RowKind = "prospect" | "inscription";
 
@@ -61,9 +62,14 @@ type Row = {
   totalPrice: number;
   amountPaid: number;
   cafAid: boolean;
+  cafStatus?: CafStatus;
   cafAidAmount: number;
+  cafPaidAmount: number;
   otherAidAmount: number;
+  transferReference?: string;
+  transferReceivedAt?: string;
   installmentPlan: boolean;
+  paymentSchedule?: Inscription["paymentSchedule"];
   installmentCount: number;
   installmentAmount: number;
   nextPaymentDate?: string;
@@ -102,6 +108,14 @@ const PAYMENT_METHODS: Record<PaymentMethod, string> = {
   check: "Cheque",
   installments: "Plusieurs fois",
   other: "Autre",
+};
+
+const CAF_STATUSES: Record<CafStatus, string> = {
+  not_requested: "Pas de CAF",
+  requested: "Demandee",
+  approved: "Accordee",
+  paid: "Versee",
+  rejected: "Refusee",
 };
 
 const PRIORITY_LABELS: Record<NonNullable<Prospect["priority"]>, string> = {
@@ -175,13 +189,21 @@ function inscriptionName(inscription: Inscription) {
 function financials(inscription: Partial<Inscription>) {
   const totalPrice = numberValue(inscription.totalPrice ?? inscription.amount);
   const cafAid = Boolean(inscription.cafAid);
-  const cafAidAmount = cafAid ? numberValue(inscription.cafAidAmount) : 0;
+  const cafAidAmount = cafAid
+    ? numberValue(
+        inscription.cafApprovedAmount ||
+          inscription.cafAidAmount ||
+          inscription.cafRequestedAmount,
+      )
+    : 0;
+  const cafPaidAmount =
+    inscription.cafStatus === "paid" ? numberValue(inscription.cafPaidAmount || cafAidAmount) : 0;
   const otherAidAmount = numberValue(inscription.otherAidAmount);
   const netPrice = Math.max(0, totalPrice - cafAidAmount - otherAidAmount);
   const amountPaid = inscription.paid ? netPrice : numberValue(inscription.amountPaid);
   const remaining = Math.max(0, netPrice - amountPaid);
 
-  return { totalPrice, cafAid, cafAidAmount, otherAidAmount, amountPaid, netPrice, remaining };
+  return { totalPrice, cafAid, cafAidAmount, cafPaidAmount, otherAidAmount, amountPaid, netPrice, remaining };
 }
 
 function prospectToRow(prospect: Prospect): Row {
@@ -210,9 +232,14 @@ function prospectToRow(prospect: Prospect): Row {
     totalPrice: 0,
     amountPaid: 0,
     cafAid: false,
+    cafStatus: "not_requested",
     cafAidAmount: 0,
+    cafPaidAmount: 0,
     otherAidAmount: 0,
+    transferReference: "",
+    transferReceivedAt: "",
     installmentPlan: false,
+    paymentSchedule: "one_time",
     installmentCount: 0,
     installmentAmount: 0,
     remaining: 0,
@@ -247,9 +274,14 @@ function inscriptionToRow(inscription: Inscription): Row {
     totalPrice: money.totalPrice,
     amountPaid: money.amountPaid,
     cafAid: money.cafAid,
+    cafStatus: inscription.cafStatus || (money.cafAid ? "requested" : "not_requested"),
     cafAidAmount: money.cafAidAmount,
+    cafPaidAmount: money.cafPaidAmount,
     otherAidAmount: money.otherAidAmount,
+    transferReference: inscription.transferReference,
+    transferReceivedAt: inscription.transferReceivedAt,
     installmentPlan: Boolean(inscription.installmentPlan),
+    paymentSchedule: inscription.paymentSchedule,
     installmentCount: numberValue(inscription.installmentCount),
     installmentAmount: numberValue(inscription.installmentAmount),
     nextPaymentDate: inscription.nextPaymentDate,
@@ -463,7 +495,9 @@ export function ProspectsTracker() {
       "Paye",
       "Reste",
       "CAF",
+      "Statut CAF",
       "Montant CAF",
+      "CAF versee",
       "Relance",
       "Notes",
     ];
@@ -482,7 +516,9 @@ export function ProspectsTracker() {
         row.amountPaid || "",
         row.remaining || "",
         row.cafAid ? "Oui" : "Non",
+        row.cafStatus ? CAF_STATUSES[row.cafStatus] : "",
         row.cafAidAmount || "",
+        row.cafPaidAmount || "",
         row.nextFollowUpDate || row.nextPaymentDate || "",
         row.notes || "",
       ]
@@ -809,6 +845,12 @@ function LeadRow({
               <div>Net : <b>{euro(row.netPrice)}</b></div>
               <div>Paye : <b>{euro(row.amountPaid)}</b></div>
               <div>Reste : <b className={row.remaining > 0 ? "text-rose-700" : "text-emerald-700"}>{euro(row.remaining)}</b></div>
+              {row.paymentMethod === "transfer" && (
+                <div className="mt-1 text-slate-500">
+                  Virement {row.transferReceivedAt ? `recu le ${row.transferReceivedAt}` : "a suivre"}
+                  {row.transferReference ? ` · ${row.transferReference}` : ""}
+                </div>
+              )}
             </div>
           </div>
         ) : (
@@ -819,6 +861,27 @@ function LeadRow({
       <td className="border-b border-slate-100 px-3 py-3">
         {isInscription ? (
           <div className="space-y-2">
+            <FieldLabel>CAF</FieldLabel>
+            <select
+              value={row.cafStatus || "not_requested"}
+              disabled={saving}
+              onChange={(event) => {
+                const next = event.target.value as CafStatus;
+                onUpdateInscription(row.id, {
+                  cafStatus: next,
+                  cafAid: next !== "not_requested",
+                  cafPaidAmount:
+                    next === "paid" ? row.cafPaidAmount || row.cafAidAmount : row.cafPaidAmount,
+                });
+              }}
+              className="h-9 w-32 rounded-md border border-slate-200 px-2 text-xs outline-none"
+            >
+              {Object.entries(CAF_STATUSES).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
             <label className="flex items-center gap-2 text-xs text-slate-700">
               <input
                 type="checkbox"
@@ -834,11 +897,22 @@ function LeadRow({
               Aide CAF
             </label>
             <NumberInput
-              label="CAF"
+              label="CAF attendue"
               value={row.cafAidAmount}
               disabled={saving || !row.cafAid}
               onCommit={(value) =>
                 onUpdateInscription(row.id, { cafAid: value > 0, cafAidAmount: value })
+              }
+            />
+            <NumberInput
+              label="CAF versee"
+              value={row.cafPaidAmount}
+              disabled={saving || !row.cafAid}
+              onCommit={(value) =>
+                onUpdateInscription(row.id, {
+                  cafPaidAmount: value,
+                  cafStatus: value > 0 ? "paid" : row.cafStatus,
+                })
               }
             />
             <NumberInput
