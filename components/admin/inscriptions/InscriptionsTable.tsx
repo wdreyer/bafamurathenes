@@ -29,6 +29,8 @@ type PaymentStatus = NonNullable<Inscription["paymentStatus"]>;
 type ValidationStatus = NonNullable<Inscription["validationStatus"]>;
 type CafStatus = NonNullable<Inscription["cafStatus"]>;
 type PaymentSchedule = NonNullable<Inscription["paymentSchedule"]>;
+type TableView = "validated" | "ongoing" | "all";
+type SortKey = "date_desc" | "name_asc" | "formation_asc" | "remaining_desc" | "caf_remaining_desc";
 
 const PAYMENT_METHODS: Record<PaymentMethod, string> = {
   card: "Carte",
@@ -166,6 +168,8 @@ export function InscriptionsTable() {
   const [paymentMethod, setPaymentMethod] = useState<"all" | PaymentMethod>("all");
   const [cafStatus, setCafStatus] = useState<"all" | CafStatus>("all");
   const [schedule, setSchedule] = useState<"all" | PaymentSchedule>("all");
+  const [view, setView] = useState<TableView>("validated");
+  const [sort, setSort] = useState<SortKey>("date_desc");
   const [savingId, setSavingId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -195,7 +199,7 @@ export function InscriptionsTable() {
 
   const filtered = useMemo(() => {
     const term = normalize(search);
-    return inscriptions.filter((inscription) => {
+    const rows = inscriptions.filter((inscription) => {
       const currentPaymentStatus =
         inscription.paymentStatus || (inscription.paid ? "paid" : "pending");
       const currentMethod = inscription.paymentMethod || "other";
@@ -224,7 +228,27 @@ export function InscriptionsTable() {
         (!term || haystack.includes(term))
       );
     });
-  }, [cafStatus, formation, inscriptions, paymentMethod, paymentStatus, schedule, search]);
+
+    return rows.sort((a, b) => {
+      if (sort === "name_asc") return contactName(a).localeCompare(contactName(b));
+      if (sort === "formation_asc") return (a.formationTitle || "").localeCompare(b.formationTitle || "");
+      if (sort === "remaining_desc") return financials(b).remainingFamily - financials(a).remainingFamily;
+      if (sort === "caf_remaining_desc") return financials(b).remainingCaf - financials(a).remainingCaf;
+      return (dateFromUnknown(b.createdAt)?.getTime() || 0) - (dateFromUnknown(a.createdAt)?.getTime() || 0);
+    });
+  }, [cafStatus, formation, inscriptions, paymentMethod, paymentStatus, schedule, search, sort]);
+
+  const validatedRows = useMemo(
+    () => filtered.filter((inscription) => (inscription.validationStatus || "pending") === "validated"),
+    [filtered],
+  );
+
+  const ongoingRows = useMemo(
+    () => filtered.filter((inscription) => (inscription.validationStatus || "pending") !== "validated"),
+    [filtered],
+  );
+
+  const displayRows = view === "validated" ? validatedRows : view === "ongoing" ? ongoingRows : filtered;
 
   const totals = useMemo(() => {
     return filtered.reduce(
@@ -327,10 +351,55 @@ export function InscriptionsTable() {
               <option key={value} value={value}>{label}</option>
             ))}
           </FilterSelect>
+          <FilterSelect value={sort} onChange={(value) => setSort(value as SortKey)}>
+            <option value="date_desc">Tri : plus recent</option>
+            <option value="name_asc">Tri : nom A-Z</option>
+            <option value="formation_asc">Tri : formation</option>
+            <option value="remaining_desc">Tri : reste famille</option>
+            <option value="caf_remaining_desc">Tri : CAF restante</option>
+          </FilterSelect>
+        </div>
+
+        <div className="flex flex-wrap gap-2 border-t border-slate-100 pt-3">
+          <ViewButton
+            active={view === "validated"}
+            label="Validés"
+            count={validatedRows.length}
+            tone="green"
+            onClick={() => setView("validated")}
+          />
+          <ViewButton
+            active={view === "ongoing"}
+            label="En cours"
+            count={ongoingRows.length}
+            tone="yellow"
+            onClick={() => setView("ongoing")}
+          />
+          <ViewButton
+            active={view === "all"}
+            label="Tous"
+            count={filtered.length}
+            tone="violet"
+            onClick={() => setView("all")}
+          />
         </div>
       </section>
 
-      <section className="overflow-x-auto border border-slate-200 bg-white">
+      <section className="border-2 bg-white" style={{ borderColor: "#1a1530", boxShadow: "4px 4px 0 #792BB9" }}>
+        <div className="flex flex-col gap-2 border-b-2 px-4 py-4 md:flex-row md:items-end md:justify-between" style={{ borderColor: "#1a1530", background: "#fff8ec" }}>
+          <div>
+            <p className="mura-mono text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
+              {view === "validated" ? "Tableau des dossiers finalises" : view === "ongoing" ? "Tableau des dossiers a suivre" : "Tous les dossiers"}
+            </p>
+            <h2 className="ed mt-1 text-3xl font-semibold italic text-slate-900">
+              {view === "validated" ? "Inscriptions validees" : view === "ongoing" ? "Inscriptions en cours" : "Toutes les inscriptions"}
+            </h2>
+          </div>
+          <div className="text-sm font-semibold text-slate-700">
+            {displayRows.length} ligne(s)
+          </div>
+        </div>
+        <div className="overflow-x-auto">
         <table className="min-w-[1720px] w-full border-collapse text-sm">
           <thead>
             <tr className="bg-slate-50 text-left text-xs font-semibold uppercase text-slate-500">
@@ -346,7 +415,13 @@ export function InscriptionsTable() {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((inscription) => {
+            {displayRows.length === 0 ? (
+              <tr>
+                <td colSpan={9} className="px-4 py-10 text-center text-sm text-slate-500">
+                  Aucun dossier dans cette vue avec les filtres actuels.
+                </td>
+              </tr>
+            ) : displayRows.map((inscription) => {
               const values = financials(inscription);
               const currentPaymentStatus =
                 inscription.paymentStatus || (inscription.paid ? "paid" : "pending");
@@ -354,9 +429,15 @@ export function InscriptionsTable() {
               const currentCafStatus = getCafStatus(inscription);
               const currentSchedule = getSchedule(inscription);
               const disabled = savingId === inscription.id;
+              const rowTone =
+                currentValidationStatus === "validated"
+                  ? "bg-emerald-50/45"
+                  : currentPaymentStatus === "partial"
+                    ? "bg-yellow-50/65"
+                    : "bg-white";
 
               return (
-                <tr key={inscription.id} className="align-top">
+                <tr key={inscription.id} className={`align-top ${rowTone}`}>
                   <TD>
                     <div className="font-medium text-slate-900">
                       {contactName(inscription) || "Sans nom"}
@@ -367,6 +448,10 @@ export function InscriptionsTable() {
                     <div className="mt-2 flex gap-2">
                       {inscription.email && <IconLink href={`mailto:${inscription.email}`} icon={Mail} label="Email" />}
                       {inscription.phone && <IconLink href={`tel:${inscription.phone.replace(/\s/g, "")}`} icon={Phone} label="Appeler" />}
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-1">
+                      <StatusBadge label={VALIDATION_STATUSES[currentValidationStatus]} tone={currentValidationStatus === "validated" ? "green" : "yellow"} />
+                      <StatusBadge label={PAYMENT_STATUSES[currentPaymentStatus]} tone={currentPaymentStatus === "paid" ? "green" : currentPaymentStatus === "partial" ? "yellow" : "rose"} />
                     </div>
                   </TD>
 
@@ -643,6 +728,7 @@ export function InscriptionsTable() {
             })}
           </tbody>
         </table>
+        </div>
       </section>
     </div>
   );
@@ -692,6 +778,65 @@ function FilterSelect({
     >
       {children}
     </select>
+  );
+}
+
+function ViewButton({
+  active,
+  label,
+  count,
+  tone,
+  onClick,
+}: {
+  active: boolean;
+  label: string;
+  count: number;
+  tone: "green" | "yellow" | "violet";
+  onClick: () => void;
+}) {
+  const colors = {
+    green: { bg: "#ecfdf5", fg: "#065f46", shadow: "#10b981" },
+    yellow: { bg: "#fef9c3", fg: "#713f12", shadow: "#f5ef72" },
+    violet: { bg: "#f0e8f8", fg: "#1a1530", shadow: "#792BB9" },
+  }[tone];
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex h-10 items-center gap-2 border-2 px-3 text-xs font-extrabold uppercase tracking-[0.1em] transition hover:-translate-y-0.5"
+      style={{
+        borderColor: active ? "#1a1530" : "rgba(26,21,48,.18)",
+        background: active ? colors.bg : "#fff8ec",
+        color: active ? colors.fg : "#1a1530",
+        boxShadow: active ? `3px 3px 0 ${colors.shadow}` : "none",
+      }}
+    >
+      {label}
+      <span className="rounded-full bg-white px-2 py-0.5 text-[10px]" style={{ color: colors.fg }}>
+        {count}
+      </span>
+    </button>
+  );
+}
+
+function StatusBadge({
+  label,
+  tone,
+}: {
+  label: string;
+  tone: "green" | "yellow" | "rose";
+}) {
+  const className = {
+    green: "bg-emerald-100 text-emerald-800",
+    yellow: "bg-yellow-100 text-yellow-800",
+    rose: "bg-rose-100 text-rose-800",
+  }[tone];
+
+  return (
+    <span className={`rounded-full px-2 py-1 text-[10px] font-bold uppercase ${className}`}>
+      {label}
+    </span>
   );
 }
 
