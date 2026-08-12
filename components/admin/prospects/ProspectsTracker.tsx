@@ -180,6 +180,16 @@ function prospectName(prospect: Prospect) {
   );
 }
 
+function hasPersonIdentity(prospect: Prospect) {
+  return Boolean(
+    prospect.name?.trim() ||
+      prospect.firstName?.trim() ||
+      prospect.lastName?.trim() ||
+      prospect.email?.trim() ||
+      prospect.phone?.trim(),
+  );
+}
+
 function inscriptionName(inscription: Inscription) {
   return (
     [inscription.firstName, inscription.lastName].filter(Boolean).join(" ") ||
@@ -355,6 +365,7 @@ export function ProspectsTracker() {
   const rows = useMemo<Row[]>(() => {
     const prospectRows = prospects
       .filter((prospect) => (prospect.status || "new") !== "registered")
+      .filter((prospect) => prospect.origin !== "yapla" || hasPersonIdentity(prospect))
       .map(prospectToRow);
     const inscriptionRows = inscriptions
       .filter((inscription) => (inscription.validationStatus || "pending") !== "validated")
@@ -775,7 +786,7 @@ function LeadRow({
           <div className="min-w-0">
             <div className="font-semibold text-slate-900">{row.name}</div>
             <div className="mt-0.5 text-xs text-slate-500">
-              {ORIGIN_LABELS[row.origin]} ? {formatDate(row.createdAt, true)}
+              {ORIGIN_LABELS[row.origin]} - {formatDate(row.createdAt, true)}
             </div>
           </div>
         </div>
@@ -801,7 +812,7 @@ function LeadRow({
           <div className="text-xs leading-5 text-slate-600">
             <div className="font-medium text-slate-900">{PAYMENT_STATUSES[row.paymentStatus || "pending"]}</div>
             <div>{PAYMENT_METHODS[row.paymentMethod || "other"]}</div>
-            <div>Pay? : <b>{euro(row.amountPaid)}</b></div>
+            <div>Payé : <b>{euro(row.amountPaid)}</b></div>
             <div>Reste : <b className={row.remaining > 0 ? "text-rose-700" : "text-emerald-700"}>{euro(row.remaining)}</b></div>
           </div>
         ) : (
@@ -817,7 +828,7 @@ function LeadRow({
             {row.otherAidAmount > 0 && <div>Autres aides : {euro(row.otherAidAmount)}</div>}
           </div>
         ) : (
-          <div className="text-xs text-slate-500">{row.department || row.quotient ? "Aides ? qualifier" : "-"}</div>
+          <div className="text-xs text-slate-500">{row.department || row.quotient ? "Aides à qualifier" : "-"}</div>
         )}
       </td>
 
@@ -841,7 +852,7 @@ function LeadRow({
             }}
             className="h-8 rounded-md border border-slate-200 px-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
           >
-            D?tails
+            Détails
           </button>
           {isInscription ? (
             <button
@@ -871,7 +882,7 @@ function LeadRow({
               }}
               className="h-8 rounded-md border border-slate-200 px-2 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
             >
-              Contact?
+              Contacté
             </button>
           )}
         </div>
