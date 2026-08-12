@@ -249,18 +249,24 @@ function prospectToRow(prospect: Prospect): Row {
 
 function inscriptionToRow(inscription: Inscription): Row {
   const money = financials(inscription);
+  const validationStatus = inscription.validationStatus || "pending";
   return {
     rowId: `inscription-${inscription.id}`,
     kind: "inscription",
     id: inscription.id,
     origin: "inscription",
-    leadType: "Inscription validee",
+    leadType: validationStatus === "validated" ? "Inscription validee" : "Inscription en cours",
     name: inscriptionName(inscription),
     email: inscription.email,
     phone: inscription.phone,
     formationId: inscription.formationId,
     formationTitle: inscription.formationTitle,
-    status: inscription.validationStatus === "cancelled" ? "closed" : "registered",
+    status:
+      validationStatus === "cancelled"
+        ? "closed"
+        : validationStatus === "validated"
+          ? "registered"
+          : "to_contact",
     priority: "normal",
     qualification: "hot",
     preferredContact: "any",
@@ -269,7 +275,7 @@ function inscriptionToRow(inscription: Inscription): Row {
     createdAt: inscription.createdAt,
     paymentStatus: inscription.paymentStatus || (inscription.paid ? "paid" : "pending"),
     paymentMethod: inscription.paymentMethod || "other",
-    validationStatus: inscription.validationStatus || "validated",
+    validationStatus,
     paid: inscription.paid,
     totalPrice: money.totalPrice,
     amountPaid: money.amountPaid,
@@ -345,7 +351,14 @@ export function ProspectsTracker() {
   }, []);
 
   const rows = useMemo<Row[]>(() => {
-    return [...prospects.map(prospectToRow), ...inscriptions.map(inscriptionToRow)];
+    const prospectRows = prospects
+      .filter((prospect) => (prospect.status || "new") !== "registered")
+      .map(prospectToRow);
+    const inscriptionRows = inscriptions
+      .filter((inscription) => (inscription.validationStatus || "pending") !== "validated")
+      .map(inscriptionToRow);
+
+    return [...prospectRows, ...inscriptionRows];
   }, [inscriptions, prospects]);
 
   const formationOptions = useMemo(() => {
@@ -409,14 +422,13 @@ export function ProspectsTracker() {
     const openProspects = rows.filter((row) =>
       ["new", "to_contact", "contacted"].includes(row.status),
     );
-    const registered = rows.filter((row) => row.status === "registered");
     const paymentRows = rows.filter((row) => row.kind === "inscription");
 
     return {
       total: rows.length,
       open: openProspects.length,
       toContact: rows.filter((row) => row.status === "to_contact" || row.status === "new").length,
-      registered: registered.length,
+      ongoingInscriptions: paymentRows.length,
       paid: paymentRows.filter((row) => row.paymentStatus === "paid").length,
       partial: paymentRows.filter((row) => row.paymentStatus === "partial").length,
       remaining: paymentRows.reduce((sum, row) => sum + row.remaining, 0),
@@ -541,7 +553,7 @@ export function ProspectsTracker() {
       <section className="grid gap-px overflow-hidden rounded-md border border-slate-200 bg-slate-200 md:grid-cols-4">
         <Metric icon={UserRoundCheck} label="Contacts suivis" value={stats.total.toString()} detail={`${stats.open} prospects ouverts`} />
         <Metric icon={CalendarClock} label="A relancer" value={stats.toContact.toString()} detail="Nouveaux + a recontacter" />
-        <Metric icon={CheckCircle2} label="Inscrits valides" value={stats.registered.toString()} detail={`${stats.paid} payes, ${stats.partial} partiels`} />
+        <Metric icon={CheckCircle2} label="Inscriptions en cours" value={stats.ongoingInscriptions.toString()} detail={`${stats.paid} payes, ${stats.partial} partiels`} />
         <Metric icon={Euro} label="Reste a encaisser" value={euro(stats.remaining)} detail={`${stats.caf} dossiers CAF coches`} />
       </section>
 
