@@ -504,7 +504,7 @@ export function InscriptionsTable() {
                           event.stopPropagation();
                           setSelectedInscriptionId(inscription.id);
                         }}
-                        className="h-8 rounded-md border border-slate-200 px-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                        className="h-8 cursor-pointer rounded-md border border-slate-200 px-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
                       >
                         Détails
                       </button>
@@ -523,7 +523,7 @@ export function InscriptionsTable() {
                             installment3Paid: currentSchedule === "three_times" || currentSchedule === "custom" ? true : inscription.installment3Paid,
                           });
                         }}
-                        className="inline-flex h-8 items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 text-xs font-medium text-emerald-800 hover:bg-emerald-100 disabled:opacity-50"
+                        className="inline-flex h-8 cursor-pointer items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 text-xs font-medium text-emerald-800 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         <Check className="h-3.5 w-3.5" />
                         Payé
@@ -565,222 +565,114 @@ function InscriptionDetailsModal({
   const currentValidationStatus = inscription.validationStatus || "pending";
   const currentCafStatus = getCafStatus(inscription);
   const currentSchedule = getSchedule(inscription);
+  const isPaid = currentPaymentStatus === "paid";
+  const isValidated = currentValidationStatus === "validated";
+  const hasCaf = currentCafStatus !== "not_requested";
+  const paymentMethod = inscription.paymentMethod || "other";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4 py-6">
-      <div className="max-h-[92vh] w-full max-w-5xl overflow-y-auto rounded-md border border-slate-200 bg-white shadow-xl">
-        <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-slate-200 bg-white px-5 py-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-3 py-4">
+      <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-md border border-slate-200 bg-white shadow-xl">
+        <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-slate-200 bg-white px-4 py-3">
           <div>
-            <h3 className="text-lg font-semibold text-slate-900">
-              {contactName(inscription) || "Inscription sans nom"}
-            </h3>
-            <p className="mt-1 text-sm text-slate-500">
-              {cleanFormationTitle(inscription.formationTitle) || "Formation non renseignée"} · inscrit le {formatDate(inscription.createdAt)}
-            </p>
+            <h3 className="text-base font-semibold text-slate-900">{contactName(inscription) || "Inscription sans nom"}</h3>
+            <p className="mt-0.5 text-xs text-slate-500">{cleanFormationTitle(inscription.formationTitle) || "Formation non renseignee"} - {formatDate(inscription.createdAt)}</p>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="h-8 rounded-md border border-slate-200 px-3 text-xs font-medium text-slate-700 hover:bg-slate-50"
-          >
-            Fermer
-          </button>
+          <button type="button" onClick={onClose} className="h-8 cursor-pointer rounded-md border border-slate-200 px-3 text-xs font-medium text-slate-700 hover:bg-slate-50">Fermer</button>
         </div>
 
-        <div className="grid gap-4 p-5 lg:grid-cols-3">
-          <section className="rounded-md border border-slate-200 p-4">
-            <h4 className="text-sm font-semibold text-slate-900">Contact</h4>
-            <div className="mt-3 space-y-2 text-sm text-slate-600">
+        <div className="grid gap-3 p-4 md:grid-cols-2">
+          <section className="rounded-md border border-slate-200 p-3">
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Contact</h4>
+            <div className="mt-2 space-y-1 text-sm text-slate-700">
               <div>Email : {inscription.email || "-"}</div>
-              <div>Téléphone : {inscription.phone || "-"}</div>
+              <div>Telephone : {inscription.phone || "-"}</div>
               <div>Tarif : {inscription.tariff || "-"}</div>
-              <div>Source : {inscription.source || "-"}</div>
             </div>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {inscription.email && <IconLink href={`mailto:${inscription.email}`} icon={Mail} label="Email" />}
-              {inscription.phone && <IconLink href={`tel:${inscription.phone.replace(/\s/g, "")}`} icon={Phone} label="Appeler" />}
+            <div className="mt-3 flex flex-wrap gap-2">
+              {inscription.email && <IconLink href={"mailto:" + inscription.email} icon={Mail} label="Email" />}
+              {inscription.phone && <IconLink href={"tel:" + inscription.phone.replace(/\s/g, "")} icon={Phone} label="Appeler" />}
             </div>
           </section>
 
-          <section className="rounded-md border border-slate-200 p-4">
-            <h4 className="text-sm font-semibold text-slate-900">Montants</h4>
-            <div className="mt-3 grid grid-cols-2 gap-3">
+          <section className="rounded-md border border-slate-200 p-3">
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Statut</h4>
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <ToggleButton active={isPaid} disabled={saving} onClick={() => onUpdate({ paymentStatus: isPaid ? "pending" : "paid", paid: !isPaid, amountPaid: !isPaid ? values.expectedTotal : values.amountPaid })}>Paye</ToggleButton>
+              <ToggleButton active={isValidated} disabled={saving} onClick={() => onUpdate({ validationStatus: isValidated ? "pending" : "validated" })}>Valide</ToggleButton>
+              <ToggleButton active={currentPaymentStatus === "partial"} disabled={saving} onClick={() => onUpdate({ paymentStatus: "partial", paid: false })}>Partiel</ToggleButton>
+              <ToggleButton active={hasCaf} disabled={saving} onClick={() => onUpdate({ cafAid: !hasCaf, cafStatus: hasCaf ? "not_requested" : "requested" })}>CAF</ToggleButton>
+            </div>
+          </section>
+
+          <section className="rounded-md border border-slate-200 p-3 md:col-span-2">
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Montants</h4>
+            <div className="mt-2 grid grid-cols-2 gap-2 md:grid-cols-5">
               <NumberInput label="Prix total" value={values.totalPrice} disabled={saving} onCommit={(value) => onUpdate({ totalPrice: value, amount: value })} />
-              <NumberInput
-                label="Famille payée"
-                value={values.amountPaid}
-                disabled={saving || currentPaymentStatus === "paid"}
-                onCommit={(value) =>
-                  onUpdate({
-                    amountPaid: value,
-                    paymentStatus: value <= 0 ? "pending" : value >= values.expectedTotal ? "paid" : "partial",
-                    paid: value >= values.expectedTotal,
-                  })
-                }
-              />
+              <NumberInput label="Famille payee" value={values.amountPaid} disabled={saving || currentPaymentStatus === "paid"} onCommit={(value) => onUpdate({ amountPaid: value, paymentStatus: value <= 0 ? "pending" : value >= values.expectedTotal ? "paid" : "partial", paid: value >= values.expectedTotal })} />
               <NumberInput label="Autres aides" value={values.otherAidAmount} disabled={saving} onCommit={(value) => onUpdate({ otherAidAmount: value })} />
+              <NumberInput label="CAF prevue" value={values.cafExpected} disabled={saving || !hasCaf} onCommit={(value) => onUpdate({ cafAid: value > 0, cafAidAmount: value, cafApprovedAmount: value, cafStatus: value > 0 ? "approved" : "not_requested" })} />
+              <NumberInput label="CAF versee" value={values.cafPaidAmount} disabled={saving || !hasCaf} onCommit={(value) => onUpdate({ cafPaidAmount: value, cafStatus: value > 0 ? "paid" : currentCafStatus })} />
             </div>
             <div className="mt-3 rounded-md bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-700">
-              <div>Part famille : <b>{euro(values.expectedTotal)}</b></div>
-              <div>Reste famille : <b className={values.remainingFamily > 0 ? "text-rose-700" : "text-emerald-700"}>{euro(values.remainingFamily)}</b></div>
-              <div>Reste CAF : <b className={values.remainingCaf > 0 ? "text-rose-700" : "text-emerald-700"}>{euro(values.remainingCaf)}</b></div>
+              <span>Famille : <b>{euro(values.expectedTotal)}</b></span>
+              <span className="ml-3">Reste famille : <b className={values.remainingFamily > 0 ? "text-rose-700" : "text-emerald-700"}>{euro(values.remainingFamily)}</b></span>
+              <span className="ml-3">Reste CAF : <b className={values.remainingCaf > 0 ? "text-rose-700" : "text-emerald-700"}>{euro(values.remainingCaf)}</b></span>
             </div>
           </section>
 
-          <section className="rounded-md border border-slate-200 p-4">
-            <h4 className="text-sm font-semibold text-slate-900">Statuts</h4>
-            <div className="mt-3 grid grid-cols-2 gap-3">
-              <label>
-                <FieldLabel>Paiement</FieldLabel>
-                <select
-                  value={currentPaymentStatus}
-                  disabled={saving}
-                  onChange={(event) => {
-                    const status = event.target.value as PaymentStatus;
-                    onUpdate({ paymentStatus: status, paid: status === "paid" });
-                  }}
-                  className="h-9 w-full rounded-md border border-slate-200 px-2 text-xs outline-none"
-                >
-                  {Object.entries(PAYMENT_STATUSES).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-                </select>
-              </label>
-              <label>
-                <FieldLabel>Validation</FieldLabel>
-                <select
-                  value={currentValidationStatus}
-                  disabled={saving}
-                  onChange={(event) => onUpdate({ validationStatus: event.target.value as ValidationStatus })}
-                  className="h-9 w-full rounded-md border border-slate-200 px-2 text-xs outline-none"
-                >
-                  {Object.entries(VALIDATION_STATUSES).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-                </select>
-              </label>
+          <section className="rounded-md border border-slate-200 p-3 md:col-span-2">
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Reglement</h4>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {(["card", "transfer", "cash", "check"] as PaymentMethod[]).map((method) => (
+                <ToggleButton key={method} active={paymentMethod === method} disabled={saving} onClick={() => onUpdate({ paymentMethod: method, installmentPlan: false })}>{PAYMENT_METHODS[method]}</ToggleButton>
+              ))}
+              <ToggleButton active={currentSchedule === "two_times"} disabled={saving} onClick={() => onUpdate({ paymentSchedule: currentSchedule === "two_times" ? "one_time" : "two_times", installmentPlan: currentSchedule !== "two_times", installmentCount: currentSchedule === "two_times" ? 1 : 2, paymentMethod: currentSchedule === "two_times" ? paymentMethod : "installments" })}>2 fois</ToggleButton>
+              <ToggleButton active={currentSchedule === "three_times"} disabled={saving} onClick={() => onUpdate({ paymentSchedule: currentSchedule === "three_times" ? "one_time" : "three_times", installmentPlan: currentSchedule !== "three_times", installmentCount: currentSchedule === "three_times" ? 1 : 3, paymentMethod: currentSchedule === "three_times" ? paymentMethod : "installments" })}>3 fois</ToggleButton>
             </div>
-          </section>
-
-          <section className="rounded-md border border-slate-200 p-4 lg:col-span-2">
-            <h4 className="text-sm font-semibold text-slate-900">CAF</h4>
-            <div className="mt-3 grid gap-3 md:grid-cols-5">
-              <label>
-                <FieldLabel>Statut CAF</FieldLabel>
-                <select
-                  value={currentCafStatus}
-                  disabled={saving}
-                  onChange={(event) => {
-                    const next = event.target.value as CafStatus;
-                    onUpdate({
-                      cafStatus: next,
-                      cafAid: next !== "not_requested",
-                      cafPaidAmount: next === "paid" ? numberValue(inscription.cafPaidAmount || inscription.cafApprovedAmount || inscription.cafAidAmount) : numberValue(inscription.cafPaidAmount),
-                    });
-                  }}
-                  className="h-9 w-full rounded-md border border-slate-200 px-2 text-xs outline-none"
-                >
-                  {Object.entries(CAF_STATUSES).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-                </select>
-              </label>
-              <NumberInput label="Demandé" value={numberValue(inscription.cafRequestedAmount || inscription.cafAidAmount)} disabled={saving || currentCafStatus === "not_requested"} onCommit={(value) => onUpdate({ cafAid: value > 0, cafRequestedAmount: value, cafAidAmount: value })} />
-              <NumberInput label="Accordé" value={numberValue(inscription.cafApprovedAmount || inscription.cafAidAmount)} disabled={saving || currentCafStatus === "not_requested"} onCommit={(value) => onUpdate({ cafAid: value > 0, cafApprovedAmount: value, cafAidAmount: value })} />
-              <NumberInput label="Versé" value={values.cafPaidAmount} disabled={saving || currentCafStatus === "not_requested"} onCommit={(value) => onUpdate({ cafPaidAmount: value, cafStatus: value > 0 ? "paid" : currentCafStatus })} />
-              <DateInput label="Date CAF" value={inscription.cafPaymentDate || ""} disabled={saving || currentCafStatus !== "paid"} onCommit={(value) => onUpdate({ cafPaymentDate: value })} />
-            </div>
-          </section>
-
-          <section className="rounded-md border border-slate-200 p-4">
-            <h4 className="text-sm font-semibold text-slate-900">Règlement famille</h4>
-            <div className="mt-3 space-y-3">
-              <label>
-                <FieldLabel>Mode</FieldLabel>
-                <select
-                  value={inscription.paymentMethod || "other"}
-                  disabled={saving}
-                  onChange={(event) => onUpdate({ paymentMethod: event.target.value as PaymentMethod, installmentPlan: event.target.value === "installments" })}
-                  className="h-9 w-full rounded-md border border-slate-200 px-2 text-xs outline-none"
-                >
-                  {Object.entries(PAYMENT_METHODS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-                </select>
-              </label>
-              {(inscription.paymentMethod || "other") === "transfer" && (
-                <div className="grid grid-cols-2 gap-2">
-                  <TextInput label="Réf. virement" value={inscription.transferReference || ""} disabled={saving} onCommit={(value) => onUpdate({ transferReference: value })} />
-                  <DateInput label="Reçu le" value={inscription.transferReceivedAt || ""} disabled={saving} onCommit={(value) => onUpdate({ transferReceivedAt: value })} />
-                </div>
-              )}
-            </div>
-          </section>
-
-          <section className="rounded-md border border-slate-200 p-4 lg:col-span-2">
-            <h4 className="text-sm font-semibold text-slate-900">Échéances</h4>
-            <div className="mt-3">
-              <label>
-                <FieldLabel>Plan</FieldLabel>
-                <select
-                  value={currentSchedule}
-                  disabled={saving}
-                  onChange={(event) => {
-                    const next = event.target.value as PaymentSchedule;
-                    onUpdate({
-                      paymentSchedule: next,
-                      installmentPlan: next !== "one_time",
-                      installmentCount: next === "two_times" ? 2 : next === "three_times" ? 3 : next === "one_time" ? 1 : numberValue(inscription.installmentCount),
-                      paymentMethod: next === "one_time" ? inscription.paymentMethod : "installments",
-                    });
-                  }}
-                  className="h-9 w-48 rounded-md border border-slate-200 px-2 text-xs outline-none"
-                >
-                  {Object.entries(PAYMENT_SCHEDULES).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-                </select>
-              </label>
-              <div className="mt-3 grid gap-2 md:grid-cols-3">
-                <InstallmentBox index={1} amount={numberValue(inscription.installment1Amount || (currentSchedule === "one_time" ? values.expectedTotal : 0))} paid={!!inscription.installment1Paid} date={inscription.installment1Date || ""} disabled={saving} onUpdate={onUpdate} />
-                {currentSchedule !== "one_time" && <InstallmentBox index={2} amount={numberValue(inscription.installment2Amount)} paid={!!inscription.installment2Paid} date={inscription.installment2Date || ""} disabled={saving} onUpdate={onUpdate} />}
-                {(currentSchedule === "three_times" || currentSchedule === "custom") && <InstallmentBox index={3} amount={numberValue(inscription.installment3Amount)} paid={!!inscription.installment3Paid} date={inscription.installment3Date || ""} disabled={saving} onUpdate={onUpdate} />}
+            {paymentMethod === "transfer" && (
+              <div className="mt-3 grid grid-cols-2 gap-2">
+                <TextInput label="Ref. virement" value={inscription.transferReference || ""} disabled={saving} onCommit={(value) => onUpdate({ transferReference: value })} />
+                <DateInput label="Recu le" value={inscription.transferReceivedAt || ""} disabled={saving} onCommit={(value) => onUpdate({ transferReceivedAt: value })} />
               </div>
-            </div>
+            )}
+            {currentSchedule !== "one_time" && (
+              <div className="mt-3 grid gap-2 md:grid-cols-3">
+                <MiniInstallment index={1} amount={numberValue(inscription.installment1Amount)} paid={!!inscription.installment1Paid} disabled={saving} onUpdate={onUpdate} />
+                <MiniInstallment index={2} amount={numberValue(inscription.installment2Amount)} paid={!!inscription.installment2Paid} disabled={saving} onUpdate={onUpdate} />
+                {currentSchedule === "three_times" && <MiniInstallment index={3} amount={numberValue(inscription.installment3Amount)} paid={!!inscription.installment3Paid} disabled={saving} onUpdate={onUpdate} />}
+              </div>
+            )}
           </section>
 
-          <section className="rounded-md border border-slate-200 p-4 lg:col-span-3">
-            <h4 className="text-sm font-semibold text-slate-900">Notes</h4>
-            <textarea
-              defaultValue={inscription.notes || ""}
-              disabled={saving}
-              onBlur={(event) => {
-                if ((inscription.notes || "") !== event.target.value) onUpdate({ notes: event.target.value });
-              }}
-              placeholder="CAF, virement, relances, accord de paiement..."
-              className="mt-3 h-28 w-full resize-none rounded-md border border-slate-200 px-3 py-2 text-sm outline-none"
-            />
-            <div className="mt-3 flex flex-wrap gap-2">
-              <button
-                type="button"
-                disabled={saving}
-                onClick={() =>
-                  onUpdate({
-                    paymentStatus: "paid",
-                    paid: true,
-                    amountPaid: values.expectedTotal,
-                    validationStatus: "validated",
-                    installment1Paid: true,
-                    installment2Paid: currentSchedule !== "one_time" ? true : inscription.installment2Paid,
-                    installment3Paid: currentSchedule === "three_times" || currentSchedule === "custom" ? true : inscription.installment3Paid,
-                  })
-                }
-                className="h-9 rounded-md border border-emerald-200 bg-emerald-50 px-3 text-xs font-medium text-emerald-800 hover:bg-emerald-100 disabled:opacity-50"
-              >
-                Famille payée
-              </button>
-              <button
-                type="button"
-                disabled={saving}
-                onClick={() => onUpdate({ cafStatus: "paid", cafAid: true, cafPaidAmount: values.cafExpected, cafPaymentDate: new Date().toISOString().slice(0, 10) })}
-                className="h-9 rounded-md border border-slate-200 px-3 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-              >
-                CAF versée
-              </button>
+          <section className="rounded-md border border-slate-200 p-3 md:col-span-2">
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Notes</h4>
+            <div className="mt-2 grid gap-2 md:grid-cols-[1fr_auto]">
+              <textarea defaultValue={inscription.notes || ""} disabled={saving} onBlur={(event) => { if ((inscription.notes || "") !== event.target.value) onUpdate({ notes: event.target.value }); }} placeholder="CAF, virement, relances..." className="h-20 w-full resize-none rounded-md border border-slate-200 px-3 py-2 text-sm outline-none" />
+              <div className="flex flex-row gap-2 md:flex-col">
+                <button type="button" disabled={saving} onClick={() => onUpdate({ paymentStatus: "paid", paid: true, amountPaid: values.expectedTotal, validationStatus: "validated", installment1Paid: true, installment2Paid: currentSchedule !== "one_time" ? true : inscription.installment2Paid, installment3Paid: currentSchedule === "three_times" || currentSchedule === "custom" ? true : inscription.installment3Paid })} className="h-9 cursor-pointer rounded-md border border-emerald-200 bg-emerald-50 px-3 text-xs font-medium text-emerald-800 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50">Tout paye</button>
+                <button type="button" disabled={saving || !hasCaf} onClick={() => onUpdate({ cafStatus: "paid", cafAid: true, cafPaidAmount: values.cafExpected, cafPaymentDate: new Date().toISOString().slice(0, 10) })} className="h-9 cursor-pointer rounded-md border border-slate-200 px-3 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50">CAF versee</button>
+              </div>
             </div>
           </section>
         </div>
       </div>
+    </div>
+  );
+}
+
+function ToggleButton({ active, children, disabled, onClick }: { active: boolean; children: ReactNode; disabled?: boolean; onClick: () => void }) {
+  return <button type="button" disabled={disabled} onClick={onClick} className={["h-8 cursor-pointer rounded-md border px-3 text-xs font-medium transition disabled:cursor-not-allowed disabled:opacity-50", active ? "border-slate-900 bg-slate-900 text-white" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"].join(" ")}>{children}</button>;
+}
+
+function MiniInstallment({ index, amount, paid, disabled, onUpdate }: { index: 1 | 2 | 3; amount: number; paid: boolean; disabled?: boolean; onUpdate: (patch: Partial<Inscription>) => void }) {
+  const amountKey = ("installment" + index + "Amount") as keyof Inscription;
+  const paidKey = ("installment" + index + "Paid") as keyof Inscription;
+  return (
+    <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2 rounded-md border border-slate-200 px-2 py-2">
+      <span className="text-xs font-semibold text-slate-500">{index}</span>
+      <input key={amount} type="number" min={0} defaultValue={amount || 0} disabled={disabled} onBlur={(event) => { const nextValue = numberValue(event.target.value); if (nextValue !== amount) onUpdate({ [amountKey]: nextValue }); }} className="h-8 w-full rounded-md border border-slate-200 px-2 text-xs outline-none disabled:bg-slate-50" />
+      <label className="flex items-center gap-1 text-xs text-slate-700"><input type="checkbox" checked={paid} disabled={disabled} onChange={(event) => onUpdate({ [paidKey]: event.target.checked })} />OK</label>
     </div>
   );
 }
@@ -856,7 +748,7 @@ function ChipButton({
       type="button"
       onClick={onClick}
       className={[
-        "h-8 rounded-md border px-3 text-xs font-medium transition",
+        "h-8 cursor-pointer rounded-md border px-3 text-xs font-medium transition",
         active
           ? "border-slate-900 bg-slate-900 text-white"
           : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
@@ -911,7 +803,7 @@ function ViewButton({
       type="button"
       onClick={onClick}
       className={[
-        "inline-flex h-9 items-center gap-2 rounded-md border px-3 text-xs font-semibold transition",
+        "inline-flex h-9 cursor-pointer items-center gap-2 rounded-md border px-3 text-xs font-semibold transition",
         active
           ? "border-slate-900 bg-slate-900 text-white"
           : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
@@ -1075,64 +967,5 @@ function NumberInput({
         className="h-8 w-28 rounded-md border border-slate-200 px-2 text-xs outline-none disabled:bg-slate-50"
       />
     </label>
-  );
-}
-
-function InstallmentBox({
-  index,
-  amount,
-  paid,
-  date,
-  disabled,
-  onUpdate,
-}: {
-  index: 1 | 2 | 3;
-  amount: number;
-  paid: boolean;
-  date: string;
-  disabled?: boolean;
-  onUpdate: (patch: Partial<Inscription>) => void;
-}) {
-  const amountKey = `installment${index}Amount` as keyof Inscription;
-  const paidKey = `installment${index}Paid` as keyof Inscription;
-  const dateKey = `installment${index}Date` as keyof Inscription;
-
-  return (
-    <div className="rounded-md border border-slate-200 p-2">
-      <div className="mb-1 text-[10px] font-semibold uppercase text-slate-500">
-        {index}
-      </div>
-      <input
-        key={`${index}-${amount}`}
-        type="number"
-        min={0}
-        defaultValue={amount || 0}
-        disabled={disabled}
-        onBlur={(event) => {
-          const nextValue = numberValue(event.target.value);
-          if (nextValue !== amount) onUpdate({ [amountKey]: nextValue });
-        }}
-        className="h-8 w-20 rounded-md border border-slate-200 px-2 text-xs outline-none disabled:bg-slate-50"
-      />
-      <label className="mt-2 flex items-center gap-1 text-xs text-slate-700">
-        <input
-          type="checkbox"
-          checked={paid}
-          disabled={disabled}
-          onChange={(event) => onUpdate({ [paidKey]: event.target.checked })}
-        />
-        Payé
-      </label>
-      <input
-        key={`${index}-${date}`}
-        type="date"
-        defaultValue={date}
-        disabled={disabled}
-        onBlur={(event) => {
-          if (event.target.value !== date) onUpdate({ [dateKey]: event.target.value });
-        }}
-        className="mt-2 h-8 w-28 rounded-md border border-slate-200 px-2 text-xs outline-none disabled:bg-slate-50"
-      />
-    </div>
   );
 }

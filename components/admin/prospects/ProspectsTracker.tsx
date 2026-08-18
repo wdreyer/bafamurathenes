@@ -581,7 +581,7 @@ export function ProspectsTracker() {
             type="button"
             onClick={() => setStatus(status === item.key ? "all" : item.key)}
             className={[
-              "rounded-md border px-3 py-2 text-left transition hover:bg-slate-50",
+              "cursor-pointer rounded-md border px-3 py-2 text-left transition hover:bg-slate-50",
               status === item.key ? "border-slate-900 bg-slate-50" : "border-slate-200 bg-white",
             ].join(" ")}
           >
@@ -651,7 +651,7 @@ export function ProspectsTracker() {
             <button
               type="button"
               onClick={() => setShowAdd((value) => !value)}
-              className="inline-flex h-10 items-center gap-2 rounded-md bg-slate-900 px-3 text-sm font-medium text-white hover:bg-slate-800"
+              className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-md bg-slate-900 px-3 text-sm font-medium text-white hover:bg-slate-800"
             >
               <Plus className="h-4 w-4" />
               Ajouter un prospect
@@ -659,7 +659,7 @@ export function ProspectsTracker() {
             <button
               type="button"
               onClick={exportCsv}
-              className="inline-flex h-10 items-center gap-2 rounded-md border border-slate-200 px-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border border-slate-200 px-3 text-sm font-medium text-slate-700 hover:bg-slate-50"
             >
               <ArrowDownUp className="h-4 w-4" />
               Export CSV
@@ -694,7 +694,7 @@ export function ProspectsTracker() {
               placeholder="Formation visee"
               className="h-10 rounded-md border border-slate-200 px-3 text-sm outline-none"
             />
-            <button className="h-10 rounded-md bg-slate-900 px-3 text-sm font-medium text-white">
+            <button className="h-10 cursor-pointer rounded-md bg-slate-900 px-3 text-sm font-medium text-white">
               Enregistrer
             </button>
             <textarea
@@ -850,7 +850,7 @@ function LeadRow({
               event.stopPropagation();
               onOpen();
             }}
-            className="h-8 rounded-md border border-slate-200 px-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
+            className="h-8 cursor-pointer rounded-md border border-slate-200 px-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
           >
             Détails
           </button>
@@ -867,7 +867,7 @@ function LeadRow({
                   validationStatus: "validated",
                 });
               }}
-              className="inline-flex h-8 items-center justify-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 text-xs font-medium text-emerald-800 hover:bg-emerald-100 disabled:opacity-50"
+              className="inline-flex h-8 cursor-pointer items-center justify-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 text-xs font-medium text-emerald-800 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <CheckCircle2 className="h-3.5 w-3.5" />
               Valider
@@ -880,7 +880,7 @@ function LeadRow({
                 event.stopPropagation();
                 onUpdateProspect(row.id, { status: "contacted" });
               }}
-              className="h-8 rounded-md border border-slate-200 px-2 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+              className="h-8 cursor-pointer rounded-md border border-slate-200 px-2 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Contacté
             </button>
@@ -905,190 +905,124 @@ function LeadDetailsModal({
   onUpdateInscription: (id: string, patch: Partial<Inscription>) => Promise<void>;
 }) {
   const isInscription = row.kind === "inscription";
+  const paymentStatus = row.paymentStatus || "pending";
+  const paymentMethod = row.paymentMethod || "other";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4 py-6">
-      <div className="max-h-[92vh] w-full max-w-5xl overflow-y-auto rounded-md border border-slate-200 bg-white shadow-xl">
-        <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-slate-200 bg-white px-5 py-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-3 py-4">
+      <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-md border border-slate-200 bg-white shadow-xl">
+        <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-slate-200 bg-white px-4 py-3">
           <div>
-            <h3 className="text-lg font-semibold text-slate-900">{row.name}</h3>
-            <p className="mt-1 text-sm text-slate-500">
-              {ORIGIN_LABELS[row.origin]} · {row.formationTitle || row.department || "Formation non renseignée"}
+            <h3 className="text-base font-semibold text-slate-900">{row.name}</h3>
+            <p className="mt-0.5 text-xs text-slate-500">
+              {ORIGIN_LABELS[row.origin]} - {row.formationTitle || row.department || "Formation non renseignee"}
             </p>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="h-8 rounded-md border border-slate-200 px-3 text-xs font-medium text-slate-700 hover:bg-slate-50"
-          >
-            Fermer
-          </button>
+          <button type="button" onClick={onClose} className="h-8 cursor-pointer rounded-md border border-slate-200 px-3 text-xs font-medium text-slate-700 hover:bg-slate-50">Fermer</button>
         </div>
 
-        <div className="grid gap-4 p-5 lg:grid-cols-3">
-          <section className="rounded-md border border-slate-200 p-4">
-            <h4 className="text-sm font-semibold text-slate-900">Contact</h4>
-            <div className="mt-3 space-y-2 text-sm text-slate-600">
+        <div className="grid gap-3 p-4 md:grid-cols-2">
+          <section className="rounded-md border border-slate-200 p-3">
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Contact</h4>
+            <div className="mt-2 space-y-1 text-sm text-slate-700">
               <div>Email : {row.email || "-"}</div>
-              <div>Téléphone : {row.phone || "-"}</div>
+              <div>Telephone : {row.phone || "-"}</div>
               <div>Date : {formatDate(row.createdAt, true)}</div>
-              <div>Source : {row.source || "-"}</div>
             </div>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {row.email && <ContactButton href={`mailto:${row.email}`} icon={Mail} label="Email" />}
-              {row.phone && <ContactButton href={`tel:${row.phone.replace(/\s/g, "")}`} icon={Phone} label="Appel" />}
-            </div>
-          </section>
-
-          <section className="rounded-md border border-slate-200 p-4">
-            <h4 className="text-sm font-semibold text-slate-900">Suivi</h4>
-            <div className="mt-3 grid grid-cols-2 gap-3">
-              <label className="col-span-2">
-                <FieldLabel>Statut</FieldLabel>
-                <select
-                  value={row.status}
-                  disabled={saving || isInscription}
-                  onChange={(event) => onUpdateProspect(row.id, { status: event.target.value as ProspectStatus })}
-                  className="h-9 w-full rounded-md border border-slate-200 px-2 text-xs outline-none disabled:bg-slate-50"
-                >
-                  {Object.entries(STATUS_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-                </select>
-              </label>
-              {!isInscription && (
-                <>
-                  <InlineSelect label="Priorité" value={row.priority || "normal"} disabled={saving} onChange={(value) => onUpdateProspect(row.id, { priority: value as Prospect["priority"] })} options={PRIORITY_LABELS} />
-                  <InlineSelect label="Qualif." value={row.qualification || "warm"} disabled={saving} onChange={(value) => onUpdateProspect(row.id, { qualification: value as Prospect["qualification"] })} options={QUALIFICATION_LABELS} />
-                </>
-              )}
+            <div className="mt-3 flex flex-wrap gap-2">
+              {row.email && <ContactButton href={"mailto:" + row.email} icon={Mail} label="Email" />}
+              {row.phone && <ContactButton href={"tel:" + row.phone.replace(/\s/g, "")} icon={Phone} label="Appel" />}
             </div>
           </section>
 
-          <section className="rounded-md border border-slate-200 p-4">
-            <h4 className="text-sm font-semibold text-slate-900">Formation</h4>
-            <div className="mt-3 space-y-2 text-sm text-slate-600">
+          <section className="rounded-md border border-slate-200 p-3">
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Suivi</h4>
+            {!isInscription ? (
+              <div className="mt-2 flex flex-wrap gap-2">
+                <SimpleToggle active={row.status === "new"} disabled={saving} onClick={() => onUpdateProspect(row.id, { status: "new" })}>Nouveau</SimpleToggle>
+                <SimpleToggle active={row.status === "to_contact"} disabled={saving} onClick={() => onUpdateProspect(row.id, { status: "to_contact" })}>A relancer</SimpleToggle>
+                <SimpleToggle active={row.status === "contacted"} disabled={saving} onClick={() => onUpdateProspect(row.id, { status: "contacted" })}>Contacte</SimpleToggle>
+                <SimpleToggle active={row.status === "registered"} disabled={saving} onClick={() => onUpdateProspect(row.id, { status: "registered" })}>Inscrit</SimpleToggle>
+                <SimpleToggle active={row.priority === "high"} disabled={saving} onClick={() => onUpdateProspect(row.id, { priority: row.priority === "high" ? "normal" : "high" })}>Prioritaire</SimpleToggle>
+                <SimpleToggle active={row.qualification === "hot"} disabled={saving} onClick={() => onUpdateProspect(row.id, { qualification: row.qualification === "hot" ? "warm" : "hot" })}>Chaud</SimpleToggle>
+              </div>
+            ) : (
+              <div className="mt-2 flex flex-wrap gap-2">
+                <StatusPill>{STATUS_LABELS[row.status]}</StatusPill>
+                <StatusPill>{PAYMENT_STATUSES[paymentStatus]}</StatusPill>
+              </div>
+            )}
+          </section>
+
+          <section className="rounded-md border border-slate-200 p-3 md:col-span-2">
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Formation</h4>
+            <div className="mt-2 grid gap-1 text-sm text-slate-700 md:grid-cols-2">
               <div>{row.formationTitle || "-"}</div>
               <div>{row.leadType || "-"}</div>
-              {row.department && <div>Département : {row.department}</div>}
+              {row.department && <div>Departement : {row.department}</div>}
               {row.quotient && <div>QF CAF : {row.quotient}</div>}
             </div>
           </section>
 
           {isInscription && (
-            <>
-              <section className="rounded-md border border-slate-200 p-4">
-                <h4 className="text-sm font-semibold text-slate-900">Paiement</h4>
-                <div className="mt-3 grid grid-cols-2 gap-3">
-                  <label>
-                    <FieldLabel>Statut</FieldLabel>
-                    <select
-                      value={row.paymentStatus || "pending"}
-                      disabled={saving}
-                      onChange={(event) => {
-                        const status = event.target.value as PaymentStatus;
-                        onUpdateInscription(row.id, { paymentStatus: status, paid: status === "paid" });
-                      }}
-                      className="h-9 w-full rounded-md border border-slate-200 px-2 text-xs outline-none"
-                    >
-                      {Object.entries(PAYMENT_STATUSES).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-                    </select>
-                  </label>
-                  <label>
-                    <FieldLabel>Mode</FieldLabel>
-                    <select
-                      value={row.paymentMethod || "other"}
-                      disabled={saving}
-                      onChange={(event) => onUpdateInscription(row.id, { paymentMethod: event.target.value as PaymentMethod, installmentPlan: event.target.value === "installments" })}
-                      className="h-9 w-full rounded-md border border-slate-200 px-2 text-xs outline-none"
-                    >
-                      {Object.entries(PAYMENT_METHODS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-                    </select>
-                  </label>
-                  <NumberInput label="Payé" value={row.amountPaid} disabled={saving} onCommit={(value) => onUpdateInscription(row.id, { amountPaid: value, paymentStatus: value <= 0 ? "pending" : value >= row.netPrice ? "paid" : "partial", paid: value >= row.netPrice })} />
-                  <NumberInput label="Autres aides" value={row.otherAidAmount} disabled={saving} onCommit={(value) => onUpdateInscription(row.id, { otherAidAmount: value })} />
-                </div>
-                <div className="mt-3 rounded-md bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-700">
-                  <div>Prix net : <b>{euro(row.netPrice)}</b></div>
-                  <div>Reste : <b className={row.remaining > 0 ? "text-rose-700" : "text-emerald-700"}>{euro(row.remaining)}</b></div>
-                </div>
-              </section>
-
-              <section className="rounded-md border border-slate-200 p-4">
-                <h4 className="text-sm font-semibold text-slate-900">CAF</h4>
-                <div className="mt-3 space-y-3">
-                  <label className="flex items-center gap-2 text-xs text-slate-700">
-                    <input type="checkbox" checked={row.cafAid} disabled={saving} onChange={(event) => onUpdateInscription(row.id, { cafAid: event.target.checked, cafAidAmount: event.target.checked ? row.cafAidAmount : 0 })} />
-                    Aide CAF
-                  </label>
-                  <label>
-                    <FieldLabel>Statut CAF</FieldLabel>
-                    <select
-                      value={row.cafStatus || "not_requested"}
-                      disabled={saving}
-                      onChange={(event) => {
-                        const next = event.target.value as CafStatus;
-                        onUpdateInscription(row.id, { cafStatus: next, cafAid: next !== "not_requested", cafPaidAmount: next === "paid" ? row.cafPaidAmount || row.cafAidAmount : row.cafPaidAmount });
-                      }}
-                      className="h-9 w-full rounded-md border border-slate-200 px-2 text-xs outline-none"
-                    >
-                      {Object.entries(CAF_STATUSES).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-                    </select>
-                  </label>
-                  <div className="grid grid-cols-2 gap-3">
-                    <NumberInput label="CAF attendue" value={row.cafAidAmount} disabled={saving || !row.cafAid} onCommit={(value) => onUpdateInscription(row.id, { cafAid: value > 0, cafAidAmount: value })} />
-                    <NumberInput label="CAF versée" value={row.cafPaidAmount} disabled={saving || !row.cafAid} onCommit={(value) => onUpdateInscription(row.id, { cafPaidAmount: value, cafStatus: value > 0 ? "paid" : row.cafStatus })} />
-                  </div>
-                </div>
-              </section>
-
-              <section className="rounded-md border border-slate-200 p-4">
-                <h4 className="text-sm font-semibold text-slate-900">Échéance</h4>
-                <div className="mt-3 space-y-3">
-                  <label className="flex items-center gap-2 text-xs text-slate-700">
-                    <input type="checkbox" checked={row.installmentPlan} disabled={saving} onChange={(event) => onUpdateInscription(row.id, { installmentPlan: event.target.checked, paymentMethod: event.target.checked ? "installments" : row.paymentMethod })} />
-                    Plusieurs fois
-                  </label>
-                  <DateInput value={row.nextPaymentDate || ""} disabled={saving} onCommit={(value) => onUpdateInscription(row.id, { nextPaymentDate: value })} />
-                </div>
-              </section>
-            </>
+            <section className="rounded-md border border-slate-200 p-3 md:col-span-2">
+              <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Paiement</h4>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <SimpleToggle active={paymentStatus === "paid"} disabled={saving} onClick={() => onUpdateInscription(row.id, { paymentStatus: paymentStatus === "paid" ? "pending" : "paid", paid: paymentStatus !== "paid", amountPaid: paymentStatus !== "paid" ? row.netPrice : row.amountPaid })}>Paye</SimpleToggle>
+                <SimpleToggle active={paymentStatus === "partial"} disabled={saving} onClick={() => onUpdateInscription(row.id, { paymentStatus: "partial", paid: false })}>Partiel</SimpleToggle>
+                <SimpleToggle active={row.cafAid} disabled={saving} onClick={() => onUpdateInscription(row.id, { cafAid: !row.cafAid, cafAidAmount: row.cafAid ? 0 : row.cafAidAmount })}>CAF</SimpleToggle>
+                {(["card", "transfer", "cash", "check"] as PaymentMethod[]).map((method) => (
+                  <SimpleToggle key={method} active={paymentMethod === method} disabled={saving} onClick={() => onUpdateInscription(row.id, { paymentMethod: method, installmentPlan: false })}>{PAYMENT_METHODS[method]}</SimpleToggle>
+                ))}
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-2 md:grid-cols-4">
+                <NumberInput label="Paye" value={row.amountPaid} disabled={saving} onCommit={(value) => onUpdateInscription(row.id, { amountPaid: value, paymentStatus: value <= 0 ? "pending" : value >= row.netPrice ? "paid" : "partial", paid: value >= row.netPrice })} />
+                <NumberInput label="Autres aides" value={row.otherAidAmount} disabled={saving} onCommit={(value) => onUpdateInscription(row.id, { otherAidAmount: value })} />
+                <NumberInput label="CAF prevue" value={row.cafAidAmount} disabled={saving || !row.cafAid} onCommit={(value) => onUpdateInscription(row.id, { cafAid: value > 0, cafAidAmount: value })} />
+                <NumberInput label="CAF versee" value={row.cafPaidAmount} disabled={saving || !row.cafAid} onCommit={(value) => onUpdateInscription(row.id, { cafPaidAmount: value, cafStatus: value > 0 ? "paid" : row.cafStatus })} />
+              </div>
+              <div className="mt-3 rounded-md bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-700">
+                <span>Net : <b>{euro(row.netPrice)}</b></span>
+                <span className="ml-3">Reste : <b className={row.remaining > 0 ? "text-rose-700" : "text-emerald-700"}>{euro(row.remaining)}</b></span>
+              </div>
+            </section>
           )}
 
-          <section className="rounded-md border border-slate-200 p-4 lg:col-span-3">
-            <h4 className="text-sm font-semibold text-slate-900">Notes et message</h4>
-            {row.message && <p className="mt-3 rounded-md bg-slate-50 px-3 py-2 text-sm leading-6 text-slate-600">{row.message}</p>}
-            <textarea
-              defaultValue={row.notes || ""}
-              disabled={saving}
-              onBlur={(event) => {
-                if ((row.notes || "") === event.target.value) return;
-                if (isInscription) onUpdateInscription(row.id, { notes: event.target.value });
-                else onUpdateProspect(row.id, { notes: event.target.value });
-              }}
-              placeholder="Infos, relances, décision, documents CAF..."
-              className="mt-3 h-28 w-full resize-none rounded-md border border-slate-200 px-3 py-2 text-sm outline-none"
-            />
-            <div className="mt-3 flex flex-wrap gap-2">
-              {isInscription ? (
-                <button
-                  type="button"
-                  disabled={saving}
-                  onClick={() => onUpdateInscription(row.id, { paymentStatus: "paid", paid: true, amountPaid: row.netPrice, validationStatus: "validated" })}
-                  className="h-9 rounded-md border border-emerald-200 bg-emerald-50 px-3 text-xs font-medium text-emerald-800 hover:bg-emerald-100 disabled:opacity-50"
-                >
-                  Valider l&apos;inscription
-                </button>
-              ) : (
-                <>
-                  <button type="button" disabled={saving} onClick={() => onUpdateProspect(row.id, { status: "contacted" })} className="h-9 rounded-md border border-slate-200 px-3 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50">Marquer contacté</button>
-                  <button type="button" disabled={saving} onClick={() => onUpdateProspect(row.id, { status: "registered" })} className="h-9 rounded-md border border-emerald-200 bg-emerald-50 px-3 text-xs font-medium text-emerald-800 hover:bg-emerald-100 disabled:opacity-50">Marquer inscrit</button>
-                </>
-              )}
+          <section className="rounded-md border border-slate-200 p-3 md:col-span-2">
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Notes</h4>
+            {row.message && <p className="mt-2 rounded-md bg-slate-50 px-3 py-2 text-sm leading-6 text-slate-600">{row.message}</p>}
+            <div className="mt-2 grid gap-2 md:grid-cols-[1fr_auto]">
+              <textarea
+                defaultValue={row.notes || ""}
+                disabled={saving}
+                onBlur={(event) => {
+                  if ((row.notes || "") === event.target.value) return;
+                  if (isInscription) onUpdateInscription(row.id, { notes: event.target.value });
+                  else onUpdateProspect(row.id, { notes: event.target.value });
+                }}
+                placeholder="Infos, relances, decision, documents CAF..."
+                className="h-20 w-full resize-none rounded-md border border-slate-200 px-3 py-2 text-sm outline-none"
+              />
+              <div className="flex flex-row gap-2 md:flex-col">
+                {isInscription ? (
+                  <button type="button" disabled={saving} onClick={() => onUpdateInscription(row.id, { paymentStatus: "paid", paid: true, amountPaid: row.netPrice, validationStatus: "validated" })} className="h-9 cursor-pointer rounded-md border border-emerald-200 bg-emerald-50 px-3 text-xs font-medium text-emerald-800 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50">Valider</button>
+                ) : (
+                  <>
+                    <button type="button" disabled={saving} onClick={() => onUpdateProspect(row.id, { status: "contacted" })} className="h-9 cursor-pointer rounded-md border border-slate-200 px-3 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50">Contacte</button>
+                    <button type="button" disabled={saving} onClick={() => onUpdateProspect(row.id, { status: "registered" })} className="h-9 cursor-pointer rounded-md border border-emerald-200 bg-emerald-50 px-3 text-xs font-medium text-emerald-800 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50">Inscrit</button>
+                  </>
+                )}
+              </div>
             </div>
           </section>
         </div>
       </div>
     </div>
   );
+}
+
+function SimpleToggle({ active, children, disabled, onClick }: { active: boolean; children: ReactNode; disabled?: boolean; onClick: () => void }) {
+  return <button type="button" disabled={disabled} onClick={onClick} className={["h-8 cursor-pointer rounded-md border px-3 text-xs font-medium transition disabled:cursor-not-allowed disabled:opacity-50", active ? "border-slate-900 bg-slate-900 text-white" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"].join(" ")}>{children}</button>;
 }
 
 function StatusPill({ children }: { children: ReactNode }) {
@@ -1172,7 +1106,7 @@ function ChipButton({
       type="button"
       onClick={onClick}
       className={[
-        "h-8 rounded-md border px-3 text-xs font-medium transition",
+        "h-8 cursor-pointer rounded-md border px-3 text-xs font-medium transition",
         active
           ? "border-slate-900 bg-slate-900 text-white"
           : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
@@ -1228,63 +1162,6 @@ function ContactButton({
 
 function FieldLabel({ children }: { children: ReactNode }) {
   return <div className="mb-1 text-[10px] font-semibold uppercase text-slate-500">{children}</div>;
-}
-
-function InlineSelect({
-  label,
-  value,
-  disabled,
-  onChange,
-  options,
-}: {
-  label: string;
-  value: string;
-  disabled?: boolean;
-  onChange: (value: string) => void;
-  options: Record<string, string>;
-}) {
-  return (
-    <label className="block">
-      <FieldLabel>{label}</FieldLabel>
-      <select
-        value={value}
-        disabled={disabled}
-        onChange={(event) => onChange(event.target.value)}
-        className="h-8 w-full rounded-md border border-slate-200 px-2 text-xs outline-none disabled:bg-slate-50"
-      >
-        {Object.entries(options).map(([optionValue, labelValue]) => (
-          <option key={optionValue} value={optionValue}>
-            {labelValue}
-          </option>
-        ))}
-      </select>
-    </label>
-  );
-}
-
-function DateInput({
-  value,
-  disabled,
-  onCommit,
-}: {
-  value: string;
-  disabled?: boolean;
-  onCommit: (value: string) => void;
-}) {
-  return (
-    <label className="block">
-      <FieldLabel>Date</FieldLabel>
-      <input
-        type="date"
-        defaultValue={value}
-        disabled={disabled}
-        onBlur={(event) => {
-          if (event.target.value !== value) onCommit(event.target.value);
-        }}
-        className="h-9 w-36 rounded-md border border-slate-200 px-2 text-xs outline-none disabled:bg-slate-50"
-      />
-    </label>
-  );
 }
 
 function NumberInput({
