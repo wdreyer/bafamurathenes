@@ -62,6 +62,7 @@ type Row = {
   quotient?: string;
   source?: string;
   message?: string;
+  smsNotes?: string;
   notes?: string;
   createdAt?: unknown;
   paymentStatus?: PaymentStatus;
@@ -136,7 +137,7 @@ const PRIORITY_LABELS: Record<NonNullable<Prospect["priority"]>, string> = {
 const QUALIFICATION_LABELS: Record<NonNullable<Prospect["qualification"]>, string> = {
   cold: "Froid",
   warm: "Tiède",
-  hot: "Chaud",
+  hot: "Très chaud",
 };
 
 function numberValue(value: unknown) {
@@ -253,6 +254,7 @@ function prospectToRow(prospect: Prospect): Row {
     quotient: prospect.quotient,
     source: prospect.source,
     message: prospect.message,
+    smsNotes: prospect.smsNotes,
     notes: prospect.notes,
     createdAt: prospect.createdAt,
     totalPrice: 0,
@@ -433,6 +435,7 @@ export function ProspectsTracker() {
           row.department,
           row.source,
           row.notes,
+          row.smsNotes,
         ]
           .filter(Boolean)
           .join(" "),
@@ -638,6 +641,7 @@ export function ProspectsTracker() {
       "CAF versée",
       "Relance",
       "Notes",
+      "SMS / appels",
     ];
     const lines = filteredRows.map((row) =>
       [
@@ -659,6 +663,7 @@ export function ProspectsTracker() {
         row.cafPaidAmount || "",
         row.nextFollowUpDate || row.nextPaymentDate || "",
         row.notes || "",
+        row.smsNotes || "",
       ]
         .map((value) => `"${String(value).replaceAll('"', '""')}"`)
         .join(","),
@@ -1124,7 +1129,7 @@ function LeadRow({
 
       <td className="border-b border-slate-100 px-3 py-2.5">
         <div className="max-w-[300px] truncate text-xs text-slate-600">
-          {row.notes || row.message || "-"}
+          {row.smsNotes || row.notes || row.message || "-"}
         </div>
       </td>
 
@@ -1230,7 +1235,7 @@ function LeadDetailsModal({
                 <SimpleToggle active={row.status === "contacted"} disabled={saving} onClick={() => onUpdateProspect(row.id, { status: "contacted" })}>Contacte</SimpleToggle>
                 <SimpleToggle active={row.status === "registered"} disabled={saving} onClick={() => onUpdateProspect(row.id, { status: "registered" })}>Inscrit</SimpleToggle>
                 <SimpleToggle active={row.priority === "high"} disabled={saving} onClick={() => onUpdateProspect(row.id, { priority: row.priority === "high" ? "normal" : "high" })}>Prioritaire</SimpleToggle>
-                <SimpleToggle active={row.qualification === "hot"} disabled={saving} onClick={() => onUpdateProspect(row.id, { qualification: row.qualification === "hot" ? "warm" : "hot" })}>Chaud</SimpleToggle>
+                <SimpleToggle active={row.qualification === "hot"} disabled={saving} onClick={() => onUpdateProspect(row.id, { qualification: row.qualification === "hot" ? "warm" : "hot" })}>Très chaud</SimpleToggle>
               </div>
             ) : (
               <div className="mt-2 flex flex-wrap gap-2">
@@ -1278,17 +1283,30 @@ function LeadDetailsModal({
             <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Notes</h4>
             {row.message && <p className="mt-2 rounded-md bg-slate-50 px-3 py-2 text-sm leading-6 text-slate-600">{row.message}</p>}
             <div className="mt-2 grid gap-2 md:grid-cols-[1fr_auto]">
-              <textarea
-                defaultValue={row.notes || ""}
-                disabled={saving}
-                onBlur={(event) => {
-                  if ((row.notes || "") === event.target.value) return;
-                  if (isInscription) onUpdateInscription(row.id, { notes: event.target.value });
-                  else onUpdateProspect(row.id, { notes: event.target.value });
-                }}
-                placeholder="Infos, relances, decision, documents CAF..."
-                className="h-20 w-full resize-none rounded-md border border-slate-200 px-3 py-2 text-sm outline-none"
-              />
+              <div className={["grid gap-2", !isInscription ? "md:grid-cols-2" : ""].join(" ")}>
+                {!isInscription && (
+                  <textarea
+                    defaultValue={row.smsNotes || ""}
+                    disabled={saving}
+                    onBlur={(event) => {
+                      if ((row.smsNotes || "") !== event.target.value) onUpdateProspect(row.id, { smsNotes: event.target.value });
+                    }}
+                    placeholder="SMS / appels..."
+                    className="h-20 w-full resize-none rounded-md border border-slate-200 px-3 py-2 text-sm outline-none"
+                  />
+                )}
+                <textarea
+                  defaultValue={row.notes || ""}
+                  disabled={saving}
+                  onBlur={(event) => {
+                    if ((row.notes || "") === event.target.value) return;
+                    if (isInscription) onUpdateInscription(row.id, { notes: event.target.value });
+                    else onUpdateProspect(row.id, { notes: event.target.value });
+                  }}
+                  placeholder="Infos, relances, decision, documents CAF..."
+                  className="h-20 w-full resize-none rounded-md border border-slate-200 px-3 py-2 text-sm outline-none"
+                />
+              </div>
               <div className="flex flex-row gap-2 md:flex-col">
                 {isInscription ? (
                   <button type="button" disabled={saving} onClick={() => onUpdateInscription(row.id, { paymentStatus: "paid", paid: true, amountPaid: row.netPrice, validationStatus: "validated" })} className="h-9 cursor-pointer rounded-md border border-emerald-200 bg-emerald-50 px-3 text-xs font-medium text-emerald-800 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50">Valider</button>

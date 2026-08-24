@@ -87,6 +87,8 @@ export type Prospect = {
   email?: string;
   phone?: string;
   message?: string;
+  smsNotes?: string;
+  callbackMoment?: string;
   pageUrl?: string;
   source?: string;
   department?: string;

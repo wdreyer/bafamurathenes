@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import { notifyContact } from "@/lib/server/notifications";
+import { upsertProspect } from "@/lib/server/prospectUpsert";
 
 export async function POST(req: Request) {
   try {
@@ -13,19 +12,18 @@ export async function POST(req: Request) {
     }
 
     try {
-      await addDoc(collection(db, "prospects"), {
+      await upsertProspect({
         origin: "contact_form",
         leadType: String(leadType || "Message formulaire"),
         name: String(name).trim(),
         email: email ? String(email).trim() : "",
         phone: phone ? String(phone).trim() : "",
         message: String(message),
+        notes: `Formulaire contact : ${String(message).trim()}`,
         pageUrl: pageUrl ? String(pageUrl) : "",
         source: pageUrl ? String(pageUrl) : "Widget contact",
         callbackMoment: callbackMoment ? String(callbackMoment) : "",
         status: "new",
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
       });
     } catch (error) {
       console.error("[contact] Firestore save failed:", error);

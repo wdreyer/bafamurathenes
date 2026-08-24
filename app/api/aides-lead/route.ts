@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import { notifyContact } from "@/lib/server/notifications";
+import { upsertProspect } from "@/lib/server/prospectUpsert";
 
 function escapeHtml(input: string) {
   return input
@@ -22,7 +21,7 @@ export async function POST(req: Request) {
     }
 
     try {
-      await addDoc(collection(db, "prospects"), {
+      await upsertProspect({
         origin: "aides_form",
         leadType: "Demande d'estimation aides",
         firstName: String(prenom).trim(),
@@ -33,9 +32,8 @@ export async function POST(req: Request) {
         department: String(departement),
         quotient: String(quotient),
         source: source ? String(source) : "Formulaire aides",
+        notes: `Demande d'estimation aides. Département : ${String(departement)}. QF CAF : ${String(quotient)}.`,
         status: "new",
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
       });
     } catch (error) {
       console.error("[aides-lead] Firestore save failed:", error);

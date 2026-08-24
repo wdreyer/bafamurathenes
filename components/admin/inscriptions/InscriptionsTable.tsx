@@ -17,8 +17,6 @@ import {
   CreditCard,
   FileText,
   HandCoins,
-  Mail,
-  Phone,
   Search,
 } from "lucide-react";
 import { db } from "@/lib/firebase";
@@ -565,15 +563,33 @@ function InscriptionDetailsModal({
   const currentValidationStatus = inscription.validationStatus || "pending";
   const currentCafStatus = getCafStatus(inscription);
   const currentSchedule = getSchedule(inscription);
-  const isPaid = currentPaymentStatus === "paid";
-  const isValidated = currentValidationStatus === "validated";
-  const hasCaf = currentCafStatus !== "not_requested";
-  const paymentMethod = inscription.paymentMethod || "other";
+  const isTransfer = inscription.paymentMethod === "transfer";
+  const cafTransferPatch: Partial<Inscription> = {
+    paymentMethod: "transfer",
+    paymentStatus: "partial",
+    paid: false,
+    amountPaid: 150,
+    cafAid: true,
+    cafStatus: "approved",
+    cafAidAmount: 400,
+    cafRequestedAmount: 400,
+    cafApprovedAmount: 400,
+    cafPaidAmount: 0,
+    installmentPlan: false,
+    paymentSchedule: "one_time",
+    installmentCount: 1,
+    installment1Amount: 150,
+    installment1Paid: true,
+    installment2Amount: 0,
+    installment2Paid: false,
+    validationStatus: "validated",
+    transferReference: "Virement 150€",
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-3 py-4">
-      <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-md border border-slate-200 bg-white shadow-xl">
-        <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-slate-200 bg-white px-4 py-3">
+      <div className="max-h-[88vh] w-full max-w-5xl overflow-y-auto rounded-md border border-slate-200 bg-white shadow-xl">
+        <div className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3">
           <div>
             <h3 className="text-base font-semibold text-slate-900">{contactName(inscription) || "Inscription sans nom"}</h3>
             <p className="mt-0.5 text-xs text-slate-500">{cleanFormationTitle(inscription.formationTitle) || "Formation non renseignee"} - {formatDate(inscription.createdAt)}</p>
@@ -581,81 +597,53 @@ function InscriptionDetailsModal({
           <button type="button" onClick={onClose} className="h-8 cursor-pointer rounded-md border border-slate-200 px-3 text-xs font-medium text-slate-700 hover:bg-slate-50">Fermer</button>
         </div>
 
-        <div className="grid gap-3 p-4 md:grid-cols-2">
-          <section className="rounded-md border border-slate-200 p-3">
-            <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Contact</h4>
-            <div className="mt-2 space-y-1 text-sm text-slate-700">
-              <div>Email : {inscription.email || "-"}</div>
-              <div>Telephone : {inscription.phone || "-"}</div>
-              <div>Tarif : {inscription.tariff || "-"}</div>
-            </div>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {inscription.email && <IconLink href={"mailto:" + inscription.email} icon={Mail} label="Email" />}
-              {inscription.phone && <IconLink href={"tel:" + inscription.phone.replace(/\s/g, "")} icon={Phone} label="Appeler" />}
-            </div>
-          </section>
+        <div className="space-y-3 p-4">
+          <div className="grid gap-px overflow-hidden rounded-md border border-slate-200 bg-slate-200 md:grid-cols-6">
+            <MiniStat label="Total" value={euro(values.totalPrice)} />
+            <MiniStat label="Reçu famille" value={euro(values.amountPaid)} />
+            <MiniStat label="Reste famille" value={euro(values.remainingFamily)} alert={values.remainingFamily > 0} />
+            <MiniStat label="CAF attendue" value={euro(values.cafExpected)} />
+            <MiniStat label="Reste CAF" value={euro(values.remainingCaf)} alert={values.remainingCaf > 0} />
+            <MiniStat label="Statut" value={`${PAYMENT_STATUSES[currentPaymentStatus]} / ${CAF_STATUSES[currentCafStatus]}`} />
+          </div>
 
-          <section className="rounded-md border border-slate-200 p-3">
-            <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Statut</h4>
-            <div className="mt-2 grid grid-cols-2 gap-2">
-              <ToggleButton active={isPaid} disabled={saving} onClick={() => onUpdate({ paymentStatus: isPaid ? "pending" : "paid", paid: !isPaid, amountPaid: !isPaid ? values.expectedTotal : values.amountPaid })}>Paye</ToggleButton>
-              <ToggleButton active={isValidated} disabled={saving} onClick={() => onUpdate({ validationStatus: isValidated ? "pending" : "validated" })}>Valide</ToggleButton>
-              <ToggleButton active={currentPaymentStatus === "partial"} disabled={saving} onClick={() => onUpdate({ paymentStatus: "partial", paid: false })}>Partiel</ToggleButton>
-              <ToggleButton active={hasCaf} disabled={saving} onClick={() => onUpdate({ cafAid: !hasCaf, cafStatus: hasCaf ? "not_requested" : "requested" })}>CAF</ToggleButton>
-            </div>
-          </section>
+          <div className="flex flex-wrap gap-2 rounded-md border border-slate-200 p-2">
+            <ToggleButton active={inscription.paymentMethod === "card" && currentPaymentStatus === "paid"} disabled={saving} onClick={() => onUpdate({ paymentMethod: "card", paymentStatus: "paid", paid: true, amountPaid: values.totalPrice, cafAid: false, cafStatus: "not_requested", cafAidAmount: 0, cafRequestedAmount: 0, cafApprovedAmount: 0, cafPaidAmount: 0, installmentPlan: false, paymentSchedule: "one_time", validationStatus: "validated" })}>CB payé</ToggleButton>
+            <ToggleButton active={isTransfer && currentPaymentStatus === "paid"} disabled={saving} onClick={() => onUpdate({ paymentMethod: "transfer", paymentStatus: "paid", paid: true, amountPaid: values.totalPrice, cafAid: false, cafStatus: "not_requested", cafAidAmount: 0, cafRequestedAmount: 0, cafApprovedAmount: 0, cafPaidAmount: 0, installmentPlan: false, paymentSchedule: "one_time", validationStatus: "validated", transferReference: inscription.transferReference || "Virement reçu" })}>Virement payé</ToggleButton>
+            <ToggleButton active={isTransfer && values.amountPaid === 150 && values.cafExpected === 400} disabled={saving} onClick={() => onUpdate(cafTransferPatch)}>CAF + 150€</ToggleButton>
+            <ToggleButton active={currentSchedule === "two_times"} disabled={saving} onClick={() => onUpdate({ paymentMethod: "transfer", paymentStatus: "partial", paid: false, amountPaid: 225, cafAid: false, cafStatus: "not_requested", cafAidAmount: 0, cafRequestedAmount: 0, cafApprovedAmount: 0, cafPaidAmount: 0, installmentPlan: true, paymentSchedule: "two_times", installmentCount: 2, installment1Amount: 225, installment1Paid: true, installment2Amount: 225, installment2Paid: false, validationStatus: "validated", transferReference: "Virement 1/2 reçu : 225€" })}>2x virement</ToggleButton>
+            <ToggleButton active={currentValidationStatus === "validated"} disabled={saving} onClick={() => onUpdate({ validationStatus: currentValidationStatus === "validated" ? "pending" : "validated" })}>Validé</ToggleButton>
+            <button type="button" disabled={saving || values.cafExpected <= 0} onClick={() => onUpdate({ cafStatus: "paid", cafAid: true, cafPaidAmount: values.cafExpected, cafPaymentDate: new Date().toISOString().slice(0, 10) })} className="h-8 cursor-pointer rounded-md border border-slate-200 px-3 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50">CAF versée</button>
+          </div>
 
-          <section className="rounded-md border border-slate-200 p-3 md:col-span-2">
-            <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Montants</h4>
-            <div className="mt-2 grid grid-cols-2 gap-2 md:grid-cols-5">
-              <NumberInput label="Prix total" value={values.totalPrice} disabled={saving} onCommit={(value) => onUpdate({ totalPrice: value, amount: value })} />
-              <NumberInput label="Famille payee" value={values.amountPaid} disabled={saving || currentPaymentStatus === "paid"} onCommit={(value) => onUpdate({ amountPaid: value, paymentStatus: value <= 0 ? "pending" : value >= values.expectedTotal ? "paid" : "partial", paid: value >= values.expectedTotal })} />
-              <NumberInput label="Autres aides" value={values.otherAidAmount} disabled={saving} onCommit={(value) => onUpdate({ otherAidAmount: value })} />
-              <NumberInput label="CAF prevue" value={values.cafExpected} disabled={saving || !hasCaf} onCommit={(value) => onUpdate({ cafAid: value > 0, cafAidAmount: value, cafApprovedAmount: value, cafStatus: value > 0 ? "approved" : "not_requested" })} />
-              <NumberInput label="CAF versee" value={values.cafPaidAmount} disabled={saving || !hasCaf} onCommit={(value) => onUpdate({ cafPaidAmount: value, cafStatus: value > 0 ? "paid" : currentCafStatus })} />
-            </div>
-            <div className="mt-3 rounded-md bg-slate-50 px-3 py-2 text-xs leading-5 text-slate-700">
-              <span>Famille : <b>{euro(values.expectedTotal)}</b></span>
-              <span className="ml-3">Reste famille : <b className={values.remainingFamily > 0 ? "text-rose-700" : "text-emerald-700"}>{euro(values.remainingFamily)}</b></span>
-              <span className="ml-3">Reste CAF : <b className={values.remainingCaf > 0 ? "text-rose-700" : "text-emerald-700"}>{euro(values.remainingCaf)}</b></span>
-            </div>
-          </section>
+          <div className="grid gap-3 md:grid-cols-[1.2fr_1fr]">
+            <section className="grid gap-2 rounded-md border border-slate-200 p-3 sm:grid-cols-4">
+              <NumberInput label="Total" value={values.totalPrice} disabled={saving} onCommit={(value) => onUpdate({ totalPrice: value, amount: value })} />
+              <NumberInput label="Reçu" value={values.amountPaid} disabled={saving || currentPaymentStatus === "paid"} onCommit={(value) => onUpdate({ amountPaid: value, paymentStatus: value <= 0 ? "pending" : value >= values.expectedTotal ? "paid" : "partial", paid: value >= values.expectedTotal })} />
+              <NumberInput label="CAF prévue" value={values.cafExpected} disabled={saving} onCommit={(value) => onUpdate({ cafAid: value > 0, cafAidAmount: value, cafRequestedAmount: value, cafApprovedAmount: value, cafStatus: value > 0 ? "approved" : "not_requested" })} />
+              <NumberInput label="CAF versée" value={values.cafPaidAmount} disabled={saving || values.cafExpected <= 0} onCommit={(value) => onUpdate({ cafPaidAmount: value, cafStatus: value > 0 ? "paid" : currentCafStatus })} />
+              {isTransfer && <TextInput label="Mémo virement" value={inscription.transferReference || ""} disabled={saving} onCommit={(value) => onUpdate({ transferReference: value })} />}
+            </section>
 
-          <section className="rounded-md border border-slate-200 p-3 md:col-span-2">
-            <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Reglement</h4>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {(["card", "transfer", "cash", "check"] as PaymentMethod[]).map((method) => (
-                <ToggleButton key={method} active={paymentMethod === method} disabled={saving} onClick={() => onUpdate({ paymentMethod: method, installmentPlan: false })}>{PAYMENT_METHODS[method]}</ToggleButton>
-              ))}
-              <ToggleButton active={currentSchedule === "two_times"} disabled={saving} onClick={() => onUpdate({ paymentSchedule: currentSchedule === "two_times" ? "one_time" : "two_times", installmentPlan: currentSchedule !== "two_times", installmentCount: currentSchedule === "two_times" ? 1 : 2, paymentMethod: currentSchedule === "two_times" ? paymentMethod : "installments" })}>2 fois</ToggleButton>
-              <ToggleButton active={currentSchedule === "three_times"} disabled={saving} onClick={() => onUpdate({ paymentSchedule: currentSchedule === "three_times" ? "one_time" : "three_times", installmentPlan: currentSchedule !== "three_times", installmentCount: currentSchedule === "three_times" ? 1 : 3, paymentMethod: currentSchedule === "three_times" ? paymentMethod : "installments" })}>3 fois</ToggleButton>
-            </div>
-            {paymentMethod === "transfer" && (
-              <div className="mt-3 grid grid-cols-2 gap-2">
-                <TextInput label="Ref. virement" value={inscription.transferReference || ""} disabled={saving} onCommit={(value) => onUpdate({ transferReference: value })} />
-                <DateInput label="Recu le" value={inscription.transferReceivedAt || ""} disabled={saving} onCommit={(value) => onUpdate({ transferReceivedAt: value })} />
+            <section className="rounded-md border border-slate-200 p-3">
+              <div className="mb-2 text-xs text-slate-600">
+                {inscription.email || "-"} {inscription.phone ? ` · ${inscription.phone}` : ""}
               </div>
-            )}
-            {currentSchedule !== "one_time" && (
-              <div className="mt-3 grid gap-2 md:grid-cols-3">
-                <MiniInstallment index={1} amount={numberValue(inscription.installment1Amount)} paid={!!inscription.installment1Paid} disabled={saving} onUpdate={onUpdate} />
-                <MiniInstallment index={2} amount={numberValue(inscription.installment2Amount)} paid={!!inscription.installment2Paid} disabled={saving} onUpdate={onUpdate} />
-                {currentSchedule === "three_times" && <MiniInstallment index={3} amount={numberValue(inscription.installment3Amount)} paid={!!inscription.installment3Paid} disabled={saving} onUpdate={onUpdate} />}
-              </div>
-            )}
-          </section>
-
-          <section className="rounded-md border border-slate-200 p-3 md:col-span-2">
-            <h4 className="text-xs font-semibold uppercase tracking-wide text-slate-500">Notes</h4>
-            <div className="mt-2 grid gap-2 md:grid-cols-[1fr_auto]">
-              <textarea defaultValue={inscription.notes || ""} disabled={saving} onBlur={(event) => { if ((inscription.notes || "") !== event.target.value) onUpdate({ notes: event.target.value }); }} placeholder="CAF, virement, relances..." className="h-20 w-full resize-none rounded-md border border-slate-200 px-3 py-2 text-sm outline-none" />
-              <div className="flex flex-row gap-2 md:flex-col">
-                <button type="button" disabled={saving} onClick={() => onUpdate({ paymentStatus: "paid", paid: true, amountPaid: values.expectedTotal, validationStatus: "validated", installment1Paid: true, installment2Paid: currentSchedule !== "one_time" ? true : inscription.installment2Paid, installment3Paid: currentSchedule === "three_times" || currentSchedule === "custom" ? true : inscription.installment3Paid })} className="h-9 cursor-pointer rounded-md border border-emerald-200 bg-emerald-50 px-3 text-xs font-medium text-emerald-800 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50">Tout paye</button>
-                <button type="button" disabled={saving || !hasCaf} onClick={() => onUpdate({ cafStatus: "paid", cafAid: true, cafPaidAmount: values.cafExpected, cafPaymentDate: new Date().toISOString().slice(0, 10) })} className="h-9 cursor-pointer rounded-md border border-slate-200 px-3 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50">CAF versee</button>
-              </div>
-            </div>
-          </section>
+              <textarea defaultValue={inscription.notes || ""} disabled={saving} onBlur={(event) => { if ((inscription.notes || "") !== event.target.value) onUpdate({ notes: event.target.value }); }} placeholder="Notes paiement, CAF, relance..." className="h-20 w-full resize-none rounded-md border border-slate-200 px-3 py-2 text-sm outline-none" />
+            </section>
+          </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function MiniStat({ label, value, alert = false }: { label: string; value: string; alert?: boolean }) {
+  return (
+    <div className="bg-white px-3 py-2">
+      <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">{label}</div>
+      <div className={["mt-0.5 truncate text-sm font-semibold", alert ? "text-rose-700" : "text-slate-900"].join(" ")}>
+        {value}
       </div>
     </div>
   );
@@ -663,18 +651,6 @@ function InscriptionDetailsModal({
 
 function ToggleButton({ active, children, disabled, onClick }: { active: boolean; children: ReactNode; disabled?: boolean; onClick: () => void }) {
   return <button type="button" disabled={disabled} onClick={onClick} className={["h-8 cursor-pointer rounded-md border px-3 text-xs font-medium transition disabled:cursor-not-allowed disabled:opacity-50", active ? "border-slate-900 bg-slate-900 text-white" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"].join(" ")}>{children}</button>;
-}
-
-function MiniInstallment({ index, amount, paid, disabled, onUpdate }: { index: 1 | 2 | 3; amount: number; paid: boolean; disabled?: boolean; onUpdate: (patch: Partial<Inscription>) => void }) {
-  const amountKey = ("installment" + index + "Amount") as keyof Inscription;
-  const paidKey = ("installment" + index + "Paid") as keyof Inscription;
-  return (
-    <div className="grid grid-cols-[auto_1fr_auto] items-center gap-2 rounded-md border border-slate-200 px-2 py-2">
-      <span className="text-xs font-semibold text-slate-500">{index}</span>
-      <input key={amount} type="number" min={0} defaultValue={amount || 0} disabled={disabled} onBlur={(event) => { const nextValue = numberValue(event.target.value); if (nextValue !== amount) onUpdate({ [amountKey]: nextValue }); }} className="h-8 w-full rounded-md border border-slate-200 px-2 text-xs outline-none disabled:bg-slate-50" />
-      <label className="flex items-center gap-1 text-xs text-slate-700"><input type="checkbox" checked={paid} disabled={disabled} onChange={(event) => onUpdate({ [paidKey]: event.target.checked })} />OK</label>
-    </div>
-  );
 }
 
 function Metric({
@@ -850,26 +826,6 @@ function TD({ children }: { children: ReactNode }) {
   return <td className="border-b border-slate-100 px-3 py-3">{children}</td>;
 }
 
-function IconLink({
-  href,
-  icon: Icon,
-  label,
-}: {
-  href: string;
-  icon: typeof Mail;
-  label: string;
-}) {
-  return (
-    <a
-      href={href}
-      className="inline-flex h-7 items-center gap-1 rounded-md border border-slate-200 px-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
-    >
-      <Icon className="h-3.5 w-3.5" />
-      {label}
-    </a>
-  );
-}
-
 function FieldLabel({
   children,
   className = "",
@@ -906,34 +862,6 @@ function TextInput({
           if (event.target.value !== value) onCommit(event.target.value);
         }}
         className="h-8 w-36 rounded-md border border-slate-200 px-2 text-xs outline-none disabled:bg-slate-50"
-      />
-    </label>
-  );
-}
-
-function DateInput({
-  label,
-  value,
-  disabled,
-  onCommit,
-}: {
-  label: string;
-  value: string;
-  disabled?: boolean;
-  onCommit: (value: string) => void;
-}) {
-  return (
-    <label className="block">
-      <FieldLabel>{label}</FieldLabel>
-      <input
-        key={value}
-        type="date"
-        defaultValue={value}
-        disabled={disabled}
-        onBlur={(event) => {
-          if (event.target.value !== value) onCommit(event.target.value);
-        }}
-        className="h-8 w-32 rounded-md border border-slate-200 px-2 text-xs outline-none disabled:bg-slate-50"
       />
     </label>
   );
