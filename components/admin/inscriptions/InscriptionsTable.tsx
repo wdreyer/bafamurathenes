@@ -29,7 +29,6 @@ type ValidationStatus = NonNullable<Inscription["validationStatus"]>;
 type CafStatus = NonNullable<Inscription["cafStatus"]>;
 type PaymentSchedule = NonNullable<Inscription["paymentSchedule"]>;
 type TableView = "validated" | "ongoing" | "all";
-type PaymentCase = "all" | "paid" | "unpaid" | "card_paid" | "transfer_paid" | "caf_transfer" | "transfer_installments";
 
 const PAYMENT_METHODS: Record<PaymentMethod, string> = {
   card: "Carte",
@@ -172,7 +171,6 @@ export function InscriptionsTable() {
   const [inscriptions, setInscriptions] = useState<Inscription[]>([]);
   const [search, setSearch] = useState("");
   const [formation, setFormation] = useState("all");
-  const [paymentCase, setPaymentCase] = useState<PaymentCase>("all");
   const [view, setView] = useState<TableView>("validated");
   const [savingId, setSavingId] = useState<string | null>(null);
   const [selectedInscriptionId, setSelectedInscriptionId] = useState<string | null>(null);
@@ -205,12 +203,6 @@ export function InscriptionsTable() {
   const filtered = useMemo(() => {
     const term = normalize(search);
     const rows = inscriptions.filter((inscription) => {
-      const currentPaymentStatus =
-        inscription.paymentStatus || (inscription.paid ? "paid" : "pending");
-      const currentMethod = inscription.paymentMethod || "other";
-      const currentCaf = getCafStatus(inscription);
-      const currentSchedule = getSchedule(inscription);
-      const values = financials(inscription);
       const haystack = normalize(
         [
           contactName(inscription),
@@ -224,18 +216,9 @@ export function InscriptionsTable() {
           .filter(Boolean)
           .join(" "),
       );
-      const matchesPaymentCase =
-        paymentCase === "all" ||
-        (paymentCase === "paid" && values.remainingTotal === 0) ||
-        (paymentCase === "unpaid" && values.remainingTotal > 0) ||
-        (paymentCase === "card_paid" && currentMethod === "card" && currentPaymentStatus === "paid") ||
-        (paymentCase === "transfer_paid" && currentMethod === "transfer" && currentPaymentStatus === "paid") ||
-        (paymentCase === "caf_transfer" && currentMethod === "transfer" && currentCaf !== "not_requested") ||
-        (paymentCase === "transfer_installments" && currentMethod === "transfer" && currentSchedule !== "one_time");
 
       return (
         (formation === "all" || cleanFormationTitle(inscription.formationTitle) === formation) &&
-        matchesPaymentCase &&
         (!term || haystack.includes(term))
       );
     });
@@ -243,7 +226,7 @@ export function InscriptionsTable() {
     return rows.sort((a, b) => {
       return (dateFromUnknown(b.createdAt)?.getTime() || 0) - (dateFromUnknown(a.createdAt)?.getTime() || 0);
     });
-  }, [formation, inscriptions, paymentCase, search]);
+  }, [formation, inscriptions, search]);
 
   const validatedRows = useMemo(
     () => filtered.filter((inscription) => (inscription.validationStatus || "pending") === "validated"),
@@ -322,16 +305,6 @@ export function InscriptionsTable() {
               className="h-10 w-full rounded-md border border-slate-200 pl-9 pr-3 text-sm outline-none focus:border-slate-400"
             />
           </label>
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          <CaseButton active={paymentCase === "all"} onClick={() => setPaymentCase("all")}>Tous</CaseButton>
-          <CaseButton active={paymentCase === "paid"} onClick={() => setPaymentCase("paid")}>Payes</CaseButton>
-          <CaseButton active={paymentCase === "unpaid"} onClick={() => setPaymentCase("unpaid")}>Non payes</CaseButton>
-          <CaseButton active={paymentCase === "card_paid"} onClick={() => setPaymentCase("card_paid")}>CB</CaseButton>
-          <CaseButton active={paymentCase === "transfer_paid"} onClick={() => setPaymentCase("transfer_paid")}>Virement</CaseButton>
-          <CaseButton active={paymentCase === "caf_transfer"} onClick={() => setPaymentCase("caf_transfer")}>CAF + virement</CaseButton>
-          <CaseButton active={paymentCase === "transfer_installments"} onClick={() => setPaymentCase("transfer_installments")}>Virement 2/3 fois</CaseButton>
         </div>
 
         <FormationChips
@@ -725,29 +698,6 @@ function ChipButton({
         active
           ? "border-slate-900 bg-slate-900 text-white"
           : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
-      ].join(" ")}
-    >
-      {children}
-    </button>
-  );
-}
-
-function CaseButton({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={[
-        "h-8 cursor-pointer rounded-md border px-3 text-xs font-medium transition",
-        active ? "border-slate-900 bg-slate-900 text-white" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
       ].join(" ")}
     >
       {children}
