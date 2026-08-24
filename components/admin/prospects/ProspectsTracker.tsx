@@ -43,7 +43,7 @@ const STATUS_LABELS: Record<ProspectStatus, string> = {
   to_contact: "A relancer",
   contacted: "Contacte",
   registered: "Inscrit",
-  closed: "Refuse / non",
+  closed: "Fini / ne s'inscrit pas",
 };
 
 const ORIGIN_LABELS: Record<Prospect["origin"], string> = {
@@ -132,6 +132,7 @@ export function ProspectsTracker() {
   const [search, setSearch] = useState("");
   const [qualification, setQualification] = useState<QualificationFilter>("all");
   const [formation, setFormation] = useState("all");
+  const [showClosed, setShowClosed] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -210,6 +211,7 @@ export function ProspectsTracker() {
       const rowQualification = isHot ? "hot" : row.qualification === "warm" ? "warm" : "normal";
 
       return (
+        (showClosed || row.status !== "closed") &&
         (qualification === "all" || rowQualification === qualification) &&
         (formation === "all" || row.formationTitle === formation) &&
         (!term || haystack.includes(term))
@@ -217,7 +219,7 @@ export function ProspectsTracker() {
     });
 
     return filtered.sort((a, b) => dateFromUnknown(b.createdAt).getTime() - dateFromUnknown(a.createdAt).getTime());
-  }, [formation, qualification, rows, search]);
+  }, [formation, qualification, rows, search, showClosed]);
 
   const selectedRow = selectedId ? rows.find((row) => row.id === selectedId) ?? null : null;
 
@@ -273,6 +275,7 @@ export function ProspectsTracker() {
           <Chip active={qualification === "normal"} onClick={() => setQualification("normal")}>Normal</Chip>
           <Chip active={qualification === "warm"} onClick={() => setQualification("warm")}>Tiede</Chip>
           <Chip active={qualification === "hot"} onClick={() => setQualification("hot")}>Chaud</Chip>
+          <Chip active={showClosed} onClick={() => setShowClosed((value) => !value)}>Voir les finis</Chip>
         </div>
 
         <FormationChips value={formation} formations={formationOptions} onChange={setFormation} />
@@ -375,7 +378,7 @@ function ProspectLine({
       <td className="border-b border-slate-100 px-3 py-2.5">
         <div className="flex flex-wrap gap-2">
           <button type="button" onClick={(event) => { event.stopPropagation(); onOpen(); }} className="h-8 cursor-pointer rounded-md border border-slate-200 px-2 text-xs font-medium text-slate-700 hover:bg-slate-50">Ouvrir</button>
-          <button type="button" disabled={saving} onClick={(event) => { event.stopPropagation(); onUpdate({ status: "closed" }); }} className="h-8 cursor-pointer rounded-md border border-rose-200 bg-rose-50 px-2 text-xs font-medium text-rose-800 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50">Non</button>
+          <button type="button" disabled={saving} onClick={(event) => { event.stopPropagation(); onUpdate({ status: "closed" }); }} className="h-8 cursor-pointer rounded-md border border-rose-200 bg-rose-50 px-2 text-xs font-medium text-rose-800 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50">Fini</button>
         </div>
       </td>
     </tr>
@@ -446,7 +449,7 @@ function ProspectModal({
                 <SimpleToggle active={!row.qualification || row.qualification === "cold"} disabled={saving} onClick={() => onUpdate({ qualification: "cold", priority: "normal", status: row.status === "closed" ? "to_contact" : row.status })}>Normal</SimpleToggle>
                 <SimpleToggle active={row.qualification === "warm"} disabled={saving} onClick={() => onUpdate({ qualification: "warm", priority: "normal", status: row.status === "closed" ? "to_contact" : row.status })}>Tiede</SimpleToggle>
                 <SimpleToggle active={row.qualification === "hot" || row.priority === "high"} disabled={saving} onClick={() => onUpdate({ qualification: "hot", priority: "high", status: row.status === "closed" ? "to_contact" : row.status })}>Chaud</SimpleToggle>
-                <SimpleToggle active={row.status === "closed"} disabled={saving} onClick={() => onUpdate({ status: "closed" })}>Refuse / non</SimpleToggle>
+                <SimpleToggle active={row.status === "closed"} disabled={saving} onClick={() => onUpdate({ status: "closed" })}>Fini / ne s&apos;inscrit pas</SimpleToggle>
                 <SimpleToggle active={row.status === "registered"} disabled={saving} onClick={() => onUpdate({ status: "registered" })}>Inscrit</SimpleToggle>
               </div>
             </section>
