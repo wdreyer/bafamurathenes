@@ -18,9 +18,11 @@ import {
   CheckCircle2,
   Euro,
   Mail,
+  Paperclip,
   Phone,
   Plus,
   Search,
+  Send,
   SlidersHorizontal,
   UserRoundCheck,
 } from "lucide-react";
@@ -33,6 +35,12 @@ type PaymentMethod = Inscription["paymentMethod"];
 type CafStatus = NonNullable<Inscription["cafStatus"]>;
 type SortKey = "date_desc" | "date_asc" | "name_asc" | "formation_asc" | "remaining_desc";
 type RowKind = "prospect" | "inscription";
+type MailTarget = "all" | RowKind;
+
+type MailAttachment = {
+  name: string;
+  content: string;
+};
 
 type Row = {
   rowId: string;
@@ -170,6 +178,13 @@ function normalize(value?: string) {
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
+}
+
+function splitEmails(value?: string) {
+  return String(value || "")
+    .split(/[,\s/;]+/)
+    .map((email) => email.trim())
+    .filter((email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
 }
 
 function prospectName(prospect: Prospect) {
@@ -324,9 +339,20 @@ export function ProspectsTracker() {
     name: "",
     email: "",
     phone: "",
+    department: "",
     formationTitle: "",
     notes: "",
   });
+  const [mailOpen, setMailOpen] = useState(false);
+  const [mailTarget, setMailTarget] = useState<MailTarget>("all");
+  const [mailDepartment, setMailDepartment] = useState("all");
+  const [mailSubject, setMailSubject] = useState("Votre formation BAFA avec Murathènes");
+  const [mailMessage, setMailMessage] = useState(
+    "Bonjour {{prenom}},\n\nJe reviens vers vous concernant votre projet BAFA avec Murathènes.\n\nFormation : {{formation}}\nDépartement : {{departement}}\n\nJe reste disponible si vous avez besoin d'informations ou de documents pour finaliser votre inscription.\n\nÀ bientôt,\nL'équipe BAFA Murathènes",
+  );
+  const [mailAttachments, setMailAttachments] = useState<MailAttachment[]>([]);
+  const [mailSending, setMailSending] = useState(false);
+  const [mailResult, setMailResult] = useState<string | null>(null);
 
   useEffect(() => {
     const prospectsQuery = query(collection(db, "prospects"), orderBy("createdAt", "desc"));
@@ -378,6 +404,10 @@ export function ProspectsTracker() {
     return Array.from(
       new Set(rows.map((row) => row.formationTitle).filter(Boolean)),
     ).sort() as string[];
+  }, [rows]);
+
+  const departmentOptions = useMemo(() => {
+    return Array.from(new Set(rows.map((row) => row.department).filter(Boolean))).sort() as string[];
   }, [rows]);
 
   const filteredRows = useMemo(() => {
@@ -434,6 +464,14 @@ export function ProspectsTracker() {
   const selectedRow = selectedRowId
     ? rows.find((row) => row.rowId === selectedRowId) ?? null
     : null;
+
+  const mailRows = useMemo(() => {
+    return filteredRows.filter((row) => {
+      const matchesTarget = mailTarget === "all" || row.kind === mailTarget;
+      const matchesDepartment = mailDepartment === "all" || row.department === mailDepartment;
+      return matchesTarget && matchesDepartment && splitEmails(row.email).length > 0;
+    });
+  }, [filteredRows, mailDepartment, mailTarget]);
 
   const stats = useMemo(() => {
     const openProspects = rows.filter((row) =>
@@ -495,6 +533,7 @@ export function ProspectsTracker() {
       name: newLead.name.trim(),
       email: newLead.email.trim(),
       phone: newLead.phone.trim(),
+      department: newLead.department.trim(),
       formationTitle: cleanFormationTitle(newLead.formationTitle.trim()),
       notes: newLead.notes.trim(),
       status: "to_contact",
@@ -505,8 +544,78 @@ export function ProspectsTracker() {
       updatedAt: serverTimestamp(),
     });
 
-    setNewLead({ name: "", email: "", phone: "", formationTitle: "", notes: "" });
+    setNewLead({ name: "", email: "", phone: "", department: "", formationTitle: "", notes: "" });
     setShowAdd(false);
+  }
+
+  async function handleAttachmentFiles(files: FileList | null) {
+    if (!files?.length) return;
+    const selected = await Promise.all(
+      Array.from(files).map(
+        (file) =>
+          new Promise<MailAttachment>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => {
+              const content = String(reader.result || "").replace(/^data:[^;]+;base64,/, "");
+              resolve({ name: file.name, content });
+            };
+            reader.onerror = () => reject(reader.error);
+            reader.readAsDataURL(file);
+          }),
+      ),
+    );
+    setMailAttachments((current) => [...current, ...selected].slice(0, 4));
+  }
+
+  async function sendMailCampaign(event: FormEvent) {
+    event.preventDefault();
+    setMailResult(null);
+    if (!mailRows.length || !mailSubject.trim() || !mailMessage.trim()) return;
+
+    setMailSending(true);
+    try {
+      const response = await fetch("/api/admin/send-prospect-mail", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          adminCode: process.env.NEXT_PUBLIC_ADMIN_CODE,
+          subject: mailSubject,
+          message: mailMessage,
+          attachments: mailAttachments,
+          recipients: mailRows.map((row) => ({
+            email: row.email || "",
+            name: row.name,
+            department: row.department || "",
+            formationTitle: row.formationTitle || "",
+            status: row.status,
+            kind: row.kind,
+          })),
+        }),
+      });
+      const result = await response.json();
+
+      if (!response.ok) {
+        setMailResult(result.error || "Envoi impossible.");
+        return;
+      }
+
+      setMailResult(`${result.sent} mail(s) envoyé(s), ${result.failed} échec(s).`);
+
+      await Promise.all(
+        mailRows
+          .filter((row) => row.kind === "prospect")
+          .map((row) =>
+            updateProspect(row.id, {
+              status: "contacted",
+              notes: [row.notes, `Mail envoyé le ${new Date().toLocaleDateString("fr-FR")} : ${mailSubject}`]
+                .filter(Boolean)
+                .join("\n"),
+            }),
+          ),
+      );
+    } finally {
+      setMailSending(false);
+    }
   }
 
   function exportCsv() {
@@ -650,6 +759,14 @@ export function ProspectsTracker() {
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
+              onClick={() => setMailOpen((value) => !value)}
+              className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-md border border-slate-900 bg-white px-3 text-sm font-medium text-slate-900 hover:bg-slate-50"
+            >
+              <Send className="h-4 w-4" />
+              Envoyer un mail
+            </button>
+            <button
+              type="button"
               onClick={() => setShowAdd((value) => !value)}
               className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-md bg-slate-900 px-3 text-sm font-medium text-white hover:bg-slate-800"
             >
@@ -667,8 +784,31 @@ export function ProspectsTracker() {
           </div>
         </div>
 
+        {mailOpen && (
+          <MailCampaignPanel
+            target={mailTarget}
+            department={mailDepartment}
+            departments={departmentOptions}
+            subject={mailSubject}
+            message={mailMessage}
+            attachments={mailAttachments}
+            recipientCount={mailRows.length}
+            sending={mailSending}
+            result={mailResult}
+            onTargetChange={setMailTarget}
+            onDepartmentChange={setMailDepartment}
+            onSubjectChange={setMailSubject}
+            onMessageChange={setMailMessage}
+            onFiles={handleAttachmentFiles}
+            onRemoveAttachment={(name) =>
+              setMailAttachments((current) => current.filter((attachment) => attachment.name !== name))
+            }
+            onSubmit={sendMailCampaign}
+          />
+        )}
+
         {showAdd && (
-          <form onSubmit={addManualLead} className="grid gap-3 border-t border-slate-100 pt-4 md:grid-cols-5">
+          <form onSubmit={addManualLead} className="grid gap-3 border-t border-slate-100 pt-4 md:grid-cols-6">
             <input
               value={newLead.name}
               onChange={(event) => setNewLead((value) => ({ ...value, name: event.target.value }))}
@@ -689,6 +829,12 @@ export function ProspectsTracker() {
               className="h-10 rounded-md border border-slate-200 px-3 text-sm outline-none"
             />
             <input
+              value={newLead.department}
+              onChange={(event) => setNewLead((value) => ({ ...value, department: event.target.value }))}
+              placeholder="Département"
+              className="h-10 rounded-md border border-slate-200 px-3 text-sm outline-none"
+            />
+            <input
               value={newLead.formationTitle}
               onChange={(event) => setNewLead((value) => ({ ...value, formationTitle: event.target.value }))}
               placeholder="Formation visee"
@@ -701,19 +847,20 @@ export function ProspectsTracker() {
               value={newLead.notes}
               onChange={(event) => setNewLead((value) => ({ ...value, notes: event.target.value }))}
               placeholder="Infos utiles, contexte, prochaine action..."
-              className="min-h-20 resize-none rounded-md border border-slate-200 px-3 py-2 text-sm outline-none md:col-span-5"
+              className="min-h-20 resize-none rounded-md border border-slate-200 px-3 py-2 text-sm outline-none md:col-span-6"
             />
           </form>
         )}
       </section>
 
       <section className="overflow-x-auto rounded-md border border-slate-200 bg-white">
-        <table className="min-w-[1500px] w-full border-collapse text-sm">
+        <table className="min-w-[1600px] w-full border-collapse text-sm">
           <thead>
             <tr className="bg-slate-50 text-left text-xs font-semibold uppercase text-slate-500">
               <th className="border-b border-slate-200 px-3 py-2">Contact</th>
               <th className="border-b border-slate-200 px-3 py-2">Suivi</th>
               <th className="border-b border-slate-200 px-3 py-2">Formation</th>
+              <th className="border-b border-slate-200 px-3 py-2">Département</th>
               <th className="border-b border-slate-200 px-3 py-2">Paiement</th>
               <th className="border-b border-slate-200 px-3 py-2">Aides</th>
               <th className="border-b border-slate-200 px-3 py-2">Relance</th>
@@ -724,7 +871,7 @@ export function ProspectsTracker() {
           <tbody>
             {filteredRows.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-3 py-10 text-center text-slate-500">
+                <td colSpan={9} className="px-3 py-10 text-center text-slate-500">
                   Aucun contact pour ces filtres.
                 </td>
               </tr>
@@ -753,6 +900,140 @@ export function ProspectsTracker() {
         />
       )}
     </div>
+  );
+}
+
+function MailCampaignPanel({
+  target,
+  department,
+  departments,
+  subject,
+  message,
+  attachments,
+  recipientCount,
+  sending,
+  result,
+  onTargetChange,
+  onDepartmentChange,
+  onSubjectChange,
+  onMessageChange,
+  onFiles,
+  onRemoveAttachment,
+  onSubmit,
+}: {
+  target: MailTarget;
+  department: string;
+  departments: string[];
+  subject: string;
+  message: string;
+  attachments: MailAttachment[];
+  recipientCount: number;
+  sending: boolean;
+  result: string | null;
+  onTargetChange: (value: MailTarget) => void;
+  onDepartmentChange: (value: string) => void;
+  onSubjectChange: (value: string) => void;
+  onMessageChange: (value: string) => void;
+  onFiles: (files: FileList | null) => void;
+  onRemoveAttachment: (name: string) => void;
+  onSubmit: (event: FormEvent) => void;
+}) {
+  return (
+    <form onSubmit={onSubmit} className="space-y-3 border-t border-slate-100 pt-4">
+      <div className="grid gap-3 lg:grid-cols-[180px_220px_1fr_auto] lg:items-end">
+        <label>
+          <FieldLabel>Cible</FieldLabel>
+          <select
+            value={target}
+            onChange={(event) => onTargetChange(event.target.value as MailTarget)}
+            className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none"
+          >
+            <option value="all">Tous visibles</option>
+            <option value="prospect">Pas inscrits</option>
+            <option value="inscription">Inscriptions en cours</option>
+          </select>
+        </label>
+
+        <label>
+          <FieldLabel>Département</FieldLabel>
+          <select
+            value={department}
+            onChange={(event) => onDepartmentChange(event.target.value)}
+            className="h-10 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none"
+          >
+            <option value="all">Tous</option>
+            {departments.map((item) => (
+              <option key={item} value={item}>
+                {item}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label>
+          <FieldLabel>Sujet</FieldLabel>
+          <input
+            value={subject}
+            onChange={(event) => onSubjectChange(event.target.value)}
+            className="h-10 w-full rounded-md border border-slate-200 px-3 text-sm outline-none"
+            placeholder="Sujet du mail"
+            required
+          />
+        </label>
+
+        <button
+          type="submit"
+          disabled={sending || recipientCount === 0}
+          className="inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-md bg-slate-900 px-4 text-sm font-medium text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <Send className="h-4 w-4" />
+          {sending ? "Envoi..." : `Envoyer (${recipientCount})`}
+        </button>
+      </div>
+
+      <textarea
+        value={message}
+        onChange={(event) => onMessageChange(event.target.value)}
+        className="min-h-44 w-full resize-y rounded-md border border-slate-200 px-3 py-2 text-sm leading-6 outline-none"
+        placeholder="Message personnalisé"
+        required
+      />
+
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="text-xs leading-5 text-slate-500">
+          Variables disponibles : {"{{prenom}}"}, {"{{nom}}"}, {"{{formation}}"}, {"{{departement}}"}, {"{{statut}}"}.
+          Les destinataires sont les lignes visibles du tableau après filtres.
+        </div>
+        <label className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-md border border-slate-200 px-3 text-xs font-medium text-slate-700 hover:bg-slate-50">
+          <Paperclip className="h-3.5 w-3.5" />
+          Joindre RIB / document BAFA
+          <input
+            type="file"
+            multiple
+            accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
+            className="hidden"
+            onChange={(event) => onFiles(event.target.files)}
+          />
+        </label>
+      </div>
+
+      {(attachments.length > 0 || result) && (
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          {attachments.map((attachment) => (
+            <button
+              key={attachment.name}
+              type="button"
+              onClick={() => onRemoveAttachment(attachment.name)}
+              className="inline-flex h-7 cursor-pointer items-center gap-1 rounded-md border border-slate-200 px-2 text-slate-700 hover:bg-slate-50"
+            >
+              <Paperclip className="h-3 w-3" />
+              {attachment.name}
+            </button>
+          ))}
+          {result && <span className="font-medium text-slate-700">{result}</span>}
+        </div>
+      )}
+    </form>
   );
 }
 
@@ -805,6 +1086,11 @@ function LeadRow({
           {row.formationTitle || row.department || "-"}
         </div>
         <div className="mt-0.5 text-xs text-slate-500">{row.leadType}</div>
+      </td>
+
+      <td className="border-b border-slate-100 px-3 py-2.5">
+        <div className="font-medium text-slate-900">{row.department || "-"}</div>
+        {!isInscription && row.quotient && <div className="mt-0.5 text-xs text-slate-500">QF : {row.quotient}</div>}
       </td>
 
       <td className="border-b border-slate-100 px-3 py-2.5">
