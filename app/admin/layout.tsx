@@ -8,6 +8,7 @@ import {
   GraduationCap,
   LayoutDashboard,
   LogOut,
+  Mail,
   ShieldCheck,
   UserRoundSearch,
   Users,
@@ -15,19 +16,14 @@ import {
 
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/formations", label: "Formations", icon: GraduationCap },
   { href: "/admin/prospects", label: "Prospects", icon: UserRoundSearch },
   { href: "/admin/inscriptions", label: "Inscriptions", icon: Users },
+  { href: "/admin/mails", label: "Mails", icon: Mail },
+  { href: "/admin/formations", label: "Formations", icon: GraduationCap },
 ];
 
 const ADMIN_CODE = process.env.NEXT_PUBLIC_ADMIN_CODE;
 const STORAGE_KEY = "murathenes_admin_ok";
-
-const INK = "#1a1530";
-const CREAM = "#fefcf5";
-const PAPER = "#fff8ec";
-const VIOLET = "#792BB9";
-const YELLOW = "#F5EF72";
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
@@ -57,20 +53,14 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
   if (!isAllowed) {
     return (
-      <div className="mura-page flex min-h-screen items-center justify-center px-4">
-        <main
-          className="w-full max-w-sm border-2 p-6"
-          style={{ background: PAPER, borderColor: INK, boxShadow: `7px 7px 0 ${VIOLET}` }}
-        >
-          <div
-            className="mb-5 inline-flex h-11 w-11 items-center justify-center rounded-md"
-            style={{ background: YELLOW, color: INK }}
-          >
+      <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4">
+        <main className="w-full max-w-sm rounded-xl border border-slate-800 bg-white p-6 shadow-2xl">
+          <div className="mb-5 inline-flex h-11 w-11 items-center justify-center rounded-lg bg-slate-950 text-white">
             <ShieldCheck className="h-5 w-5" />
           </div>
-          <h1 className="ed text-3xl font-semibold italic leading-none">Acces admin</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-950">Accès admin</h1>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            Entrez le code pour acceder au pilotage Murathenes.
+            Entrez le code pour accéder au pilotage BAFA.
           </p>
 
           <form onSubmit={onSubmit} className="mt-5 space-y-3">
@@ -80,14 +70,12 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               type="password"
               autoFocus
               placeholder="Code admin"
-              className="h-11 w-full border-2 bg-white px-3 text-sm outline-none"
-              style={{ borderColor: INK }}
+              className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm outline-none focus:border-slate-950"
             />
             {error && <p className="text-sm font-medium text-rose-600">{error}</p>}
             <button
               type="submit"
-              className="mura-pill w-full"
-              style={{ background: INK, color: CREAM }}
+              className="h-11 w-full cursor-pointer rounded-lg bg-slate-950 text-sm font-semibold text-white hover:bg-slate-800"
             >
               Entrer
             </button>
@@ -98,65 +86,72 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="mura-page min-h-screen">
-      <header className="sticky top-0 z-40 border-b-2" style={{ borderColor: INK, background: CREAM }}>
-        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 md:flex-row md:items-center md:justify-between md:px-6">
-          <Link href="/admin" className="flex items-center gap-3 text-inherit no-underline">
-            <span
-              className="grid h-10 w-10 place-items-center border-2"
-              style={{ borderColor: INK, background: YELLOW, boxShadow: `2px 2px 0 ${VIOLET}` }}
-            >
+    <div className="min-h-screen bg-slate-100 text-slate-950">
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 border-r border-slate-200 bg-slate-950 text-white lg:flex lg:flex-col">
+        <div className="border-b border-white/10 px-5 py-5">
+          <Link href="/admin" className="flex items-center gap-3 text-white no-underline">
+            <span className="grid h-10 w-10 place-items-center rounded-lg bg-white text-slate-950">
               <ShieldCheck className="h-5 w-5" />
             </span>
             <span>
-              <span className="block text-sm font-black">Admin Murathenes</span>
-              <span className="mura-mono block text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
-                Formations · prospects · paiements
-              </span>
+              <span className="block text-sm font-semibold">BAFA Admin</span>
+              <span className="block text-xs text-slate-400">Murathènes</span>
             </span>
           </Link>
-
-          <div className="flex flex-col gap-3 md:flex-row md:items-center">
-            <nav className="flex gap-2 overflow-x-auto pb-1 md:pb-0">
-              {navItems.map((item) => {
-                const Icon = item.icon;
-                const active =
-                  item.href === "/admin"
-                    ? pathname === "/admin"
-                    : pathname === item.href || pathname.startsWith(`${item.href}/`);
-
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className="inline-flex h-9 shrink-0 items-center gap-2 border-2 px-3 text-xs font-extrabold uppercase tracking-[0.1em] no-underline transition hover:-translate-y-0.5"
-                    style={{
-                      borderColor: active ? INK : "rgba(26,21,48,.18)",
-                      background: active ? VIOLET : PAPER,
-                      color: active ? CREAM : INK,
-                      boxShadow: active ? `2px 2px 0 ${YELLOW}` : "none",
-                    }}
-                  >
-                    <Icon className="h-3.5 w-3.5" />
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </nav>
-
-            <button
-              onClick={logout}
-              className="inline-flex h-9 items-center justify-center gap-2 border-2 bg-white px-3 text-xs font-bold text-slate-700 transition hover:-translate-y-0.5"
-              style={{ borderColor: "rgba(26,21,48,.18)" }}
-            >
-              <LogOut className="h-3.5 w-3.5" />
-              Deconnexion
-            </button>
-          </div>
         </div>
-      </header>
 
-      <main className="mx-auto max-w-7xl px-4 py-6 md:px-6">{children}</main>
+        <nav className="flex-1 space-y-1 px-3 py-4">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const active =
+              item.href === "/admin"
+                ? pathname === "/admin"
+                : pathname === item.href || pathname.startsWith(`${item.href}/`);
+
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={[
+                  "flex h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium no-underline transition",
+                  active ? "bg-white text-slate-950" : "text-slate-300 hover:bg-white/10 hover:text-white",
+                ].join(" ")}
+              >
+                <Icon className="h-4 w-4" />
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
+
+        <div className="border-t border-white/10 p-3">
+          <button
+            onClick={logout}
+            className="flex h-10 w-full cursor-pointer items-center gap-3 rounded-lg px-3 text-sm font-medium text-slate-300 hover:bg-white/10 hover:text-white"
+          >
+            <LogOut className="h-4 w-4" />
+            Déconnexion
+          </button>
+        </div>
+      </aside>
+
+      <div className="lg:pl-64">
+        <header className="sticky top-0 z-30 border-b border-slate-200 bg-white px-4 py-3 lg:hidden">
+          <div className="flex items-center justify-between">
+            <Link href="/admin" className="font-semibold text-slate-950 no-underline">BAFA Admin</Link>
+            <button onClick={logout} className="text-sm font-medium text-slate-600">Déconnexion</button>
+          </div>
+          <nav className="mt-3 flex gap-2 overflow-x-auto">
+            {navItems.map((item) => (
+              <Link key={item.href} href={item.href} className="shrink-0 rounded-md bg-slate-100 px-3 py-2 text-xs font-medium text-slate-700 no-underline">
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+        </header>
+
+        <main className="px-4 py-5 md:px-6">{children}</main>
+      </div>
     </div>
   );
 }

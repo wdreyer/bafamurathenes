@@ -29,7 +29,7 @@ type ValidationStatus = NonNullable<Inscription["validationStatus"]>;
 type CafStatus = NonNullable<Inscription["cafStatus"]>;
 type PaymentSchedule = NonNullable<Inscription["paymentSchedule"]>;
 type TableView = "validated" | "ongoing" | "all";
-type SortKey = "date_desc" | "name_asc" | "formation_asc" | "remaining_desc" | "caf_remaining_desc";
+type PaymentCase = "all" | "paid" | "unpaid" | "card_paid" | "transfer_paid" | "caf_transfer" | "transfer_installments";
 
 const PAYMENT_METHODS: Record<PaymentMethod, string> = {
   card: "Carte",
@@ -163,12 +163,8 @@ export function InscriptionsTable() {
   const [inscriptions, setInscriptions] = useState<Inscription[]>([]);
   const [search, setSearch] = useState("");
   const [formation, setFormation] = useState("all");
-  const [paymentStatus, setPaymentStatus] = useState<"all" | PaymentStatus>("all");
-  const [paymentMethod, setPaymentMethod] = useState<"all" | PaymentMethod>("all");
-  const [cafStatus, setCafStatus] = useState<"all" | CafStatus>("all");
-  const [schedule, setSchedule] = useState<"all" | PaymentSchedule>("all");
+  const [paymentCase, setPaymentCase] = useState<PaymentCase>("all");
   const [view, setView] = useState<TableView>("validated");
-  const [sort, setSort] = useState<SortKey>("date_desc");
   const [savingId, setSavingId] = useState<string | null>(null);
   const [selectedInscriptionId, setSelectedInscriptionId] = useState<string | null>(null);
 
@@ -205,6 +201,7 @@ export function InscriptionsTable() {
       const currentMethod = inscription.paymentMethod || "other";
       const currentCaf = getCafStatus(inscription);
       const currentSchedule = getSchedule(inscription);
+      const values = financials(inscription);
       const haystack = normalize(
         [
           contactName(inscription),
@@ -218,25 +215,26 @@ export function InscriptionsTable() {
           .filter(Boolean)
           .join(" "),
       );
+      const matchesPaymentCase =
+        paymentCase === "all" ||
+        (paymentCase === "paid" && values.remainingTotal === 0) ||
+        (paymentCase === "unpaid" && values.remainingTotal > 0) ||
+        (paymentCase === "card_paid" && currentMethod === "card" && currentPaymentStatus === "paid") ||
+        (paymentCase === "transfer_paid" && currentMethod === "transfer" && currentPaymentStatus === "paid") ||
+        (paymentCase === "caf_transfer" && currentMethod === "transfer" && currentCaf !== "not_requested") ||
+        (paymentCase === "transfer_installments" && currentMethod === "transfer" && currentSchedule !== "one_time");
 
       return (
         (formation === "all" || cleanFormationTitle(inscription.formationTitle) === formation) &&
-        (paymentStatus === "all" || currentPaymentStatus === paymentStatus) &&
-        (paymentMethod === "all" || currentMethod === paymentMethod) &&
-        (cafStatus === "all" || currentCaf === cafStatus) &&
-        (schedule === "all" || currentSchedule === schedule) &&
+        matchesPaymentCase &&
         (!term || haystack.includes(term))
       );
     });
 
     return rows.sort((a, b) => {
-      if (sort === "name_asc") return contactName(a).localeCompare(contactName(b));
-      if (sort === "formation_asc") return cleanFormationTitle(a.formationTitle).localeCompare(cleanFormationTitle(b.formationTitle));
-      if (sort === "remaining_desc") return financials(b).remainingFamily - financials(a).remainingFamily;
-      if (sort === "caf_remaining_desc") return financials(b).remainingCaf - financials(a).remainingCaf;
       return (dateFromUnknown(b.createdAt)?.getTime() || 0) - (dateFromUnknown(a.createdAt)?.getTime() || 0);
     });
-  }, [cafStatus, formation, inscriptions, paymentMethod, paymentStatus, schedule, search, sort]);
+  }, [formation, inscriptions, paymentCase, search]);
 
   const validatedRows = useMemo(
     () => filtered.filter((inscription) => (inscription.validationStatus || "pending") === "validated"),
@@ -315,37 +313,16 @@ export function InscriptionsTable() {
               className="h-10 w-full rounded-md border border-slate-200 pl-9 pr-3 text-sm outline-none focus:border-slate-400"
             />
           </label>
-          <FilterSelect value={paymentStatus} onChange={(value) => setPaymentStatus(value as "all" | PaymentStatus)}>
-            <option value="all">Tous paiements</option>
-            {Object.entries(PAYMENT_STATUSES).map(([value, label]) => (
-              <option key={value} value={value}>{label}</option>
-            ))}
-          </FilterSelect>
-          <FilterSelect value={paymentMethod} onChange={(value) => setPaymentMethod(value as "all" | PaymentMethod)}>
-            <option value="all">Tous modes</option>
-            {Object.entries(PAYMENT_METHODS).map(([value, label]) => (
-              <option key={value} value={value}>{label}</option>
-            ))}
-          </FilterSelect>
-          <FilterSelect value={cafStatus} onChange={(value) => setCafStatus(value as "all" | CafStatus)}>
-            <option value="all">CAF : tous</option>
-            {Object.entries(CAF_STATUSES).map(([value, label]) => (
-              <option key={value} value={value}>{label}</option>
-            ))}
-          </FilterSelect>
-          <FilterSelect value={schedule} onChange={(value) => setSchedule(value as "all" | PaymentSchedule)}>
-            <option value="all">Toutes échéances</option>
-            {Object.entries(PAYMENT_SCHEDULES).map(([value, label]) => (
-              <option key={value} value={value}>{label}</option>
-            ))}
-          </FilterSelect>
-          <FilterSelect value={sort} onChange={(value) => setSort(value as SortKey)}>
-            <option value="date_desc">Tri : plus récent</option>
-            <option value="name_asc">Tri : nom A-Z</option>
-            <option value="formation_asc">Tri : formation</option>
-            <option value="remaining_desc">Tri : reste famille</option>
-            <option value="caf_remaining_desc">Tri : CAF restante</option>
-          </FilterSelect>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <CaseButton active={paymentCase === "all"} onClick={() => setPaymentCase("all")}>Tous</CaseButton>
+          <CaseButton active={paymentCase === "paid"} onClick={() => setPaymentCase("paid")}>Payes</CaseButton>
+          <CaseButton active={paymentCase === "unpaid"} onClick={() => setPaymentCase("unpaid")}>Non payes</CaseButton>
+          <CaseButton active={paymentCase === "card_paid"} onClick={() => setPaymentCase("card_paid")}>CB</CaseButton>
+          <CaseButton active={paymentCase === "transfer_paid"} onClick={() => setPaymentCase("transfer_paid")}>Virement</CaseButton>
+          <CaseButton active={paymentCase === "caf_transfer"} onClick={() => setPaymentCase("caf_transfer")}>CAF + virement</CaseButton>
+          <CaseButton active={paymentCase === "transfer_installments"} onClick={() => setPaymentCase("transfer_installments")}>Virement 2/3 fois</CaseButton>
         </div>
 
         <FormationChips
@@ -564,6 +541,7 @@ function InscriptionDetailsModal({
   const currentCafStatus = getCafStatus(inscription);
   const currentSchedule = getSchedule(inscription);
   const isTransfer = inscription.paymentMethod === "transfer";
+  const thirdInstallment = Math.round(values.totalPrice / 3);
   const cafTransferPatch: Partial<Inscription> = {
     paymentMethod: "transfer",
     paymentStatus: "partial",
@@ -612,6 +590,7 @@ function InscriptionDetailsModal({
             <ToggleButton active={isTransfer && currentPaymentStatus === "paid"} disabled={saving} onClick={() => onUpdate({ paymentMethod: "transfer", paymentStatus: "paid", paid: true, amountPaid: values.totalPrice, cafAid: false, cafStatus: "not_requested", cafAidAmount: 0, cafRequestedAmount: 0, cafApprovedAmount: 0, cafPaidAmount: 0, installmentPlan: false, paymentSchedule: "one_time", validationStatus: "validated", transferReference: inscription.transferReference || "Virement reçu" })}>Virement payé</ToggleButton>
             <ToggleButton active={isTransfer && values.amountPaid === 150 && values.cafExpected === 400} disabled={saving} onClick={() => onUpdate(cafTransferPatch)}>CAF + 150€</ToggleButton>
             <ToggleButton active={currentSchedule === "two_times"} disabled={saving} onClick={() => onUpdate({ paymentMethod: "transfer", paymentStatus: "partial", paid: false, amountPaid: 225, cafAid: false, cafStatus: "not_requested", cafAidAmount: 0, cafRequestedAmount: 0, cafApprovedAmount: 0, cafPaidAmount: 0, installmentPlan: true, paymentSchedule: "two_times", installmentCount: 2, installment1Amount: 225, installment1Paid: true, installment2Amount: 225, installment2Paid: false, validationStatus: "validated", transferReference: "Virement 1/2 reçu : 225€" })}>2x virement</ToggleButton>
+            <ToggleButton active={currentSchedule === "three_times"} disabled={saving} onClick={() => onUpdate({ paymentMethod: "transfer", paymentStatus: "partial", paid: false, amountPaid: thirdInstallment, cafAid: false, cafStatus: "not_requested", cafAidAmount: 0, cafRequestedAmount: 0, cafApprovedAmount: 0, cafPaidAmount: 0, installmentPlan: true, paymentSchedule: "three_times", installmentCount: 3, installment1Amount: thirdInstallment, installment1Paid: true, installment2Amount: thirdInstallment, installment2Paid: false, installment3Amount: values.totalPrice - thirdInstallment * 2, installment3Paid: false, validationStatus: "validated", transferReference: `Virement 1/3 reçu : ${thirdInstallment}€` })}>3x virement</ToggleButton>
             <ToggleButton active={currentValidationStatus === "validated"} disabled={saving} onClick={() => onUpdate({ validationStatus: currentValidationStatus === "validated" ? "pending" : "validated" })}>Validé</ToggleButton>
             <button type="button" disabled={saving || values.cafExpected <= 0} onClick={() => onUpdate({ cafStatus: "paid", cafAid: true, cafPaidAmount: values.cafExpected, cafPaymentDate: new Date().toISOString().slice(0, 10) })} className="h-8 cursor-pointer rounded-md border border-slate-200 px-3 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50">CAF versée</button>
           </div>
@@ -735,23 +714,26 @@ function ChipButton({
   );
 }
 
-function FilterSelect({
-  value,
-  onChange,
+function CaseButton({
+  active,
+  onClick,
   children,
 }: {
-  value: string;
-  onChange: (value: string) => void;
+  active: boolean;
+  onClick: () => void;
   children: ReactNode;
 }) {
   return (
-    <select
-      value={value}
-      onChange={(event) => onChange(event.target.value)}
-      className="h-10 min-w-40 rounded-md border border-slate-200 bg-white px-3 text-sm outline-none focus:border-slate-400"
+    <button
+      type="button"
+      onClick={onClick}
+      className={[
+        "h-8 cursor-pointer rounded-md border px-3 text-xs font-medium transition",
+        active ? "border-slate-900 bg-slate-900 text-white" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
+      ].join(" ")}
     >
       {children}
-    </select>
+    </button>
   );
 }
 
