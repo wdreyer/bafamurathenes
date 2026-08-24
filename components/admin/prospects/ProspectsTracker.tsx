@@ -12,12 +12,12 @@ import {
   serverTimestamp,
   updateDoc,
 } from "firebase/firestore";
-import { ArrowDownUp, Flame, Mail, Phone, Plus, Search, UserRoundCheck } from "lucide-react";
+import { Mail, Phone, Plus, Search } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { cleanFormationTitle } from "@/lib/formationTitles";
 import type { Inscription, Prospect, ProspectStatus } from "@/lib/types";
 
-type SortKey = "date_desc" | "date_asc" | "name_asc" | "formation_asc";
+type QualificationFilter = "all" | "normal" | "warm" | "hot";
 
 type ProspectRow = {
   id: string;
@@ -55,9 +55,9 @@ const ORIGIN_LABELS: Record<Prospect["origin"], string> = {
 };
 
 const QUALIFICATION_LABELS: Record<NonNullable<Prospect["qualification"]>, string> = {
-  cold: "Froid",
+  cold: "Normal",
   warm: "Tiede",
-  hot: "Tres chaud",
+  hot: "Chaud",
 };
 
 function normalize(value?: string) {
@@ -130,10 +130,8 @@ export function ProspectsTracker() {
   const [prospects, setProspects] = useState<Prospect[]>([]);
   const [inscriptions, setInscriptions] = useState<Inscription[]>([]);
   const [search, setSearch] = useState("");
-  const [origin, setOrigin] = useState<"all" | Prospect["origin"]>("all");
-  const [status, setStatus] = useState<"all" | ProspectStatus>("all");
+  const [qualification, setQualification] = useState<QualificationFilter>("all");
   const [formation, setFormation] = useState("all");
-  const [sort, setSort] = useState<SortKey>("date_desc");
   const [showAdd, setShowAdd] = useState(false);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -208,33 +206,20 @@ export function ProspectsTracker() {
           .join(" "),
       );
 
+      const isHot = row.qualification === "hot" || row.priority === "high";
+      const rowQualification = isHot ? "hot" : row.qualification === "warm" ? "warm" : "normal";
+
       return (
-        (origin === "all" || row.origin === origin) &&
-        (status === "all" || row.status === status) &&
+        (qualification === "all" || rowQualification === qualification) &&
         (formation === "all" || row.formationTitle === formation) &&
         (!term || haystack.includes(term))
       );
     });
 
-    return filtered.sort((a, b) => {
-      if (sort === "date_asc") return dateFromUnknown(a.createdAt).getTime() - dateFromUnknown(b.createdAt).getTime();
-      if (sort === "name_asc") return a.name.localeCompare(b.name);
-      if (sort === "formation_asc") return (a.formationTitle || "").localeCompare(b.formationTitle || "");
-      return dateFromUnknown(b.createdAt).getTime() - dateFromUnknown(a.createdAt).getTime();
-    });
-  }, [formation, origin, rows, search, sort, status]);
+    return filtered.sort((a, b) => dateFromUnknown(b.createdAt).getTime() - dateFromUnknown(a.createdAt).getTime());
+  }, [formation, qualification, rows, search]);
 
   const selectedRow = selectedId ? rows.find((row) => row.id === selectedId) ?? null : null;
-
-  const stats = useMemo(() => {
-    return {
-      total: rows.length,
-      open: rows.filter((row) => ["new", "to_contact", "contacted"].includes(row.status)).length,
-      hot: rows.filter((row) => row.qualification === "hot" || row.priority === "high").length,
-      closed: rows.filter((row) => row.status === "closed").length,
-      todo: rows.filter((row) => row.status === "new" || row.status === "to_contact").length,
-    };
-  }, [rows]);
 
   async function updateProspect(id: string, patch: Partial<Prospect>) {
     setSavingId(id);
@@ -259,7 +244,7 @@ export function ProspectsTracker() {
       notes: newLead.notes.trim(),
       status: "to_contact",
       priority: "normal",
-      qualification: "warm",
+      qualification: "cold",
       preferredContact: "any",
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
@@ -268,44 +253,8 @@ export function ProspectsTracker() {
     setShowAdd(false);
   }
 
-  function exportCsv() {
-    const headers = ["Date", "Origine", "Statut", "Nom", "Email", "Telephone", "Formation", "Departement", "Qualification", "Relance", "Notes", "SMS / appels"];
-    const lines = filteredRows.map((row) =>
-      [
-        formatDate(row.createdAt, true),
-        ORIGIN_LABELS[row.origin],
-        STATUS_LABELS[row.status],
-        row.name,
-        row.email || "",
-        row.phone || "",
-        row.formationTitle || "",
-        row.department || "",
-        row.qualification ? QUALIFICATION_LABELS[row.qualification] : "",
-        row.nextFollowUpDate || "",
-        row.notes || "",
-        row.smsNotes || "",
-      ]
-        .map((value) => `"${String(value).replaceAll('"', '""')}"`)
-        .join(","),
-    );
-    const blob = new Blob([[headers.join(","), ...lines].join("\n")], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "prospects-bafa-murathenes.csv";
-    link.click();
-    URL.revokeObjectURL(url);
-  }
-
   return (
     <div className="space-y-5">
-      <section className="grid gap-px overflow-hidden rounded-md border border-slate-200 bg-slate-200 md:grid-cols-4">
-        <Metric icon={UserRoundCheck} label="Prospects" value={stats.total.toString()} detail={`${stats.open} ouverts`} />
-        <Metric icon={Flame} label="Tres chauds" value={stats.hot.toString()} detail="Priorite haute ou hot" />
-        <Metric icon={Phone} label="A traiter" value={stats.todo.toString()} detail="Nouveaux + relance" />
-        <Metric icon={ArrowDownUp} label="Refuses" value={stats.closed.toString()} detail="Ont dit non" />
-      </section>
-
       <section className="space-y-3 rounded-md border border-slate-200 bg-white p-3">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <label className="relative min-w-0 flex-1">
@@ -317,24 +266,13 @@ export function ProspectsTracker() {
               className="h-10 w-full rounded-md border border-slate-200 pl-9 pr-3 text-sm outline-none focus:border-slate-400"
             />
           </label>
-          <FilterSelect value={origin} onChange={(value) => setOrigin(value as "all" | Prospect["origin"])}>
-            <option value="all">Toutes origines</option>
-            {Object.entries(ORIGIN_LABELS).map(([value, label]) => (
-              <option key={value} value={value}>{label}</option>
-            ))}
-          </FilterSelect>
-          <FilterSelect value={status} onChange={(value) => setStatus(value as "all" | ProspectStatus)}>
-            <option value="all">Tous statuts</option>
-            {Object.entries(STATUS_LABELS).filter(([value]) => value !== "registered").map(([value, label]) => (
-              <option key={value} value={value}>{label}</option>
-            ))}
-          </FilterSelect>
-          <FilterSelect value={sort} onChange={(value) => setSort(value as SortKey)}>
-            <option value="date_desc">Plus recent</option>
-            <option value="date_asc">Plus ancien</option>
-            <option value="name_asc">Nom A-Z</option>
-            <option value="formation_asc">Formation A-Z</option>
-          </FilterSelect>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <Chip active={qualification === "all"} onClick={() => setQualification("all")}>Tous niveaux</Chip>
+          <Chip active={qualification === "normal"} onClick={() => setQualification("normal")}>Normal</Chip>
+          <Chip active={qualification === "warm"} onClick={() => setQualification("warm")}>Tiede</Chip>
+          <Chip active={qualification === "hot"} onClick={() => setQualification("hot")}>Chaud</Chip>
         </div>
 
         <FormationChips value={formation} formations={formationOptions} onChange={setFormation} />
@@ -343,10 +281,6 @@ export function ProspectsTracker() {
           <button type="button" onClick={() => setShowAdd((value) => !value)} className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-md bg-slate-900 px-3 text-sm font-medium text-white hover:bg-slate-800">
             <Plus className="h-4 w-4" />
             Ajouter
-          </button>
-          <button type="button" onClick={exportCsv} className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-md border border-slate-200 px-3 text-sm font-medium text-slate-700 hover:bg-slate-50">
-            <ArrowDownUp className="h-4 w-4" />
-            Export CSV
           </button>
         </div>
 
@@ -368,18 +302,17 @@ export function ProspectsTracker() {
           <thead>
             <tr className="bg-slate-50 text-left text-xs font-semibold uppercase text-slate-500">
               <TH>Contact</TH>
-              <TH>Statut</TH>
+              <TH>Niveau</TH>
               <TH>Formation</TH>
               <TH>Departement</TH>
-              <TH>Dernier echange</TH>
-              <TH>Relance</TH>
+              <TH>Historique des echanges</TH>
               <TH>Actions</TH>
             </tr>
           </thead>
           <tbody>
             {filteredRows.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-3 py-10 text-center text-slate-500">Aucun prospect pour ces filtres.</td>
+                <td colSpan={6} className="px-3 py-10 text-center text-slate-500">Aucun prospect pour ces filtres.</td>
               </tr>
             ) : (
               filteredRows.map((row) => (
@@ -428,8 +361,9 @@ function ProspectLine({
       </td>
       <td className="border-b border-slate-100 px-3 py-2.5">
         <div className="flex flex-wrap gap-1.5">
-          <StatusPill tone={row.status === "closed" ? "gray" : row.qualification === "hot" || row.priority === "high" ? "rose" : "slate"}>{STATUS_LABELS[row.status]}</StatusPill>
-          {row.qualification && <StatusPill tone={row.qualification === "hot" ? "rose" : "slate"}>{QUALIFICATION_LABELS[row.qualification]}</StatusPill>}
+          <StatusPill tone={row.status === "closed" ? "gray" : row.qualification === "hot" || row.priority === "high" ? "rose" : "slate"}>
+            {row.status === "closed" ? STATUS_LABELS.closed : row.qualification ? QUALIFICATION_LABELS[row.qualification] : "Normal"}
+          </StatusPill>
         </div>
         <div className="mt-1 text-xs text-slate-500">{ORIGIN_LABELS[row.origin]}</div>
       </td>
@@ -438,11 +372,9 @@ function ProspectLine({
       <td className="border-b border-slate-100 px-3 py-2.5">
         <div className="max-w-[300px] truncate text-xs text-slate-600">{row.smsNotes || row.notes || row.message || "-"}</div>
       </td>
-      <td className="border-b border-slate-100 px-3 py-2.5 text-xs text-slate-600">{row.nextFollowUpDate || "-"}</td>
       <td className="border-b border-slate-100 px-3 py-2.5">
         <div className="flex flex-wrap gap-2">
           <button type="button" onClick={(event) => { event.stopPropagation(); onOpen(); }} className="h-8 cursor-pointer rounded-md border border-slate-200 px-2 text-xs font-medium text-slate-700 hover:bg-slate-50">Ouvrir</button>
-          <button type="button" disabled={saving} onClick={(event) => { event.stopPropagation(); onUpdate({ status: "contacted" }); }} className="h-8 cursor-pointer rounded-md border border-slate-200 px-2 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50">Contacte</button>
           <button type="button" disabled={saving} onClick={(event) => { event.stopPropagation(); onUpdate({ status: "closed" }); }} className="h-8 cursor-pointer rounded-md border border-rose-200 bg-rose-50 px-2 text-xs font-medium text-rose-800 hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-50">Non</button>
         </div>
       </td>
@@ -485,12 +417,11 @@ function ProspectModal({
           </section>
 
           <section className="rounded-md border border-slate-200 p-3">
-            <h4 className="text-xs font-semibold uppercase text-slate-500">Statut</h4>
+            <h4 className="text-xs font-semibold uppercase text-slate-500">Niveau</h4>
             <div className="mt-2 flex flex-wrap gap-2">
-              <SimpleToggle active={row.status === "new"} disabled={saving} onClick={() => onUpdate({ status: "new" })}>Nouveau</SimpleToggle>
-              <SimpleToggle active={row.status === "to_contact"} disabled={saving} onClick={() => onUpdate({ status: "to_contact" })}>A relancer</SimpleToggle>
-              <SimpleToggle active={row.status === "contacted"} disabled={saving} onClick={() => onUpdate({ status: "contacted" })}>Contacte</SimpleToggle>
-              <SimpleToggle active={row.qualification === "hot"} disabled={saving} onClick={() => onUpdate({ qualification: row.qualification === "hot" ? "warm" : "hot", priority: row.qualification === "hot" ? "normal" : "high" })}>Tres chaud</SimpleToggle>
+              <SimpleToggle active={!row.qualification || row.qualification === "cold"} disabled={saving} onClick={() => onUpdate({ qualification: "cold", priority: "normal", status: row.status === "closed" ? "to_contact" : row.status })}>Normal</SimpleToggle>
+              <SimpleToggle active={row.qualification === "warm"} disabled={saving} onClick={() => onUpdate({ qualification: "warm", priority: "normal", status: row.status === "closed" ? "to_contact" : row.status })}>Tiede</SimpleToggle>
+              <SimpleToggle active={row.qualification === "hot" || row.priority === "high"} disabled={saving} onClick={() => onUpdate({ qualification: "hot", priority: "high", status: row.status === "closed" ? "to_contact" : row.status })}>Chaud</SimpleToggle>
               <SimpleToggle active={row.status === "closed"} disabled={saving} onClick={() => onUpdate({ status: "closed" })}>Refuse / non</SimpleToggle>
               <SimpleToggle active={row.status === "registered"} disabled={saving} onClick={() => onUpdate({ status: "registered" })}>Inscrit</SimpleToggle>
             </div>
@@ -519,19 +450,6 @@ function ProspectModal({
   );
 }
 
-function Metric({ icon: Icon, label, value, detail }: { icon: typeof UserRoundCheck; label: string; value: string; detail: string }) {
-  return (
-    <div className="bg-white p-4">
-      <div className="flex items-center gap-2 text-xs font-semibold uppercase text-slate-500">
-        <Icon className="h-4 w-4" />
-        {label}
-      </div>
-      <div className="mt-2 text-2xl font-semibold text-slate-950">{value}</div>
-      <div className="mt-1 text-xs text-slate-500">{detail}</div>
-    </div>
-  );
-}
-
 function FormationChips({ value, formations, onChange }: { value: string; formations: string[]; onChange: (value: string) => void }) {
   if (!formations.length) return null;
   return (
@@ -549,14 +467,6 @@ function Chip({ active, children, onClick }: { active: boolean; children: ReactN
     <button type="button" onClick={onClick} className={["h-8 cursor-pointer rounded-md border px-3 text-xs font-medium", active ? "border-slate-900 bg-slate-900 text-white" : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"].join(" ")}>
       {children}
     </button>
-  );
-}
-
-function FilterSelect({ value, onChange, children }: { value: string; onChange: (value: string) => void; children: ReactNode }) {
-  return (
-    <select value={value} onChange={(event) => onChange(event.target.value)} className="h-10 min-w-40 cursor-pointer rounded-md border border-slate-200 bg-white px-3 text-sm outline-none focus:border-slate-400">
-      {children}
-    </select>
   );
 }
 
