@@ -393,9 +393,31 @@ function ProspectModal({
   onClose: () => void;
   onUpdate: (patch: Partial<Prospect>) => void;
 }) {
+  const [exchangeDraft, setExchangeDraft] = useState("");
+
+  function addExchange(kind: "SMS" | "Appel" | "Mail" | "Note") {
+    const text = exchangeDraft.trim();
+    if (!text) return;
+    const stamp = new Intl.DateTimeFormat("fr-FR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date());
+    const line = `${stamp} - ${kind} - ${text}`;
+    onUpdate({
+      smsNotes: [line, row.smsNotes].filter(Boolean).join("\n"),
+      status: row.status === "new" ? "contacted" : row.status,
+    });
+    setExchangeDraft("");
+  }
+
+  const history = [row.smsNotes, row.notes, row.message].filter(Boolean).join("\n").split("\n").filter(Boolean);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-3 py-4">
-      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-md border border-slate-200 bg-white shadow-xl">
+      <div className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-md border border-slate-200 bg-white shadow-xl">
         <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-slate-200 bg-white px-4 py-3">
           <div>
             <h3 className="text-base font-semibold text-slate-900">{row.name}</h3>
@@ -404,46 +426,70 @@ function ProspectModal({
           <button type="button" onClick={onClose} className="h-8 cursor-pointer rounded-md border border-slate-200 px-3 text-xs font-medium text-slate-700 hover:bg-slate-50">Fermer</button>
         </div>
 
-        <div className="grid gap-3 p-4">
-          <section className="grid gap-2 rounded-md border border-slate-200 p-3 md:grid-cols-2">
-            <Info label="Email" value={row.email || "-"} />
-            <Info label="Telephone" value={row.phone || "-"} />
-            <Info label="Formation" value={row.formationTitle || "-"} />
-            <TextEdit label="Departement" value={row.department || ""} disabled={saving} onCommit={(value) => onUpdate({ department: value })} />
-            <div className="flex flex-wrap gap-2 md:col-span-2">
-              {row.email && <ContactButton href={`mailto:${row.email}`} icon={Mail} label="Email" />}
-              {row.phone && <ContactButton href={`tel:${row.phone.replace(/\s/g, "")}`} icon={Phone} label="Appel" />}
-            </div>
-          </section>
-
-          <section className="rounded-md border border-slate-200 p-3">
-            <h4 className="text-xs font-semibold uppercase text-slate-500">Niveau</h4>
-            <div className="mt-2 flex flex-wrap gap-2">
-              <SimpleToggle active={!row.qualification || row.qualification === "cold"} disabled={saving} onClick={() => onUpdate({ qualification: "cold", priority: "normal", status: row.status === "closed" ? "to_contact" : row.status })}>Normal</SimpleToggle>
-              <SimpleToggle active={row.qualification === "warm"} disabled={saving} onClick={() => onUpdate({ qualification: "warm", priority: "normal", status: row.status === "closed" ? "to_contact" : row.status })}>Tiede</SimpleToggle>
-              <SimpleToggle active={row.qualification === "hot" || row.priority === "high"} disabled={saving} onClick={() => onUpdate({ qualification: "hot", priority: "high", status: row.status === "closed" ? "to_contact" : row.status })}>Chaud</SimpleToggle>
-              <SimpleToggle active={row.status === "closed"} disabled={saving} onClick={() => onUpdate({ status: "closed" })}>Refuse / non</SimpleToggle>
-              <SimpleToggle active={row.status === "registered"} disabled={saving} onClick={() => onUpdate({ status: "registered" })}>Inscrit</SimpleToggle>
-            </div>
-          </section>
-
-          {row.message && (
-            <section className="rounded-md border border-slate-200 p-3">
-              <h4 className="text-xs font-semibold uppercase text-slate-500">Message formulaire</h4>
-              <p className="mt-2 text-sm leading-6 text-slate-700">{row.message}</p>
+        <div className="grid gap-3 p-4 lg:grid-cols-[320px_1fr]">
+          <aside className="space-y-3">
+            <section className="grid gap-2 rounded-md border border-slate-200 p-3">
+              <TextEdit label="Nom" value={row.name === "Contact sans nom" ? "" : row.name} disabled={saving} onCommit={(value) => onUpdate({ name: value })} />
+              <TextEdit label="Email" value={row.email || ""} disabled={saving} onCommit={(value) => onUpdate({ email: value })} />
+              <TextEdit label="Telephone" value={row.phone || ""} disabled={saving} onCommit={(value) => onUpdate({ phone: value })} />
+              <TextEdit label="Formation" value={row.formationTitle || ""} disabled={saving} onCommit={(value) => onUpdate({ formationTitle: cleanFormationTitle(value) })} />
+              <TextEdit label="Departement" value={row.department || ""} disabled={saving} onCommit={(value) => onUpdate({ department: value })} />
+              <div className="flex flex-wrap gap-2 md:col-span-2">
+                {row.email && <ContactButton href={`mailto:${row.email}`} icon={Mail} label="Email" />}
+                {row.phone && <ContactButton href={`tel:${row.phone.replace(/\s/g, "")}`} icon={Phone} label="Appel" />}
+              </div>
             </section>
-          )}
 
-          <section className="grid gap-2 rounded-md border border-slate-200 p-3 md:grid-cols-2">
-            <label className="text-sm">
-              <span className="mb-1 block text-xs font-semibold uppercase text-slate-500">SMS / appels</span>
-              <textarea defaultValue={row.smsNotes || ""} disabled={saving} onBlur={(event) => { if ((row.smsNotes || "") !== event.target.value) onUpdate({ smsNotes: event.target.value }); }} className="h-24 w-full resize-none rounded-md border border-slate-200 px-3 py-2 outline-none" />
-            </label>
-            <label className="text-sm">
-              <span className="mb-1 block text-xs font-semibold uppercase text-slate-500">Notes</span>
-              <textarea defaultValue={row.notes || ""} disabled={saving} onBlur={(event) => { if ((row.notes || "") !== event.target.value) onUpdate({ notes: event.target.value }); }} className="h-24 w-full resize-none rounded-md border border-slate-200 px-3 py-2 outline-none" />
-            </label>
-          </section>
+            <section className="rounded-md border border-slate-200 p-3">
+              <h4 className="text-xs font-semibold uppercase text-slate-500">Niveau</h4>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <SimpleToggle active={!row.qualification || row.qualification === "cold"} disabled={saving} onClick={() => onUpdate({ qualification: "cold", priority: "normal", status: row.status === "closed" ? "to_contact" : row.status })}>Normal</SimpleToggle>
+                <SimpleToggle active={row.qualification === "warm"} disabled={saving} onClick={() => onUpdate({ qualification: "warm", priority: "normal", status: row.status === "closed" ? "to_contact" : row.status })}>Tiede</SimpleToggle>
+                <SimpleToggle active={row.qualification === "hot" || row.priority === "high"} disabled={saving} onClick={() => onUpdate({ qualification: "hot", priority: "high", status: row.status === "closed" ? "to_contact" : row.status })}>Chaud</SimpleToggle>
+                <SimpleToggle active={row.status === "closed"} disabled={saving} onClick={() => onUpdate({ status: "closed" })}>Refuse / non</SimpleToggle>
+                <SimpleToggle active={row.status === "registered"} disabled={saving} onClick={() => onUpdate({ status: "registered" })}>Inscrit</SimpleToggle>
+              </div>
+            </section>
+          </aside>
+
+          <div className="space-y-3">
+            <section className="rounded-md border border-slate-200 p-3">
+              <h4 className="text-xs font-semibold uppercase text-slate-500">Ajouter un echange</h4>
+              <textarea
+                value={exchangeDraft}
+                onChange={(event) => setExchangeDraft(event.target.value)}
+                disabled={saving}
+                placeholder="Ex : a appele, attend le retour de sa mere, veut la formation generale..."
+                className="mt-2 h-24 w-full resize-none rounded-md border border-slate-200 px-3 py-2 text-sm outline-none"
+              />
+              <div className="mt-2 flex flex-wrap gap-2">
+                <button type="button" disabled={saving || !exchangeDraft.trim()} onClick={() => addExchange("SMS")} className="h-8 cursor-pointer rounded-md bg-slate-900 px-3 text-xs font-medium text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50">SMS</button>
+                <button type="button" disabled={saving || !exchangeDraft.trim()} onClick={() => addExchange("Appel")} className="h-8 cursor-pointer rounded-md bg-slate-900 px-3 text-xs font-medium text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50">Appel</button>
+                <button type="button" disabled={saving || !exchangeDraft.trim()} onClick={() => addExchange("Mail")} className="h-8 cursor-pointer rounded-md bg-slate-900 px-3 text-xs font-medium text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50">Mail</button>
+                <button type="button" disabled={saving || !exchangeDraft.trim()} onClick={() => addExchange("Note")} className="h-8 cursor-pointer rounded-md border border-slate-200 px-3 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50">Note</button>
+              </div>
+            </section>
+
+            <section className="rounded-md border border-slate-200 p-3">
+              <h4 className="text-xs font-semibold uppercase text-slate-500">Historique</h4>
+              <div className="mt-2 max-h-80 space-y-2 overflow-y-auto">
+                {history.length ? history.map((entry, index) => (
+                  <div key={`${entry}-${index}`} className="rounded-md border border-slate-100 bg-slate-50 px-3 py-2 text-sm leading-6 text-slate-700">
+                    {entry}
+                  </div>
+                )) : (
+                  <div className="rounded-md border border-dashed border-slate-200 px-3 py-6 text-center text-sm text-slate-500">Aucun echange note.</div>
+                )}
+              </div>
+            </section>
+
+            <section className="rounded-md border border-slate-200 p-3">
+              <label className="text-sm">
+                <span className="mb-1 block text-xs font-semibold uppercase text-slate-500">Notes libres</span>
+                <textarea defaultValue={row.notes || ""} disabled={saving} onBlur={(event) => { if ((row.notes || "") !== event.target.value) onUpdate({ notes: event.target.value }); }} className="h-20 w-full resize-none rounded-md border border-slate-200 px-3 py-2 outline-none" />
+              </label>
+            </section>
+          </div>
         </div>
       </div>
     </div>
@@ -497,15 +543,6 @@ function ContactButton({ href, icon: Icon, label }: { href: string; icon: typeof
       <Icon className="h-3.5 w-3.5" />
       {label}
     </a>
-  );
-}
-
-function Info({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <div className="text-xs font-semibold uppercase text-slate-500">{label}</div>
-      <div className="mt-1 text-sm text-slate-900">{value}</div>
-    </div>
   );
 }
 
