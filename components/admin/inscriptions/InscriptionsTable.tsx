@@ -56,10 +56,13 @@ const VALIDATION_STATUSES: Record<ValidationStatus, string> = {
 
 const CAF_STATUSES: Record<CafStatus, string> = {
   not_requested: "Pas de CAF",
-  requested: "Demandée",
-  approved: "Accordée",
-  paid: "Versée",
-  rejected: "Refusée",
+  murathenes_document: "Doc Murathènes",
+  family_document: "Doc famille",
+  sent: "Envoyé",
+  approved: "Accordé",
+  requested: "Doc Murathènes",
+  paid: "Accordé",
+  rejected: "Pas de CAF",
 };
 
 const PAYMENT_SCHEDULES: Record<PaymentSchedule, string> = {
@@ -113,11 +116,17 @@ function contactName(inscription: Inscription) {
 }
 
 function getCafStatus(inscription: Inscription): CafStatus {
+  if (inscription.cafStatus === "paid") return "approved";
+  if (inscription.cafStatus === "requested") return "murathenes_document";
   if (inscription.cafStatus) return inscription.cafStatus;
-  if (inscription.cafAid && numberValue(inscription.cafPaidAmount) > 0) return "paid";
+  if (inscription.cafAid && numberValue(inscription.cafPaidAmount) > 0) return "approved";
   if (inscription.cafAid && numberValue(inscription.cafApprovedAmount) > 0) return "approved";
-  if (inscription.cafAid) return "requested";
+  if (inscription.cafAid) return "murathenes_document";
   return "not_requested";
+}
+
+function isCafApproved(status: CafStatus) {
+  return status === "approved" || status === "paid";
 }
 
 function getSchedule(inscription: Inscription): PaymentSchedule {
@@ -139,7 +148,7 @@ function financials(inscription: Inscription) {
             inscription.cafAidAmount ||
             inscription.cafRequestedAmount,
         );
-  const cafPaidAmount = cafStatus === "paid" ? numberValue(inscription.cafPaidAmount || cafExpected) : 0;
+  const cafPaidAmount = isCafApproved(cafStatus) ? numberValue(inscription.cafPaidAmount || cafExpected) : 0;
   const otherAidAmount = numberValue(inscription.otherAidAmount);
   const amountPaid = inscription.paid ? totalPrice : numberValue(inscription.amountPaid);
   const expectedTotal = Math.max(0, totalPrice - cafExpected - otherAidAmount);
@@ -452,7 +461,7 @@ export function InscriptionsTable() {
                   </TD>
 
                   <TD>
-                    <StatusBadge label={CAF_STATUSES[currentCafStatus]} tone={currentCafStatus === "paid" ? "green" : currentCafStatus === "not_requested" ? "yellow" : "rose"} />
+                    <StatusBadge label={CAF_STATUSES[currentCafStatus]} tone={isCafApproved(currentCafStatus) ? "green" : currentCafStatus === "not_requested" ? "yellow" : "rose"} />
                     {values.cafExpected > 0 && (
                       <div className="mt-1 text-xs text-slate-500">{euro(values.cafPaidAmount)} / {euro(values.cafExpected)}</div>
                     )}
@@ -548,7 +557,7 @@ function InscriptionDetailsModal({
     paid: false,
     amountPaid: 150,
     cafAid: true,
-    cafStatus: "approved",
+    cafStatus: "murathenes_document",
     cafAidAmount: 400,
     cafRequestedAmount: 400,
     cafApprovedAmount: 400,
@@ -580,8 +589,8 @@ function InscriptionDetailsModal({
             <MiniStat label="Total" value={euro(values.totalPrice)} />
             <MiniStat label="Reçu famille" value={euro(values.amountPaid)} />
             <MiniStat label="Reste famille" value={euro(values.remainingFamily)} alert={values.remainingFamily > 0} />
-            <MiniStat label="CAF attendue" value={euro(values.cafExpected)} />
-            <MiniStat label="Reste CAF" value={euro(values.remainingCaf)} alert={values.remainingCaf > 0} />
+            <MiniStat label="CAF prévue" value={euro(values.cafExpected)} />
+            <MiniStat label="CAF à recevoir" value={euro(values.remainingCaf)} alert={values.remainingCaf > 0} />
             <MiniStat label="Statut" value={`${PAYMENT_STATUSES[currentPaymentStatus]} / ${CAF_STATUSES[currentCafStatus]}`} />
           </div>
 
@@ -592,15 +601,24 @@ function InscriptionDetailsModal({
             <ToggleButton active={currentSchedule === "two_times"} disabled={saving} onClick={() => onUpdate({ paymentMethod: "transfer", paymentStatus: "partial", paid: false, amountPaid: 225, cafAid: false, cafStatus: "not_requested", cafAidAmount: 0, cafRequestedAmount: 0, cafApprovedAmount: 0, cafPaidAmount: 0, installmentPlan: true, paymentSchedule: "two_times", installmentCount: 2, installment1Amount: 225, installment1Paid: true, installment2Amount: 225, installment2Paid: false, validationStatus: "validated", transferReference: "Virement 1/2 reçu : 225€" })}>2x virement</ToggleButton>
             <ToggleButton active={currentSchedule === "three_times"} disabled={saving} onClick={() => onUpdate({ paymentMethod: "transfer", paymentStatus: "partial", paid: false, amountPaid: thirdInstallment, cafAid: false, cafStatus: "not_requested", cafAidAmount: 0, cafRequestedAmount: 0, cafApprovedAmount: 0, cafPaidAmount: 0, installmentPlan: true, paymentSchedule: "three_times", installmentCount: 3, installment1Amount: thirdInstallment, installment1Paid: true, installment2Amount: thirdInstallment, installment2Paid: false, installment3Amount: values.totalPrice - thirdInstallment * 2, installment3Paid: false, validationStatus: "validated", transferReference: `Virement 1/3 reçu : ${thirdInstallment}€` })}>3x virement</ToggleButton>
             <ToggleButton active={currentValidationStatus === "validated"} disabled={saving} onClick={() => onUpdate({ validationStatus: currentValidationStatus === "validated" ? "pending" : "validated" })}>Validé</ToggleButton>
-            <button type="button" disabled={saving || values.cafExpected <= 0} onClick={() => onUpdate({ cafStatus: "paid", cafAid: true, cafPaidAmount: values.cafExpected, cafPaymentDate: new Date().toISOString().slice(0, 10) })} className="h-8 cursor-pointer rounded-md border border-slate-200 px-3 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50">CAF versée</button>
+          </div>
+
+          <div className="rounded-md border border-slate-200 p-2">
+            <div className="mb-2 text-xs font-semibold uppercase text-slate-500">Etapes CAF</div>
+            <div className="flex flex-wrap gap-2">
+              <ToggleButton active={currentCafStatus === "not_requested"} disabled={saving} onClick={() => onUpdate({ cafAid: false, cafStatus: "not_requested", cafAidAmount: 0, cafRequestedAmount: 0, cafApprovedAmount: 0, cafPaidAmount: 0 })}>Pas de CAF</ToggleButton>
+              <ToggleButton active={currentCafStatus === "murathenes_document"} disabled={saving} onClick={() => onUpdate({ cafAid: true, cafStatus: "murathenes_document", cafAidAmount: values.cafExpected || 400, cafRequestedAmount: values.cafExpected || 400, cafApprovedAmount: 0, cafPaidAmount: 0 })}>Document Murathènes</ToggleButton>
+              <ToggleButton active={currentCafStatus === "family_document"} disabled={saving} onClick={() => onUpdate({ cafAid: true, cafStatus: "family_document", cafAidAmount: values.cafExpected || 400, cafRequestedAmount: values.cafExpected || 400, cafApprovedAmount: 0, cafPaidAmount: 0 })}>Document famille</ToggleButton>
+              <ToggleButton active={currentCafStatus === "sent"} disabled={saving} onClick={() => onUpdate({ cafAid: true, cafStatus: "sent", cafAidAmount: values.cafExpected || 400, cafRequestedAmount: values.cafExpected || 400, cafApprovedAmount: 0, cafPaidAmount: 0 })}>Envoyé</ToggleButton>
+              <ToggleButton active={isCafApproved(currentCafStatus)} disabled={saving || values.cafExpected <= 0} onClick={() => onUpdate({ cafAid: true, cafStatus: "approved", cafAidAmount: values.cafExpected || 400, cafRequestedAmount: values.cafExpected || 400, cafApprovedAmount: values.cafExpected || 400, cafPaidAmount: values.cafExpected || 400, cafPaymentDate: new Date().toISOString().slice(0, 10) })}>Accordé</ToggleButton>
+            </div>
           </div>
 
           <div className="grid gap-3 md:grid-cols-[1.2fr_1fr]">
             <section className="grid gap-2 rounded-md border border-slate-200 p-3 sm:grid-cols-4">
               <NumberInput label="Total" value={values.totalPrice} disabled={saving} onCommit={(value) => onUpdate({ totalPrice: value, amount: value })} />
               <NumberInput label="Reçu" value={values.amountPaid} disabled={saving || currentPaymentStatus === "paid"} onCommit={(value) => onUpdate({ amountPaid: value, paymentStatus: value <= 0 ? "pending" : value >= values.expectedTotal ? "paid" : "partial", paid: value >= values.expectedTotal })} />
-              <NumberInput label="CAF prévue" value={values.cafExpected} disabled={saving} onCommit={(value) => onUpdate({ cafAid: value > 0, cafAidAmount: value, cafRequestedAmount: value, cafApprovedAmount: value, cafStatus: value > 0 ? "approved" : "not_requested" })} />
-              <NumberInput label="CAF versée" value={values.cafPaidAmount} disabled={saving || values.cafExpected <= 0} onCommit={(value) => onUpdate({ cafPaidAmount: value, cafStatus: value > 0 ? "paid" : currentCafStatus })} />
+              <NumberInput label="CAF prévue" value={values.cafExpected} disabled={saving} onCommit={(value) => onUpdate({ cafAid: value > 0, cafAidAmount: value, cafRequestedAmount: value, cafApprovedAmount: isCafApproved(currentCafStatus) ? value : 0, cafPaidAmount: isCafApproved(currentCafStatus) ? value : 0, cafStatus: value > 0 ? currentCafStatus === "not_requested" ? "murathenes_document" : currentCafStatus : "not_requested" })} />
               {isTransfer && <TextInput label="Mémo virement" value={inscription.transferReference || ""} disabled={saving} onCommit={(value) => onUpdate({ transferReference: value })} />}
             </section>
 

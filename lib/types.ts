@@ -40,7 +40,15 @@ export type Inscription = {
   totalPrice?: number;
   amountPaid?: number;
   cafAid?: boolean;
-  cafStatus?: "not_requested" | "requested" | "approved" | "paid" | "rejected";
+  cafStatus?:
+    | "not_requested"
+    | "murathenes_document"
+    | "family_document"
+    | "sent"
+    | "approved"
+    | "requested"
+    | "paid"
+    | "rejected";
   cafAidAmount?: number;
   cafRequestedAmount?: number;
   cafApprovedAmount?: number;

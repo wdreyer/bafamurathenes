@@ -55,11 +55,17 @@ function prospectName(prospect: Prospect) {
 
 function financials(inscription: Inscription) {
   const total = numberValue(inscription.totalPrice ?? inscription.amount);
+  const cafStatus =
+    inscription.cafStatus === "paid"
+      ? "approved"
+      : inscription.cafStatus === "requested"
+        ? "murathenes_document"
+        : inscription.cafStatus;
   const cafExpected =
-    inscription.cafStatus === "not_requested" || inscription.cafStatus === "rejected"
+    cafStatus === "not_requested" || cafStatus === "rejected"
       ? 0
       : numberValue(inscription.cafApprovedAmount || inscription.cafAidAmount || inscription.cafRequestedAmount);
-  const cafPaid = inscription.cafStatus === "paid" ? numberValue(inscription.cafPaidAmount || cafExpected) : 0;
+  const cafPaid = cafStatus === "approved" ? numberValue(inscription.cafPaidAmount || cafExpected) : 0;
   const familyDue = Math.max(0, total - cafExpected - numberValue(inscription.otherAidAmount));
   const familyPaid = inscription.paid ? familyDue : numberValue(inscription.amountPaid);
 
@@ -148,7 +154,7 @@ export default function AdminDashboardPage() {
           <BigNumber label="Validés" value={data.validated.length.toString()} detail={`${data.ongoing.length} en cours`} icon={CheckCircle2} />
           <BigNumber label="Prospects ouverts" value={data.openProspects.length.toString()} detail={`${data.hotProspects.length} très chauds`} icon={Flame} />
           <BigNumber label="Famille à encaisser" value={euro(data.totals.familyRemaining)} detail={`${euro(data.totals.familyPaid)} reçus`} icon={CreditCard} />
-          <BigNumber label="CAF attendue" value={euro(data.totals.cafRemaining)} detail="Non versée" icon={HandCoins} />
+          <BigNumber label="CAF à recevoir" value={euro(data.totals.cafRemaining)} detail="Avant accord" icon={HandCoins} />
         </section>
 
         <section className="grid gap-4 xl:grid-cols-[1fr_1fr]">
@@ -212,7 +218,7 @@ export default function AdminDashboardPage() {
         <section className="grid gap-4 lg:grid-cols-3">
           <SimpleBox href="/admin/prospects" title="Relancer" value={data.openProspects.length} detail="prospects ouverts" />
           <SimpleBox href="/admin/inscriptions" title="Encaisser" value={data.paymentRows.length} detail="dossiers à suivre" />
-          <SimpleBox href="/admin/inscriptions" title="Vérifier CAF" value={data.paymentRows.filter((row) => row.money.cafRemaining > 0).length} detail="CAF non versées" />
+          <SimpleBox href="/admin/inscriptions" title="Suivre CAF" value={data.paymentRows.filter((row) => row.money.cafRemaining > 0).length} detail="Dossiers avant accord" />
         </section>
       </div>
     </main>
