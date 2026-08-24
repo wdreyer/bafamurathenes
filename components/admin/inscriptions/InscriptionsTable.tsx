@@ -13,7 +13,6 @@ import {
 } from "firebase/firestore";
 import {
   Banknote,
-  Check,
   CreditCard,
   FileText,
   HandCoins,
@@ -28,7 +27,8 @@ type PaymentStatus = NonNullable<Inscription["paymentStatus"]>;
 type ValidationStatus = NonNullable<Inscription["validationStatus"]>;
 type CafStatus = NonNullable<Inscription["cafStatus"]>;
 type PaymentSchedule = NonNullable<Inscription["paymentSchedule"]>;
-type TableView = "validated" | "ongoing" | "all";
+type SortKey = "date" | "name" | "formation" | "total" | "paid" | "remaining" | "caf" | "payment" | "status";
+type SortDirection = "asc" | "desc";
 
 const PAYMENT_METHODS: Record<PaymentMethod, string> = {
   card: "Carte",
@@ -167,11 +167,48 @@ function financials(inscription: Inscription) {
   };
 }
 
+function compareInscriptions(a: Inscription, b: Inscription, key: SortKey, direction: SortDirection) {
+  const multiplier = direction === "asc" ? 1 : -1;
+  const aValues = financials(a);
+  const bValues = financials(b);
+
+  const compareText = (left: string, right: string) => left.localeCompare(right, "fr", { sensitivity: "base" });
+  const compareNumber = (left: number, right: number) => left - right;
+
+  let result = 0;
+  if (key === "date") {
+    result = compareNumber(dateFromUnknown(a.createdAt)?.getTime() || 0, dateFromUnknown(b.createdAt)?.getTime() || 0);
+  } else if (key === "name") {
+    result = compareText(contactName(a), contactName(b));
+  } else if (key === "formation") {
+    result = compareText(cleanFormationTitle(a.formationTitle), cleanFormationTitle(b.formationTitle));
+  } else if (key === "total") {
+    result = compareNumber(aValues.totalPrice, bValues.totalPrice);
+  } else if (key === "paid") {
+    result = compareNumber(aValues.amountPaid, bValues.amountPaid);
+  } else if (key === "remaining") {
+    result = compareNumber(aValues.remainingTotal, bValues.remainingTotal);
+  } else if (key === "caf") {
+    result = compareText(CAF_STATUSES[getCafStatus(a)], CAF_STATUSES[getCafStatus(b)]);
+  } else if (key === "payment") {
+    result = compareText(PAYMENT_METHODS[a.paymentMethod || "other"], PAYMENT_METHODS[b.paymentMethod || "other"]);
+  } else if (key === "status") {
+    result = compareText(PAYMENT_STATUSES[a.paymentStatus || (a.paid ? "paid" : "pending")], PAYMENT_STATUSES[b.paymentStatus || (b.paid ? "paid" : "pending")]);
+  }
+
+  if (result === 0) {
+    result = compareNumber(dateFromUnknown(a.createdAt)?.getTime() || 0, dateFromUnknown(b.createdAt)?.getTime() || 0);
+  }
+
+  return result * multiplier;
+}
+
 export function InscriptionsTable() {
   const [inscriptions, setInscriptions] = useState<Inscription[]>([]);
   const [search, setSearch] = useState("");
   const [formation, setFormation] = useState("all");
-  const [view, setView] = useState<TableView>("validated");
+  const [sortKey, setSortKey] = useState<SortKey>("date");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [savingId, setSavingId] = useState<string | null>(null);
   const [selectedInscriptionId, setSelectedInscriptionId] = useState<string | null>(null);
 
@@ -223,22 +260,9 @@ export function InscriptionsTable() {
       );
     });
 
-    return rows.sort((a, b) => {
-      return (dateFromUnknown(b.createdAt)?.getTime() || 0) - (dateFromUnknown(a.createdAt)?.getTime() || 0);
-    });
-  }, [formation, inscriptions, search]);
+    return rows.sort((a, b) => compareInscriptions(a, b, sortKey, sortDirection));
+  }, [formation, inscriptions, search, sortDirection, sortKey]);
 
-  const validatedRows = useMemo(
-    () => filtered.filter((inscription) => (inscription.validationStatus || "pending") === "validated"),
-    [filtered],
-  );
-
-  const ongoingRows = useMemo(
-    () => filtered.filter((inscription) => (inscription.validationStatus || "pending") !== "validated"),
-    [filtered],
-  );
-
-  const displayRows = view === "validated" ? validatedRows : view === "ongoing" ? ongoingRows : filtered;
   const selectedInscription = selectedInscriptionId
     ? inscriptions.find((inscription) => inscription.id === selectedInscriptionId) ?? null
     : null;
@@ -276,6 +300,16 @@ export function InscriptionsTable() {
     }
   }
 
+  function changeSort(nextKey: SortKey) {
+    if (sortKey === nextKey) {
+      setSortDirection((current) => (current === "asc" ? "desc" : "asc"));
+      return;
+    }
+
+    setSortKey(nextKey);
+    setSortDirection(["total", "paid", "remaining", "caf", "date"].includes(nextKey) ? "desc" : "asc");
+  }
+
   if (!inscriptions.length) {
     return (
       <div className="border border-dashed border-slate-200 bg-slate-50 p-6 text-sm text-slate-500">
@@ -289,7 +323,7 @@ export function InscriptionsTable() {
       <section className="grid gap-px overflow-hidden rounded-md border border-slate-200 bg-slate-200 md:grid-cols-5">
         <Metric icon={FileText} label="Inscriptions" value={filtered.length.toString()} detail={`${inscriptions.length} au total`} />
         <Metric icon={CreditCard} label="Prix total" value={euro(totals.total)} detail="Avant aides" />
-        <Metric icon={HandCoins} label="CAF attendue" value={euro(totals.cafExpected)} detail={`${euro(totals.cafRemaining)} non versée`} />
+        <Metric icon={HandCoins} label="CAF à recevoir" value={euro(totals.cafExpected)} detail={`${euro(totals.cafRemaining)} avant accord`} />
         <Metric icon={Banknote} label="Familles payées" value={euro(totals.familyPaid)} detail="Règlements reçus" />
         <Metric icon={Banknote} label="Reste famille" value={euro(totals.familyRemaining)} detail="Hors CAF attendue" />
       </section>
@@ -313,76 +347,51 @@ export function InscriptionsTable() {
           onChange={setFormation}
         />
 
-        <div className="flex flex-wrap gap-2 border-t border-slate-100 pt-3">
-          <ViewButton
-            active={view === "validated"}
-            label="Validés"
-            count={validatedRows.length}
-            tone="green"
-            onClick={() => setView("validated")}
-          />
-          <ViewButton
-            active={view === "ongoing"}
-            label="En cours"
-            count={ongoingRows.length}
-            tone="yellow"
-            onClick={() => setView("ongoing")}
-          />
-          <ViewButton
-            active={view === "all"}
-            label="Tous"
-            count={filtered.length}
-            tone="violet"
-            onClick={() => setView("all")}
-          />
-        </div>
       </section>
 
       <section className="overflow-hidden rounded-md border border-slate-200 bg-white">
         <div className="flex flex-col gap-2 border-b border-slate-200 px-4 py-3 md:flex-row md:items-center md:justify-between" style={{ background: "#fff8ec" }}>
           <div>
             <p className="mura-mono text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
-              {view === "validated" ? "Tableau des dossiers finalisés" : view === "ongoing" ? "Tableau des dossiers à suivre" : "Tous les dossiers"}
+              Tableau des inscriptions
             </p>
             <h2 className="mt-1 text-lg font-semibold text-slate-900">
-              {view === "validated" ? "Inscriptions validées" : view === "ongoing" ? "Inscriptions en cours" : "Toutes les inscriptions"}
+              Inscriptions
             </h2>
           </div>
           <div className="text-sm font-semibold text-slate-700">
-            {displayRows.length} ligne(s)
+            {filtered.length} ligne(s)
           </div>
         </div>
         <div className="overflow-x-auto">
         <table className="min-w-[1120px] w-full border-collapse text-sm">
           <thead>
             <tr className="bg-slate-50 text-left text-xs font-semibold uppercase text-slate-500">
-              <TH>Inscrit</TH>
+              <SortTH sortKey="name" activeKey={sortKey} direction={sortDirection} onSort={changeSort}>Inscrit</SortTH>
               <TH>Contact</TH>
-              <TH>Formation</TH>
-              <TH>Total</TH>
-              <TH>Payé</TH>
-              <TH>Reste</TH>
-              <TH>CAF</TH>
-              <TH>Règlement</TH>
-              <TH>Statut</TH>
-              <TH>Actions</TH>
+              <SortTH sortKey="formation" activeKey={sortKey} direction={sortDirection} onSort={changeSort}>Formation</SortTH>
+              <SortTH sortKey="total" activeKey={sortKey} direction={sortDirection} onSort={changeSort}>Total</SortTH>
+              <SortTH sortKey="paid" activeKey={sortKey} direction={sortDirection} onSort={changeSort}>Payé</SortTH>
+              <SortTH sortKey="remaining" activeKey={sortKey} direction={sortDirection} onSort={changeSort}>Reste</SortTH>
+              <SortTH sortKey="caf" activeKey={sortKey} direction={sortDirection} onSort={changeSort}>CAF</SortTH>
+              <SortTH sortKey="payment" activeKey={sortKey} direction={sortDirection} onSort={changeSort}>Règlement</SortTH>
+              <SortTH sortKey="status" activeKey={sortKey} direction={sortDirection} onSort={changeSort}>Statut</SortTH>
             </tr>
           </thead>
           <tbody>
-            {displayRows.length === 0 ? (
+            {filtered.length === 0 ? (
               <tr>
                 <td colSpan={9} className="px-4 py-10 text-center text-sm text-slate-500">
-                  Aucun dossier dans cette vue avec les filtres actuels.
+                  Aucune inscription avec les filtres actuels.
                 </td>
               </tr>
-            ) : displayRows.map((inscription) => {
+            ) : filtered.map((inscription) => {
               const values = financials(inscription);
               const currentPaymentStatus =
                 inscription.paymentStatus || (inscription.paid ? "paid" : "pending");
               const currentValidationStatus = inscription.validationStatus || "pending";
               const currentCafStatus = getCafStatus(inscription);
               const currentSchedule = getSchedule(inscription);
-              const disabled = savingId === inscription.id;
               const rowTone =
                 currentValidationStatus === "validated"
                   ? "bg-emerald-50/45"
@@ -449,42 +458,6 @@ export function InscriptionsTable() {
                     <div className="flex flex-wrap gap-1">
                       <StatusBadge label={VALIDATION_STATUSES[currentValidationStatus]} tone={currentValidationStatus === "validated" ? "green" : "yellow"} />
                       <StatusBadge label={PAYMENT_STATUSES[currentPaymentStatus]} tone={currentPaymentStatus === "paid" ? "green" : currentPaymentStatus === "partial" ? "yellow" : "rose"} />
-                    </div>
-                  </TD>
-
-                  <TD>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        disabled={disabled}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          setSelectedInscriptionId(inscription.id);
-                        }}
-                        className="h-8 cursor-pointer rounded-md border border-slate-200 px-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
-                      >
-                        Détails
-                      </button>
-                      <button
-                        type="button"
-                        disabled={disabled}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          updateInscription(inscription.id, {
-                            paymentStatus: "paid",
-                            paid: true,
-                            amountPaid: values.expectedTotal,
-                            validationStatus: "validated",
-                            installment1Paid: true,
-                            installment2Paid: currentSchedule !== "one_time" ? true : inscription.installment2Paid,
-                            installment3Paid: currentSchedule === "three_times" || currentSchedule === "custom" ? true : inscription.installment3Paid,
-                          });
-                        }}
-                        className="inline-flex h-8 cursor-pointer items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 text-xs font-medium text-emerald-800 hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        <Check className="h-3.5 w-3.5" />
-                        Payé
-                      </button>
                     </div>
                   </TD>
                 </tr>
@@ -705,49 +678,6 @@ function ChipButton({
   );
 }
 
-function ViewButton({
-  active,
-  label,
-  count,
-  tone,
-  onClick,
-}: {
-  active: boolean;
-  label: string;
-  count: number;
-  tone: "green" | "yellow" | "violet";
-  onClick: () => void;
-}) {
-  const countClass = {
-    green: "bg-emerald-50 text-emerald-700",
-    yellow: "bg-yellow-50 text-yellow-700",
-    violet: "bg-violet-50 text-violet-700",
-  }[tone];
-
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={[
-        "inline-flex h-9 cursor-pointer items-center gap-2 rounded-md border px-3 text-xs font-semibold transition",
-        active
-          ? "border-slate-900 bg-slate-900 text-white"
-          : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
-      ].join(" ")}
-    >
-      {label}
-      <span
-        className={[
-          "rounded-full px-2 py-0.5 text-[10px]",
-          active ? "bg-white/15 text-white" : countClass,
-        ].join(" ")}
-      >
-        {count}
-      </span>
-    </button>
-  );
-}
-
 function StatusBadge({
   label,
   tone,
@@ -770,6 +700,37 @@ function StatusBadge({
 
 function TH({ children }: { children: ReactNode }) {
   return <th className="border-b border-slate-200 px-3 py-2">{children}</th>;
+}
+
+function SortTH({
+  children,
+  sortKey,
+  activeKey,
+  direction,
+  onSort,
+}: {
+  children: ReactNode;
+  sortKey: SortKey;
+  activeKey: SortKey;
+  direction: SortDirection;
+  onSort: (key: SortKey) => void;
+}) {
+  const active = sortKey === activeKey;
+
+  return (
+    <th className="border-b border-slate-200 px-3 py-2">
+      <button
+        type="button"
+        onClick={() => onSort(sortKey)}
+        className="inline-flex cursor-pointer items-center gap-1 text-left text-xs font-semibold uppercase text-slate-500 hover:text-slate-950"
+      >
+        {children}
+        <span className={active ? "text-slate-950" : "text-slate-300"}>
+          {active ? (direction === "asc" ? "ASC" : "DESC") : "-"}
+        </span>
+      </button>
+    </th>
+  );
 }
 
 function TD({ children }: { children: ReactNode }) {
