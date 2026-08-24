@@ -4,10 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { Fraunces, Caveat, JetBrains_Mono } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
-import ContactWidget from "@/components/ContactWidget";
-import ScrollHint from "@/components/ScrollHint";
+import SiteChrome from "@/components/SiteChrome";
 import { getSiteUrl } from "@/lib/siteUrl";
 
 const geistSans = Geist({
@@ -174,13 +171,7 @@ export default function RootLayout({
           {JSON.stringify(structuredData)}
         </Script>
 
-        <Header />
-        <main className="flex-1">
-          {children}
-        </main>
-        <Footer />
-        <ContactWidget />
-        <ScrollHint />
+        <SiteChrome>{children}</SiteChrome>
       </body>
     </html>
   );
