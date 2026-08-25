@@ -132,6 +132,7 @@ export function ProspectsTracker() {
   const [search, setSearch] = useState("");
   const [qualification, setQualification] = useState<QualificationFilter>("all");
   const [formation, setFormation] = useState("all");
+  const [department, setDepartment] = useState("all");
   const [showClosed, setShowClosed] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
   const [savingId, setSavingId] = useState<string | null>(null);
@@ -188,6 +189,11 @@ export function ProspectsTracker() {
     [rows],
   );
 
+  const departmentOptions = useMemo(
+    () => Array.from(new Set(rows.map((row) => row.department?.trim()).filter(Boolean))).sort() as string[],
+    [rows],
+  );
+
   const filteredRows = useMemo(() => {
     const term = normalize(search);
     const filtered = rows.filter((row) => {
@@ -214,12 +220,13 @@ export function ProspectsTracker() {
         (showClosed || row.status !== "closed") &&
         (qualification === "all" || rowQualification === qualification) &&
         (formation === "all" || row.formationTitle === formation) &&
+        (department === "all" || row.department?.trim() === department) &&
         (!term || haystack.includes(term))
       );
     });
 
     return filtered.sort((a, b) => dateFromUnknown(b.createdAt).getTime() - dateFromUnknown(a.createdAt).getTime());
-  }, [formation, qualification, rows, search, showClosed]);
+  }, [department, formation, qualification, rows, search, showClosed]);
 
   const selectedRow = selectedId ? rows.find((row) => row.id === selectedId) ?? null : null;
 
@@ -278,7 +285,10 @@ export function ProspectsTracker() {
           <Chip active={showClosed} onClick={() => setShowClosed((value) => !value)}>Voir les finis</Chip>
         </div>
 
-        <FormationSelect value={formation} formations={formationOptions} onChange={setFormation} />
+        <div className="grid gap-2 md:grid-cols-2">
+          <FormationSelect value={formation} formations={formationOptions} onChange={setFormation} />
+          <DepartmentSelect value={department} departments={departmentOptions} onChange={setDepartment} />
+        </div>
 
         <div className="flex flex-wrap justify-end gap-2 border-t border-slate-100 pt-3">
           <button type="button" onClick={() => setShowAdd((value) => !value)} className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-md bg-slate-900 px-3 text-sm font-medium text-white hover:bg-slate-800">
@@ -502,7 +512,7 @@ function ProspectModal({
 function FormationSelect({ value, formations, onChange }: { value: string; formations: string[]; onChange: (value: string) => void }) {
   if (!formations.length) return null;
   return (
-    <label className="block max-w-sm">
+    <label className="block">
       <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">Formation</span>
       <select
         value={value}
@@ -513,6 +523,27 @@ function FormationSelect({ value, formations, onChange }: { value: string; forma
         {formations.map((formation) => (
           <option key={formation} value={formation}>
             {formation}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
+function DepartmentSelect({ value, departments, onChange }: { value: string; departments: string[]; onChange: (value: string) => void }) {
+  if (!departments.length) return null;
+  return (
+    <label className="block">
+      <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">Departement</span>
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="h-10 w-full cursor-pointer rounded-md border border-slate-200 bg-white px-3 text-sm outline-none focus:border-slate-400"
+      >
+        <option value="all">Tous les departements</option>
+        {departments.map((department) => (
+          <option key={department} value={department}>
+            {department}
           </option>
         ))}
       </select>
