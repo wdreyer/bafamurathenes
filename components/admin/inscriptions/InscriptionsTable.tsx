@@ -341,7 +341,7 @@ export function InscriptionsTable() {
           </label>
         </div>
 
-        <FormationChips
+        <FormationSelect
           value={formation}
           formations={formations}
           onChange={setFormation}
@@ -623,7 +623,7 @@ function Metric({
   );
 }
 
-function FormationChips({
+function FormationSelect({
   value,
   formations,
   onChange,
@@ -633,48 +633,23 @@ function FormationChips({
   onChange: (value: string) => void;
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+    <label className="block max-w-sm">
+      <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
         Formation
       </span>
-      <ChipButton active={value === "all"} onClick={() => onChange("all")}>
-        Toutes
-      </ChipButton>
-      {formations.map((title) => (
-        <ChipButton
-          key={title}
-          active={value === title}
-          onClick={() => onChange(value === title ? "all" : title)}
-        >
-          {title}
-        </ChipButton>
-      ))}
-    </div>
-  );
-}
-
-function ChipButton({
-  active,
-  children,
-  onClick,
-}: {
-  active: boolean;
-  children: ReactNode;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={[
-        "h-8 cursor-pointer rounded-md border px-3 text-xs font-medium transition",
-        active
-          ? "border-slate-900 bg-slate-900 text-white"
-          : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50",
-      ].join(" ")}
-    >
-      {children}
-    </button>
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="h-10 w-full cursor-pointer rounded-md border border-slate-200 bg-white px-3 text-sm outline-none focus:border-slate-400"
+      >
+        <option value="all">Toutes les formations</option>
+        {formations.map((title) => (
+          <option key={title} value={title}>
+            {title}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }
 

@@ -278,7 +278,7 @@ export function ProspectsTracker() {
           <Chip active={showClosed} onClick={() => setShowClosed((value) => !value)}>Voir les finis</Chip>
         </div>
 
-        <FormationChips value={formation} formations={formationOptions} onChange={setFormation} />
+        <FormationSelect value={formation} formations={formationOptions} onChange={setFormation} />
 
         <div className="flex flex-wrap justify-end gap-2 border-t border-slate-100 pt-3">
           <button type="button" onClick={() => setShowAdd((value) => !value)} className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-md bg-slate-900 px-3 text-sm font-medium text-white hover:bg-slate-800">
@@ -499,15 +499,24 @@ function ProspectModal({
   );
 }
 
-function FormationChips({ value, formations, onChange }: { value: string; formations: string[]; onChange: (value: string) => void }) {
+function FormationSelect({ value, formations, onChange }: { value: string; formations: string[]; onChange: (value: string) => void }) {
   if (!formations.length) return null;
   return (
-    <div className="flex flex-wrap gap-2">
-      <Chip active={value === "all"} onClick={() => onChange("all")}>Toutes formations</Chip>
-      {formations.map((formation) => (
-        <Chip key={formation} active={value === formation} onClick={() => onChange(formation)}>{formation}</Chip>
-      ))}
-    </div>
+    <label className="block max-w-sm">
+      <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">Formation</span>
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="h-10 w-full cursor-pointer rounded-md border border-slate-200 bg-white px-3 text-sm outline-none focus:border-slate-400"
+      >
+        <option value="all">Toutes les formations</option>
+        {formations.map((formation) => (
+          <option key={formation} value={formation}>
+            {formation}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }
 
