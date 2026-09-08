@@ -17,18 +17,18 @@ export async function upsertProspect(patch: ProspectPatch) {
   const existing = await findExistingProspect(patch);
 
   if (!existing) {
-    return addDoc(collection(db, "prospects"), {
+    return addDoc(collection(db, "prospects"), stripUndefined({
       ...patch,
       status: patch.status || "new",
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
-    });
+    }));
   }
 
-  await updateDoc(doc(db, "prospects", existing.id), {
+  await updateDoc(doc(db, "prospects", existing.id), stripUndefined({
     ...mergeProspect(existing.data, patch),
     updatedAt: serverTimestamp(),
-  });
+  }));
 
   return { id: existing.id };
 }
@@ -111,4 +111,10 @@ function mergeText(left?: string, right?: string, separator = "\n\n") {
   if (!a) return b;
   if (!b || a.includes(b)) return a;
   return `${a}${separator}${b}`;
+}
+
+function stripUndefined<T extends Record<string, unknown>>(value: T) {
+  return Object.fromEntries(
+    Object.entries(value).filter(([, fieldValue]) => fieldValue !== undefined),
+  ) as T;
 }
