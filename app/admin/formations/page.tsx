@@ -4,12 +4,13 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { db } from "@/lib/firebase";
 import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
-import type { Formation } from "@/lib/types";
+import type { Formation, Inscription } from "@/lib/types";
 import { FormationsTable } from "@/components/admin/formations/FormationsTable";
 import { Button } from "@/components/ui/Button";
 
 export default function FormationsPage() {
   const [formations, setFormations] = useState<Formation[]>([]);
+  const [inscriptions, setInscriptions] = useState<Inscription[]>([]);
 
   useEffect(() => {
     const q = query(collection(db, "formations"), orderBy("startDate", "desc"));
@@ -28,6 +29,26 @@ export default function FormationsPage() {
     return () => unsubscribe();
   }, []);
 
+  useEffect(() => {
+    const q = query(collection(db, "inscriptions"), orderBy("createdAt", "desc"));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setInscriptions(
+        snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...(doc.data() as Omit<Inscription, "id">),
+        })),
+      );
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const formationsWithCounts = formations.map((formation) => ({
+    ...formation,
+    inscriptionsCount: inscriptions.filter((inscription) => inscription.formationId === formation.id).length,
+  }));
+
   return (
     <main className="space-y-6">
       <div className="flex items-center justify-between gap-3">
@@ -42,7 +63,7 @@ export default function FormationsPage() {
         </Link>
       </div>
 
-      <FormationsTable formations={formations} />
+      <FormationsTable formations={formationsWithCounts} />
     </main>
   );
 }

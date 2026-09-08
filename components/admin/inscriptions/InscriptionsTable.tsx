@@ -3,8 +3,10 @@
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import {
+  addDoc,
   collection,
   doc,
+  increment,
   onSnapshot,
   orderBy,
   query,
@@ -16,11 +18,12 @@ import {
   CreditCard,
   FileText,
   HandCoins,
+  Plus,
   Search,
 } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { cleanFormationTitle } from "@/lib/formationTitles";
-import type { Inscription } from "@/lib/types";
+import type { Formation, Inscription } from "@/lib/types";
 
 type PaymentMethod = Inscription["paymentMethod"];
 type PaymentStatus = NonNullable<Inscription["paymentStatus"]>;
@@ -205,12 +208,28 @@ function compareInscriptions(a: Inscription, b: Inscription, key: SortKey, direc
 
 export function InscriptionsTable() {
   const [inscriptions, setInscriptions] = useState<Inscription[]>([]);
+  const [availableFormations, setAvailableFormations] = useState<Formation[]>([]);
   const [search, setSearch] = useState("");
   const [formation, setFormation] = useState("all");
   const [sortKey, setSortKey] = useState<SortKey>("date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [savingId, setSavingId] = useState<string | null>(null);
   const [selectedInscriptionId, setSelectedInscriptionId] = useState<string | null>(null);
+  const [showAdd, setShowAdd] = useState(false);
+  const [newInscription, setNewInscription] = useState({
+    formationId: "",
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    responsibleFirstName: "",
+    responsibleLastName: "",
+    responsibleEmail: "",
+    responsiblePhone: "",
+    totalPrice: "550",
+    amountPaid: "0",
+    notes: "",
+  });
 
   useEffect(() => {
     const q = query(collection(db, "inscriptions"), orderBy("createdAt", "desc"));
@@ -222,6 +241,23 @@ export function InscriptionsTable() {
               id: entry.id,
               ...(entry.data() as Omit<Inscription, "id">),
             }) as Inscription,
+        ),
+      );
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    const q = query(collection(db, "formations"), orderBy("startDate", "asc"));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      setAvailableFormations(
+        snapshot.docs.map(
+          (entry) =>
+            ({
+              id: entry.id,
+              ...(entry.data() as Omit<Formation, "id">),
+            }) as Formation,
         ),
       );
     });
@@ -300,6 +336,80 @@ export function InscriptionsTable() {
     }
   }
 
+  async function addManualInscription(event: React.FormEvent) {
+    event.preventDefault();
+    const selectedFormation = availableFormations.find((item) => item.id === newInscription.formationId);
+    if (!selectedFormation || !newInscription.firstName.trim() || !newInscription.lastName.trim()) return;
+
+    const totalPrice = numberValue(newInscription.totalPrice || selectedFormation.price);
+    const amountPaid = numberValue(newInscription.amountPaid);
+    const paymentStatus: PaymentStatus = amountPaid <= 0 ? "pending" : amountPaid >= totalPrice ? "paid" : "partial";
+
+    await addDoc(collection(db, "inscriptions"), {
+      formationId: selectedFormation.id,
+      formationTitle: cleanFormationTitle(selectedFormation.title),
+      firstName: newInscription.firstName.trim(),
+      lastName: newInscription.lastName.trim(),
+      email: newInscription.email.trim(),
+      phone: newInscription.phone.trim(),
+      responsibleFirstName: newInscription.responsibleFirstName.trim(),
+      responsibleLastName: newInscription.responsibleLastName.trim(),
+      responsibleEmail: newInscription.responsibleEmail.trim(),
+      responsiblePhone: newInscription.responsiblePhone.trim(),
+      paymentMethod: "transfer",
+      paymentStatus,
+      paid: paymentStatus === "paid",
+      validationStatus: "validated",
+      amount: totalPrice,
+      totalPrice,
+      amountPaid,
+      tariff: "Tarif normal",
+      installmentPlan: false,
+      paymentSchedule: "one_time",
+      installmentCount: 1,
+      installmentAmount: 0,
+      installment1Amount: amountPaid,
+      installment1Paid: amountPaid > 0,
+      installment2Amount: 0,
+      installment2Paid: false,
+      installment3Amount: 0,
+      installment3Paid: false,
+      cafAid: false,
+      cafStatus: "not_requested",
+      cafAidAmount: 0,
+      cafRequestedAmount: 0,
+      cafApprovedAmount: 0,
+      cafPaidAmount: 0,
+      otherAidAmount: 0,
+      transferReference: amountPaid > 0 ? "Saisie manuelle admin" : "",
+      notes: newInscription.notes.trim(),
+      source: "Saisie manuelle admin",
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+
+    await updateDoc(doc(db, "formations", selectedFormation.id), {
+      inscriptionsCount: increment(1),
+      updatedAt: serverTimestamp(),
+    });
+
+    setNewInscription({
+      formationId: "",
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: "",
+      responsibleFirstName: "",
+      responsibleLastName: "",
+      responsibleEmail: "",
+      responsiblePhone: "",
+      totalPrice: "550",
+      amountPaid: "0",
+      notes: "",
+    });
+    setShowAdd(false);
+  }
+
   function changeSort(nextKey: SortKey) {
     if (sortKey === nextKey) {
       setSortDirection((current) => (current === "asc" ? "desc" : "asc"));
@@ -347,6 +457,77 @@ export function InscriptionsTable() {
           onChange={setFormation}
         />
 
+        <div className="flex justify-end border-t border-slate-100 pt-3">
+          <button
+            type="button"
+            onClick={() => {
+              setShowAdd((value) => !value);
+              const firstFormation = availableFormations[0];
+              if (!newInscription.formationId && firstFormation) {
+                setNewInscription((value) => ({
+                  ...value,
+                  formationId: firstFormation.id,
+                  totalPrice: String(firstFormation.price || value.totalPrice),
+                }));
+              }
+            }}
+            className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-md bg-slate-900 px-3 text-sm font-medium text-white hover:bg-slate-800"
+          >
+            <Plus className="h-4 w-4" />
+            Ajouter une inscription
+          </button>
+        </div>
+
+        {showAdd && (
+          <form onSubmit={addManualInscription} className="grid gap-2 border-t border-slate-100 pt-3 md:grid-cols-4">
+            <label className="md:col-span-2">
+              <FieldLabel>Formation</FieldLabel>
+              <select
+                value={newInscription.formationId}
+                onChange={(event) => {
+                  const selectedFormation = availableFormations.find((item) => item.id === event.target.value);
+                  setNewInscription((value) => ({
+                    ...value,
+                    formationId: event.target.value,
+                    totalPrice: String(selectedFormation?.price || value.totalPrice),
+                  }));
+                }}
+                required
+                className="h-9 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none"
+              >
+                <option value="">Choisir une formation</option>
+                {availableFormations.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {cleanFormationTitle(item.title)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <TextDraft label="Prénom" value={newInscription.firstName} onChange={(value) => setNewInscription((current) => ({ ...current, firstName: value }))} required />
+            <TextDraft label="Nom" value={newInscription.lastName} onChange={(value) => setNewInscription((current) => ({ ...current, lastName: value }))} required />
+            <TextDraft label="Email" value={newInscription.email} onChange={(value) => setNewInscription((current) => ({ ...current, email: value }))} />
+            <TextDraft label="Téléphone" value={newInscription.phone} onChange={(value) => setNewInscription((current) => ({ ...current, phone: value }))} />
+            <TextDraft label="Prénom responsable" value={newInscription.responsibleFirstName} onChange={(value) => setNewInscription((current) => ({ ...current, responsibleFirstName: value }))} />
+            <TextDraft label="Nom responsable" value={newInscription.responsibleLastName} onChange={(value) => setNewInscription((current) => ({ ...current, responsibleLastName: value }))} />
+            <TextDraft label="Email responsable" value={newInscription.responsibleEmail} onChange={(value) => setNewInscription((current) => ({ ...current, responsibleEmail: value }))} />
+            <TextDraft label="Tél. responsable" value={newInscription.responsiblePhone} onChange={(value) => setNewInscription((current) => ({ ...current, responsiblePhone: value }))} />
+            <TextDraft label="Total" value={newInscription.totalPrice} onChange={(value) => setNewInscription((current) => ({ ...current, totalPrice: value }))} type="number" />
+            <TextDraft label="Déjà reçu" value={newInscription.amountPaid} onChange={(value) => setNewInscription((current) => ({ ...current, amountPaid: value }))} type="number" />
+            <label className="md:col-span-4">
+              <FieldLabel>Notes</FieldLabel>
+              <textarea
+                value={newInscription.notes}
+                onChange={(event) => setNewInscription((current) => ({ ...current, notes: event.target.value }))}
+                className="h-16 w-full resize-none rounded-md border border-slate-200 px-3 py-2 text-sm outline-none"
+              />
+            </label>
+            <div className="flex justify-end md:col-span-4">
+              <button className="h-9 cursor-pointer rounded-md bg-slate-900 px-3 text-sm font-medium text-white">
+                Enregistrer
+              </button>
+            </div>
+          </form>
+        )}
       </section>
 
       <section className="overflow-hidden rounded-md border border-slate-200 bg-white">
@@ -540,6 +721,24 @@ function InscriptionDetailsModal({
             <MiniStat label="Statut" value={`${PAYMENT_STATUSES[currentPaymentStatus]} / ${CAF_STATUSES[currentCafStatus]}`} />
           </div>
 
+          <div className="grid gap-3 md:grid-cols-2">
+            <section className="grid gap-2 rounded-md border border-slate-200 p-3 sm:grid-cols-2">
+              <div className="text-xs font-semibold uppercase text-slate-500 sm:col-span-2">Participant</div>
+              <TextInput label="Prenom" value={inscription.firstName || ""} disabled={saving} onCommit={(value) => onUpdate({ firstName: value })} />
+              <TextInput label="Nom" value={inscription.lastName || ""} disabled={saving} onCommit={(value) => onUpdate({ lastName: value })} />
+              <TextInput label="Email" value={inscription.email || ""} disabled={saving} onCommit={(value) => onUpdate({ email: value })} />
+              <TextInput label="Telephone" value={inscription.phone || ""} disabled={saving} onCommit={(value) => onUpdate({ phone: value })} />
+            </section>
+
+            <section className="grid gap-2 rounded-md border border-slate-200 p-3 sm:grid-cols-2">
+              <div className="text-xs font-semibold uppercase text-slate-500 sm:col-span-2">Responsable</div>
+              <TextInput label="Prenom" value={inscription.responsibleFirstName || ""} disabled={saving} onCommit={(value) => onUpdate({ responsibleFirstName: value })} />
+              <TextInput label="Nom" value={inscription.responsibleLastName || ""} disabled={saving} onCommit={(value) => onUpdate({ responsibleLastName: value })} />
+              <TextInput label="Email" value={inscription.responsibleEmail || ""} disabled={saving} onCommit={(value) => onUpdate({ responsibleEmail: value })} />
+              <TextInput label="Telephone" value={inscription.responsiblePhone || ""} disabled={saving} onCommit={(value) => onUpdate({ responsiblePhone: value })} />
+            </section>
+          </div>
+
           <div className="flex flex-wrap gap-2 rounded-md border border-slate-200 p-2">
             <ToggleButton active={inscription.paymentMethod === "card" && currentPaymentStatus === "paid"} disabled={saving} onClick={() => onUpdate({ paymentMethod: "card", paymentStatus: "paid", paid: true, amountPaid: values.totalPrice, cafAid: false, cafStatus: "not_requested", cafAidAmount: 0, cafRequestedAmount: 0, cafApprovedAmount: 0, cafPaidAmount: 0, installmentPlan: false, paymentSchedule: "one_time", validationStatus: "validated" })}>CB payé</ToggleButton>
             <ToggleButton active={isTransfer && currentPaymentStatus === "paid"} disabled={saving} onClick={() => onUpdate({ paymentMethod: "transfer", paymentStatus: "paid", paid: true, amountPaid: values.totalPrice, cafAid: false, cafStatus: "not_requested", cafAidAmount: 0, cafRequestedAmount: 0, cafApprovedAmount: 0, cafPaidAmount: 0, installmentPlan: false, paymentSchedule: "one_time", validationStatus: "validated", transferReference: inscription.transferReference || "Virement reçu" })}>Virement payé</ToggleButton>
@@ -572,7 +771,7 @@ function InscriptionDetailsModal({
               <div className="mb-2 text-xs text-slate-600">
                 {inscription.email || "-"} {inscription.phone ? ` · ${inscription.phone}` : ""}
               </div>
-              <textarea defaultValue={inscription.notes || ""} disabled={saving} onBlur={(event) => { if ((inscription.notes || "") !== event.target.value) onUpdate({ notes: event.target.value }); }} placeholder="Notes paiement, CAF, relance..." className="h-20 w-full resize-none rounded-md border border-slate-200 px-3 py-2 text-sm outline-none" />
+              <EditableTextarea value={inscription.notes || ""} disabled={saving} onCommit={(value) => onUpdate({ notes: value })} />
             </section>
           </div>
         </div>
@@ -737,19 +936,84 @@ function TextInput({
   disabled?: boolean;
   onCommit: (value: string) => void;
 }) {
+  const [draft, setDraft] = useState(value);
+
+  function commit() {
+    if (draft !== value) onCommit(draft);
+  }
+
   return (
     <label className="block">
       <FieldLabel>{label}</FieldLabel>
       <input
-        key={value}
-        defaultValue={value}
+        value={draft}
         disabled={disabled}
-        onBlur={(event) => {
-          if (event.target.value !== value) onCommit(event.target.value);
+        onChange={(event) => setDraft(event.target.value)}
+        onBlur={commit}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            event.currentTarget.blur();
+          }
         }}
-        className="h-8 w-36 rounded-md border border-slate-200 px-2 text-xs outline-none disabled:bg-slate-50"
+        className="h-8 w-full rounded-md border border-slate-200 px-2 text-xs outline-none disabled:bg-slate-50"
       />
     </label>
+  );
+}
+
+function TextDraft({
+  label,
+  value,
+  onChange,
+  required = false,
+  type = "text",
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  required?: boolean;
+  type?: "text" | "number";
+}) {
+  return (
+    <label className="block">
+      <FieldLabel>{label}</FieldLabel>
+      <input
+        type={type}
+        min={type === "number" ? 0 : undefined}
+        step={type === "number" ? 1 : undefined}
+        value={value}
+        required={required}
+        onChange={(event) => onChange(event.target.value)}
+        className="h-9 w-full rounded-md border border-slate-200 px-3 text-sm outline-none"
+      />
+    </label>
+  );
+}
+
+function EditableTextarea({
+  value,
+  disabled,
+  onCommit,
+}: {
+  value: string;
+  disabled?: boolean;
+  onCommit: (value: string) => void;
+}) {
+  const [draft, setDraft] = useState(value);
+
+  function commit() {
+    if (draft !== value) onCommit(draft);
+  }
+
+  return (
+    <textarea
+      value={draft}
+      disabled={disabled}
+      onChange={(event) => setDraft(event.target.value)}
+      onBlur={commit}
+      placeholder="Notes paiement, CAF, relance..."
+      className="h-20 w-full resize-none rounded-md border border-slate-200 px-3 py-2 text-sm outline-none disabled:bg-slate-50"
+    />
   );
 }
 
@@ -764,19 +1028,28 @@ function NumberInput({
   disabled?: boolean;
   onCommit: (value: number) => void;
 }) {
+  const [draft, setDraft] = useState(String(value || 0));
+
+  function commit() {
+    const nextValue = numberValue(draft);
+    if (nextValue !== value) onCommit(nextValue);
+  }
+
   return (
     <label className="mt-2 block first:mt-0">
       <FieldLabel>{label}</FieldLabel>
       <input
-        key={value}
         type="number"
         min={0}
         step={1}
-        defaultValue={value || 0}
+        value={draft}
         disabled={disabled}
-        onBlur={(event) => {
-          const nextValue = numberValue(event.target.value);
-          if (nextValue !== value) onCommit(nextValue);
+        onChange={(event) => setDraft(event.target.value)}
+        onBlur={commit}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") {
+            event.currentTarget.blur();
+          }
         }}
         className="h-8 w-28 rounded-md border border-slate-200 px-2 text-xs outline-none disabled:bg-slate-50"
       />

@@ -32,6 +32,12 @@ export type Inscription = {
   lastName: string;
   email: string;
   phone: string;
+  address?: string;
+  responsibleFirstName?: string;
+  responsibleLastName?: string;
+  responsibleEmail?: string;
+  responsiblePhone?: string;
+  prospectId?: string;
   paymentMethod: "card" | "transfer" | "cash" | "check" | "installments" | "other";
   paymentStatus?: "pending" | "partial" | "paid" | "refunded" | "cancelled";
   paid: boolean;

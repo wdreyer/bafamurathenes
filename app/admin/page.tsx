@@ -15,7 +15,7 @@ import {
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { cleanFormationTitle } from "@/lib/formationTitles";
-import type { Inscription, Prospect } from "@/lib/types";
+import type { Formation, Inscription, Prospect } from "@/lib/types";
 
 function euro(value: number) {
   return new Intl.NumberFormat("fr-FR", {
@@ -81,6 +81,7 @@ function financials(inscription: Inscription) {
 export default function AdminDashboardPage() {
   const [inscriptions, setInscriptions] = useState<Inscription[]>([]);
   const [prospects, setProspects] = useState<Prospect[]>([]);
+  const [formations, setFormations] = useState<Formation[]>([]);
 
   useEffect(() => {
     const unsubInscriptions = onSnapshot(collection(db, "inscriptions"), (snap) => {
@@ -95,9 +96,16 @@ export default function AdminDashboardPage() {
       );
     });
 
+    const unsubFormations = onSnapshot(collection(db, "formations"), (snap) => {
+      setFormations(
+        snap.docs.map((entry) => ({ id: entry.id, ...(entry.data() as Omit<Formation, "id">) })),
+      );
+    });
+
     return () => {
       unsubInscriptions();
       unsubProspects();
+      unsubFormations();
     };
   }, []);
 
@@ -125,15 +133,31 @@ export default function AdminDashboardPage() {
       { familyRemaining: 0, cafRemaining: 0, familyPaid: 0 },
     );
 
+    const formationRows = formations
+      .map((formation) => {
+        const formationInscriptions = inscriptions.filter((inscription) => inscription.formationId === formation.id);
+        const validatedCount = formationInscriptions.filter((inscription) => (inscription.validationStatus || "pending") === "validated").length;
+        const paidCount = formationInscriptions.filter((inscription) => inscription.paid || inscription.paymentStatus === "paid").length;
+
+        return {
+          formation,
+          count: formationInscriptions.length,
+          validatedCount,
+          paidCount,
+        };
+      })
+      .sort((a, b) => dateFromUnknown(a.formation.startDate).getTime() - dateFromUnknown(b.formation.startDate).getTime());
+
     return {
       validated,
       ongoing,
       openProspects,
       hotProspects,
       paymentRows,
+      formationRows,
       totals,
     };
-  }, [inscriptions, prospects]);
+  }, [formations, inscriptions, prospects]);
 
   return (
     <main className="-mx-4 -my-6 min-h-[calc(100vh-80px)] bg-slate-50 px-4 py-5 text-slate-950 md:-mx-6 md:px-6">
@@ -215,6 +239,34 @@ export default function AdminDashboardPage() {
           </Panel>
         </section>
 
+        <Panel title="Inscrits par formation" actionHref="/admin/formations" actionLabel="Ouvrir formations">
+          {data.formationRows.length === 0 ? (
+            <Empty text="Aucune formation à afficher." />
+          ) : (
+            <div className="divide-y divide-slate-100">
+              {data.formationRows.map(({ formation, count, validatedCount, paidCount }) => (
+                <Link
+                  key={formation.id}
+                  href="/admin/formations"
+                  className="grid gap-2 px-3 py-3 text-sm no-underline hover:bg-white md:grid-cols-[1fr_auto]"
+                >
+                  <div className="min-w-0">
+                    <div className="font-semibold text-slate-950">{cleanFormationTitle(formation.title)}</div>
+                    <div className="mt-0.5 text-xs text-slate-500">
+                      {formatDate(formation.startDate)} - {formatDate(formation.endDate)}
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-1 md:justify-end">
+                    <Tag tone="slate">{count} inscrit{count > 1 ? "s" : ""}</Tag>
+                    <Tag tone="green">{validatedCount} validé{validatedCount > 1 ? "s" : ""}</Tag>
+                    <Tag tone="violet">{paidCount} payé{paidCount > 1 ? "s" : ""}</Tag>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </Panel>
+
         <section className="grid gap-4 lg:grid-cols-3">
           <SimpleBox href="/admin/prospects" title="Relancer" value={data.openProspects.length} detail="prospects ouverts" />
           <SimpleBox href="/admin/inscriptions" title="Encaisser" value={data.paymentRows.length} detail="dossiers à suivre" />
@@ -293,11 +345,13 @@ function SimpleBox({ href, title, value, detail }: { href: string; title: string
   );
 }
 
-function Tag({ tone, children }: { tone: "rose" | "violet" | "orange"; children: React.ReactNode }) {
+function Tag({ tone, children }: { tone: "rose" | "violet" | "orange" | "green" | "slate"; children: React.ReactNode }) {
   const className = {
     rose: "bg-rose-50 text-rose-700",
     violet: "bg-violet-50 text-violet-700",
     orange: "bg-orange-50 text-orange-700",
+    green: "bg-emerald-50 text-emerald-700",
+    slate: "bg-slate-100 text-slate-700",
   }[tone];
 
   return <span className={`rounded-full px-2 py-1 text-xs font-semibold ${className}`}>{children}</span>;

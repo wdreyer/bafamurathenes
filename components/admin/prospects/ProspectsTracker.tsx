@@ -6,18 +6,21 @@ import {
   addDoc,
   collection,
   doc,
+  increment,
   onSnapshot,
   orderBy,
   query,
   serverTimestamp,
   updateDoc,
+  writeBatch,
 } from "firebase/firestore";
-import { Mail, Phone, Plus, Search } from "lucide-react";
+import { ChevronDown, Mail, Phone, Plus, Search } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { cleanFormationTitle } from "@/lib/formationTitles";
-import type { Inscription, Prospect, ProspectStatus } from "@/lib/types";
+import type { Formation, Inscription, Prospect, ProspectStatus } from "@/lib/types";
 
 type QualificationFilter = "all" | "normal" | "warm" | "hot";
+type SortMode = "createdAt_desc" | "lastExchange_desc" | "lastExchange_asc";
 
 type ProspectRow = {
   id: string;
@@ -25,6 +28,7 @@ type ProspectRow = {
   name: string;
   email?: string;
   phone?: string;
+  formationId?: string;
   formationTitle?: string;
   status: ProspectStatus;
   priority?: Prospect["priority"];
@@ -91,6 +95,37 @@ function formatDate(value: unknown, withTime = false) {
   }).format(date);
 }
 
+function parseExchangeDate(value: string) {
+  const match = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})(?:[,\s]+(\d{1,2})[:h](\d{2}))?/);
+  if (!match) return null;
+
+  const day = Number(match[1]);
+  const month = Number(match[2]);
+  const rawYear = Number(match[3]);
+  const year = rawYear < 100 ? 2000 + rawYear : rawYear;
+  const hour = match[4] ? Number(match[4]) : 0;
+  const minute = match[5] ? Number(match[5]) : 0;
+  const date = new Date(year, month - 1, day, hour, minute);
+
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function lastExchangeTime(row: Pick<ProspectRow, "smsNotes" | "notes" | "message">) {
+  return [row.smsNotes, row.notes, row.message]
+    .filter(Boolean)
+    .join("\n")
+    .split("\n")
+    .reduce((latest, entry) => {
+      const date = parseExchangeDate(entry.trim());
+      return date ? Math.max(latest, date.getTime()) : latest;
+    }, 0);
+}
+
+function formatLastExchangeDate(row: Pick<ProspectRow, "smsNotes" | "notes" | "message">) {
+  const time = lastExchangeTime(row);
+  return time ? formatDate(time, true) : "-";
+}
+
 function prospectName(prospect: Prospect) {
   return (
     prospect.name ||
@@ -112,6 +147,7 @@ function prospectToRow(prospect: Prospect): ProspectRow {
     name: prospectName(prospect),
     email: prospect.email,
     phone: prospect.phone,
+    formationId: prospect.formationId,
     formationTitle: cleanFormationTitle(prospect.formationTitle || ""),
     status: prospect.status || "new",
     priority: prospect.priority,
@@ -129,10 +165,12 @@ function prospectToRow(prospect: Prospect): ProspectRow {
 export function ProspectsTracker() {
   const [prospects, setProspects] = useState<Prospect[]>([]);
   const [inscriptions, setInscriptions] = useState<Inscription[]>([]);
+  const [formations, setFormations] = useState<Formation[]>([]);
   const [search, setSearch] = useState("");
   const [qualification, setQualification] = useState<QualificationFilter>("all");
   const [formation, setFormation] = useState("all");
-  const [department, setDepartment] = useState("all");
+  const [departments, setDepartments] = useState<string[]>([]);
+  const [sortMode, setSortMode] = useState<SortMode>("createdAt_desc");
   const [showClosed, setShowClosed] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
   const [savingId, setSavingId] = useState<string | null>(null);
@@ -149,6 +187,7 @@ export function ProspectsTracker() {
   useEffect(() => {
     const prospectsQuery = query(collection(db, "prospects"), orderBy("createdAt", "desc"));
     const inscriptionsQuery = query(collection(db, "inscriptions"), orderBy("createdAt", "desc"));
+    const formationsQuery = query(collection(db, "formations"), orderBy("startDate", "asc"));
 
     const unsubProspects = onSnapshot(prospectsQuery, (snapshot) => {
       setProspects(snapshot.docs.map((entry) => ({ id: entry.id, ...(entry.data() as Omit<Prospect, "id">) })));
@@ -156,10 +195,14 @@ export function ProspectsTracker() {
     const unsubInscriptions = onSnapshot(inscriptionsQuery, (snapshot) => {
       setInscriptions(snapshot.docs.map((entry) => ({ id: entry.id, ...(entry.data() as Omit<Inscription, "id">) })));
     });
+    const unsubFormations = onSnapshot(formationsQuery, (snapshot) => {
+      setFormations(snapshot.docs.map((entry) => ({ id: entry.id, ...(entry.data() as Omit<Formation, "id">) })));
+    });
 
     return () => {
       unsubProspects();
       unsubInscriptions();
+      unsubFormations();
     };
   }, []);
 
@@ -220,13 +263,23 @@ export function ProspectsTracker() {
         (showClosed || row.status !== "closed") &&
         (qualification === "all" || rowQualification === qualification) &&
         (formation === "all" || row.formationTitle === formation) &&
-        (department === "all" || row.department?.trim() === department) &&
+        (!departments.length || (row.department ? departments.includes(row.department.trim()) : false)) &&
         (!term || haystack.includes(term))
       );
     });
 
-    return filtered.sort((a, b) => dateFromUnknown(b.createdAt).getTime() - dateFromUnknown(a.createdAt).getTime());
-  }, [department, formation, qualification, rows, search, showClosed]);
+    return filtered.sort((a, b) => {
+      if (sortMode === "lastExchange_desc") {
+        return lastExchangeTime(b) - lastExchangeTime(a) || dateFromUnknown(b.createdAt).getTime() - dateFromUnknown(a.createdAt).getTime();
+      }
+
+      if (sortMode === "lastExchange_asc") {
+        return lastExchangeTime(a) - lastExchangeTime(b) || dateFromUnknown(b.createdAt).getTime() - dateFromUnknown(a.createdAt).getTime();
+      }
+
+      return dateFromUnknown(b.createdAt).getTime() - dateFromUnknown(a.createdAt).getTime();
+    });
+  }, [departments, formation, qualification, rows, search, showClosed, sortMode]);
 
   const selectedRow = selectedId ? rows.find((row) => row.id === selectedId) ?? null : null;
 
@@ -262,6 +315,69 @@ export function ProspectsTracker() {
     setShowAdd(false);
   }
 
+  async function registerProspect(row: ProspectRow) {
+    const formationTitle = cleanFormationTitle(row.formationTitle || "");
+    const selectedFormation = formations.find((item) => item.id === row.formationId)
+      || formations.find((item) => cleanFormationTitle(item.title) === formationTitle);
+    const nameParts = row.name === "Contact sans nom" ? [] : row.name.trim().split(/\s+/);
+    const firstName = nameParts[0] || row.name || "";
+    const lastName = nameParts.slice(1).join(" ");
+    const totalPrice = selectedFormation?.price || 0;
+    const inscriptionRef = doc(collection(db, "inscriptions"));
+    const batch = writeBatch(db);
+
+    batch.set(inscriptionRef, {
+      formationId: selectedFormation?.id || "",
+      formationTitle: selectedFormation ? cleanFormationTitle(selectedFormation.title) : formationTitle,
+      firstName,
+      lastName,
+      email: row.email || "",
+      phone: row.phone || "",
+      paymentMethod: "transfer",
+      paymentStatus: "pending",
+      paid: false,
+      validationStatus: "validated",
+      amount: totalPrice,
+      totalPrice,
+      amountPaid: 0,
+      tariff: "Tarif normal",
+      installmentPlan: false,
+      paymentSchedule: "one_time",
+      installmentCount: 1,
+      installmentAmount: 0,
+      installment1Amount: 0,
+      installment1Paid: false,
+      installment2Amount: 0,
+      installment2Paid: false,
+      installment3Amount: 0,
+      installment3Paid: false,
+      cafAid: false,
+      cafStatus: "not_requested",
+      cafAidAmount: 0,
+      cafRequestedAmount: 0,
+      cafApprovedAmount: 0,
+      cafPaidAmount: 0,
+      otherAidAmount: 0,
+      transferReference: "",
+      prospectId: row.id,
+      source: "Validation prospect",
+      notes: [row.notes, row.message].filter(Boolean).join("\n"),
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+
+    if (selectedFormation) {
+      batch.update(doc(db, "formations", selectedFormation.id), {
+        inscriptionsCount: increment(1),
+        updatedAt: serverTimestamp(),
+      });
+    }
+
+    batch.delete(doc(db, "prospects", row.id));
+    await batch.commit();
+    setSelectedId(null);
+  }
+
   return (
     <div className="space-y-5">
       <section className="space-y-3 rounded-md border border-slate-200 bg-white p-3">
@@ -285,9 +401,10 @@ export function ProspectsTracker() {
           <Chip active={showClosed} onClick={() => setShowClosed((value) => !value)}>Voir les finis</Chip>
         </div>
 
-        <div className="grid gap-2 md:grid-cols-2">
+        <div className="grid gap-2 lg:grid-cols-3">
           <FormationSelect value={formation} formations={formationOptions} onChange={setFormation} />
-          <DepartmentSelect value={department} departments={departmentOptions} onChange={setDepartment} />
+          <DepartmentMultiSelect selected={departments} departments={departmentOptions} onChange={setDepartments} />
+          <SortSelect value={sortMode} onChange={setSortMode} />
         </div>
 
         <div className="flex flex-wrap justify-end gap-2 border-t border-slate-100 pt-3">
@@ -311,11 +428,13 @@ export function ProspectsTracker() {
       </section>
 
       <section className="overflow-x-auto rounded-md border border-slate-200 bg-white">
-        <table className="min-w-[1120px] w-full border-collapse text-sm">
+        <table className="min-w-[1320px] w-full border-collapse text-sm">
           <thead>
             <tr className="bg-slate-50 text-left text-xs font-semibold uppercase text-slate-500">
               <TH>Contact</TH>
               <TH>Niveau</TH>
+              <TH>Date prospect</TH>
+              <TH>Dernier echange</TH>
               <TH>Formation</TH>
               <TH>Departement</TH>
               <TH>Historique des echanges</TH>
@@ -325,7 +444,7 @@ export function ProspectsTracker() {
           <tbody>
             {filteredRows.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-3 py-10 text-center text-slate-500">Aucun prospect pour ces filtres.</td>
+                <td colSpan={8} className="px-3 py-10 text-center text-slate-500">Aucun prospect pour ces filtres.</td>
               </tr>
             ) : (
               filteredRows.map((row) => (
@@ -348,6 +467,7 @@ export function ProspectsTracker() {
           saving={savingId === selectedRow.id}
           onClose={() => setSelectedId(null)}
           onUpdate={(patch) => updateProspect(selectedRow.id, patch)}
+          onRegister={() => registerProspect(selectedRow)}
         />
       )}
     </div>
@@ -371,6 +491,9 @@ function ProspectLine({
       <td className="border-b border-slate-100 px-3 py-2.5">
         <div className="font-semibold text-slate-900">{row.name}</div>
         <div className="mt-0.5 text-xs text-slate-500">{row.email || "-"} {row.phone ? ` / ${row.phone}` : ""}</div>
+        <div className="mt-1 text-[11px] text-slate-400">
+          Prospect : {formatDate(row.createdAt, true)} · Dernier échange : {formatLastExchangeDate(row)}
+        </div>
       </td>
       <td className="border-b border-slate-100 px-3 py-2.5">
         <div className="flex flex-wrap gap-1.5">
@@ -380,6 +503,8 @@ function ProspectLine({
         </div>
         <div className="mt-1 text-xs text-slate-500">{ORIGIN_LABELS[row.origin]}</div>
       </td>
+      <td className="border-b border-slate-100 px-3 py-2.5 whitespace-nowrap text-xs text-slate-600">{formatDate(row.createdAt, true)}</td>
+      <td className="border-b border-slate-100 px-3 py-2.5 whitespace-nowrap text-xs font-medium text-slate-700">{formatLastExchangeDate(row)}</td>
       <td className="border-b border-slate-100 px-3 py-2.5">{row.formationTitle || "-"}</td>
       <td className="border-b border-slate-100 px-3 py-2.5 font-medium text-slate-900">{row.department || "-"}</td>
       <td className="border-b border-slate-100 px-3 py-2.5">
@@ -400,11 +525,13 @@ function ProspectModal({
   saving,
   onClose,
   onUpdate,
+  onRegister,
 }: {
   row: ProspectRow;
   saving: boolean;
   onClose: () => void;
   onUpdate: (patch: Partial<Prospect>) => void;
+  onRegister: () => void;
 }) {
   const [exchangeDraft, setExchangeDraft] = useState("");
 
@@ -460,7 +587,7 @@ function ProspectModal({
                 <SimpleToggle active={row.qualification === "warm"} disabled={saving} onClick={() => onUpdate({ qualification: "warm", priority: "normal", status: row.status === "closed" ? "to_contact" : row.status })}>Tiede</SimpleToggle>
                 <SimpleToggle active={row.qualification === "hot" || row.priority === "high"} disabled={saving} onClick={() => onUpdate({ qualification: "hot", priority: "high", status: row.status === "closed" ? "to_contact" : row.status })}>Chaud</SimpleToggle>
                 <SimpleToggle active={row.status === "closed"} disabled={saving} onClick={() => onUpdate({ status: "closed" })}>Fini / ne s&apos;inscrit pas</SimpleToggle>
-                <SimpleToggle active={row.status === "registered"} disabled={saving} onClick={() => onUpdate({ status: "registered" })}>Inscrit</SimpleToggle>
+                <SimpleToggle active={row.status === "registered"} disabled={saving} onClick={onRegister}>Inscrit</SimpleToggle>
               </div>
             </section>
           </aside>
@@ -530,22 +657,59 @@ function FormationSelect({ value, formations, onChange }: { value: string; forma
   );
 }
 
-function DepartmentSelect({ value, departments, onChange }: { value: string; departments: string[]; onChange: (value: string) => void }) {
+function DepartmentMultiSelect({ selected, departments, onChange }: { selected: string[]; departments: string[]; onChange: (value: string[]) => void }) {
   if (!departments.length) return null;
+  const label = selected.length ? `${selected.length} departement${selected.length > 1 ? "s" : ""}` : "Tous les departements";
+
+  function toggleDepartment(department: string) {
+    onChange(selected.includes(department) ? selected.filter((item) => item !== department) : [...selected, department]);
+  }
+
+  return (
+    <div className="relative">
+      <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">Departement</span>
+      <details className="group">
+        <summary className="flex h-10 w-full cursor-pointer list-none items-center justify-between gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm text-slate-900 outline-none focus:border-slate-400">
+          <span className="truncate">{label}</span>
+          <ChevronDown className="h-4 w-4 shrink-0 text-slate-400 transition group-open:rotate-180" />
+        </summary>
+        <div className="absolute z-20 mt-1 max-h-72 w-full overflow-y-auto rounded-md border border-slate-200 bg-white p-2 shadow-lg">
+          <button
+            type="button"
+            onClick={() => onChange([])}
+            className="mb-1 h-8 w-full cursor-pointer rounded-md px-2 text-left text-xs font-medium text-slate-600 hover:bg-slate-50"
+          >
+            Tous les departements
+          </button>
+          {departments.map((department) => (
+            <label key={department} className="flex min-h-8 cursor-pointer items-center gap-2 rounded-md px-2 py-1 text-sm text-slate-700 hover:bg-slate-50">
+              <input
+                type="checkbox"
+                checked={selected.includes(department)}
+                onChange={() => toggleDepartment(department)}
+                className="h-4 w-4 rounded border-slate-300"
+              />
+              <span className="truncate">{department}</span>
+            </label>
+          ))}
+        </div>
+      </details>
+    </div>
+  );
+}
+
+function SortSelect({ value, onChange }: { value: SortMode; onChange: (value: SortMode) => void }) {
   return (
     <label className="block">
-      <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">Departement</span>
+      <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">Tri</span>
       <select
         value={value}
-        onChange={(event) => onChange(event.target.value)}
+        onChange={(event) => onChange(event.target.value as SortMode)}
         className="h-10 w-full cursor-pointer rounded-md border border-slate-200 bg-white px-3 text-sm outline-none focus:border-slate-400"
       >
-        <option value="all">Tous les departements</option>
-        {departments.map((department) => (
-          <option key={department} value={department}>
-            {department}
-          </option>
-        ))}
+        <option value="createdAt_desc">Date d&apos;ajout recente</option>
+        <option value="lastExchange_desc">Dernier echange recent</option>
+        <option value="lastExchange_asc">Dernier echange ancien</option>
       </select>
     </label>
   );
