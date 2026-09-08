@@ -13,9 +13,14 @@ import {
   User,
   X,
 } from "lucide-react";
+import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { cleanFormationTitle } from "@/lib/formationTitles";
+import type { Formation } from "@/lib/types";
 
 type LeadMode = "callback" | "message";
 type Status = "idle" | "sending" | "sent" | "error";
+type FormationOption = Pick<Formation, "id" | "title" | "startDate" | "endDate">;
 
 const CONTACT_OPEN_EVENT = "contact-widget:open";
 const CONTACT_CLOSE_EVENT = "contact-widget:close";
@@ -36,6 +41,7 @@ const EMPTY_FORM = {
   phone: "",
   callbackMoment: "Peu importe",
   message: "",
+  formationId: "",
 };
 
 function fieldClass() {
@@ -53,32 +59,59 @@ function openModeFromEvent(event: Event): LeadMode | null {
 }
 
 type WindowWithGtag = Window & {
+  dataLayer?: unknown[];
   gtag?: (
-    command: "event",
-    eventName: "conversion",
+    command: "event" | "config" | "js",
+    eventName: string | Date,
     params: {
-      send_to: string;
-      value: number;
-      currency: string;
+      send_to?: string;
+      value?: number;
+      currency?: string;
+      event_category?: string;
+      event_label?: string;
+      lead_type?: string;
+      formation_id?: string;
+      formation_title?: string;
       user_data?: { email?: string; phone_number?: string };
     },
   ) => void;
 };
 
-function reportLeadConversion(email: string, phone: string) {
+function reportLeadConversion(email: string, phone: string, leadType: string, formation?: FormationOption) {
   if (typeof window === "undefined") return;
-  const gtag = (window as WindowWithGtag).gtag;
-  if (!gtag) return;
-
-  gtag("event", "conversion", {
-    send_to: GOOGLE_ADS_LEAD_CONVERSION,
+  const win = window as WindowWithGtag;
+  const eventParams = {
+    event_category: "lead",
+    event_label: leadType,
+    lead_type: leadType,
+    formation_id: formation?.id,
+    formation_title: formation ? cleanFormationTitle(formation.title) : "",
     value: 1.0,
     currency: "EUR",
     user_data: {
       ...(email && { email }),
       ...(phone && { phone_number: phone }),
     },
+  };
+
+  if (!win.gtag) {
+    win.dataLayer = win.dataLayer || [];
+    win.dataLayer.push({ event: "generate_lead", ...eventParams });
+    return;
+  }
+
+  win.gtag("event", "conversion", {
+    send_to: GOOGLE_ADS_LEAD_CONVERSION,
+    ...eventParams,
   });
+  win.gtag("event", "generate_lead", eventParams);
+}
+
+function activeFormationOptions(formations: FormationOption[]) {
+  const today = new Date().toISOString().slice(0, 10);
+  return formations
+    .filter((formation) => !formation.endDate || formation.endDate >= today)
+    .sort((a, b) => String(a.startDate || "").localeCompare(String(b.startDate || "")));
 }
 
 export default function ContactWidget() {
@@ -86,6 +119,7 @@ export default function ContactWidget() {
   const [mode, setMode] = useState<LeadMode>("callback");
   const [status, setStatus] = useState<Status>("idle");
   const [form, setForm] = useState(EMPTY_FORM);
+  const [formations, setFormations] = useState<FormationOption[]>([]);
 
   const panelRef = useRef<HTMLDivElement | null>(null);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
@@ -101,9 +135,30 @@ export default function ContactWidget() {
 
   const canSend = useMemo(() => {
     if (form.name.trim().length < 2) return false;
+    if (!form.formationId) return false;
     if (mode === "callback") return okPhone;
     return okEmail && form.message.trim().length >= 10;
-  }, [form.name, form.message, mode, okEmail, okPhone]);
+  }, [form.formationId, form.name, form.message, mode, okEmail, okPhone]);
+
+  const formationOptions = useMemo(() => activeFormationOptions(formations), [formations]);
+  const selectedFormation = useMemo(
+    () => formationOptions.find((formation) => formation.id === form.formationId) ?? null,
+    [form.formationId, formationOptions],
+  );
+
+  useEffect(() => {
+    const formationsQuery = query(collection(db, "formations"), orderBy("startDate", "asc"));
+    const unsubscribe = onSnapshot(formationsQuery, (snapshot) => {
+      setFormations(
+        snapshot.docs.map((entry) => ({
+          id: entry.id,
+          ...(entry.data() as Omit<Formation, "id">),
+        })),
+      );
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   useEffect(() => {
     const onOpen = (event: Event) => {
@@ -157,8 +212,8 @@ export default function ContactWidget() {
     const isCallback = mode === "callback";
     const pageUrl = typeof window !== "undefined" ? window.location.href : "";
     const message = isCallback
-      ? `Contact téléphone\n\nMoment souhaité : ${form.callbackMoment}\nTéléphone : ${form.phone.trim()}\nPage : ${pageUrl}`
-      : form.message.trim();
+      ? `Contact téléphone\n\nFormation : ${selectedFormation ? cleanFormationTitle(selectedFormation.title) : ""}\nMoment souhaité : ${form.callbackMoment}\nTéléphone : ${form.phone.trim()}\nPage : ${pageUrl}`
+      : `Formation : ${selectedFormation ? cleanFormationTitle(selectedFormation.title) : ""}\n\n${form.message.trim()}`;
 
     try {
       setStatus("sending");
@@ -173,11 +228,13 @@ export default function ContactWidget() {
           pageUrl,
           leadType: isCallback ? "Contact téléphone" : "Message formulaire",
           callbackMoment: isCallback ? form.callbackMoment : "",
+          formationId: selectedFormation?.id || "",
+          formationTitle: selectedFormation ? cleanFormationTitle(selectedFormation.title) : "",
         }),
       });
 
       if (!res.ok) throw new Error("Failed");
-      reportLeadConversion(form.email.trim(), form.phone.trim());
+      reportLeadConversion(form.email.trim(), form.phone.trim(), isCallback ? "Contact téléphone" : "Message formulaire", selectedFormation ?? undefined);
       setStatus("sent");
       setForm(EMPTY_FORM);
     } catch {
@@ -328,6 +385,26 @@ export default function ContactWidget() {
               placeholder="Votre prénom"
               autoComplete="name"
             />
+          </label>
+
+          <label className="block">
+            <span className="mb-1.5 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.12em] text-[#1a1530]/70">
+              <CalendarClock size={14} /> Formation
+            </span>
+            <select
+              value={form.formationId}
+              onChange={(event) => setForm((value) => ({ ...value, formationId: event.target.value }))}
+              className={fieldClass()}
+              style={{ borderColor: `${INK}33` }}
+              required
+            >
+              <option value="">Choisir une formation</option>
+              {formationOptions.map((formation) => (
+                <option key={formation.id} value={formation.id}>
+                  {cleanFormationTitle(formation.title)}
+                </option>
+              ))}
+            </select>
           </label>
 
           {mode === "callback" ? (

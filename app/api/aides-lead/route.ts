@@ -3,10 +3,10 @@ import { upsertProspect } from "@/lib/server/prospectUpsert";
 
 export async function POST(req: Request) {
   try {
-    const { prenom, nom, email, telephone, departement, quotient, source } =
+    const { prenom, nom, email, telephone, departement, quotient, source, formationId, formationTitle } =
       await req.json();
 
-    if (!prenom || !nom || !email || !telephone || !departement || !quotient) {
+    if (!prenom || !nom || !email || !telephone || !departement || !quotient || !formationId || !formationTitle) {
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     }
 
@@ -20,8 +20,10 @@ export async function POST(req: Request) {
       phone: String(telephone).trim(),
       department: String(departement),
       quotient: String(quotient),
+      formationId: String(formationId),
+      formationTitle: String(formationTitle),
       source: source ? String(source) : "Formulaire aides",
-      notes: `Demande d'estimation aides. Département : ${String(departement)}. QF CAF : ${String(quotient)}.`,
+      notes: `Demande d'estimation aides. Formation : ${String(formationTitle)}. Département : ${String(departement)}. QF CAF : ${String(quotient)}.`,
       status: "new",
     });
 
