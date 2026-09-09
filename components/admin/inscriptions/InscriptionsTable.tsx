@@ -336,6 +336,34 @@ export function InscriptionsTable() {
     }
   }
 
+  async function updateInscriptionFormation(inscription: Inscription, formationId: string) {
+    const selectedFormation = availableFormations.find((item) => item.id === formationId);
+    if (!selectedFormation || selectedFormation.id === inscription.formationId) return;
+
+    setSavingId(inscription.id);
+    try {
+      await updateDoc(doc(db, "inscriptions", inscription.id), {
+        formationId: selectedFormation.id,
+        formationTitle: cleanFormationTitle(selectedFormation.title),
+        updatedAt: serverTimestamp(),
+      });
+
+      if (inscription.formationId) {
+        await updateDoc(doc(db, "formations", inscription.formationId), {
+          inscriptionsCount: increment(-1),
+          updatedAt: serverTimestamp(),
+        });
+      }
+
+      await updateDoc(doc(db, "formations", selectedFormation.id), {
+        inscriptionsCount: increment(1),
+        updatedAt: serverTimestamp(),
+      });
+    } finally {
+      setSavingId(null);
+    }
+  }
+
   async function addManualInscription(event: React.FormEvent) {
     event.preventDefault();
     const selectedFormation = availableFormations.find((item) => item.id === newInscription.formationId);
@@ -651,9 +679,11 @@ export function InscriptionsTable() {
       {selectedInscription && (
         <InscriptionDetailsModal
           inscription={selectedInscription}
+          formations={availableFormations}
           saving={savingId === selectedInscription.id}
           onClose={() => setSelectedInscriptionId(null)}
           onUpdate={(patch) => updateInscription(selectedInscription.id, patch)}
+          onChangeFormation={(formationId) => updateInscriptionFormation(selectedInscription, formationId)}
         />
       )}
     </div>
@@ -662,14 +692,18 @@ export function InscriptionsTable() {
 
 function InscriptionDetailsModal({
   inscription,
+  formations,
   saving,
   onClose,
   onUpdate,
+  onChangeFormation,
 }: {
   inscription: Inscription;
+  formations: Formation[];
   saving: boolean;
   onClose: () => void;
   onUpdate: (patch: Partial<Inscription>) => void;
+  onChangeFormation: (formationId: string) => void;
 }) {
   const values = financials(inscription);
   const currentPaymentStatus = inscription.paymentStatus || (inscription.paid ? "paid" : "pending");
@@ -720,6 +754,25 @@ function InscriptionDetailsModal({
             <MiniStat label="CAF à recevoir" value={euro(values.remainingCaf)} alert={values.remainingCaf > 0} />
             <MiniStat label="Statut" value={`${PAYMENT_STATUSES[currentPaymentStatus]} / ${CAF_STATUSES[currentCafStatus]}`} />
           </div>
+
+          <section className="rounded-md border border-slate-200 p-3">
+            <label className="block max-w-xl">
+              <FieldLabel>Formation</FieldLabel>
+              <select
+                value={inscription.formationId || ""}
+                disabled={saving}
+                onChange={(event) => onChangeFormation(event.target.value)}
+                className="h-9 w-full cursor-pointer rounded-md border border-slate-200 bg-white px-3 text-sm outline-none disabled:cursor-not-allowed disabled:bg-slate-50"
+              >
+                <option value="">Choisir une formation</option>
+                {formations.map((formation) => (
+                  <option key={formation.id} value={formation.id}>
+                    {cleanFormationTitle(formation.title)}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </section>
 
           <div className="grid gap-3 md:grid-cols-2">
             <section className="grid gap-2 rounded-md border border-slate-200 p-3 sm:grid-cols-2">
