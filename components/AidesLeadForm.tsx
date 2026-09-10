@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { cleanFormationTitle } from "@/lib/formationTitles";
+import { reportGoogleAdsLeadConversion } from "@/lib/googleAdsConversions";
 import { MIN_PRICE_AFTER_AIDS } from "@/lib/offers";
 import type { Formation } from "@/lib/types";
 
@@ -12,8 +13,7 @@ const CREAM = "#fefcf5";
 const VIOLET = "#792BB9";
 const YELLOW = "#F5EF72";
 const PAPER = "#fff8ec";
-const GOOGLE_ADS_ESTIMATION_CONVERSION = "AW-17976361031/2jh2COuTqaccEMeA5vtC";
-type FormationOption = Pick<Formation, "id" | "title" | "startDate" | "endDate">;
+type FormationOption = Pick<Formation, "id" | "title" | "startDate" | "endDate" | "price">;
 
 const DEPARTMENTS = [
   { value: "01 – Ain", label: "01 – Ain" },
@@ -72,56 +72,6 @@ type AidesLeadFormProps = {
   /** Shown in the email to identify the source page */
   source?: string;
 };
-
-type WindowWithGtag = Window & {
-  dataLayer?: unknown[];
-  gtag?: (
-    command: "event" | "config" | "js",
-    eventName: string | Date,
-    params: {
-      send_to?: string;
-      value?: number;
-      currency?: string;
-      event_category?: string;
-      event_label?: string;
-      lead_type?: string;
-      formation_id?: string;
-      formation_title?: string;
-      event_callback?: () => void;
-      user_data?: { email?: string; phone_number?: string };
-    },
-  ) => void;
-};
-
-function reportEstimationConversion(email: string, phone: string, formation?: FormationOption) {
-  if (typeof window === "undefined") return;
-  const win = window as WindowWithGtag;
-  const eventParams = {
-    event_category: "lead",
-    event_label: "Demande d'estimation aides",
-    lead_type: "Demande d'estimation aides",
-    formation_id: formation?.id,
-    formation_title: formation ? cleanFormationTitle(formation.title) : "",
-    value: 1.0,
-    currency: "EUR",
-    user_data: {
-      ...(email && { email }),
-      ...(phone && { phone_number: phone }),
-    },
-  };
-
-  if (!win.gtag) {
-    win.dataLayer = win.dataLayer || [];
-    win.dataLayer.push({ event: "generate_lead", ...eventParams });
-    return;
-  }
-
-  win.gtag("event", "conversion", {
-    send_to: GOOGLE_ADS_ESTIMATION_CONVERSION,
-    ...eventParams,
-  });
-  win.gtag("event", "generate_lead", eventParams);
-}
 
 function activeFormationOptions(formations: FormationOption[]) {
   const today = new Date().toISOString().slice(0, 10);
@@ -184,7 +134,12 @@ export default function AidesLeadForm({ theme = "light", source }: AidesLeadForm
         }),
       });
       if (res.ok) {
-        reportEstimationConversion(email.trim(), telephone.trim(), selectedFormation);
+        reportGoogleAdsLeadConversion({
+          email: email.trim(),
+          phone: telephone.trim(),
+          leadType: "Demande d'estimation aides",
+          formation: selectedFormation,
+        });
         setStatus("success");
       } else {
         setStatus("error");

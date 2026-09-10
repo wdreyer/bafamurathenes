@@ -16,11 +16,12 @@ import {
 import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { cleanFormationTitle } from "@/lib/formationTitles";
+import { reportGoogleAdsLeadConversion } from "@/lib/googleAdsConversions";
 import type { Formation } from "@/lib/types";
 
 type LeadMode = "callback" | "message";
 type Status = "idle" | "sending" | "sent" | "error";
-type FormationOption = Pick<Formation, "id" | "title" | "startDate" | "endDate">;
+type FormationOption = Pick<Formation, "id" | "title" | "startDate" | "endDate" | "price">;
 
 const CONTACT_OPEN_EVENT = "contact-widget:open";
 const CONTACT_CLOSE_EVENT = "contact-widget:close";
@@ -33,7 +34,6 @@ const YELLOW = "#F5EF72";
 const PHONE_DISPLAY = "01 84 21 05 48";
 const PHONE_TEL = "0184210548";
 const EMAIL = "bafa@murathenes.org";
-const GOOGLE_ADS_LEAD_CONVERSION = "AW-17976361031/2jh2COuTqaccEMeA5vtC";
 
 const EMPTY_FORM = {
   name: "",
@@ -56,55 +56,6 @@ function openModeFromEvent(event: Event): LeadMode | null {
   if (!(event instanceof CustomEvent)) return null;
   const maybeMode = (event.detail as { mode?: unknown } | null)?.mode;
   return maybeMode === "message" || maybeMode === "callback" ? maybeMode : null;
-}
-
-type WindowWithGtag = Window & {
-  dataLayer?: unknown[];
-  gtag?: (
-    command: "event" | "config" | "js",
-    eventName: string | Date,
-    params: {
-      send_to?: string;
-      value?: number;
-      currency?: string;
-      event_category?: string;
-      event_label?: string;
-      lead_type?: string;
-      formation_id?: string;
-      formation_title?: string;
-      user_data?: { email?: string; phone_number?: string };
-    },
-  ) => void;
-};
-
-function reportLeadConversion(email: string, phone: string, leadType: string, formation?: FormationOption) {
-  if (typeof window === "undefined") return;
-  const win = window as WindowWithGtag;
-  const eventParams = {
-    event_category: "lead",
-    event_label: leadType,
-    lead_type: leadType,
-    formation_id: formation?.id,
-    formation_title: formation ? cleanFormationTitle(formation.title) : "",
-    value: 1.0,
-    currency: "EUR",
-    user_data: {
-      ...(email && { email }),
-      ...(phone && { phone_number: phone }),
-    },
-  };
-
-  if (!win.gtag) {
-    win.dataLayer = win.dataLayer || [];
-    win.dataLayer.push({ event: "generate_lead", ...eventParams });
-    return;
-  }
-
-  win.gtag("event", "conversion", {
-    send_to: GOOGLE_ADS_LEAD_CONVERSION,
-    ...eventParams,
-  });
-  win.gtag("event", "generate_lead", eventParams);
 }
 
 function activeFormationOptions(formations: FormationOption[]) {
@@ -234,7 +185,12 @@ export default function ContactWidget() {
       });
 
       if (!res.ok) throw new Error("Failed");
-      reportLeadConversion(form.email.trim(), form.phone.trim(), isCallback ? "Contact téléphone" : "Message formulaire", selectedFormation ?? undefined);
+      reportGoogleAdsLeadConversion({
+        email: form.email.trim(),
+        phone: form.phone.trim(),
+        leadType: isCallback ? "Contact téléphone" : "Message formulaire",
+        formation: selectedFormation ?? undefined,
+      });
       setStatus("sent");
       setForm(EMPTY_FORM);
     } catch {
