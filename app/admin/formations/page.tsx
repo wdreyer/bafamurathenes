@@ -63,7 +63,7 @@ export default function FormationsPage() {
         </Link>
       </div>
 
-      <FormationsTable formations={formationsWithCounts} />
+      <FormationsTable formations={formationsWithCounts} inscriptions={inscriptions} />
     </main>
   );
 }

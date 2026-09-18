@@ -1,13 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import type { Formation } from "@/lib/types";
+import { useState } from "react";
+import { Check, Copy } from "lucide-react";
+import type { Formation, Inscription } from "@/lib/types";
 import { cleanFormationTitle } from "@/lib/formationTitles";
 import { Table, THead, TBody, TR, TH, TD } from "@/components/ui/Table";
 import { Button } from "@/components/ui/Button";
 
 type Props = {
   formations: Formation[];
+  inscriptions: Inscription[];
 };
 
 const typeLabel: Record<string, string> = {
@@ -34,7 +37,57 @@ const formatDateFr = (value: string | undefined | null): string => {
   return `${day}-${month}-${year}`;
 };
 
-export function FormationsTable({ formations }: Props) {
+const splitEmails = (value?: string) =>
+  (value || "")
+    .split(/[;,\s]+/)
+    .map((email) => email.trim())
+    .filter((email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
+
+function getFormationEmails(formation: Formation, inscriptions: Inscription[]): string[] {
+  const formationTitle = cleanFormationTitle(formation.title).toLowerCase();
+  const matchingInscriptions = inscriptions.filter((inscription) =>
+    inscription.formationId === formation.id
+      || (!inscription.formationId
+        && cleanFormationTitle(inscription.formationTitle).toLowerCase() === formationTitle),
+  );
+
+  const emails = matchingInscriptions.flatMap((inscription) => [
+    ...splitEmails(inscription.email),
+    ...splitEmails(inscription.responsibleEmail),
+  ]);
+
+  return Array.from(new Map(emails.map((email) => [email.toLowerCase(), email])).values())
+    .sort((a, b) => a.localeCompare(b, "fr"));
+}
+
+async function copyText(value: string) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(value);
+    return;
+  }
+
+  const textarea = document.createElement("textarea");
+  textarea.value = value;
+  textarea.style.position = "fixed";
+  textarea.style.opacity = "0";
+  document.body.appendChild(textarea);
+  textarea.select();
+  document.execCommand("copy");
+  textarea.remove();
+}
+
+export function FormationsTable({ formations, inscriptions }: Props) {
+  const [copiedFormationId, setCopiedFormationId] = useState<string | null>(null);
+
+  const copyFormationEmails = async (formation: Formation) => {
+    const emails = getFormationEmails(formation, inscriptions);
+    if (!emails.length) return;
+
+    await copyText(emails.join(", "));
+    setCopiedFormationId(formation.id);
+    window.setTimeout(() => setCopiedFormationId(null), 2000);
+  };
+
   if (!formations.length) {
     return (
       <div className="border border-dashed border-slate-200 bg-slate-50 p-6 text-sm text-slate-500">
@@ -65,8 +118,12 @@ export function FormationsTable({ formations }: Props) {
           </TR>
         </THead>
         <TBody>
-          {sortedFormations.map((formation) => (
-            <TR key={formation.id}>
+          {sortedFormations.map((formation) => {
+            const emailCount = getFormationEmails(formation, inscriptions).length;
+            const copied = copiedFormationId === formation.id;
+
+            return (
+              <TR key={formation.id}>
               <TD className="w-[34%]">
                 <div className="flex flex-col">
                   <span className="font-medium text-slate-900">
@@ -95,14 +152,32 @@ export function FormationsTable({ formations }: Props) {
               </TD>
               <TD>{formation.inscriptionsCount ?? 0}</TD>
               <TD className="text-right">
-                <Link href={`/admin/formations/${formation.id}`}>
-                  <Button variant="secondary" className="h-8 px-2 text-xs">
-                    Modifier
+                <div className="flex items-center justify-end gap-2">
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    className="h-8 gap-1.5 px-2 text-xs"
+                    disabled={!emailCount}
+                    title={emailCount
+                      ? `Copier ${emailCount} email${emailCount > 1 ? "s" : ""}`
+                      : "Aucun email à copier"}
+                    onClick={() => void copyFormationEmails(formation)}
+                  >
+                    {copied
+                      ? <Check className="h-3.5 w-3.5" aria-hidden="true" />
+                      : <Copy className="h-3.5 w-3.5" aria-hidden="true" />}
+                    {copied ? "Copié" : `Copier les emails (${emailCount})`}
                   </Button>
-                </Link>
+                  <Link href={`/admin/formations/${formation.id}`}>
+                    <Button variant="secondary" className="h-8 px-2 text-xs">
+                      Modifier
+                    </Button>
+                  </Link>
+                </div>
               </TD>
-            </TR>
-          ))}
+              </TR>
+            );
+          })}
         </TBody>
       </Table>
     </div>
