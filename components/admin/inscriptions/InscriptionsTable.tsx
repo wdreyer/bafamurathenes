@@ -15,6 +15,8 @@ import {
 } from "firebase/firestore";
 import {
   Banknote,
+  Check,
+  Copy,
   CreditCard,
   FileText,
   HandCoins,
@@ -104,6 +106,22 @@ function formatDate(value: unknown) {
     month: "2-digit",
     year: "numeric",
   }).format(date);
+}
+
+async function copyToClipboard(value: string) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(value);
+    return;
+  }
+
+  const textarea = document.createElement("textarea");
+  textarea.value = value;
+  textarea.style.position = "fixed";
+  textarea.style.opacity = "0";
+  document.body.appendChild(textarea);
+  textarea.select();
+  document.execCommand("copy");
+  textarea.remove();
 }
 
 function normalize(value?: string) {
@@ -508,29 +526,21 @@ export function InscriptionsTable() {
 
         {showAdd && (
           <form onSubmit={addManualInscription} className="grid gap-2 border-t border-slate-100 pt-3 md:grid-cols-4">
-            <label className="md:col-span-2">
+            <div className="md:col-span-4">
               <FieldLabel>Formation</FieldLabel>
-              <select
+              <FormationTiles
                 value={newInscription.formationId}
-                onChange={(event) => {
-                  const selectedFormation = availableFormations.find((item) => item.id === event.target.value);
+                formations={availableFormations}
+                onChange={(formationId) => {
+                  const selectedFormation = availableFormations.find((item) => item.id === formationId);
                   setNewInscription((value) => ({
                     ...value,
-                    formationId: event.target.value,
+                    formationId,
                     totalPrice: String(selectedFormation?.price || value.totalPrice),
                   }));
                 }}
-                required
-                className="h-9 w-full rounded-md border border-slate-200 bg-white px-3 text-sm outline-none"
-              >
-                <option value="">Choisir une formation</option>
-                {availableFormations.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {cleanFormationTitle(item.title)}
-                  </option>
-                ))}
-              </select>
-            </label>
+              />
+            </div>
             <TextDraft label="Prénom" value={newInscription.firstName} onChange={(value) => setNewInscription((current) => ({ ...current, firstName: value }))} required />
             <TextDraft label="Nom" value={newInscription.lastName} onChange={(value) => setNewInscription((current) => ({ ...current, lastName: value }))} required />
             <TextDraft label="Email" value={newInscription.email} onChange={(value) => setNewInscription((current) => ({ ...current, email: value }))} />
@@ -573,7 +583,7 @@ export function InscriptionsTable() {
           </div>
         </div>
         <div className="overflow-x-auto">
-        <table className="min-w-[1120px] w-full border-collapse text-sm">
+        <table className="min-w-[1220px] w-full border-collapse text-sm">
           <thead>
             <tr className="bg-slate-50 text-left text-xs font-semibold uppercase text-slate-500">
               <SortTH sortKey="name" activeKey={sortKey} direction={sortDirection} onSort={changeSort}>Inscrit</SortTH>
@@ -585,12 +595,13 @@ export function InscriptionsTable() {
               <SortTH sortKey="caf" activeKey={sortKey} direction={sortDirection} onSort={changeSort}>CAF</SortTH>
               <SortTH sortKey="payment" activeKey={sortKey} direction={sortDirection} onSort={changeSort}>Règlement</SortTH>
               <SortTH sortKey="status" activeKey={sortKey} direction={sortDirection} onSort={changeSort}>Statut</SortTH>
+              <TH className="text-center">Formulaire envoyé</TH>
             </tr>
           </thead>
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={9} className="px-4 py-10 text-center text-sm text-slate-500">
+                <td colSpan={10} className="px-4 py-10 text-center text-sm text-slate-500">
                   Aucune inscription avec les filtres actuels.
                 </td>
               </tr>
@@ -625,7 +636,8 @@ export function InscriptionsTable() {
 
                   <TD>
                     <div className="space-y-1 text-xs text-slate-600">
-                      {inscription.email && <div>{inscription.email}</div>}
+                      {inscription.email && <CopyEmailButton email={inscription.email} label="Stagiaire" />}
+                      {inscription.responsibleEmail && <CopyEmailButton email={inscription.responsibleEmail} label="Responsable" />}
                       {inscription.phone && <div>{inscription.phone}</div>}
                     </div>
                   </TD>
@@ -668,6 +680,19 @@ export function InscriptionsTable() {
                       <StatusBadge label={VALIDATION_STATUSES[currentValidationStatus]} tone={currentValidationStatus === "validated" ? "green" : "yellow"} />
                       <StatusBadge label={PAYMENT_STATUSES[currentPaymentStatus]} tone={currentPaymentStatus === "paid" ? "green" : currentPaymentStatus === "partial" ? "yellow" : "rose"} />
                     </div>
+                  </TD>
+
+                  <TD className="text-center" onClick={(event) => event.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      checked={Boolean(inscription.registrationFormSent)}
+                      disabled={savingId === inscription.id}
+                      aria-label={`Formulaire envoyé pour ${contactName(inscription) || "cette inscription"}`}
+                      className="h-4 w-4 cursor-pointer accent-slate-900 disabled:cursor-wait"
+                      onChange={(event) => void updateInscription(inscription.id, {
+                        registrationFormSent: event.target.checked,
+                      })}
+                    />
                   </TD>
                 </tr>
               );
@@ -756,22 +781,13 @@ function InscriptionDetailsModal({
           </div>
 
           <section className="rounded-md border border-slate-200 p-3">
-            <label className="block max-w-xl">
-              <FieldLabel>Formation</FieldLabel>
-              <select
-                value={inscription.formationId || ""}
-                disabled={saving}
-                onChange={(event) => onChangeFormation(event.target.value)}
-                className="h-9 w-full cursor-pointer rounded-md border border-slate-200 bg-white px-3 text-sm outline-none disabled:cursor-not-allowed disabled:bg-slate-50"
-              >
-                <option value="">Choisir une formation</option>
-                {formations.map((formation) => (
-                  <option key={formation.id} value={formation.id}>
-                    {cleanFormationTitle(formation.title)}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <FieldLabel>Formation</FieldLabel>
+            <FormationTiles
+              value={inscription.formationId || ""}
+              formations={formations}
+              disabled={saving}
+              onChange={onChangeFormation}
+            />
           </section>
 
           <div className="grid gap-3 md:grid-cols-2">
@@ -885,23 +901,113 @@ function FormationSelect({
   onChange: (value: string) => void;
 }) {
   return (
-    <label className="block max-w-sm">
+    <div>
       <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-slate-500">
         Formation
       </span>
-      <select
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="h-10 w-full cursor-pointer rounded-md border border-slate-200 bg-white px-3 text-sm outline-none focus:border-slate-400"
-      >
-        <option value="all">Toutes les formations</option>
+      <div className="flex flex-wrap gap-2" role="group" aria-label="Filtrer par formation">
+        <button
+          type="button"
+          aria-pressed={value === "all"}
+          onClick={() => onChange("all")}
+          className={`h-9 cursor-pointer rounded-md border px-3 text-sm font-medium transition ${
+            value === "all"
+              ? "border-slate-900 bg-slate-900 text-white"
+              : "border-slate-200 bg-white text-slate-700 hover:border-slate-400"
+          }`}
+        >
+          Toutes
+        </button>
         {formations.map((title) => (
-          <option key={title} value={title}>
+          <button
+            key={title}
+            type="button"
+            aria-pressed={value === title}
+            onClick={() => onChange(title)}
+            className={`min-h-9 cursor-pointer rounded-md border px-3 py-1.5 text-sm font-medium transition ${
+              value === title
+                ? "border-slate-900 bg-slate-900 text-white"
+                : "border-slate-200 bg-white text-slate-700 hover:border-slate-400"
+            }`}
+          >
             {title}
-          </option>
+          </button>
         ))}
-      </select>
-    </label>
+      </div>
+    </div>
+  );
+}
+
+function FormationTiles({
+  value,
+  formations,
+  disabled = false,
+  onChange,
+}: {
+  value: string;
+  formations: Formation[];
+  disabled?: boolean;
+  onChange: (formationId: string) => void;
+}) {
+  if (!formations.length) {
+    return <p className="text-sm text-slate-500">Aucune formation disponible.</p>;
+  }
+
+  return (
+    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3" role="radiogroup" aria-label="Choisir une formation">
+      {formations.map((formation) => {
+        const selected = value === formation.id;
+
+        return (
+          <button
+            key={formation.id}
+            type="button"
+            role="radio"
+            aria-checked={selected}
+            disabled={disabled}
+            onClick={() => onChange(formation.id)}
+            className={`min-h-16 cursor-pointer rounded-md border px-3 py-2 text-left transition disabled:cursor-not-allowed disabled:opacity-60 ${
+              selected
+                ? "border-slate-900 bg-slate-900 text-white shadow-sm"
+                : "border-slate-200 bg-white text-slate-900 hover:border-slate-400 hover:bg-slate-50"
+            }`}
+          >
+            <span className="block text-sm font-semibold">{cleanFormationTitle(formation.title)}</span>
+            <span className={`mt-1 block text-xs ${selected ? "text-slate-300" : "text-slate-500"}`}>
+              {formatDate(formation.startDate)} au {formatDate(formation.endDate)}
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function CopyEmailButton({ email, label }: { email: string; label: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    await copyToClipboard(email);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1800);
+  };
+
+  return (
+    <button
+      type="button"
+      title={`Copier ${email}`}
+      onClick={(event) => void handleCopy(event)}
+      className="group flex max-w-[260px] cursor-pointer items-center gap-1.5 text-left hover:text-slate-950"
+    >
+      <span className="min-w-0">
+        <span className="block text-[10px] font-semibold uppercase text-slate-400">{label}</span>
+        <span className="block truncate underline decoration-slate-300 underline-offset-2">{email}</span>
+      </span>
+      {copied
+        ? <Check className="h-3.5 w-3.5 shrink-0 text-emerald-600" aria-label="Copié" />
+        : <Copy className="h-3.5 w-3.5 shrink-0 text-slate-400 group-hover:text-slate-700" aria-hidden="true" />}
+    </button>
   );
 }
 
@@ -925,8 +1031,8 @@ function StatusBadge({
   );
 }
 
-function TH({ children }: { children: ReactNode }) {
-  return <th className="border-b border-slate-200 px-3 py-2">{children}</th>;
+function TH({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return <th className={`border-b border-slate-200 px-3 py-2 ${className}`}>{children}</th>;
 }
 
 function SortTH({
@@ -960,8 +1066,8 @@ function SortTH({
   );
 }
 
-function TD({ children }: { children: ReactNode }) {
-  return <td className="border-b border-slate-100 px-3 py-3">{children}</td>;
+function TD({ children, className = "", onClick }: { children: ReactNode; className?: string; onClick?: React.MouseEventHandler<HTMLTableCellElement> }) {
+  return <td className={`border-b border-slate-100 px-3 py-3 ${className}`} onClick={onClick}>{children}</td>;
 }
 
 function FieldLabel({

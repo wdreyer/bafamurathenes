@@ -42,6 +42,7 @@ export type Inscription = {
   paymentStatus?: "pending" | "partial" | "paid" | "refunded" | "cancelled";
   paid: boolean;
   validationStatus?: "pending" | "validated" | "cancelled";
+  registrationFormSent?: boolean;
   amount?: number;
   totalPrice?: number;
   amountPaid?: number;
