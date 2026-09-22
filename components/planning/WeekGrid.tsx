@@ -26,7 +26,7 @@ function dayLabel(startDate: string, day: number) {
   const date = new Date(`${startDate.slice(0, 10)}T12:00:00`);
   if (Number.isNaN(date.getTime())) return `Jour ${day}`;
   date.setDate(date.getDate() + day - 1);
-  return new Intl.DateTimeFormat("fr-FR", { weekday: "short", day: "numeric", month: "short" }).format(date);
+  return new Intl.DateTimeFormat("fr-FR", { weekday: "long", day: "numeric", month: "long" }).format(date);
 }
 
 export function WeekGrid({ activities, dayCount, startDate, week, trainerNames = {}, onEdit, onAdd }: Props) {
@@ -42,7 +42,7 @@ export function WeekGrid({ activities, dayCount, startDate, week, trainerNames =
         <div className="grid border-b border-slate-200 bg-slate-50" style={{ gridTemplateColumns: columns }}>
           <div className="border-r border-slate-200 px-2 py-3 text-xs font-semibold text-slate-500">Heure</div>
           {days.map((day) => <div key={day} className="flex min-w-0 items-center justify-between gap-1 border-r border-slate-200 px-2 py-2 last:border-r-0">
-            <div className="min-w-0"><span className="block text-[10px] font-bold uppercase text-slate-500">Jour {day}</span><span className="block truncate text-xs font-semibold capitalize text-slate-900">{dayLabel(startDate, day)}</span></div>
+            <div className="min-w-0"><span className="block text-[10px] font-bold uppercase text-slate-500">Jour {day}</span><span className="block text-xs font-semibold leading-4 text-slate-900">{dayLabel(startDate, day)}</span></div>
             {onAdd && <button type="button" onClick={() => onAdd(day)} title={`Ajouter un temps au jour ${day}`} aria-label={`Ajouter un temps au jour ${day}`} className="grid h-8 w-8 shrink-0 place-items-center rounded border border-slate-200 bg-white hover:border-emerald-500 hover:text-emerald-700"><Plus size={16}/></button>}
           </div>)}
         </div>
