@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Plannings formateurs | Murathènes",
+  title: "Équipe pédagogique | Murathènes",
   robots: { index: false, follow: false, googleBot: { index: false, follow: false } },
 };
 

@@ -7,19 +7,24 @@ import type { Inscription } from "@/lib/types";
 type Props = {
   inscriptions: Inscription[];
   loading: boolean;
+  groupCount: number;
   onSaveNote: (inscriptionId: string, note: string) => Promise<boolean>;
+  onSaveGroup: (inscriptionId: string, groupNumber: number | null) => Promise<boolean>;
 };
 
 const fullName = (inscription: Inscription) => `${inscription.firstName} ${inscription.lastName}`.trim();
 
-function TraineeRow({ inscription, number, onSaveNote }: {
+function TraineeRow({ inscription, number, groupCount, onSaveNote, onSaveGroup }: {
   inscription: Inscription;
   number: number;
+  groupCount: number;
   onSaveNote: Props["onSaveNote"];
+  onSaveGroup: Props["onSaveGroup"];
 }) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState("");
   const [saving, setSaving] = useState(false);
+  const [groupSaving, setGroupSaving] = useState(false);
 
   const save = async () => {
     setSaving(true);
@@ -30,12 +35,19 @@ function TraineeRow({ inscription, number, onSaveNote }: {
     }
   };
 
+  const changeGroup = async (value: string) => {
+    setGroupSaving(true);
+    try { await onSaveGroup(inscription.id, value ? Number(value) : null); }
+    finally { setGroupSaving(false); }
+  };
+
   return <div className="grid gap-3 border-b border-slate-200 px-4 py-4 last:border-b-0 lg:grid-cols-[230px_minmax(0,1fr)]">
     <div className="flex min-w-0 items-start gap-3">
       <span className="w-6 shrink-0 pt-0.5 text-xs font-medium text-slate-400">{String(number).padStart(2, "0")}</span>
       <div className="min-w-0">
         <p className="font-medium text-slate-900">{fullName(inscription) || "Sans nom"}</p>
         <p className="mt-0.5 text-xs text-slate-500">{inscription.validationStatus === "validated" ? "Inscription validée" : "En attente de validation"}</p>
+        {groupCount > 0 && <label className="mt-2 block text-[11px] font-medium text-slate-500">Groupe d&apos;activité<select value={inscription.traineeGroupNumber || ""} disabled={groupSaving} onChange={(event) => void changeGroup(event.target.value)} className="mt-1 h-8 w-full rounded border border-slate-300 bg-white px-2 text-xs text-slate-800 disabled:opacity-50"><option value="">Sans groupe</option>{Array.from({ length: groupCount }, (_, index) => <option key={index} value={index + 1}>Groupe {index + 1}</option>)}</select></label>}
       </div>
     </div>
     {editing ? <div className="min-w-0 space-y-2">
@@ -53,7 +65,7 @@ function TraineeRow({ inscription, number, onSaveNote }: {
   </div>;
 }
 
-export function TraineeRoster({ inscriptions, loading, onSaveNote }: Props) {
+export function TraineeRoster({ inscriptions, loading, groupCount, onSaveNote, onSaveGroup }: Props) {
   const trainees = useMemo(() => inscriptions.filter((inscription) => inscription.validationStatus !== "cancelled")
     .sort((a, b) => a.lastName.localeCompare(b.lastName, "fr") || a.firstName.localeCompare(b.firstName, "fr")), [inscriptions]);
 
@@ -63,7 +75,7 @@ export function TraineeRoster({ inscriptions, loading, onSaveNote }: Props) {
       <span className="text-xs font-medium text-slate-500">{trainees.length} inscrit{trainees.length > 1 ? "s" : ""}</span>
     </div>
     {loading ? <p className="px-4 py-8 text-sm text-slate-500">Chargement des inscriptions...</p>
-      : trainees.length ? trainees.map((inscription, index) => <TraineeRow key={inscription.id} inscription={inscription} number={index + 1} onSaveNote={onSaveNote} />)
+      : trainees.length ? trainees.map((inscription, index) => <TraineeRow key={inscription.id} inscription={inscription} number={index + 1} groupCount={groupCount} onSaveNote={onSaveNote} onSaveGroup={onSaveGroup} />)
         : <p className="px-4 py-8 text-sm text-slate-500">Aucun inscrit pour cette formation.</p>}
   </section>;
 }

@@ -42,6 +42,8 @@ export type PlanActivity = {
   title: string;
   content: string;
   trainerIds: string[];
+  groupNumber?: number;
+  resourceId?: string;
   color: "mint" | "coral" | "sky" | "lemon" | "lilac" | "neutral";
 };
 
@@ -103,6 +105,7 @@ export type Inscription = {
   transferReceivedAt?: string;
   notes?: string;
   trainerNotes?: string;
+  traineeGroupNumber?: number | null;
   source?: string;
   tariff?: string;
   yaplaStatus?: string;
