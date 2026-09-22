@@ -781,6 +781,7 @@ function InscriptionDetailsModal({
           <div>
             <h3 className="text-base font-semibold text-slate-900">{contactName(inscription) || "Inscription sans nom"}</h3>
             <p className="mt-0.5 text-xs text-slate-500">{formationName(inscription, formations) || "Formation non renseignée"} - {formatDate(inscription.createdAt)}</p>
+            {inscription.registrationCode && <p className="mt-0.5 text-xs text-slate-500">Code identifiant : {inscription.registrationCode}</p>}
           </div>
           <button type="button" onClick={onClose} className="h-8 cursor-pointer rounded-md border border-slate-200 px-3 text-xs font-medium text-slate-700 hover:bg-slate-50">Fermer</button>
         </div>
@@ -858,6 +859,10 @@ function InscriptionDetailsModal({
               <EditableTextarea value={inscription.notes || ""} disabled={saving} onCommit={(value) => onUpdate({ notes: value })} />
             </section>
           </div>
+          <section className="rounded-md border border-slate-200 p-3">
+            <div className="mb-2 text-xs font-semibold uppercase text-slate-500">Notes pédagogiques</div>
+            <EditableTextarea key={`trainer-${inscription.id}`} value={inscription.trainerNotes || ""} disabled={saving} placeholder="Note sur le stagiaire..." onCommit={(value) => onUpdate({ trainerNotes: value })} />
+          </section>
         </div>
       </div>
     </div>
@@ -1168,10 +1173,12 @@ function EditableTextarea({
   value,
   disabled,
   onCommit,
+  placeholder = "Notes paiement, CAF, relance...",
 }: {
   value: string;
   disabled?: boolean;
   onCommit: (value: string) => void;
+  placeholder?: string;
 }) {
   const [draft, setDraft] = useState(value);
 
@@ -1185,7 +1192,7 @@ function EditableTextarea({
       disabled={disabled}
       onChange={(event) => setDraft(event.target.value)}
       onBlur={commit}
-      placeholder="Notes paiement, CAF, relance..."
+      placeholder={placeholder}
       className="h-20 w-full resize-none rounded-md border border-slate-200 px-3 py-2 text-sm outline-none disabled:bg-slate-50"
     />
   );

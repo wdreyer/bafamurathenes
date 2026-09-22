@@ -49,6 +49,7 @@ export type Inscription = {
   id: string;
   formationId: string;
   formationTitle?: string;
+  registrationCode?: string;
   firstName: string;
   lastName: string;
   email: string;
@@ -101,6 +102,7 @@ export type Inscription = {
   transferReference?: string;
   transferReceivedAt?: string;
   notes?: string;
+  trainerNotes?: string;
   source?: string;
   tariff?: string;
   yaplaStatus?: string;

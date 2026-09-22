@@ -2,12 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { collection, doc, onSnapshot, serverTimestamp, setDoc } from "firebase/firestore";
+import { collection, doc, onSnapshot, query, serverTimestamp, setDoc, updateDoc, where } from "firebase/firestore";
 import { BookOpen, CalendarDays, ChevronDown, Clock3, Pencil, Plus, Printer, Save, Trash2, Users, X } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { cleanFormationTitle } from "@/lib/formationTitles";
 import { WeekGrid } from "@/components/planning/WeekGrid";
-import type { Formation, PlanActivity } from "@/lib/types";
+import { TraineeRoster } from "@/components/planning/TraineeRoster";
+import type { Formation, Inscription, PlanActivity } from "@/lib/types";
 
 type PublicPlan = {
   formationId: string;
@@ -50,11 +51,14 @@ export default function PublicPlanningPage() {
   const [formationId, setFormationId] = useState("");
   const [day, setDay] = useState(1);
   const [view, setView] = useState<"week" | "day">("week");
+  const [section, setSection] = useState<"planning" | "trainees">("planning");
   const [week, setWeek] = useState(0);
   const [error, setError] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [editing, setEditing] = useState<PlanActivity | null>(null);
   const [busy, setBusy] = useState(false);
+  const [registrations, setRegistrations] = useState<Inscription[]>([]);
+  const [registrationsLoading, setRegistrationsLoading] = useState(true);
 
   useEffect(() => {
     const unsubFormations = onSnapshot(collection(db, "formations"), (snapshot) => {
@@ -73,6 +77,17 @@ export default function PublicPlanningPage() {
 
   const selectedFormationId = available.some((item) => item.id === formationId)
     ? formationId : available[0]?.id || "";
+
+  useEffect(() => {
+    if (!selectedFormationId) { setRegistrations([]); setRegistrationsLoading(false); return; }
+    setRegistrationsLoading(true);
+    const registrationsQuery = query(collection(db, "inscriptions"), where("formationId", "==", selectedFormationId));
+    return onSnapshot(registrationsQuery, (snapshot) => {
+      setRegistrations(snapshot.docs.map((entry) => ({ id: entry.id, ...entry.data() } as Inscription)));
+      setRegistrationsLoading(false);
+    }, () => { setError("Impossible de charger les inscriptions."); setRegistrationsLoading(false); });
+  }, [selectedFormationId]);
+
   const formation = available.find((item) => item.id === selectedFormationId);
   const plan = plans.find((item) => item.formationId === selectedFormationId);
   const dayCount = formation?.type === "formation_generale" ? 9 : 7;
@@ -110,17 +125,29 @@ export default function PublicPlanningPage() {
     if (await saveActivities(next)) setEditing(null);
   };
 
+  const saveTrainerNote = async (inscriptionId: string, note: string) => {
+    if (!registrations.some((inscription) => inscription.id === inscriptionId)) return false;
+    setError("");
+    try {
+      await updateDoc(doc(db, "inscriptions", inscriptionId), { trainerNotes: note, updatedAt: serverTimestamp() });
+      return true;
+    } catch {
+      setError("Impossible d'enregistrer la note du stagiaire.");
+      return false;
+    }
+  };
+
   return (
     <main className="min-h-screen bg-[#f7f8f6] text-slate-950">
       <div className="mx-auto max-w-6xl px-4 pb-16 pt-5 sm:px-6">
         <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-5">
           <div>
             <p className="text-xs font-bold uppercase text-emerald-700">Murathènes · équipe pédagogique</p>
-            <h1 className="mt-1 text-2xl font-semibold">Plannings de formation</h1>
+            <h1 className="mt-1 text-2xl font-semibold">Planning & stagiaires</h1>
           </div>
           <div className="print:hidden flex items-center gap-2">
             <Link href="/atelier/guide-formateurs" className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-sm font-medium no-underline hover:bg-slate-50"><BookOpen size={16}/>Guide</Link>
-            <button type="button" onClick={() => window.print()} title="Imprimer le planning affiché" className="flex h-9 items-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-sm hover:bg-slate-50"><Printer size={16}/>Imprimer</button>
+            <button type="button" onClick={() => window.print()} title="Imprimer la vue affichée" className="flex h-9 items-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-sm hover:bg-slate-50"><Printer size={16}/>Imprimer</button>
           </div>
         </header>
 
@@ -139,6 +166,12 @@ export default function PublicPlanningPage() {
             <div className="flex items-center gap-2 text-sm text-slate-600"><Users size={16}/>{trainers.length ? trainers.join(", ") : "Équipe à préciser"}</div>
           </div>
 
+          <div className="print:hidden flex gap-1 border-b border-slate-200" role="tablist" aria-label="Espace formateurs">
+            <button type="button" role="tab" aria-selected={section === "planning"} onClick={() => setSection("planning")} className={`border-b-2 px-4 py-3 text-sm font-medium ${section === "planning" ? "border-emerald-700 text-emerald-900" : "border-transparent text-slate-600 hover:text-slate-900"}`}>Planning</button>
+            <button type="button" role="tab" aria-selected={section === "trainees"} onClick={() => setSection("trainees")} className={`border-b-2 px-4 py-3 text-sm font-medium ${section === "trainees" ? "border-emerald-700 text-emerald-900" : "border-transparent text-slate-600 hover:text-slate-900"}`}>Stagiaires ({registrations.filter((item) => item.validationStatus !== "cancelled").length})</button>
+          </div>
+
+          <div className={section === "planning" ? "" : "hidden"}>
           <div className="print:hidden flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-3">
             <div className="flex rounded-md border border-slate-200 bg-white p-1" role="group" aria-label="Affichage du planning">
               <button type="button" onClick={() => setView("week")} aria-pressed={view === "week"} className={`rounded px-3 py-1.5 text-sm ${view === "week" ? "bg-slate-900 text-white" : "text-slate-600"}`}>Semaine</button>
@@ -179,6 +212,8 @@ export default function PublicPlanningPage() {
             )) : <p className="py-10 text-sm text-slate-500">Aucun temps prévu ce jour.</p>}
           </div>
           </>}
+          </div>
+          {section === "trainees" && <TraineeRoster key={selectedFormationId} inscriptions={registrations} loading={registrationsLoading} onSaveNote={saveTrainerNote} />}
         </>}
       </div>
       {editing && <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-3" onMouseDown={(event) => { if (event.target === event.currentTarget) setEditing(null); }}>
