@@ -1,9 +1,9 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   DndContext, DragOverlay, KeyboardSensor, PointerSensor, pointerWithin, rectIntersection,
-  useDraggable, useDroppable, useSensor, useSensors, type CollisionDetection, type DragEndEvent,
+  useDraggable, useDroppable, useSensor, useSensors, type CollisionDetection, type DragEndEvent, type DragMoveEvent,
 } from "@dnd-kit/core";
 import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Clock3, FileText, GripVertical, List, Plus, Settings2 } from "lucide-react";
 import { expandActivityToBoundary, moveActivityToTarget, type PlanningDropTarget } from "@/lib/planningMove";
@@ -69,7 +69,7 @@ function ActivityItem({ activity, themes, trainerNames, compact, disabled, onEdi
   return <div ref={setNodeRef} className={`h-full min-w-0 rounded border-l-[3px] ${compact ? "px-1.5 py-1" : "px-2.5 py-2"} ${themeSurface(theme.color)} ${isDragging ? "opacity-35" : ""}`}>
     <div className="flex min-w-0 items-start gap-1">
       {draggable && <button ref={setActivatorNodeRef} type="button" title={`Déplacer ${activity.title}`} aria-label={`Déplacer ${activity.title}`} disabled={disabled} {...attributes} {...listeners}
-        className={`grid shrink-0 cursor-grab place-items-center rounded text-current/60 touch-none hover:bg-white/70 active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-40 ${compact ? "h-4 w-4" : "mt-0.5 h-6 w-6"}`}><GripVertical size={compact ? 12 : 15} /></button>}
+        className={`grid shrink-0 cursor-grab place-items-center rounded text-current/60 touch-none hover:bg-white/80 active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-40 ${compact ? "h-6 w-5" : "mt-0.5 h-6 w-6"}`}><GripVertical size={compact ? 14 : 15} /></button>}
       <div className="min-w-0 flex-1">
         {onEdit ? <button type="button" disabled={disabled} onClick={() => onEdit(activity)} title={`Modifier ${activity.title}`} className="block w-full cursor-pointer text-left disabled:cursor-wait">
           <span className={`font-semibold ${compact ? "flex items-start justify-between gap-1 text-[11px] leading-[1.25]" : "block text-sm leading-5"}`}><span>{emoji && <span aria-hidden="true" className="mr-1">{emoji}</span>}{activity.title}</span>{compact && <small className="shrink-0 text-[9px] font-normal opacity-60">{activity.end}</small>}</span>
@@ -100,7 +100,7 @@ function OverviewSlot({ day, start, end, row, dragging }: {
   day: number; start: string; end: string; row: number; dragging: boolean;
 }) {
   const { isOver, setNodeRef } = useDroppable({ id: `overview-slot-${day}-${start}`, data: { day, start } satisfies PlanningDropTarget });
-  return <div ref={setNodeRef} className={`min-h-8 border-b border-r border-slate-100 ${isOver && dragging ? "bg-emerald-100/80" : "bg-white"}`}
+  return <div id={`overview-slot-${day}-${start}`} ref={setNodeRef} className={`min-h-8 border-b border-r border-slate-100 transition-colors ${isOver && dragging ? "bg-emerald-200 ring-1 ring-inset ring-emerald-600" : dragging ? "bg-emerald-50/50" : "bg-white"}`}
     style={{ gridColumn: day + 1, gridRow: row }}>
     <span className="sr-only">Créneau de {start} à {end}</span>
   </div>;
@@ -133,7 +133,7 @@ function OverviewGrid({ days, startDate, activities, themes, trainerNames, busy,
 }) {
   const boundaries = Array.from(new Set(activities.flatMap((item) => [item.start, item.end]))).sort();
   const intervals = boundaries.slice(0, -1).map((start, index) => ({ start, end: boundaries[index + 1] }));
-  return <div className="w-full max-w-[calc(100vw-24px)] overflow-x-auto rounded-md border border-slate-200 bg-white sm:max-w-[calc(100vw-40px)] xl:max-w-[calc(100vw-48px)]">
+  return <div className="planning-grid-scroll w-full max-w-[calc(100vw-24px)] overflow-x-auto rounded-md border border-slate-200 bg-white sm:max-w-[calc(100vw-40px)] xl:max-w-[calc(100vw-48px)]">
     <div className="grid min-w-max" style={{ gridTemplateColumns: `54px repeat(${days.length}, minmax(140px, calc((100vw - 116px) / 7)))`, gridTemplateRows: `42px repeat(${intervals.length}, minmax(34px, auto))` }}>
       <div className="sticky left-0 top-0 z-30 grid place-items-center border-b border-r border-slate-200 bg-[#edf5f1] text-[9px] font-bold uppercase text-slate-500">Heure</div>
       {days.map((day) => <OverviewDayHeader key={day} day={day} startDate={startDate} busy={busy} dragging={dragging} onAdd={onAdd} />)}
@@ -240,11 +240,41 @@ export function PlanningBoard({ activities, dayCount, startDate, groupCount, the
   const [moving, setMoving] = useState(false);
   const [editingThemes, setEditingThemes] = useState(false);
   const overviewRef = useRef<HTMLDivElement>(null);
+  const autoScrollTimer = useRef<number | null>(null);
+  const autoScrollDirection = useRef<-1 | 0 | 1>(0);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }), useSensor(KeyboardSensor));
   const days = Array.from({ length: dayCount }, (_, index) => index + 1);
   const pendingConfirmed = pending && activities.some((item) => item.id === pending.id && item.day === pending.day && item.start === pending.start && item.end === pending.end);
   const displayActivities = pending && !pendingConfirmed ? activities.map((item) => item.id === pending.id ? pending : item) : activities;
   const activeActivity = displayActivities.find((item) => item.id === activeId);
+
+  const stopAutoScroll = () => {
+    if (autoScrollTimer.current !== null) window.clearInterval(autoScrollTimer.current);
+    autoScrollTimer.current = null;
+    autoScrollDirection.current = 0;
+  };
+
+  const setAutoScroll = (direction: -1 | 0 | 1) => {
+    if (autoScrollDirection.current === direction) return;
+    stopAutoScroll();
+    if (!direction) return;
+    autoScrollDirection.current = direction;
+    autoScrollTimer.current = window.setInterval(() => {
+      overviewRef.current?.querySelector<HTMLElement>(".planning-grid-scroll")?.scrollBy({ left: direction * 14 });
+    }, 16);
+  };
+
+  useEffect(() => () => stopAutoScroll(), []);
+
+  const onDragMove = ({ active }: DragMoveEvent) => {
+    const container = overviewRef.current?.querySelector<HTMLElement>(".planning-grid-scroll");
+    const dragged = active.rect.current.translated;
+    if (!container || !dragged) { setAutoScroll(0); return; }
+    const bounds = container.getBoundingClientRect();
+    const center = dragged.left + dragged.width / 2;
+    const threshold = Math.min(90, bounds.width * 0.12);
+    setAutoScroll(center > bounds.right - threshold ? 1 : center < bounds.left + threshold ? -1 : 0);
+  };
 
   const selectDay = (day: number) => {
     if (view === "day") { setSelectedDay(day); return; }
@@ -252,6 +282,7 @@ export function PlanningBoard({ activities, dayCount, startDate, groupCount, the
   };
 
   const onDragEnd = async ({ active, over }: DragEndEvent) => {
+    stopAutoScroll();
     setActiveId(null);
     if (!onMove || !over || busy || moving) return;
     const activity = displayActivities.find((item) => item.id === active.id);
@@ -265,7 +296,7 @@ export function PlanningBoard({ activities, dayCount, startDate, groupCount, the
     setMoving(false);
   };
 
-  return <DndContext sensors={sensors} collisionDetection={collisionDetection} onDragStart={({ active }) => setActiveId(String(active.id))} onDragCancel={() => setActiveId(null)} onDragEnd={(event) => void onDragEnd(event)}>
+  return <DndContext sensors={sensors} collisionDetection={collisionDetection} onDragStart={({ active }) => setActiveId(String(active.id))} onDragMove={onDragMove} onDragCancel={() => { stopAutoScroll(); setActiveId(null); }} onDragEnd={(event) => void onDragEnd(event)}>
     <div className="planning-controls space-y-4 print:hidden">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3 print:hidden">
         <div className="inline-flex rounded-md border border-slate-200 bg-white p-1" role="group" aria-label="Affichage du planning">
