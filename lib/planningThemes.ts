@@ -10,12 +10,12 @@ export const defaultThemes: PlanTheme[] = [
 ];
 
 export const themeColors: { id: PlanTheme["color"]; name: string; swatch: string; surface: string; fill: string }[] = [
-  { id: "sky", name: "Bleu", swatch: "bg-sky-500", surface: "border-sky-400 bg-sky-50 text-sky-950", fill: "bg-sky-100 text-sky-950" },
-  { id: "mint", name: "Vert", swatch: "bg-emerald-500", surface: "border-emerald-400 bg-emerald-50 text-emerald-950", fill: "bg-emerald-100 text-emerald-950" },
-  { id: "lilac", name: "Mauve", swatch: "bg-violet-500", surface: "border-violet-400 bg-violet-50 text-violet-950", fill: "bg-violet-100 text-violet-950" },
-  { id: "lemon", name: "Jaune", swatch: "bg-amber-400", surface: "border-amber-400 bg-amber-50 text-amber-950", fill: "bg-amber-100 text-amber-950" },
-  { id: "coral", name: "Corail", swatch: "bg-rose-400", surface: "border-rose-400 bg-rose-50 text-rose-950", fill: "bg-rose-100 text-rose-950" },
-  { id: "neutral", name: "Gris", swatch: "bg-slate-400", surface: "border-slate-300 bg-slate-50 text-slate-800", fill: "bg-slate-100 text-slate-800" },
+  { id: "sky", name: "Bleu", swatch: "bg-sky-500", surface: "border-sky-400 bg-sky-50 text-sky-950", fill: "bg-sky-200 text-sky-950" },
+  { id: "mint", name: "Vert", swatch: "bg-emerald-500", surface: "border-emerald-400 bg-emerald-50 text-emerald-950", fill: "bg-emerald-200 text-emerald-950" },
+  { id: "lilac", name: "Mauve", swatch: "bg-violet-500", surface: "border-violet-400 bg-violet-50 text-violet-950", fill: "bg-violet-200 text-violet-950" },
+  { id: "lemon", name: "Jaune", swatch: "bg-amber-400", surface: "border-amber-400 bg-amber-50 text-amber-950", fill: "bg-amber-200 text-amber-950" },
+  { id: "coral", name: "Corail", swatch: "bg-rose-400", surface: "border-rose-400 bg-rose-50 text-rose-950", fill: "bg-rose-200 text-rose-950" },
+  { id: "neutral", name: "Gris", swatch: "bg-slate-400", surface: "border-slate-300 bg-slate-50 text-slate-800", fill: "bg-slate-200 text-slate-800" },
 ];
 
 export function themeForActivity(activity: PlanActivity, themes: PlanTheme[]): PlanTheme {

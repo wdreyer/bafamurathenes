@@ -41,15 +41,17 @@ function DayNavButton({ day, label, active, onClick }: { day: number; label: str
   </button>;
 }
 
-function ActivityCell({ activity, themes, disabled, onEdit }: {
-  activity: PlanActivity; themes: PlanTheme[]; disabled: boolean; onEdit?: Props["onEdit"];
+function ActivityCell({ activity, themes, disabled, onEdit, merged = false }: {
+  activity: PlanActivity; themes: PlanTheme[]; disabled: boolean; onEdit?: Props["onEdit"]; merged?: boolean;
 }) {
   const theme = themeForActivity(activity, themes);
-  const label = <span className="block truncate text-[10px] font-semibold leading-tight">{activity.title}</span>;
-  const className = `flex h-full min-w-0 items-center border-b border-r border-white/60 px-1 ${themeFill(theme.color)}`;
+  const label = <span className={merged
+    ? "block text-center text-[11px] font-bold leading-snug"
+    : "block whitespace-normal break-words text-[10.5px] font-semibold leading-snug"}>{activity.title}</span>;
+  const className = `flex h-full min-w-0 border-b border-r border-white/60 px-1.5 py-1 ${themeFill(theme.color)} ${merged ? "items-center justify-center text-center" : "items-start justify-start text-left"}`;
   if (!onEdit) return <div className={className} title={`${activity.title} · ${activity.start}–${activity.end}`}>{label}</div>;
   return <button type="button" disabled={disabled} onClick={() => onEdit(activity)} title={`${activity.title} · ${activity.start}–${activity.end}`}
-    className={`${className} w-full cursor-pointer text-left disabled:cursor-wait`}>{label}</button>;
+    className={`${className} w-full cursor-pointer disabled:cursor-wait`}>{label}</button>;
 }
 
 function OverviewGrid({ days, startDate, activities, themes, busy, onAdd, onEdit }: {
@@ -103,7 +105,7 @@ function OverviewGrid({ days, startDate, activities, themes, busy, onAdd, onEdit
   });
 
   return <div className="planning-grid-scroll w-full overflow-x-auto rounded-md border border-slate-300 bg-white">
-    <div className="grid min-w-full" style={{ gridTemplateColumns: `76px repeat(${days.length}, minmax(100px, 1fr))`, gridTemplateRows: `28px repeat(${intervals.length}, minmax(24px, auto))` }}>
+    <div className="grid min-w-full" style={{ gridTemplateColumns: `76px repeat(${days.length}, minmax(100px, 1fr))`, gridTemplateRows: `34px repeat(${intervals.length}, minmax(34px, auto))` }}>
       <div className="sticky left-0 top-0 z-30 grid place-items-center border-b border-r border-slate-300 bg-[#edf5f1] text-[9px] font-bold uppercase text-slate-500">Heure</div>
 
       {days.map((day, index) => <div key={day} id={`planning-jour-${day}`} className="sticky top-0 z-20 flex min-w-0 scroll-mt-4 items-center justify-between gap-1 border-b border-r border-slate-300 bg-[#edf5f1] px-1"
@@ -141,7 +143,7 @@ function OverviewGrid({ days, startDate, activities, themes, busy, onAdd, onEdit
         const endRow = boundaries.indexOf(run.end) + 2;
         const colStart = run.dayIndexStart + 2;
         return <div key={`merge-${run.start}-${run.end}-${run.dayIndexStart}`} className="z-[6]" style={{ gridColumn: `${colStart} / ${colStart + run.dayCount}`, gridRow: `${startRow} / ${endRow}` }}>
-          <ActivityCell activity={run.activity} themes={themes} disabled={busy} onEdit={onEdit} />
+          <ActivityCell activity={run.activity} themes={themes} disabled={busy} onEdit={onEdit} merged />
         </div>;
       })}
     </div>
