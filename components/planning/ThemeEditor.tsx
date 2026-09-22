@@ -33,7 +33,7 @@ export function ThemeEditor({ themes, activities, onSave, onClose }: Props) {
     } finally { setSaving(false); }
   };
 
-  return <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-3" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+  return <div className="planning-controls fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-3" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
     <div role="dialog" aria-modal="true" aria-label="Gérer les thèmes" className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-md bg-white p-4 shadow-xl sm:p-6">
       <div className="mb-4 flex items-start justify-between gap-3"><div><p className="text-xs font-semibold uppercase text-emerald-700">Planning</p><h2 className="mt-1 text-lg font-semibold text-slate-950">Thèmes & couleurs</h2></div><button type="button" onClick={onClose} aria-label="Fermer" title="Fermer" className="grid h-8 w-8 place-items-center rounded-md hover:bg-slate-100"><X size={18} /></button></div>
       {error && <p role="alert" className="mb-3 border-l-2 border-rose-500 bg-rose-50 p-3 text-sm text-rose-800">{error}</p>}

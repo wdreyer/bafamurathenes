@@ -130,15 +130,15 @@ export default function TeamPage() {
     } catch { setError("Impossible d'enregistrer la fiche du stagiaire."); return false; }
   };
 
-  return <main className="min-h-screen text-slate-950">
-    <div className="mx-auto max-w-6xl px-4 pb-16 pt-5 sm:px-6">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4"><h2 className="text-lg font-semibold">Planning & stagiaires</h2><button type="button" onClick={() => window.print()} title="Imprimer la vue affichée" className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-sm hover:bg-slate-50 print:hidden"><Printer size={16} />Imprimer</button></div>
-      {error && <p role="alert" className="mt-5 rounded border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">{error}</p>}
+  return <main className="team-page min-h-screen text-slate-950">
+    <div className="w-full px-3 pb-16 pt-5 sm:px-5 xl:px-6">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4 print:hidden"><h2 className="text-lg font-semibold">Planning & stagiaires</h2><button type="button" onClick={() => window.print()} title="Imprimer le planning en A4 paysage" className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-sm hover:bg-slate-50"><Printer size={16} />Imprimer</button></div>
+      {error && <p role="alert" className="mt-5 rounded border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800 print:hidden">{error}</p>}
       {!loaded && <p className="py-12 text-sm text-slate-500">Chargement des plannings...</p>}
       {loaded && !available.length && !error && <p className="py-12 text-sm text-slate-500">Aucun planning disponible pour le moment.</p>}
 
       {formation && plan && <>
-        <div className="flex flex-wrap items-end justify-between gap-4 py-5">
+        <div className="flex flex-wrap items-end justify-between gap-4 py-5 print:hidden">
           <div className="min-w-0"><label htmlFor="team-formation" className="mb-1 block text-xs font-semibold uppercase text-slate-500">Formation</label><select id="team-formation" value={selectedFormationId} onChange={(event) => { setFormationId(event.target.value); setEditing(null); }} className="h-11 max-w-full rounded-md border border-slate-300 bg-white px-3 text-sm font-medium">{available.map((item) => <option key={item.id} value={item.id}>{item.title} · {item.startDate.slice(0, 10)}</option>)}</select></div>
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-600"><span>{dayCount} journées</span><span>{rosterCount} stagiaires</span><span className="inline-flex items-center gap-1"><Users size={15} />{trainers.length ? trainers.map((item) => item.name).join(", ") : "Équipe à préciser"}</span></div>
         </div>
@@ -148,14 +148,14 @@ export default function TeamPage() {
           <button type="button" role="tab" aria-selected={section === "trainees"} onClick={() => setSection("trainees")} className={`border-b-2 px-4 py-3 text-sm font-medium ${section === "trainees" ? "border-emerald-700 text-emerald-900" : "border-transparent text-slate-600"}`}>Stagiaires ({rosterCount})</button>
         </div>
 
-        <div className={section === "planning" ? "" : "hidden"}>
+        <div className={section === "planning" ? "" : "hidden print:block"}>
           <div className="print:hidden flex flex-wrap items-center justify-between gap-3 py-4">
             <p className="text-sm font-medium text-slate-700">J1 à J{dayCount} · {plan.activities.length} temps</p>
             <div className="flex items-center gap-2"><span className="mr-1 text-xs font-semibold text-slate-600">Colonnes de groupe : {groupCount}</span><button type="button" disabled={busy || registrationsLoading || groupCount === 0} onClick={() => void changeGroupCount(groupCount - 1)} title="Retirer une colonne de groupe" aria-label="Retirer une colonne de groupe" className="grid h-8 w-8 place-items-center rounded-full border border-slate-300 bg-white disabled:opacity-40"><Minus size={15} /></button><button type="button" disabled={busy || groupCount >= 8} onClick={() => void changeGroupCount(groupCount + 1)} title="Ajouter une colonne de groupe" aria-label="Ajouter une colonne de groupe" className="grid h-8 w-8 place-items-center rounded-full border border-slate-300 bg-white disabled:opacity-40"><Plus size={15} /></button></div>
           </div>
-          <PlanningBoard key={formation.id} activities={plan.activities} dayCount={dayCount} startDate={formation.startDate} groupCount={groupCount} themes={themes} trainerNames={plan.trainerNames} busy={busy} onEdit={(item) => { setError(""); setEditing({ ...item, trainerIds: item.trainerIds || [] }); }} onAdd={(day) => { setError(""); setEditing(emptyActivity(day)); }} onMove={(moved) => saveActivities(plan.activities.map((item) => item.id === moved.id ? moved : item))} onSaveThemes={saveThemes} />
+          <PlanningBoard key={formation.id} activities={plan.activities} dayCount={dayCount} startDate={formation.startDate} formationTitle={formation.title} groupCount={groupCount} themes={themes} trainerNames={plan.trainerNames} busy={busy} onEdit={(item) => { setError(""); setEditing({ ...item, trainerIds: item.trainerIds || [] }); }} onAdd={(day) => { setError(""); setEditing(emptyActivity(day)); }} onMove={(moved) => saveActivities(plan.activities.map((item) => item.id === moved.id ? moved : item))} onSaveThemes={saveThemes} />
         </div>
-        {section === "trainees" && <TraineeRoster key={selectedFormationId} inscriptions={registrations} loading={registrationsLoading} groupCount={groupCount} onSaveNote={(id, note) => saveTraineeField(id, { trainerNotes: note })} onSaveGroup={(id, groupNumber) => saveTraineeField(id, { traineeGroupNumber: groupNumber })} />}
+        {section === "trainees" && <div className="print:hidden"><TraineeRoster key={selectedFormationId} inscriptions={registrations} loading={registrationsLoading} groupCount={groupCount} onSaveNote={(id, note) => saveTraineeField(id, { trainerNotes: note })} onSaveGroup={(id, groupNumber) => saveTraineeField(id, { traineeGroupNumber: groupNumber })} /></div>}
       </>}
     </div>
     {editing && formation && plan && <ActivityEditor activity={editing} existing={plan.activities.some((item) => item.id === editing.id)} dayCount={dayCount} groupCount={groupCount} formationType={formation.type} trainers={trainers} themes={themes} busy={busy} error={error} onChange={setEditing} onSave={() => void saveEditing()} onClose={() => setEditing(null)} onDelete={() => { if (window.confirm("Supprimer ce temps ?")) void saveActivities(plan.activities.filter((item) => item.id !== editing.id)).then((saved) => { if (saved) setEditing(null); }); }} />}

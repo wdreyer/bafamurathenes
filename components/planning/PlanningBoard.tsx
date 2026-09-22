@@ -19,6 +19,7 @@ type Props = {
   groupCount: number;
   themes?: PlanTheme[];
   trainerNames?: Record<string, string>;
+  formationTitle?: string;
   busy?: boolean;
   onEdit?: (activity: PlanActivity) => void;
   onAdd?: (day: number) => void;
@@ -51,7 +52,7 @@ function activityEmoji(title: string) {
 function DayNavButton({ day, label, active, onClick }: { day: number; label: string; active: boolean; onClick: () => void }) {
   const { isOver, setNodeRef } = useDroppable({ id: `nav-day-${day}`, data: { day } satisfies PlanningDropTarget });
   return <button ref={setNodeRef} type="button" onClick={onClick} aria-current={active ? "date" : undefined}
-    className={`shrink-0 rounded-md border px-3 py-2 text-left text-xs font-semibold transition ${isOver ? "border-emerald-700 bg-emerald-100 text-emerald-950" : active ? "border-emerald-700 bg-emerald-800 text-white" : "border-slate-200 bg-white text-slate-700 hover:border-emerald-500"}`}>
+    className={`shrink-0 cursor-pointer rounded-md border px-3 py-2 text-left text-xs font-semibold transition ${isOver ? "border-emerald-700 bg-emerald-100 text-emerald-950" : active ? "border-emerald-700 bg-emerald-800 text-white" : "border-slate-200 bg-white text-slate-700 hover:border-emerald-500"}`}>
     <span className="block">J{day}</span><span className="block font-normal opacity-80">{label}</span>
   </button>;
 }
@@ -65,19 +66,19 @@ function ActivityItem({ activity, themes, trainerNames, compact, disabled, onEdi
   const resource = resourceForActivity(activity);
   const emoji = activityEmoji(activity.title);
   const trainers = (activity.trainerIds || []).map((id) => trainerNames[id]).filter(Boolean).join(", ");
-  return <div ref={setNodeRef} className={`min-w-0 rounded-md border-l-[3px] px-2.5 py-2 ${themeSurface(theme.color)} ${isDragging ? "opacity-35" : ""}`}>
+  return <div ref={setNodeRef} className={`min-w-0 rounded border-l-[3px] ${compact ? "px-1.5 py-1" : "px-2.5 py-2"} ${themeSurface(theme.color)} ${isDragging ? "opacity-35" : ""}`}>
     <div className="flex min-w-0 items-start gap-1">
       {draggable && <button ref={setActivatorNodeRef} type="button" title={`Déplacer ${activity.title}`} aria-label={`Déplacer ${activity.title}`} disabled={disabled} {...attributes} {...listeners}
-        className="mt-0.5 grid h-6 w-6 shrink-0 cursor-grab place-items-center rounded text-current/60 touch-none hover:bg-white/70 active:cursor-grabbing disabled:opacity-40"><GripVertical size={15} /></button>}
+        className={`grid shrink-0 cursor-grab place-items-center rounded text-current/60 touch-none hover:bg-white/70 active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-40 ${compact ? "h-4 w-4" : "mt-0.5 h-6 w-6"}`}><GripVertical size={compact ? 12 : 15} /></button>}
       <div className="min-w-0 flex-1">
-        {onEdit ? <button type="button" disabled={disabled} onClick={() => onEdit(activity)} title={`Modifier ${activity.title}`} className="block w-full text-left disabled:cursor-wait">
-          <span className="block text-sm font-semibold leading-5">{emoji && <span aria-hidden="true" className="mr-1.5">{emoji}</span>}{activity.title}</span>
+        {onEdit ? <button type="button" disabled={disabled} onClick={() => onEdit(activity)} title={`Modifier ${activity.title}`} className="block w-full cursor-pointer text-left disabled:cursor-wait">
+          <span className={`block font-semibold ${compact ? "text-[11px] leading-[1.25]" : "text-sm leading-5"}`}>{emoji && <span aria-hidden="true" className="mr-1">{emoji}</span>}{activity.title}</span>
           {!compact && activity.content && <span className="mt-1 block line-clamp-2 text-xs leading-4 opacity-80">{activity.content}</span>}
-        </button> : <p className="text-sm font-semibold leading-5">{emoji && <span aria-hidden="true" className="mr-1.5">{emoji}</span>}{activity.title}</p>}
-        {compact && activity.groupNumber ? <p className="mt-1 text-[11px] font-semibold opacity-70">Groupe {activity.groupNumber}</p> : null}
-        {(trainers || resource) && <div className="mt-1.5 flex flex-wrap items-center justify-between gap-1 text-[11px] opacity-80">
+        </button> : <p className={`font-semibold ${compact ? "text-[11px] leading-[1.25]" : "text-sm leading-5"}`}>{emoji && <span aria-hidden="true" className="mr-1">{emoji}</span>}{activity.title}</p>}
+        {compact && activity.groupNumber ? <p className="mt-0.5 text-[10px] font-semibold opacity-70">Groupe {activity.groupNumber}</p> : null}
+        {(trainers || resource) && <div className={`flex flex-wrap items-center justify-between gap-1 opacity-80 ${compact ? "mt-0.5 text-[10px]" : "mt-1.5 text-[11px]"}`}>
           {trainers && <span>{trainers}</span>}
-          {resource && <a href={resource.href} target="_blank" rel="noopener noreferrer" title={`Ouvrir ${resource.title}`} className="inline-flex items-center gap-1 font-semibold underline"><FileText size={12} />PDF</a>}
+          {resource && <a href={resource.href} target="_blank" rel="noopener noreferrer" title={`Ouvrir ${resource.title}`} className="inline-flex cursor-pointer items-center gap-1 font-semibold underline"><FileText size={12} />PDF</a>}
         </div>}
       </div>
     </div>
@@ -90,14 +91,14 @@ function SlotRow({ day, start, end, activities, themes, trainerNames, groupCount
   busy: boolean; onEdit?: Props["onEdit"]; onMove?: Props["onMove"];
 }) {
   const { isOver, setNodeRef } = useDroppable({ id: `slot-${day}-${start}-${end}`, data: { day, start } satisfies PlanningDropTarget });
-  const columns = compact || groupCount === 0 ? "68px minmax(0,1fr)" : `76px repeat(${groupCount}, minmax(170px,1fr))`;
+  const columns = compact ? "minmax(0,1fr)" : groupCount === 0 ? "76px minmax(0,1fr)" : `76px repeat(${groupCount}, minmax(170px,1fr))`;
   const minWidth = !compact && groupCount > 0 ? 76 + groupCount * 170 : undefined;
-  return <div ref={setNodeRef} className={`grid gap-2 border-b border-slate-100 px-2.5 py-2 last:border-b-0 ${isOver && dragging ? "bg-emerald-100/80 ring-1 ring-inset ring-emerald-500" : ""}`}
+  return <div ref={setNodeRef} className={`grid border-b border-slate-100 last:border-b-0 ${compact ? "gap-1 px-1.5 py-1.5" : "gap-2 px-2.5 py-2"} ${isOver && dragging ? "bg-emerald-100/80 ring-1 ring-inset ring-emerald-500" : ""}`}
     style={{ gridTemplateColumns: columns, minWidth }}>
-    <div className="flex items-start gap-1 pt-1 text-xs font-semibold text-slate-700"><Clock3 size={12} className="mt-0.5 shrink-0 text-slate-400" /><span>{start}<br /><span className="font-normal text-slate-400">{end}</span></span></div>
+    <div className={`flex items-start gap-1 font-semibold text-slate-700 ${compact ? "text-[10px]" : "pt-1 text-xs"}`}><Clock3 size={compact ? 10 : 12} className="mt-0.5 shrink-0 text-slate-400" /><span>{start}{compact ? " – " : <br />}<span className="font-normal text-slate-400">{end}</span></span></div>
     {activities.map((activity) => {
       const group = !compact && activity.groupNumber && activity.groupNumber <= groupCount ? activity.groupNumber : 0;
-      return <div key={activity.id} className="min-w-0" style={{ gridColumn: group ? String(group + 1) : "2 / -1" }}>
+      return <div key={activity.id} className="min-w-0" style={{ gridColumn: compact ? "1" : group ? String(group + 1) : "2 / -1" }}>
         <ActivityItem activity={activity} themes={themes} trainerNames={trainerNames} compact={compact} disabled={busy} onEdit={onEdit} draggable={Boolean(onMove)} />
       </div>;
     })}
@@ -113,10 +114,11 @@ function DayPanel({ day, startDate, activities, themes, trainerNames, groupCount
   const { isOver: emptyOver, setNodeRef: setEmptyRef } = useDroppable({ id: `empty-day-${day}`, data: { day } satisfies PlanningDropTarget });
   const dayActivities = activities.filter((item) => item.day === day);
   const slots = Array.from(new Set(dayActivities.map((item) => `${item.start}|${item.end}`))).sort((a, b) => a.localeCompare(b));
-  return <section id={`planning-jour-${day}`} className={`min-w-0 scroll-mt-4 overflow-hidden rounded-md border border-slate-200 bg-white ${compact ? "w-[330px] max-w-[85vw] shrink-0 snap-start" : "w-full"}`}>
-    <div ref={setHeaderRef} className={`flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-3 py-3 ${headerOver && dragging ? "bg-emerald-100 ring-1 ring-inset ring-emerald-500" : "bg-[#f4f8f6]"}`}>
-      <div className="flex min-w-0 items-center gap-2.5"><span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-emerald-800 text-xs font-bold text-white">J{day}</span><h2 className="text-sm font-semibold capitalize text-slate-900">{dateForDay(startDate, day)}</h2></div>
-      {onAdd && <button type="button" disabled={busy} onClick={() => onAdd(day)} title={`Ajouter un temps au jour ${day}`} aria-label={`Ajouter un temps au jour ${day}`} className="grid h-8 w-8 place-items-center rounded-full border border-slate-300 bg-white text-slate-700 hover:border-emerald-600 disabled:opacity-40"><Plus size={15} /></button>}
+  return <section id={`planning-jour-${day}`} className={`min-w-0 scroll-mt-4 overflow-hidden rounded-md border border-slate-200 bg-white ${compact ? "max-w-[85vw] shrink-0 snap-start" : "w-full"}`}
+    style={compact ? { width: "max(150px, calc((100% - 36px) / 7))" } : undefined}>
+    <div ref={setHeaderRef} className={`flex items-center justify-between gap-1 border-b border-slate-100 ${compact ? "px-1.5 py-1.5" : "px-3 py-3"} ${headerOver && dragging ? "bg-emerald-100 ring-1 ring-inset ring-emerald-500" : "bg-[#f4f8f6]"}`}>
+      <div className={`flex min-w-0 items-center ${compact ? "gap-1" : "gap-2.5"}`}><span className={`grid shrink-0 place-items-center rounded-full bg-emerald-800 font-bold text-white ${compact ? "h-6 w-6 text-[10px]" : "h-8 w-8 text-xs"}`}>J{day}</span><h2 className={`font-semibold capitalize text-slate-900 ${compact ? "text-[11px] leading-tight" : "text-sm"}`}>{dateForDay(startDate, day)}</h2></div>
+      {onAdd && <button type="button" disabled={busy} onClick={() => onAdd(day)} title={`Ajouter un temps au jour ${day}`} aria-label={`Ajouter un temps au jour ${day}`} className={`grid shrink-0 cursor-pointer place-items-center rounded-full border border-slate-300 bg-white text-slate-700 hover:border-emerald-600 disabled:cursor-not-allowed disabled:opacity-40 ${compact ? "h-6 w-6" : "h-8 w-8"}`}><Plus size={compact ? 12 : 15} /></button>}
     </div>
     {slots.length ? <div className="overflow-x-auto">
       {!compact && groupCount > 0 && <div className="grid border-b border-slate-100 text-[11px] font-semibold text-slate-500" style={{ gridTemplateColumns: `76px repeat(${groupCount}, minmax(170px,1fr))`, minWidth: 76 + groupCount * 170 }}><span className="px-3 py-2">Horaire</span>{Array.from({ length: groupCount }, (_, index) => <span key={index} className="border-l border-slate-100 px-3 py-2">Groupe {index + 1}</span>)}</div>}
@@ -129,7 +131,32 @@ function DayPanel({ day, startDate, activities, themes, trainerNames, groupCount
   </section>;
 }
 
-export function PlanningBoard({ activities, dayCount, startDate, groupCount, themes = defaultThemes, trainerNames = {}, busy = false, onEdit, onAdd, onMove, onSaveThemes }: Props) {
+function PrintPlanning({ activities, dayCount, startDate, formationTitle, themes }: {
+  activities: PlanActivity[]; dayCount: number; startDate: string; formationTitle?: string; themes: PlanTheme[];
+}) {
+  const weeks = Array.from({ length: Math.ceil(dayCount / 7) }, (_, index) =>
+    Array.from({ length: Math.min(7, dayCount - index * 7) }, (_, offset) => index * 7 + offset + 1));
+  return <div className="hidden print:block">
+    {weeks.map((week, index) => <section key={index} className="team-print-week">
+      <div className="team-print-heading"><strong>{formationTitle || "Planning de formation"}</strong><span>Semaine {index + 1} · J{week[0]} à J{week[week.length - 1]}</span></div>
+      <div className="team-print-grid" style={{ gridTemplateColumns: `repeat(${week.length}, minmax(0, 1fr))` }}>
+        {week.map((day) => <div key={day} className="team-print-day">
+          <h2>J{day} · {dateForDay(startDate, day)}</h2>
+          {activities.filter((item) => item.day === day).sort((a, b) => a.start.localeCompare(b.start)).map((activity) => {
+            const theme = themeForActivity(activity, themes);
+            return <div key={activity.id} className="team-print-activity" style={{ borderLeftColor: `var(--planning-${theme.color})` }}>
+              <span>{activity.start}–{activity.end}</span><strong>{activity.title}</strong>
+              {activity.groupNumber ? <small>G{activity.groupNumber}</small> : null}
+            </div>;
+          })}
+        </div>)}
+      </div>
+      <div className="team-print-legend">{themes.map((theme) => <span key={theme.id}><i style={{ backgroundColor: `var(--planning-${theme.color})` }} />{theme.name}</span>)}</div>
+    </section>)}
+  </div>;
+}
+
+export function PlanningBoard({ activities, dayCount, startDate, groupCount, themes = defaultThemes, trainerNames = {}, formationTitle, busy = false, onEdit, onAdd, onMove, onSaveThemes }: Props) {
   const [view, setView] = useState<"all" | "day">("all");
   const [selectedDay, setSelectedDay] = useState(1);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -165,11 +192,11 @@ export function PlanningBoard({ activities, dayCount, startDate, groupCount, the
   };
 
   return <DndContext sensors={sensors} collisionDetection={collisionDetection} onDragStart={({ active }) => setActiveId(String(active.id))} onDragCancel={() => setActiveId(null)} onDragEnd={(event) => void onDragEnd(event)}>
-    <div className="space-y-4">
+    <div className="planning-controls space-y-4 print:hidden">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3 print:hidden">
         <div className="inline-flex rounded-md border border-slate-200 bg-white p-1" role="group" aria-label="Affichage du planning">
-          <button type="button" onClick={() => setView("all")} aria-pressed={view === "all"} className={`inline-flex h-8 items-center gap-1.5 rounded px-3 text-xs font-semibold ${view === "all" ? "bg-emerald-800 text-white" : "text-slate-600"}`}><CalendarDays size={15} />Formation complète</button>
-          <button type="button" onClick={() => setView("day")} aria-pressed={view === "day"} className={`inline-flex h-8 items-center gap-1.5 rounded px-3 text-xs font-semibold ${view === "day" ? "bg-emerald-800 text-white" : "text-slate-600"}`}><List size={15} />Jour par jour</button>
+          <button type="button" onClick={() => setView("all")} aria-pressed={view === "all"} className={`inline-flex h-8 cursor-pointer items-center gap-1.5 rounded px-3 text-xs font-semibold ${view === "all" ? "bg-emerald-800 text-white" : "text-slate-600"}`}><CalendarDays size={15} />Formation complète</button>
+          <button type="button" onClick={() => setView("day")} aria-pressed={view === "day"} className={`inline-flex h-8 cursor-pointer items-center gap-1.5 rounded px-3 text-xs font-semibold ${view === "day" ? "bg-emerald-800 text-white" : "text-slate-600"}`}><List size={15} />Jour par jour</button>
         </div>
         <div className="flex items-center gap-1"><button type="button" onClick={() => view === "all" ? overviewRef.current?.scrollBy({ left: -340, behavior: "smooth" }) : setSelectedDay((day) => Math.max(1, day - 1))} disabled={view === "day" && selectedDay === 1} title="Jour précédent" aria-label="Jour précédent" className="grid h-9 w-9 place-items-center rounded-md border border-slate-200 bg-white disabled:opacity-40"><ChevronLeft size={17} /></button><button type="button" onClick={() => view === "all" ? overviewRef.current?.scrollBy({ left: 340, behavior: "smooth" }) : setSelectedDay((day) => Math.min(dayCount, day + 1))} disabled={view === "day" && selectedDay === dayCount} title="Jour suivant" aria-label="Jour suivant" className="grid h-9 w-9 place-items-center rounded-md border border-slate-200 bg-white disabled:opacity-40"><ChevronRight size={17} /></button></div>
       </div>
@@ -184,11 +211,12 @@ export function PlanningBoard({ activities, dayCount, startDate, groupCount, the
         {onSaveThemes && <button type="button" onClick={() => setEditingThemes(true)} title="Gérer les thèmes" aria-label="Gérer les thèmes" className="ml-auto grid h-8 w-8 place-items-center rounded-md border border-slate-200 bg-white text-slate-600 hover:border-emerald-600 print:hidden"><Settings2 size={16} /></button>}
       </div>
 
-      {view === "all" ? <div ref={overviewRef} className="flex gap-3 overflow-x-auto pb-4 snap-x snap-mandatory print:flex-wrap print:overflow-visible">
+      {view === "all" ? <div ref={overviewRef} className="flex gap-1.5 overflow-x-auto pb-4 snap-x snap-mandatory">
         {days.map((day) => <DayPanel key={day} day={day} startDate={startDate} activities={displayActivities} themes={themes} trainerNames={trainerNames} groupCount={groupCount} compact dragging={Boolean(activeId)} busy={busy || moving} onAdd={onAdd} onEdit={onEdit} onMove={onMove} />)}
       </div> : <DayPanel day={selectedDay} startDate={startDate} activities={displayActivities} themes={themes} trainerNames={trainerNames} groupCount={groupCount} compact={false} dragging={Boolean(activeId)} busy={busy || moving} onAdd={onAdd} onEdit={onEdit} onMove={onMove} />}
       {moving && <p role="status" className="text-xs text-emerald-800">Déplacement en cours...</p>}
     </div>
+    <PrintPlanning activities={displayActivities} dayCount={dayCount} startDate={startDate} formationTitle={formationTitle} themes={themes} />
     <DragOverlay>{activeActivity ? <div className={`max-w-[280px] rounded-md border-l-4 px-3 py-2 text-sm font-semibold shadow-lg ${themeSurface(themeForActivity(activeActivity, themes).color)}`}>{activeActivity.title}</div> : null}</DragOverlay>
     {editingThemes && onSaveThemes && <ThemeEditor themes={themes} activities={activities} onSave={onSaveThemes} onClose={() => setEditingThemes(false)} />}
   </DndContext>;

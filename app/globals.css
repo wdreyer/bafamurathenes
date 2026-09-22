@@ -685,3 +685,129 @@ select:focus-visible {
 .timeline-dot-wrapper:hover .timeline-dot {
   animation: timelinePulse 0.6s ease-out;
 }
+
+.team-shell {
+  --planning-sky: #0ea5e9;
+  --planning-mint: #10b981;
+  --planning-lilac: #8b5cf6;
+  --planning-lemon: #f59e0b;
+  --planning-coral: #fb7185;
+  --planning-neutral: #94a3b8;
+}
+
+.team-shell button:not(:disabled):not([title^="Déplacer"]),
+.team-shell a[href],
+.team-shell select,
+.team-shell summary,
+.planning-controls button:not(:disabled):not([title^="Déplacer"]),
+.planning-controls a[href],
+.planning-controls select {
+  cursor: pointer;
+}
+
+@page planning-landscape {
+  size: A4 landscape;
+  margin: 8mm;
+}
+
+@media print {
+  .team-page {
+    page: planning-landscape;
+    background: #fff;
+  }
+
+  .team-page > div {
+    padding: 0;
+  }
+
+  .team-print-week {
+    break-after: page;
+    color: #1e293b;
+    print-color-adjust: exact;
+  }
+
+  .team-print-week:last-child {
+    break-after: auto;
+  }
+
+  .team-print-heading {
+    display: flex;
+    justify-content: space-between;
+    gap: 6mm;
+    align-items: baseline;
+    border-bottom: 1px solid #b8c6bf;
+    padding-bottom: 2mm;
+    margin-bottom: 2.5mm;
+    font-size: 10pt;
+  }
+
+  .team-print-heading span {
+    font-size: 8pt;
+  }
+
+  .team-print-grid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 1.5mm;
+    align-items: start;
+  }
+
+  .team-print-day {
+    min-width: 0;
+    border: 1px solid #d9e3df;
+  }
+
+  .team-print-day h2 {
+    background: #eaf3ef;
+    padding: 2mm;
+    font-size: 8pt;
+    font-weight: 700;
+    text-transform: capitalize;
+  }
+
+  .team-print-activity {
+    border-top: 1px solid #e9eeec;
+    border-left: 2pt solid;
+    padding: 1.5mm;
+    font-size: 8pt;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+    break-inside: avoid;
+  }
+
+  .team-print-activity span {
+    display: block;
+    color: #475569;
+    font-size: 7pt;
+  }
+
+  .team-print-activity strong {
+    display: block;
+    font-weight: 600;
+  }
+
+  .team-print-activity small {
+    font-size: 7pt;
+  }
+
+  .team-print-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1mm 3mm;
+    margin-top: 3mm;
+    font-size: 7pt;
+  }
+
+  .team-print-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 1mm;
+  }
+
+  .team-print-legend i {
+    display: inline-block;
+    width: 2mm;
+    height: 2mm;
+    border-radius: 50%;
+  }
+}

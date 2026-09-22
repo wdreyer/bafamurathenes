@@ -60,7 +60,7 @@ export function ActivityEditor({ activity, existing, dayCount, groupCount, forma
     onChange({ ...base, title });
   };
 
-  return <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-3" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+  return <div className="planning-controls fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-3" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
     <div role="dialog" aria-modal="true" aria-label="Modifier un temps" className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-md bg-white p-4 shadow-xl sm:p-6">
       <div className="mb-4 flex items-center justify-between gap-3"><div><p className="text-xs font-semibold uppercase text-emerald-700">Planning pédagogique</p><h2 className="mt-0.5 text-lg font-semibold">{existing ? "Modifier le temps" : "Ajouter un temps"}</h2></div><button type="button" onClick={onClose} title="Fermer" aria-label="Fermer" className="grid h-8 w-8 place-items-center rounded hover:bg-slate-100"><X size={19} /></button></div>
       {error && <p role="alert" className="mb-4 rounded border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">{error}</p>}

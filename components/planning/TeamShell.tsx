@@ -7,9 +7,9 @@ import { BookOpen, CalendarDays } from "lucide-react";
 
 export function TeamShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  return <div className="min-h-screen bg-[#f5f8f6] text-slate-950">
-    <header className="border-b border-emerald-900/10 bg-white">
-      <div className="mx-auto flex max-w-[1440px] flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6 sm:py-5">
+  return <div className="team-shell min-h-screen bg-[#f5f8f6] text-slate-950">
+    <header className="border-b border-emerald-900/10 bg-white print:hidden">
+      <div className="flex w-full flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6 sm:py-5">
         <div className="flex min-w-0 items-center gap-3 sm:gap-4">
           <Link href="/equipe" aria-label="Accueil de l'espace formateur·ice" className="grid h-14 w-14 shrink-0 place-items-center rounded-md bg-[#f4effa] no-underline sm:h-16 sm:w-16"><Image src="/MT.png" alt="Logo Murathènes" width={48} height={48} className="h-10 w-auto sm:h-12" priority /></Link>
           <div className="min-w-0"><p className="text-xs font-bold uppercase text-[#6d35a1]">Murathènes</p><h1 className="mt-0.5 text-2xl font-bold leading-tight text-slate-950 sm:text-3xl">Espace formateur·ice</h1></div>
