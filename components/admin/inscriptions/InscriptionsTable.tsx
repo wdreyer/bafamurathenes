@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import {
   addDoc,
@@ -19,6 +20,7 @@ import {
   Copy,
   CreditCard,
   FileText,
+  ExternalLink,
   HandCoins,
   Plus,
   Search,
@@ -135,6 +137,11 @@ function contactName(inscription: Inscription) {
   return [inscription.firstName, inscription.lastName].filter(Boolean).join(" ");
 }
 
+function formationName(inscription: Inscription, formations: Formation[]) {
+  const current = formations.find((item) => item.id === inscription.formationId);
+  return current?.title?.trim() || cleanFormationTitle(inscription.formationTitle);
+}
+
 function getCafStatus(inscription: Inscription): CafStatus {
   if (inscription.cafStatus === "paid") return "approved";
   if (inscription.cafStatus === "requested") return "murathenes_document";
@@ -188,7 +195,7 @@ function financials(inscription: Inscription) {
   };
 }
 
-function compareInscriptions(a: Inscription, b: Inscription, key: SortKey, direction: SortDirection) {
+function compareInscriptions(a: Inscription, b: Inscription, key: SortKey, direction: SortDirection, formations: Formation[]) {
   const multiplier = direction === "asc" ? 1 : -1;
   const aValues = financials(a);
   const bValues = financials(b);
@@ -202,7 +209,7 @@ function compareInscriptions(a: Inscription, b: Inscription, key: SortKey, direc
   } else if (key === "name") {
     result = compareText(contactName(a), contactName(b));
   } else if (key === "formation") {
-    result = compareText(cleanFormationTitle(a.formationTitle), cleanFormationTitle(b.formationTitle));
+    result = compareText(formationName(a, formations), formationName(b, formations));
   } else if (key === "total") {
     result = compareNumber(aValues.totalPrice, bValues.totalPrice);
   } else if (key === "paid") {
@@ -224,7 +231,7 @@ function compareInscriptions(a: Inscription, b: Inscription, key: SortKey, direc
   return result * multiplier;
 }
 
-export function InscriptionsTable() {
+export function InscriptionsTable({ formationId }: { formationId?: string } = {}) {
   const [inscriptions, setInscriptions] = useState<Inscription[]>([]);
   const [availableFormations, setAvailableFormations] = useState<Formation[]>([]);
   const [search, setSearch] = useState("");
@@ -234,8 +241,9 @@ export function InscriptionsTable() {
   const [savingId, setSavingId] = useState<string | null>(null);
   const [selectedInscriptionId, setSelectedInscriptionId] = useState<string | null>(null);
   const [showAdd, setShowAdd] = useState(false);
+  const [copiedEmails, setCopiedEmails] = useState(false);
   const [newInscription, setNewInscription] = useState({
-    formationId: "",
+    formationId: formationId || "",
     firstName: "",
     lastName: "",
     email: "",
@@ -283,23 +291,16 @@ export function InscriptionsTable() {
     return () => unsubscribe();
   }, []);
 
-  const formations = useMemo(
-    () =>
-      Array.from(
-        new Set(inscriptions.map((item) => cleanFormationTitle(item.formationTitle)).filter(Boolean)),
-      ).sort() as string[],
-    [inscriptions],
-  );
-
   const filtered = useMemo(() => {
     const term = normalize(search);
+    const selectedFormationId = formationId || formation;
     const rows = inscriptions.filter((inscription) => {
       const haystack = normalize(
         [
           contactName(inscription),
           inscription.email,
           inscription.phone,
-          cleanFormationTitle(inscription.formationTitle),
+          formationName(inscription, availableFormations),
           inscription.tariff,
           inscription.transferReference,
           inscription.notes,
@@ -309,13 +310,20 @@ export function InscriptionsTable() {
       );
 
       return (
-        (formation === "all" || cleanFormationTitle(inscription.formationTitle) === formation) &&
+        (selectedFormationId === "all" || inscription.formationId === selectedFormationId) &&
         (!term || haystack.includes(term))
       );
     });
 
-    return rows.sort((a, b) => compareInscriptions(a, b, sortKey, sortDirection));
-  }, [formation, inscriptions, search, sortDirection, sortKey]);
+    return rows.sort((a, b) => compareInscriptions(a, b, sortKey, sortDirection, availableFormations));
+  }, [availableFormations, formation, formationId, inscriptions, search, sortDirection, sortKey]);
+
+  const groupEmails = useMemo(() => {
+    const values = filtered.flatMap((inscription) => [inscription.email, inscription.responsibleEmail])
+      .flatMap((value) => (value || "").split(/[;,\s]+/).filter((email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)));
+    return Array.from(new Map(values.map((email) => [email.toLowerCase(), email])).values())
+      .sort((a, b) => a.localeCompare(b, "fr"));
+  }, [filtered]);
 
   const selectedInscription = selectedInscriptionId
     ? inscriptions.find((inscription) => inscription.id === selectedInscriptionId) ?? null
@@ -440,7 +448,7 @@ export function InscriptionsTable() {
     });
 
     setNewInscription({
-      formationId: "",
+      formationId: formationId || "",
       firstName: "",
       lastName: "",
       email: "",
@@ -466,14 +474,6 @@ export function InscriptionsTable() {
     setSortDirection(["total", "paid", "remaining", "caf", "date"].includes(nextKey) ? "desc" : "asc");
   }
 
-  if (!inscriptions.length) {
-    return (
-      <div className="border border-dashed border-slate-200 bg-slate-50 p-6 text-sm text-slate-500">
-        Aucune inscription pour l&apos;instant.
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-6">
       <section className="grid gap-px overflow-hidden rounded-md border border-slate-200 bg-slate-200 md:grid-cols-5">
@@ -497,11 +497,11 @@ export function InscriptionsTable() {
           </label>
         </div>
 
-        <FormationSelect
+        {!formationId && <FormationSelect
           value={formation}
-          formations={formations}
+          formations={availableFormations}
           onChange={setFormation}
-        />
+        />}
 
         <div className="flex justify-end border-t border-slate-100 pt-3">
           <button
@@ -526,7 +526,7 @@ export function InscriptionsTable() {
 
         {showAdd && (
           <form onSubmit={addManualInscription} className="grid gap-2 border-t border-slate-100 pt-3 md:grid-cols-4">
-            <div className="md:col-span-4">
+            {!formationId && <div className="md:col-span-4">
               <FieldLabel>Formation</FieldLabel>
               <FormationTiles
                 value={newInscription.formationId}
@@ -540,7 +540,7 @@ export function InscriptionsTable() {
                   }));
                 }}
               />
-            </div>
+            </div>}
             <TextDraft label="Prénom" value={newInscription.firstName} onChange={(value) => setNewInscription((current) => ({ ...current, firstName: value }))} required />
             <TextDraft label="Nom" value={newInscription.lastName} onChange={(value) => setNewInscription((current) => ({ ...current, lastName: value }))} required />
             <TextDraft label="Email" value={newInscription.email} onChange={(value) => setNewInscription((current) => ({ ...current, email: value }))} />
@@ -578,8 +578,11 @@ export function InscriptionsTable() {
               Inscriptions
             </h2>
           </div>
-          <div className="text-sm font-semibold text-slate-700">
-            {filtered.length} ligne(s)
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-sm font-semibold text-slate-700">{filtered.length} ligne(s)</span>
+            <button type="button" disabled={!groupEmails.length} onClick={() => void copyToClipboard(groupEmails.join(", ")).then(() => { setCopiedEmails(true); window.setTimeout(() => setCopiedEmails(false), 1800); })} className="inline-flex h-8 items-center gap-1.5 rounded border border-slate-300 bg-white px-2 text-xs font-medium text-slate-800 disabled:opacity-40">
+              {copiedEmails ? <Check size={14} /> : <Copy size={14} />}{copiedEmails ? "Copié" : `Copier les emails (${groupEmails.length})`}
+            </button>
           </div>
         </div>
         <div className="overflow-x-auto">
@@ -644,9 +647,7 @@ export function InscriptionsTable() {
                   </TD>
 
                   <TD>
-                    <div className="max-w-[240px] truncate font-medium text-slate-900">
-                      {cleanFormationTitle(inscription.formationTitle) || "-"}
-                    </div>
+                    {inscription.formationId ? <Link href={`/admin/formations/${inscription.formationId}`} onClick={(event) => event.stopPropagation()} className="inline-flex max-w-[240px] items-center gap-1 font-medium text-slate-900 hover:underline"><span className="truncate">{formationName(inscription, availableFormations) || "Formation"}</span><ExternalLink size={12} className="shrink-0" /></Link> : <div className="max-w-[240px] truncate font-medium text-slate-900">{formationName(inscription, availableFormations) || "-"}</div>}
                     {inscription.tariff && <div className="mt-1 text-xs text-slate-500">{inscription.tariff}</div>}
                   </TD>
 
@@ -779,7 +780,7 @@ function InscriptionDetailsModal({
         <div className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-3">
           <div>
             <h3 className="text-base font-semibold text-slate-900">{contactName(inscription) || "Inscription sans nom"}</h3>
-            <p className="mt-0.5 text-xs text-slate-500">{cleanFormationTitle(inscription.formationTitle) || "Formation non renseignee"} - {formatDate(inscription.createdAt)}</p>
+            <p className="mt-0.5 text-xs text-slate-500">{formationName(inscription, formations) || "Formation non renseignée"} - {formatDate(inscription.createdAt)}</p>
           </div>
           <button type="button" onClick={onClose} className="h-8 cursor-pointer rounded-md border border-slate-200 px-3 text-xs font-medium text-slate-700 hover:bg-slate-50">Fermer</button>
         </div>
@@ -911,7 +912,7 @@ function FormationSelect({
   onChange,
 }: {
   value: string;
-  formations: string[];
+  formations: Formation[];
   onChange: (value: string) => void;
 }) {
   return (
@@ -932,19 +933,19 @@ function FormationSelect({
         >
           Toutes
         </button>
-        {formations.map((title) => (
+        {formations.map((item) => (
           <button
-            key={title}
+            key={item.id}
             type="button"
-            aria-pressed={value === title}
-            onClick={() => onChange(title)}
+            aria-pressed={value === item.id}
+            onClick={() => onChange(item.id)}
             className={`min-h-9 cursor-pointer rounded-md border px-3 py-1.5 text-sm font-medium transition ${
-              value === title
+              value === item.id
                 ? "border-slate-900 bg-slate-900 text-white"
                 : "border-slate-200 bg-white text-slate-700 hover:border-slate-400"
             }`}
           >
-            {title}
+            {item.title}
           </button>
         ))}
       </div>
@@ -986,7 +987,7 @@ function FormationTiles({
                 : "border-slate-200 bg-white text-slate-900 hover:border-slate-400 hover:bg-slate-50"
             }`}
           >
-            <span className="block text-sm font-semibold">{cleanFormationTitle(formation.title)}</span>
+            <span className="block text-sm font-semibold">{formation.title}</span>
             <span className={`mt-1 block text-xs ${selected ? "text-slate-300" : "text-slate-500"}`}>
               {formatDate(formation.startDate)} au {formatDate(formation.endDate)}
             </span>

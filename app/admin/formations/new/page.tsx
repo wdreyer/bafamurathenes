@@ -16,8 +16,8 @@ export default function NewFormationPage() {
       </div>
 
       <FormationForm
-        onSaved={() => {
-          router.push("/admin/formations");
+        onSaved={(formationId) => {
+          router.push(`/admin/formations/${formationId}`);
         }}
       />
     </main>

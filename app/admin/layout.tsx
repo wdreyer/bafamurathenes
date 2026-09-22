@@ -9,7 +9,6 @@ import {
   CalendarDays,
   LayoutDashboard,
   LogOut,
-  Mail,
   ShieldCheck,
   UserRoundSearch,
   Users,
@@ -19,7 +18,6 @@ const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/prospects", label: "Prospects", icon: UserRoundSearch },
   { href: "/admin/inscriptions", label: "Inscriptions", icon: Users },
-  { href: "/admin/mails", label: "Mails", icon: Mail },
   { href: "/admin/formations", label: "Formations", icon: GraduationCap },
   { href: "/admin/formateurs", label: "Formateurs", icon: CalendarDays },
 ];

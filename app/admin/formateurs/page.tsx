@@ -5,7 +5,6 @@ import { useEffect, useMemo, useState } from "react";
 import { addDoc, collection, doc, getDoc, onSnapshot, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
 import { CalendarDays, Check, ChevronLeft, ChevronRight, Clock3, ExternalLink, Pencil, Plus, Save, Trash2, Users, X } from "lucide-react";
 import { db } from "@/lib/firebase";
-import { cleanFormationTitle } from "@/lib/formationTitles";
 import { buildPlanningTemplate } from "@/lib/planningTemplates";
 import { WeekGrid } from "@/components/planning/WeekGrid";
 import type { Formation, PlanActivity, Trainer } from "@/lib/types";
@@ -48,6 +47,11 @@ export default function FormateursPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
+    const requestedFormation = new URLSearchParams(window.location.search).get("formation");
+    if (requestedFormation) { setFormationId(requestedFormation); setTab("planning"); }
+  }, []);
+
+  useEffect(() => {
     const unsubTrainers = onSnapshot(collection(db, "trainers"), (snapshot) =>
       setTrainers(snapshot.docs.map((entry) => ({ id: entry.id, ...entry.data() } as Trainer))
         .sort((a, b) => trainerName(a).localeCompare(trainerName(b), "fr"))),
@@ -60,7 +64,7 @@ export default function FormateursPage() {
   }, []);
 
   useEffect(() => {
-    if (!formationId && formations.length) setFormationId(formations[0].id);
+    if (formations.length && (!formationId || !formations.some((item) => item.id === formationId))) setFormationId(formations[0].id);
   }, [formations, formationId]);
 
   const formation = formations.find((item) => item.id === formationId);
@@ -178,7 +182,7 @@ export default function FormateursPage() {
         </div>
       ) : (
         <div className="space-y-5">
-          <div className="flex flex-wrap items-center gap-3"><label className="text-xs font-semibold uppercase text-slate-500">Session</label><select value={formationId} onChange={(event) => {setFormationId(event.target.value);setDay(1);setWeek(0);setEditing(null);}} className="h-10 min-w-[260px] max-w-full rounded border border-slate-200 bg-white px-3 text-sm">{formations.map((item) => <option key={item.id} value={item.id}>{cleanFormationTitle(item.title)} · {item.startDate.slice(0,10)}</option>)}</select>{formation && <span className="text-xs text-slate-500">{formation.type === "formation_generale" ? "Formation générale" : "Approfondissement échange de jeunes et séjours à l'étranger"}</span>}</div>
+          <div className="flex flex-wrap items-center gap-3"><label className="text-xs font-semibold uppercase text-slate-500">Session</label><select value={formationId} onChange={(event) => {setFormationId(event.target.value);setDay(1);setWeek(0);setEditing(null);}} className="h-10 min-w-[260px] max-w-full rounded border border-slate-200 bg-white px-3 text-sm">{formations.map((item) => <option key={item.id} value={item.id}>{item.title} · {item.startDate.slice(0,10)}</option>)}</select>{formation && <><span className="text-xs text-slate-500">{formation.type === "formation_generale" ? "Formation générale" : "Approfondissement échange de jeunes et séjours à l'étranger"}</span><a href={`/admin/formations/${formation.id}`} className="inline-flex items-center gap-1 text-sm text-emerald-800 underline">Fiche formation <ExternalLink size={13} /></a></>}</div>
           {formation && <>
             <div className="border-y border-slate-200 py-3"><div className="mb-2 flex items-center justify-between"><h2 className="text-sm font-semibold">Formateurs de la session</h2><button onClick={() => setTab("team")} className="text-xs text-emerald-700">Gérer l'équipe</button></div><div className="flex flex-wrap gap-2">{trainers.map((trainer) => <button key={trainer.id} disabled={busy} onClick={() => void toggleTrainer(trainer.id)} aria-pressed={formation.trainerIds?.includes(trainer.id) || false} className={`rounded-md border px-3 py-1.5 text-sm ${formation.trainerIds?.includes(trainer.id) ? "border-emerald-700 bg-emerald-50 text-emerald-900" : "border-slate-200 bg-white text-slate-600"}`}>{formation.trainerIds?.includes(trainer.id) && <Check size={13} className="mr-1 inline"/>}{trainerName(trainer)}</button>)}{!trainers.length && <p className="text-sm text-slate-500">Ajoute d'abord un formateur dans l'onglet Équipe.</p>}</div></div>
             {!planExists ? <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-dashed border-slate-300 bg-white p-6"><div><h2 className="font-semibold">Planning à préparer</h2><p className="text-sm text-slate-500">Modèle {formation.type === "formation_generale" ? "formation générale · 9 jours" : "approfondissement · 7 jours"}, inspiré des plannings fournis.</p></div><button disabled={busy} onClick={() => void saveActivities(buildPlanningTemplate(formation))} className="flex items-center gap-2 rounded bg-slate-900 px-4 py-2 text-sm text-white"><Plus size={16}/>Créer le planning</button></div> : <>

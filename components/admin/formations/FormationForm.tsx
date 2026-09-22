@@ -23,7 +23,7 @@ import { Button } from "@/components/ui/Button";
 type Props = {
   initialData?: Formation;
   formationId?: string;
-  onSaved?: () => void;
+  onSaved?: (formationId: string) => void;
 };
 
 const TYPES: { value: FormationType; label: string }[] = [
@@ -101,6 +101,7 @@ export function FormationForm({ initialData, formationId, onSaved }: Props) {
       }));
 
     try {
+      let savedFormationId = formationId;
       if (isEdit && formationId) {
         const ref = doc(db, "formations", formationId);
         await updateDoc(ref, {
@@ -115,7 +116,7 @@ export function FormationForm({ initialData, formationId, onSaved }: Props) {
           updatedAt: serverTimestamp(),
         });
       } else {
-        await addDoc(collection(db, "formations"), {
+        const created = await addDoc(collection(db, "formations"), {
           type,
           title,
           startDate,
@@ -127,9 +128,10 @@ export function FormationForm({ initialData, formationId, onSaved }: Props) {
           inscriptionsCount: 0,
           createdAt: serverTimestamp(),
         });
+        savedFormationId = created.id;
       }
 
-      onSaved?.();
+      if (savedFormationId) onSaved?.(savedFormationId);
     } catch (err) {
       console.error(err);
       setError("Erreur lors de l'enregistrement de la formation.");
