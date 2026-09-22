@@ -153,7 +153,10 @@ export default function FormateursPage() {
           <button role="tab" aria-selected={tab === "team"} onClick={() => setTab("team")} className={`flex items-center gap-2 rounded px-3 py-2 text-sm ${tab === "team" ? "bg-slate-900 text-white" : "text-slate-600"}`}><Users size={16}/>Équipe</button>
         </div>
       </div>
-      <a href="/atelier/equipe-planning" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm font-medium text-emerald-800 underline underline-offset-2">Ouvrir la vue formateurs <ExternalLink size={15} /></a>
+      <div className="flex flex-wrap gap-4">
+        <a href="/atelier/equipe-planning" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm font-medium text-emerald-800 underline underline-offset-2">Ouvrir la vue formateurs <ExternalLink size={15} /></a>
+        <a href="/atelier/guide-formateurs" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm font-medium text-emerald-800 underline underline-offset-2">Ouvrir le guide <ExternalLink size={15} /></a>
+      </div>
       {error && <p role="alert" className="rounded border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">{error}</p>}
 
       {tab === "team" ? (

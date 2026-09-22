@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { collection, onSnapshot } from "firebase/firestore";
-import { CalendarDays, ChevronDown, Clock3, Printer, Users } from "lucide-react";
+import { BookOpen, CalendarDays, ChevronDown, Clock3, Printer, Users } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { cleanFormationTitle } from "@/lib/formationTitles";
 import type { Formation, PlanActivity } from "@/lib/types";
@@ -69,7 +70,10 @@ export default function PublicPlanningPage() {
             <p className="text-xs font-bold uppercase text-emerald-700">Murathènes · équipe pédagogique</p>
             <h1 className="mt-1 text-2xl font-semibold">Plannings de formation</h1>
           </div>
-          <button type="button" onClick={() => window.print()} title="Imprimer le jour affiché" className="print:hidden flex h-9 items-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-sm hover:bg-slate-50"><Printer size={16}/>Imprimer</button>
+          <div className="print:hidden flex items-center gap-2">
+            <Link href="/atelier/guide-formateurs" className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-sm font-medium no-underline hover:bg-slate-50"><BookOpen size={16}/>Guide</Link>
+            <button type="button" onClick={() => window.print()} title="Imprimer le jour affiché" className="flex h-9 items-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-sm hover:bg-slate-50"><Printer size={16}/>Imprimer</button>
+          </div>
         </header>
 
         {error && <p role="alert" className="mt-5 rounded-md border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">{error}</p>}
