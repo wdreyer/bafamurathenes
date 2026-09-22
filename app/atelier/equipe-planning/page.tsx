@@ -6,6 +6,7 @@ import { collection, onSnapshot } from "firebase/firestore";
 import { BookOpen, CalendarDays, ChevronDown, Clock3, Printer, Users } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { cleanFormationTitle } from "@/lib/formationTitles";
+import { WeekGrid } from "@/components/planning/WeekGrid";
 import type { Formation, PlanActivity } from "@/lib/types";
 
 type PublicPlan = {
@@ -35,6 +36,8 @@ export default function PublicPlanningPage() {
   const [plans, setPlans] = useState<PublicPlan[]>([]);
   const [formationId, setFormationId] = useState("");
   const [day, setDay] = useState(1);
+  const [view, setView] = useState<"week" | "day">("week");
+  const [week, setWeek] = useState(0);
   const [error, setError] = useState("");
   const [loaded, setLoaded] = useState(false);
 
@@ -58,6 +61,7 @@ export default function PublicPlanningPage() {
   const formation = available.find((item) => item.id === selectedFormationId);
   const plan = plans.find((item) => item.formationId === selectedFormationId);
   const dayCount = formation?.type === "formation_generale" ? 9 : 7;
+  const selectedWeek = dayCount > 7 ? week : 0;
   const activities = (plan?.activities || []).filter((item) => item.day === day)
     .sort((a, b) => a.start.localeCompare(b.start));
   const trainers = formation?.trainerIds?.map((id) => plan?.trainerNames?.[id]).filter(Boolean) || [];
@@ -72,7 +76,7 @@ export default function PublicPlanningPage() {
           </div>
           <div className="print:hidden flex items-center gap-2">
             <Link href="/atelier/guide-formateurs" className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-sm font-medium no-underline hover:bg-slate-50"><BookOpen size={16}/>Guide</Link>
-            <button type="button" onClick={() => window.print()} title="Imprimer le jour affiché" className="flex h-9 items-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-sm hover:bg-slate-50"><Printer size={16}/>Imprimer</button>
+            <button type="button" onClick={() => window.print()} title="Imprimer le planning affiché" className="flex h-9 items-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-sm hover:bg-slate-50"><Printer size={16}/>Imprimer</button>
           </div>
         </header>
 
@@ -84,13 +88,24 @@ export default function PublicPlanningPage() {
           <div className="flex flex-wrap items-end justify-between gap-4 py-6">
             <div className="min-w-0">
               <label htmlFor="public-formation" className="mb-1 block text-xs font-semibold uppercase text-slate-500">Formation</label>
-              <select id="public-formation" value={selectedFormationId} onChange={(event) => { setFormationId(event.target.value); setDay(1); }} className="h-11 max-w-full rounded-md border border-slate-300 bg-white px-3 text-sm font-medium">
+              <select id="public-formation" value={selectedFormationId} onChange={(event) => { setFormationId(event.target.value); setDay(1); setWeek(0); }} className="h-11 max-w-full rounded-md border border-slate-300 bg-white px-3 text-sm font-medium">
                 {available.map((item) => <option key={item.id} value={item.id}>{cleanFormationTitle(item.title)} · {item.startDate.slice(0, 10)}</option>)}
               </select>
             </div>
             <div className="flex items-center gap-2 text-sm text-slate-600"><Users size={16}/>{trainers.length ? trainers.join(", ") : "Équipe à préciser"}</div>
           </div>
 
+          <div className="print:hidden flex flex-wrap items-center justify-between gap-2 border-b border-slate-200 pb-3">
+            <div className="flex rounded-md border border-slate-200 bg-white p-1" role="group" aria-label="Affichage du planning">
+              <button type="button" onClick={() => setView("week")} aria-pressed={view === "week"} className={`rounded px-3 py-1.5 text-sm ${view === "week" ? "bg-slate-900 text-white" : "text-slate-600"}`}>Semaine</button>
+              <button type="button" onClick={() => setView("day")} aria-pressed={view === "day"} className={`rounded px-3 py-1.5 text-sm ${view === "day" ? "bg-slate-900 text-white" : "text-slate-600"}`}>Jour</button>
+            </div>
+            {view === "week" && dayCount > 7 && <div className="flex gap-1" role="group" aria-label="Choisir une semaine">
+              {[0, 1].map((number) => <button key={number} type="button" onClick={() => setWeek(number)} aria-pressed={selectedWeek === number} className={`rounded-md border px-3 py-1.5 text-sm ${selectedWeek === number ? "border-emerald-700 bg-emerald-50 text-emerald-900" : "border-slate-200 bg-white text-slate-600"}`}>Semaine {number + 1}</button>)}
+            </div>}
+          </div>
+
+          {view === "week" ? <div className="mt-5"><WeekGrid activities={plan.activities} dayCount={dayCount} startDate={formation.startDate} week={selectedWeek} trainerNames={plan.trainerNames} /></div> : <>
           <div className="print:hidden flex gap-1 overflow-x-auto border-b border-slate-200 pb-3" aria-label="Choisir un jour">
             {Array.from({ length: dayCount }, (_, index) => index + 1).map((number) => (
               <button key={number} type="button" onClick={() => setDay(number)} aria-pressed={day === number} className={`min-w-20 flex-1 rounded-md px-3 py-2 text-sm font-semibold ${day === number ? "bg-slate-900 text-white" : "border border-slate-200 bg-white text-slate-700 hover:border-slate-400"}`}>
@@ -118,6 +133,7 @@ export default function PublicPlanningPage() {
               </details>
             )) : <p className="py-10 text-sm text-slate-500">Aucun temps prévu ce jour.</p>}
           </div>
+          </>}
         </>}
       </div>
     </main>

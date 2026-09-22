@@ -7,6 +7,7 @@ import { CalendarDays, Check, ChevronLeft, ChevronRight, Clock3, ExternalLink, P
 import { db } from "@/lib/firebase";
 import { cleanFormationTitle } from "@/lib/formationTitles";
 import { buildPlanningTemplate } from "@/lib/planningTemplates";
+import { WeekGrid } from "@/components/planning/WeekGrid";
 import type { Formation, PlanActivity, Trainer } from "@/lib/types";
 
 const colors: { value: PlanActivity["color"]; label: string; className: string }[] = [
@@ -38,6 +39,8 @@ export default function FormateursPage() {
   const [planExists, setPlanExists] = useState(false);
   const [tab, setTab] = useState<"planning" | "team">("team");
   const [day, setDay] = useState(1);
+  const [view, setView] = useState<"week" | "day">("week");
+  const [week, setWeek] = useState(0);
   const [editing, setEditing] = useState<PlanActivity | null>(null);
   const [trainerDraft, setTrainerDraft] = useState({ firstName: "", lastName: "", email: "", phone: "", notes: "" });
   const [editingTrainerId, setEditingTrainerId] = useState<string | null>(null);
@@ -62,6 +65,7 @@ export default function FormateursPage() {
 
   const formation = formations.find((item) => item.id === formationId);
   const dayCount = formation?.type === "formation_generale" ? 9 : 7;
+  const selectedWeek = dayCount > 7 ? week : 0;
 
   useEffect(() => {
     if (!formationId) return;
@@ -174,13 +178,24 @@ export default function FormateursPage() {
         </div>
       ) : (
         <div className="space-y-5">
-          <div className="flex flex-wrap items-center gap-3"><label className="text-xs font-semibold uppercase text-slate-500">Session</label><select value={formationId} onChange={(event) => {setFormationId(event.target.value);setDay(1);setEditing(null);}} className="h-10 min-w-[260px] max-w-full rounded border border-slate-200 bg-white px-3 text-sm">{formations.map((item) => <option key={item.id} value={item.id}>{cleanFormationTitle(item.title)} · {item.startDate.slice(0,10)}</option>)}</select>{formation && <span className="text-xs text-slate-500">{formation.type === "formation_generale" ? "Formation générale" : "Approfondissement échange de jeunes et séjours à l'étranger"}</span>}</div>
+          <div className="flex flex-wrap items-center gap-3"><label className="text-xs font-semibold uppercase text-slate-500">Session</label><select value={formationId} onChange={(event) => {setFormationId(event.target.value);setDay(1);setWeek(0);setEditing(null);}} className="h-10 min-w-[260px] max-w-full rounded border border-slate-200 bg-white px-3 text-sm">{formations.map((item) => <option key={item.id} value={item.id}>{cleanFormationTitle(item.title)} · {item.startDate.slice(0,10)}</option>)}</select>{formation && <span className="text-xs text-slate-500">{formation.type === "formation_generale" ? "Formation générale" : "Approfondissement échange de jeunes et séjours à l'étranger"}</span>}</div>
           {formation && <>
             <div className="border-y border-slate-200 py-3"><div className="mb-2 flex items-center justify-between"><h2 className="text-sm font-semibold">Formateurs de la session</h2><button onClick={() => setTab("team")} className="text-xs text-emerald-700">Gérer l'équipe</button></div><div className="flex flex-wrap gap-2">{trainers.map((trainer) => <button key={trainer.id} disabled={busy} onClick={() => void toggleTrainer(trainer.id)} aria-pressed={formation.trainerIds?.includes(trainer.id) || false} className={`rounded-md border px-3 py-1.5 text-sm ${formation.trainerIds?.includes(trainer.id) ? "border-emerald-700 bg-emerald-50 text-emerald-900" : "border-slate-200 bg-white text-slate-600"}`}>{formation.trainerIds?.includes(trainer.id) && <Check size={13} className="mr-1 inline"/>}{trainerName(trainer)}</button>)}{!trainers.length && <p className="text-sm text-slate-500">Ajoute d'abord un formateur dans l'onglet Équipe.</p>}</div></div>
             {!planExists ? <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-dashed border-slate-300 bg-white p-6"><div><h2 className="font-semibold">Planning à préparer</h2><p className="text-sm text-slate-500">Modèle {formation.type === "formation_generale" ? "formation générale · 9 jours" : "approfondissement · 7 jours"}, inspiré des plannings fournis.</p></div><button disabled={busy} onClick={() => void saveActivities(buildPlanningTemplate(formation))} className="flex items-center gap-2 rounded bg-slate-900 px-4 py-2 text-sm text-white"><Plus size={16}/>Créer le planning</button></div> : <>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex rounded-md border border-slate-200 bg-white p-1" role="group" aria-label="Affichage du planning">
+                  <button type="button" onClick={() => setView("week")} aria-pressed={view === "week"} className={`rounded px-3 py-1.5 text-sm ${view === "week" ? "bg-slate-900 text-white" : "text-slate-600"}`}>Semaine</button>
+                  <button type="button" onClick={() => setView("day")} aria-pressed={view === "day"} className={`rounded px-3 py-1.5 text-sm ${view === "day" ? "bg-slate-900 text-white" : "text-slate-600"}`}>Jour</button>
+                </div>
+                {view === "week" && dayCount > 7 && <div className="flex gap-1" role="group" aria-label="Choisir une semaine">
+                  {[0, 1].map((number) => <button key={number} type="button" onClick={() => setWeek(number)} aria-pressed={selectedWeek === number} className={`rounded-md border px-3 py-1.5 text-sm ${selectedWeek === number ? "border-emerald-700 bg-emerald-50 text-emerald-900" : "border-slate-200 bg-white text-slate-600"}`}>Semaine {number + 1}</button>)}
+                </div>}
+              </div>
+              {view === "week" ? <WeekGrid activities={activities} dayCount={dayCount} startDate={formation.startDate} week={selectedWeek} trainerNames={Object.fromEntries(trainers.map((trainer) => [trainer.id, trainerName(trainer)]))} onEdit={(activity) => setEditing({ ...activity, trainerIds: activity.trainerIds || [] })} onAdd={(number) => setEditing(emptyActivity(number))} /> : <>
               <div className="flex items-center justify-between gap-2"><button onClick={() => setDay((value) => Math.max(1,value-1))} disabled={day === 1} aria-label="Jour précédent" className="rounded border border-slate-200 bg-white p-2 disabled:opacity-30"><ChevronLeft size={18}/></button><div className="flex flex-1 gap-1 overflow-x-auto py-1">{Array.from({length:dayCount},(_,index) => index+1).map((number) => <button key={number} onClick={() => setDay(number)} className={`min-w-20 flex-1 rounded-md border px-2 py-2 text-sm ${day === number ? "border-slate-900 bg-slate-900 text-white" : "border-slate-200 bg-white text-slate-700"}`}>J{number}<span className="block text-[10px] opacity-70">{activities.filter((item) => item.day === number).length} temps</span></button>)}</div><button onClick={() => setDay((value) => Math.min(dayCount,value+1))} disabled={day === dayCount} aria-label="Jour suivant" className="rounded border border-slate-200 bg-white p-2 disabled:opacity-30"><ChevronRight size={18}/></button></div>
               <div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="text-xl font-semibold capitalize">{dateLabel(formation.startDate,day)}</h2><p className="text-xs text-slate-500">{dayActivities.length} temps au programme · {assigned.map(trainerName).join(", ") || "Aucun formateur affecté"}</p></div><button onClick={() => setEditing(emptyActivity(day))} className="flex items-center gap-2 rounded bg-emerald-700 px-3 py-2 text-sm font-medium text-white"><Plus size={16}/>Ajouter un temps</button></div>
               <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">{dayActivities.map((activity) => {const color = colors.find((item) => item.value === activity.color) || colors[5];return <button key={activity.id} onClick={() => setEditing({...activity,trainerIds:activity.trainerIds || []})} className={`min-h-32 rounded-md border p-4 text-left transition hover:shadow-sm ${color.className}`}><span className="flex items-center gap-1 text-xs font-bold"><Clock3 size={14}/>{activity.start} - {activity.end}</span><span className="mt-3 block text-sm font-semibold">{activity.title}</span>{activity.content && <span className="mt-1 line-clamp-2 block text-xs opacity-75">{activity.content}</span>}<span className="mt-3 block text-xs opacity-70">{(activity.trainerIds || []).map((id) => trainers.find((trainer) => trainer.id === id)).filter((trainer): trainer is Trainer => Boolean(trainer)).map(trainerName).join(", ") || "À attribuer"}</span></button>})}<button onClick={() => setEditing(emptyActivity(day))} className="flex min-h-32 items-center justify-center gap-2 rounded-md border border-dashed border-slate-300 text-sm text-slate-500 hover:border-emerald-500 hover:text-emerald-700"><Plus size={18}/>Ajouter</button></div>
+              </>}
             </>}
           </>}
         </div>
