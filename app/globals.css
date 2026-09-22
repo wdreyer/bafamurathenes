@@ -747,42 +747,83 @@ select:focus-visible {
 
   .team-print-grid {
     display: grid;
-    grid-template-columns: repeat(7, minmax(0, 1fr));
-    gap: 1.5mm;
-    align-items: start;
+    align-items: stretch;
+    border-top: 1px solid #d9e3df;
+    border-left: 1px solid #d9e3df;
   }
 
-  .team-print-day {
+  .team-print-grid > h2,
+  .team-print-corner {
+    z-index: 2;
+    display: flex;
+    align-items: center;
     min-width: 0;
-    border: 1px solid #d9e3df;
+    border-right: 1px solid #d9e3df;
+    border-bottom: 1px solid #d9e3df;
+    background: #eaf3ef;
+    padding: 1mm;
+    font-size: 7pt;
+    font-weight: 700;
+    line-height: 1.15;
   }
 
-  .team-print-day h2 {
-    background: #eaf3ef;
-    padding: 2mm;
-    font-size: 8pt;
-    font-weight: 700;
+  .team-print-grid > h2 {
     text-transform: capitalize;
   }
 
+  .team-print-corner {
+    justify-content: center;
+    font-size: 6pt;
+    text-transform: uppercase;
+    color: #64748b;
+  }
+
+  .team-print-time {
+    z-index: 1;
+    border-right: 1px solid #d9e3df;
+    border-bottom: 1px solid #d9e3df;
+    background: #f8fafc;
+    padding: 1mm;
+    text-align: right;
+    font-size: 6.5pt;
+    font-weight: 600;
+    color: #64748b;
+  }
+
+  .team-print-cell {
+    border-right: 1px solid #e2e8f0;
+    border-bottom: 1px solid #e2e8f0;
+    background: #fff;
+  }
+
   .team-print-activity {
-    border-top: 1px solid #e9eeec;
+    z-index: 3;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-content: start;
+    gap: 0.5mm;
+    margin: 0.5mm;
+    border: 1px solid #e2e8f0;
     border-left: 2pt solid;
-    padding: 1.5mm;
-    font-size: 8pt;
-    line-height: 1.25;
+    border-radius: 1mm;
+    background: #fff;
+    padding: 1mm;
+    font-size: 6.8pt;
+    line-height: 1.15;
     overflow-wrap: anywhere;
     break-inside: avoid;
   }
 
   .team-print-activity span {
-    display: block;
+    grid-column: 2;
+    grid-row: 1;
     color: #475569;
-    font-size: 7pt;
+    font-size: 5.8pt;
   }
 
   .team-print-activity strong {
-    display: block;
+    grid-column: 1;
+    grid-row: 1;
     font-weight: 600;
   }
 

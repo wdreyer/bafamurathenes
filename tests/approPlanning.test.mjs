@@ -5,7 +5,7 @@ import { buildPlanningTemplate } from "../lib/planningTemplates.ts";
 const appro = buildPlanningTemplate({ type: "approfondissement_sejour_etranger" });
 
 test("appro template follows the seven-day source timetable", () => {
-  assert.equal(appro.length, 73);
+  assert.equal(appro.length, 78);
   assert.deepEqual([...new Set(appro.map((item) => item.day))], [1, 2, 3, 4, 5, 6, 7]);
   assert.equal(appro.filter((item) => item.day === 1).length, 3);
   assert.equal(appro.filter((item) => item.day === 1 && item.start < "18:00").length, 0);
@@ -15,6 +15,7 @@ test("appro template follows the seven-day source timetable", () => {
   assert.ok(appro.some((item) => item.day === 7 && item.start === "14:00" && item.end === "14:30" && item.title === "Clotûre de session"));
   assert.equal(appro.filter((item) => item.title === "Chants / Danses stagiaires").length, 5);
   assert.equal(appro.filter((item) => item.title === "repas exterieur").length, 1);
+  assert.equal(appro.filter((item) => item.title === "Pause repas" && item.start === "12:00" && item.end === "14:00").length, 5);
 });
 
 test("the general training template remains unchanged", () => {

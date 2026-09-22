@@ -72,7 +72,7 @@ function ActivityItem({ activity, themes, trainerNames, compact, disabled, onEdi
         className={`grid shrink-0 cursor-grab place-items-center rounded text-current/60 touch-none hover:bg-white/70 active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-40 ${compact ? "h-4 w-4" : "mt-0.5 h-6 w-6"}`}><GripVertical size={compact ? 12 : 15} /></button>}
       <div className="min-w-0 flex-1">
         {onEdit ? <button type="button" disabled={disabled} onClick={() => onEdit(activity)} title={`Modifier ${activity.title}`} className="block w-full cursor-pointer text-left disabled:cursor-wait">
-          <span className={`block font-semibold ${compact ? "text-[11px] leading-[1.25]" : "text-sm leading-5"}`}>{emoji && <span aria-hidden="true" className="mr-1">{emoji}</span>}{activity.title}</span>
+          <span className={`font-semibold ${compact ? "flex items-start justify-between gap-1 text-[11px] leading-[1.25]" : "block text-sm leading-5"}`}><span>{emoji && <span aria-hidden="true" className="mr-1">{emoji}</span>}{activity.title}</span>{compact && <small className="shrink-0 text-[9px] font-normal opacity-60">{activity.end}</small>}</span>
           {!compact && activity.content && <span className="mt-1 block line-clamp-2 text-xs leading-4 opacity-80">{activity.content}</span>}
         </button> : <p className={`font-semibold ${compact ? "text-[11px] leading-[1.25]" : "text-sm leading-5"}`}>{emoji && <span aria-hidden="true" className="mr-1">{emoji}</span>}{activity.title}</p>}
         {compact && activity.groupNumber ? <p className="mt-0.5 text-[10px] font-semibold opacity-70">Groupe {activity.groupNumber}</p> : null}
@@ -81,6 +81,65 @@ function ActivityItem({ activity, themes, trainerNames, compact, disabled, onEdi
           {resource && <a href={resource.href} target="_blank" rel="noopener noreferrer" title={`Ouvrir ${resource.title}`} className="inline-flex cursor-pointer items-center gap-1 font-semibold underline"><FileText size={12} />PDF</a>}
         </div>}
       </div>
+    </div>
+  </div>;
+}
+
+function OverviewDayHeader({ day, startDate, busy, dragging, onAdd }: {
+  day: number; startDate: string; busy: boolean; dragging: boolean; onAdd?: Props["onAdd"];
+}) {
+  const { isOver, setNodeRef } = useDroppable({ id: `overview-day-${day}`, data: { day } satisfies PlanningDropTarget });
+  return <div id={`planning-jour-${day}`} ref={setNodeRef} className={`sticky top-0 z-20 flex min-w-0 scroll-mt-4 items-center justify-between gap-1 border-b border-r border-slate-200 px-1.5 py-1.5 ${isOver && dragging ? "bg-emerald-100" : "bg-[#edf5f1]"}`}
+    style={{ gridColumn: day + 1, gridRow: 1 }}>
+    <div className="flex min-w-0 items-center gap-1"><span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-emerald-800 text-[10px] font-bold text-white">J{day}</span><span className="min-w-0 text-[11px] font-semibold capitalize leading-tight text-slate-900">{dateForDay(startDate, day)}</span></div>
+    {onAdd && <button type="button" disabled={busy} onClick={() => onAdd(day)} title={`Ajouter un temps au jour ${day}`} aria-label={`Ajouter un temps au jour ${day}`} className="grid h-6 w-6 shrink-0 place-items-center rounded-full border border-slate-300 bg-white text-slate-700 hover:border-emerald-600 disabled:cursor-not-allowed disabled:opacity-40"><Plus size={12} /></button>}
+  </div>;
+}
+
+function OverviewSlot({ day, start, end, row, dragging }: {
+  day: number; start: string; end: string; row: number; dragging: boolean;
+}) {
+  const { isOver, setNodeRef } = useDroppable({ id: `overview-slot-${day}-${start}`, data: { day, start } satisfies PlanningDropTarget });
+  return <div ref={setNodeRef} className={`min-h-8 border-b border-r border-slate-100 ${isOver && dragging ? "bg-emerald-100/80" : "bg-white"}`}
+    style={{ gridColumn: day + 1, gridRow: row }}>
+    <span className="sr-only">Créneau de {start} à {end}</span>
+  </div>;
+}
+
+function OverviewActivityBlock({ day, startRow, endRow, activities, themes, trainerNames, busy, onEdit, onMove }: {
+  day: number; startRow: number; endRow: number; activities: PlanActivity[]; themes: PlanTheme[];
+  trainerNames: Record<string, string>; busy: boolean; onEdit?: Props["onEdit"]; onMove?: Props["onMove"];
+}) {
+  return <div className="z-[5] flex min-h-0 flex-col gap-0.5 overflow-hidden p-0.5 pointer-events-none" style={{ gridColumn: day + 1, gridRow: `${startRow} / ${endRow}` }}>
+    {activities.map((activity) => <div key={activity.id} className="min-h-0 flex-1 pointer-events-auto"><ActivityItem activity={activity} themes={themes} trainerNames={trainerNames} compact disabled={busy} onEdit={onEdit} draggable={Boolean(onMove)} /></div>)}
+  </div>;
+}
+
+function OverviewGrid({ days, startDate, activities, themes, trainerNames, busy, dragging, onAdd, onEdit, onMove }: {
+  days: number[]; startDate: string; activities: PlanActivity[]; themes: PlanTheme[]; trainerNames: Record<string, string>;
+  busy: boolean; dragging: boolean; onAdd?: Props["onAdd"]; onEdit?: Props["onEdit"]; onMove?: Props["onMove"];
+}) {
+  const boundaries = Array.from(new Set(activities.flatMap((item) => [item.start, item.end]))).sort();
+  const intervals = boundaries.slice(0, -1).map((start, index) => ({ start, end: boundaries[index + 1] }));
+  return <div className="overflow-x-auto rounded-md border border-slate-200 bg-white">
+    <div className="grid min-w-max" style={{ gridTemplateColumns: `54px repeat(${days.length}, minmax(140px, calc((100vw - 116px) / 7)))`, gridTemplateRows: `42px repeat(${intervals.length}, minmax(34px, auto))` }}>
+      <div className="sticky left-0 top-0 z-30 grid place-items-center border-b border-r border-slate-200 bg-[#edf5f1] text-[9px] font-bold uppercase text-slate-500">Heure</div>
+      {days.map((day) => <OverviewDayHeader key={day} day={day} startDate={startDate} busy={busy} dragging={dragging} onAdd={onAdd} />)}
+      {intervals.map((interval, index) => <div key={interval.start} className="sticky left-0 z-10 border-b border-r border-slate-200 bg-slate-50 px-1.5 pt-1 text-right text-[10px] font-semibold text-slate-500" style={{ gridColumn: 1, gridRow: index + 2 }}>{interval.start}</div>)}
+      {days.flatMap((day) => intervals.map((interval, index) => <OverviewSlot key={`${day}-${interval.start}`} day={day} start={interval.start} end={interval.end} row={index + 2} dragging={dragging} />))}
+      {days.flatMap((day) => {
+        const groups = new Map<string, PlanActivity[]>();
+        activities.filter((item) => item.day === day).forEach((item) => {
+          const key = `${item.start}|${item.end}`;
+          groups.set(key, [...(groups.get(key) || []), item]);
+        });
+        return Array.from(groups.entries()).map(([key, group]) => {
+          const [start, end] = key.split("|");
+          const startIndex = boundaries.indexOf(start);
+          const endIndex = boundaries.indexOf(end);
+          return <OverviewActivityBlock key={`${day}-${key}`} day={day} startRow={startIndex + 2} endRow={endIndex + 2} activities={group} themes={themes} trainerNames={trainerNames} busy={busy} onEdit={onEdit} onMove={onMove} />;
+        });
+      })}
     </div>
   </div>;
 }
@@ -137,22 +196,27 @@ function PrintPlanning({ activities, dayCount, startDate, formationTitle, themes
   const weeks = Array.from({ length: Math.ceil(dayCount / 7) }, (_, index) =>
     Array.from({ length: Math.min(7, dayCount - index * 7) }, (_, offset) => index * 7 + offset + 1));
   return <div className="hidden print:block">
-    {weeks.map((week, index) => <section key={index} className="team-print-week">
-      <div className="team-print-heading"><strong>{formationTitle || "Planning de formation"}</strong><span>Semaine {index + 1} · J{week[0]} à J{week[week.length - 1]}</span></div>
-      <div className="team-print-grid" style={{ gridTemplateColumns: `repeat(${week.length}, minmax(0, 1fr))` }}>
-        {week.map((day) => <div key={day} className="team-print-day">
-          <h2>J{day} · {dateForDay(startDate, day)}</h2>
-          {activities.filter((item) => item.day === day).sort((a, b) => a.start.localeCompare(b.start)).map((activity) => {
+    {weeks.map((week, index) => {
+      const weekActivities = activities.filter((item) => week.includes(item.day));
+      const boundaries = Array.from(new Set(weekActivities.flatMap((item) => [item.start, item.end]))).sort();
+      return <section key={index} className="team-print-week">
+        <div className="team-print-heading"><strong>{formationTitle || "Planning de formation"}</strong><span>Semaine {index + 1} · J{week[0]} à J{week[week.length - 1]}</span></div>
+        <div className="team-print-grid" style={{ gridTemplateColumns: `13mm repeat(${week.length}, minmax(0, 1fr))`, gridTemplateRows: `8mm repeat(${boundaries.length - 1}, minmax(6.5mm, auto))` }}>
+          <div className="team-print-corner">Heure</div>
+          {week.map((day) => <h2 key={day} style={{ gridColumn: week.indexOf(day) + 2, gridRow: 1 }}>J{day} · {dateForDay(startDate, day)}</h2>)}
+          {boundaries.slice(0, -1).map((time, row) => <div key={time} className="team-print-time" style={{ gridColumn: 1, gridRow: row + 2 }}>{time}</div>)}
+          {week.flatMap((day) => boundaries.slice(0, -1).map((time, row) => <div key={`${day}-${time}`} className="team-print-cell" style={{ gridColumn: week.indexOf(day) + 2, gridRow: row + 2 }} />))}
+          {weekActivities.map((activity) => {
             const theme = themeForActivity(activity, themes);
-            return <div key={activity.id} className="team-print-activity" style={{ borderLeftColor: `var(--planning-${theme.color})` }}>
-              <span>{activity.start}–{activity.end}</span><strong>{activity.title}</strong>
-              {activity.groupNumber ? <small>G{activity.groupNumber}</small> : null}
+            return <div key={activity.id} className="team-print-activity" style={{ gridColumn: week.indexOf(activity.day) + 2,
+              gridRow: `${boundaries.indexOf(activity.start) + 2} / ${boundaries.indexOf(activity.end) + 2}`, borderLeftColor: `var(--planning-${theme.color})` }}>
+              <strong>{activity.title}</strong><span>{activity.end}</span>{activity.groupNumber ? <small>G{activity.groupNumber}</small> : null}
             </div>;
           })}
-        </div>)}
-      </div>
-      <div className="team-print-legend">{themes.map((theme) => <span key={theme.id}><i style={{ backgroundColor: `var(--planning-${theme.color})` }} />{theme.name}</span>)}</div>
-    </section>)}
+        </div>
+        <div className="team-print-legend">{themes.map((theme) => <span key={theme.id}><i style={{ backgroundColor: `var(--planning-${theme.color})` }} />{theme.name}</span>)}</div>
+      </section>;
+    })}
   </div>;
 }
 
@@ -172,9 +236,7 @@ export function PlanningBoard({ activities, dayCount, startDate, groupCount, the
 
   const selectDay = (day: number) => {
     if (view === "day") { setSelectedDay(day); return; }
-    const container = overviewRef.current;
-    const panel = container?.querySelector<HTMLElement>(`#planning-jour-${day}`);
-    if (container && panel) container.scrollTo({ left: panel.getBoundingClientRect().left - container.getBoundingClientRect().left + container.scrollLeft, behavior: "smooth" });
+    overviewRef.current?.querySelector<HTMLElement>(`#planning-jour-${day}`)?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "start" });
   };
 
   const onDragEnd = async ({ active, over }: DragEndEvent) => {
@@ -198,7 +260,7 @@ export function PlanningBoard({ activities, dayCount, startDate, groupCount, the
           <button type="button" onClick={() => setView("all")} aria-pressed={view === "all"} className={`inline-flex h-8 cursor-pointer items-center gap-1.5 rounded px-3 text-xs font-semibold ${view === "all" ? "bg-emerald-800 text-white" : "text-slate-600"}`}><CalendarDays size={15} />Formation complète</button>
           <button type="button" onClick={() => setView("day")} aria-pressed={view === "day"} className={`inline-flex h-8 cursor-pointer items-center gap-1.5 rounded px-3 text-xs font-semibold ${view === "day" ? "bg-emerald-800 text-white" : "text-slate-600"}`}><List size={15} />Jour par jour</button>
         </div>
-        <div className="flex items-center gap-1"><button type="button" onClick={() => view === "all" ? overviewRef.current?.scrollBy({ left: -340, behavior: "smooth" }) : setSelectedDay((day) => Math.max(1, day - 1))} disabled={view === "day" && selectedDay === 1} title="Jour précédent" aria-label="Jour précédent" className="grid h-9 w-9 place-items-center rounded-md border border-slate-200 bg-white disabled:opacity-40"><ChevronLeft size={17} /></button><button type="button" onClick={() => view === "all" ? overviewRef.current?.scrollBy({ left: 340, behavior: "smooth" }) : setSelectedDay((day) => Math.min(dayCount, day + 1))} disabled={view === "day" && selectedDay === dayCount} title="Jour suivant" aria-label="Jour suivant" className="grid h-9 w-9 place-items-center rounded-md border border-slate-200 bg-white disabled:opacity-40"><ChevronRight size={17} /></button></div>
+        <div className="flex items-center gap-1"><button type="button" onClick={() => view === "all" ? overviewRef.current?.querySelector<HTMLElement>(".overflow-x-auto")?.scrollBy({ left: -340, behavior: "smooth" }) : setSelectedDay((day) => Math.max(1, day - 1))} disabled={view === "day" && selectedDay === 1} title="Jour précédent" aria-label="Jour précédent" className="grid h-9 w-9 place-items-center rounded-md border border-slate-200 bg-white disabled:opacity-40"><ChevronLeft size={17} /></button><button type="button" onClick={() => view === "all" ? overviewRef.current?.querySelector<HTMLElement>(".overflow-x-auto")?.scrollBy({ left: 340, behavior: "smooth" }) : setSelectedDay((day) => Math.min(dayCount, day + 1))} disabled={view === "day" && selectedDay === dayCount} title="Jour suivant" aria-label="Jour suivant" className="grid h-9 w-9 place-items-center rounded-md border border-slate-200 bg-white disabled:opacity-40"><ChevronRight size={17} /></button></div>
       </div>
 
       <div className="flex gap-1.5 overflow-x-auto pb-1 print:hidden" aria-label="Choisir une journée">
@@ -211,9 +273,8 @@ export function PlanningBoard({ activities, dayCount, startDate, groupCount, the
         {onSaveThemes && <button type="button" onClick={() => setEditingThemes(true)} title="Gérer les thèmes" aria-label="Gérer les thèmes" className="ml-auto grid h-8 w-8 place-items-center rounded-md border border-slate-200 bg-white text-slate-600 hover:border-emerald-600 print:hidden"><Settings2 size={16} /></button>}
       </div>
 
-      {view === "all" ? <div ref={overviewRef} className="flex gap-1.5 overflow-x-auto pb-4 snap-x snap-mandatory">
-        {days.map((day) => <DayPanel key={day} day={day} startDate={startDate} activities={displayActivities} themes={themes} trainerNames={trainerNames} groupCount={groupCount} compact dragging={Boolean(activeId)} busy={busy || moving} onAdd={onAdd} onEdit={onEdit} onMove={onMove} />)}
-      </div> : <DayPanel day={selectedDay} startDate={startDate} activities={displayActivities} themes={themes} trainerNames={trainerNames} groupCount={groupCount} compact={false} dragging={Boolean(activeId)} busy={busy || moving} onAdd={onAdd} onEdit={onEdit} onMove={onMove} />}
+      {view === "all" ? <div ref={overviewRef}><OverviewGrid days={days} startDate={startDate} activities={displayActivities} themes={themes} trainerNames={trainerNames} busy={busy || moving} dragging={Boolean(activeId)} onAdd={onAdd} onEdit={onEdit} onMove={onMove} /></div>
+        : <DayPanel day={selectedDay} startDate={startDate} activities={displayActivities} themes={themes} trainerNames={trainerNames} groupCount={groupCount} compact={false} dragging={Boolean(activeId)} busy={busy || moving} onAdd={onAdd} onEdit={onEdit} onMove={onMove} />}
       {moving && <p role="status" className="text-xs text-emerald-800">Déplacement en cours...</p>}
     </div>
     <PrintPlanning activities={displayActivities} dayCount={dayCount} startDate={startDate} formationTitle={formationTitle} themes={themes} />
