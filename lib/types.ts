@@ -22,6 +22,27 @@ export type Formation = {
   inscriptionsCount: number;
   createdAt?: Date;
   updatedAt?: Date;
+  trainerIds?: string[];
+};
+
+export type Trainer = {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email?: string;
+  phone?: string;
+  notes?: string;
+};
+
+export type PlanActivity = {
+  id: string;
+  day: number;
+  start: string;
+  end: string;
+  title: string;
+  content: string;
+  trainerIds: string[];
+  color: "mint" | "coral" | "sky" | "lemon" | "lilac" | "neutral";
 };
 
 export type Inscription = {
@@ -43,6 +64,7 @@ export type Inscription = {
   paid: boolean;
   validationStatus?: "pending" | "validated" | "cancelled";
   registrationFormSent?: boolean;
+  convocationSent?: boolean;
   amount?: number;
   totalPrice?: number;
   amountPaid?: number;

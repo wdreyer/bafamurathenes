@@ -9,6 +9,7 @@ import {
   CreditCard,
   Flame,
   HandCoins,
+  CalendarDays,
   UserRoundSearch,
   Users,
 } from "lucide-react";
@@ -167,10 +168,11 @@ export default function AdminDashboardPage() {
             <h1 className="text-2xl font-semibold tracking-tight">Dashboard BAFA</h1>
             <p className="mt-1 text-sm text-slate-500">Une vue simple : qui relancer, quoi encaisser, où cliquer.</p>
           </div>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             <QuickLink href="/admin/prospects" label="Prospects" icon={UserRoundSearch} />
             <QuickLink href="/admin/inscriptions" label="Inscriptions" icon={Users} />
             <QuickLink href="/admin/formations" label="Formations" icon={CheckCircle2} />
+            <QuickLink href="/admin/formateurs" label="Formateurs" icon={CalendarDays} />
           </div>
         </header>
 

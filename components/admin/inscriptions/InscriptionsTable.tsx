@@ -583,7 +583,7 @@ export function InscriptionsTable() {
           </div>
         </div>
         <div className="overflow-x-auto">
-        <table className="min-w-[1220px] w-full border-collapse text-sm">
+        <table className="min-w-[1320px] w-full border-collapse text-sm">
           <thead>
             <tr className="bg-slate-50 text-left text-xs font-semibold uppercase text-slate-500">
               <SortTH sortKey="name" activeKey={sortKey} direction={sortDirection} onSort={changeSort}>Inscrit</SortTH>
@@ -596,12 +596,13 @@ export function InscriptionsTable() {
               <SortTH sortKey="payment" activeKey={sortKey} direction={sortDirection} onSort={changeSort}>Règlement</SortTH>
               <SortTH sortKey="status" activeKey={sortKey} direction={sortDirection} onSort={changeSort}>Statut</SortTH>
               <TH className="text-center">Formulaire envoyé</TH>
+              <TH className="text-center">Convocation envoyée</TH>
             </tr>
           </thead>
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={10} className="px-4 py-10 text-center text-sm text-slate-500">
+                <td colSpan={11} className="px-4 py-10 text-center text-sm text-slate-500">
                   Aucune inscription avec les filtres actuels.
                 </td>
               </tr>
@@ -691,6 +692,19 @@ export function InscriptionsTable() {
                       className="h-4 w-4 cursor-pointer accent-slate-900 disabled:cursor-wait"
                       onChange={(event) => void updateInscription(inscription.id, {
                         registrationFormSent: event.target.checked,
+                      })}
+                    />
+                  </TD>
+
+                  <TD className="text-center" onClick={(event) => event.stopPropagation()}>
+                    <input
+                      type="checkbox"
+                      checked={Boolean(inscription.convocationSent)}
+                      disabled={savingId === inscription.id}
+                      aria-label={`Convocation envoyée pour ${contactName(inscription) || "cette inscription"}`}
+                      className="h-4 w-4 cursor-pointer accent-slate-900 disabled:cursor-wait"
+                      onChange={(event) => void updateInscription(inscription.id, {
+                        convocationSent: event.target.checked,
                       })}
                     />
                   </TD>

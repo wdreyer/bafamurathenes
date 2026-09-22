@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   GraduationCap,
+  CalendarDays,
   LayoutDashboard,
   LogOut,
   Mail,
@@ -20,6 +21,7 @@ const navItems = [
   { href: "/admin/inscriptions", label: "Inscriptions", icon: Users },
   { href: "/admin/mails", label: "Mails", icon: Mail },
   { href: "/admin/formations", label: "Formations", icon: GraduationCap },
+  { href: "/admin/formateurs", label: "Formateurs", icon: CalendarDays },
 ];
 
 const ADMIN_CODE = process.env.NEXT_PUBLIC_ADMIN_CODE;

@@ -8,7 +8,7 @@ import ScrollHint from "@/components/ScrollHint";
 
 export default function SiteChrome({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isAdmin = pathname === "/admin" || pathname.startsWith("/admin/");
+  const isAdmin = pathname === "/admin" || pathname.startsWith("/admin/") || pathname === "/atelier/equipe-planning";
 
   if (isAdmin) {
     return <>{children}</>;
