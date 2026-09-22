@@ -5,6 +5,7 @@ import Link from "next/link";
 import { collection, doc, onSnapshot, query, serverTimestamp, setDoc, updateDoc, where } from "firebase/firestore";
 import { BookOpen, Minus, Plus, Printer, Users } from "lucide-react";
 import { db } from "@/lib/firebase";
+import { savePlanningTime } from "@/lib/savePlanningTime";
 import { ActivityEditor } from "@/components/planning/ActivityEditor";
 import { PlanningBoard } from "@/components/planning/PlanningBoard";
 import { TraineeRoster } from "@/components/planning/TraineeRoster";
@@ -81,14 +82,17 @@ export default function TeamPage() {
   };
 
   const saveEditing = async () => {
-    if (!editing || !plan) return;
+    if (!editing || !plan || !formation) return;
     if (!editing.title.trim() || editing.end <= editing.start) {
       setError("Renseigne un titre et une heure de fin après le début."); return;
     }
-    const next = plan.activities.some((item) => item.id === editing.id)
-      ? plan.activities.map((item) => item.id === editing.id ? editing : item)
-      : [...plan.activities, editing];
-    if (await saveActivities(next)) setEditing(null);
+    setBusy(true); setError("");
+    try {
+      await savePlanningTime({ formationId: formation.id, activities: plan.activities, activity: editing,
+        formationType: formation.type });
+      setEditing(null);
+    } catch { setError("Le temps et sa référence dans le guide n'ont pas pu être enregistrés."); }
+    finally { setBusy(false); }
   };
 
   const changeGroupCount = async (next: number) => {

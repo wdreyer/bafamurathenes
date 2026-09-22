@@ -2,8 +2,9 @@
 
 import { useMemo, useState } from "react";
 import { BookOpen, ExternalLink, FileText, Search, Save, Trash2, X } from "lucide-react";
-import { catalogCategories, catalogForFormation, resourceForActivity, type CatalogCategory, type TrainingCatalogItem } from "@/lib/trainingCatalog";
+import { catalogCategories, catalogForFormationWithCustom, resourceForActivity, type CatalogCategory, type TrainingCatalogItem } from "@/lib/trainingCatalog";
 import { trainerResources } from "@/lib/trainerGuide";
+import { useTrainingTimes } from "@/lib/useTrainingTimes";
 import type { FormationType, PlanActivity } from "@/lib/types";
 
 type Props = {
@@ -34,7 +35,8 @@ export function ActivityEditor({ activity, existing, dayCount, groupCount, forma
   const [catalogOpen, setCatalogOpen] = useState(!existing);
   const [category, setCategory] = useState<"all" | CatalogCategory>("all");
   const [search, setSearch] = useState("");
-  const catalog = useMemo(() => catalogForFormation(formationType), [formationType]);
+  const { times: customTimes, error: catalogError } = useTrainingTimes();
+  const catalog = useMemo(() => catalogForFormationWithCustom(formationType, customTimes), [formationType, customTimes]);
   const matches = catalog.filter((item) => (category === "all" || item.category === category) &&
     `${item.title} ${item.content}`.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
       .includes(search.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim()));
@@ -46,6 +48,7 @@ export function ActivityEditor({ activity, existing, dayCount, groupCount, forma
     const { resourceId: _resourceId, ...base } = activity;
     void _resourceId;
     onChange({ ...base, title: item.title, content: item.content, color: item.color,
+      catalogId: item.id, catalogCategory: item.category, catalogScope: item.scope,
       ...(item.resourceId ? { resourceId: item.resourceId } : {}) });
     setCatalogOpen(false);
   };
@@ -56,10 +59,18 @@ export function ActivityEditor({ activity, existing, dayCount, groupCount, forma
     onChange(resourceId ? { ...base, resourceId } : base);
   };
 
+  const changeTitle = (title: string) => {
+    if (title === activity.title) return;
+    const { catalogId: _catalogId, ...base } = activity;
+    void _catalogId;
+    onChange({ ...base, title });
+  };
+
   return <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-3" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
     <div role="dialog" aria-modal="true" aria-label="Modifier un temps" className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-md bg-white p-4 shadow-xl sm:p-6">
       <div className="mb-4 flex items-center justify-between gap-3"><div><p className="text-xs font-semibold uppercase text-emerald-700">Planning pédagogique</p><h2 className="mt-0.5 text-lg font-semibold">{existing ? "Modifier le temps" : "Ajouter un temps"}</h2></div><button type="button" onClick={onClose} title="Fermer" aria-label="Fermer" className="grid h-8 w-8 place-items-center rounded hover:bg-slate-100"><X size={19} /></button></div>
       {error && <p role="alert" className="mb-4 rounded border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">{error}</p>}
+      {catalogError && <p role="alert" className="mb-4 rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">{catalogError}</p>}
 
       <div className="mb-5 border-y border-slate-200 py-3">
         <div className="flex flex-wrap items-center justify-between gap-2"><button type="button" onClick={() => setCatalogOpen((value) => !value)} aria-expanded={catalogOpen} className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-800"><BookOpen size={17} />Temps de formation ({catalog.length})</button><a href="/formateurs/ressources/temps-formation-indicatifs.docx" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-slate-600 underline">Liste indicative <ExternalLink size={12} /></a></div>
@@ -76,7 +87,12 @@ export function ActivityEditor({ activity, existing, dayCount, groupCount, forma
       </div>
 
       <form onSubmit={(event) => { event.preventDefault(); onSave(); }} className="space-y-4">
-        <label className="block text-xs font-semibold text-slate-600">Titre<input required value={activity.title} onChange={(event) => onChange({ ...activity, title: event.target.value })} className="mt-1 h-10 w-full rounded border border-slate-300 px-3 text-sm font-normal text-slate-900" /></label>
+        <label className="block text-xs font-semibold text-slate-600">Titre<input required value={activity.title} onChange={(event) => changeTitle(event.target.value)} className="mt-1 h-10 w-full rounded border border-slate-300 px-3 text-sm font-normal text-slate-900" /></label>
+        {!existing && !activity.catalogId && <div className="grid gap-2 border-l-2 border-emerald-500 bg-emerald-50/70 p-3 sm:grid-cols-2">
+          <label className="text-xs font-semibold text-slate-700">Rubrique du guide<select value={activity.catalogCategory || "animation"} onChange={(event) => onChange({ ...activity, catalogCategory: event.target.value as CatalogCategory })} className="mt-1 h-9 w-full rounded border border-slate-300 bg-white px-2 text-sm font-normal">{catalogCategories.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+          <label className="text-xs font-semibold text-slate-700">Réutilisable pour<select value={activity.catalogScope || "both"} onChange={(event) => onChange({ ...activity, catalogScope: event.target.value as TrainingCatalogItem["scope"] })} className="mt-1 h-9 w-full rounded border border-slate-300 bg-white px-2 text-sm font-normal"><option value="both">Toutes les formations</option><option value="general">Formation générale</option><option value="appro">Approfondissement</option></select></label>
+          <p className="text-xs text-emerald-900 sm:col-span-2">Ce nouveau temps sera ajouté au guide et proposé dans les prochains plannings.</p>
+        </div>}
         <div className="grid grid-cols-3 gap-2">
           <label className="text-xs font-semibold text-slate-600">Jour<select value={activity.day} onChange={(event) => onChange({ ...activity, day: Number(event.target.value) })} className="mt-1 h-10 w-full rounded border border-slate-300 bg-white px-2 text-sm font-normal">{Array.from({ length: dayCount }, (_, index) => <option key={index} value={index + 1}>J{index + 1}</option>)}</select></label>
           <label className="text-xs font-semibold text-slate-600">Début<input required type="time" value={activity.start} onChange={(event) => onChange({ ...activity, start: event.target.value })} className="mt-1 h-10 w-full rounded border border-slate-300 px-2 text-sm font-normal" /></label>

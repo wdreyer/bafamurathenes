@@ -44,8 +44,14 @@ export type PlanActivity = {
   trainerIds: string[];
   groupNumber?: number;
   resourceId?: string;
+  catalogId?: string;
+  catalogCategory?: TrainingTimeCategory;
+  catalogScope?: TrainingTimeScope;
   color: "mint" | "coral" | "sky" | "lemon" | "lilac" | "neutral";
 };
+
+export type TrainingTimeCategory = "cadre" | "pedagogie" | "animation" | "vie" | "interculturel" | "bilan";
+export type TrainingTimeScope = "general" | "appro" | "both";
 
 export type Inscription = {
   id: string;

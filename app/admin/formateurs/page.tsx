@@ -5,6 +5,7 @@ import { addDoc, collection, doc, getDoc, getDocs, onSnapshot, query, serverTime
 import { CalendarDays, Check, ExternalLink, Minus, Pencil, Plus, Save, Users } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { buildPlanningTemplate } from "@/lib/planningTemplates";
+import { savePlanningTime } from "@/lib/savePlanningTime";
 import { ActivityEditor } from "@/components/planning/ActivityEditor";
 import { PlanningBoard } from "@/components/planning/PlanningBoard";
 import type { Formation, Inscription, PlanActivity, Trainer } from "@/lib/types";
@@ -129,13 +130,16 @@ export default function FormateursPage() {
   };
 
   const persistActivity = async () => {
-    if (!editing || !editing.title.trim() || editing.end <= editing.start) {
+    if (!formation || !editing || !editing.title.trim() || editing.end <= editing.start) {
       setError("Renseigne un titre et une heure de fin après le début."); return;
     }
-    const next = activities.some((item) => item.id === editing.id)
-      ? activities.map((item) => item.id === editing.id ? editing : item)
-      : [...activities, editing];
-    if (await saveActivities(next)) setEditing(null);
+    setBusy(true); setError("");
+    try {
+      await savePlanningTime({ formationId: formation.id, activities, activity: editing,
+        formationType: formation.type, trainerNames: Object.fromEntries(assigned.map((trainer) => [trainer.id, trainerName(trainer)])) });
+      setEditing(null);
+    } catch { setError("Le temps et sa référence dans le guide n'ont pas pu être enregistrés."); }
+    finally { setBusy(false); }
   };
 
   return <div className="mx-auto max-w-[1440px] space-y-5 pb-10">

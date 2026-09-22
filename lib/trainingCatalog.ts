@@ -1,12 +1,12 @@
-import type { FormationType, PlanActivity } from "@/lib/types";
+import type { FormationType, PlanActivity, TrainingTimeCategory, TrainingTimeScope } from "@/lib/types";
 import { trainerResources } from "@/lib/trainerGuide";
 
-export type CatalogCategory = "cadre" | "pedagogie" | "animation" | "vie" | "interculturel" | "bilan";
+export type CatalogCategory = TrainingTimeCategory;
 export type TrainingCatalogItem = {
   id: string;
   title: string;
   category: CatalogCategory;
-  scope: "general" | "appro" | "both";
+  scope: TrainingTimeScope;
   content: string;
   color: PlanActivity["color"];
   resourceId?: string;
@@ -75,6 +75,17 @@ export const trainingCatalog: TrainingCatalogItem[] = [
 export function catalogForFormation(type: FormationType) {
   const scope = type === "formation_generale" ? "general" : "appro";
   return trainingCatalog.filter((item) => item.scope === "both" || item.scope === scope);
+}
+
+export function allCatalogTimes(customTimes: TrainingCatalogItem[]) {
+  return [...trainingCatalog, ...customTimes].sort((a, b) =>
+    catalogCategories.findIndex((item) => item.id === a.category) - catalogCategories.findIndex((item) => item.id === b.category)
+    || a.title.localeCompare(b.title, "fr"));
+}
+
+export function catalogForFormationWithCustom(type: FormationType, customTimes: TrainingCatalogItem[]) {
+  const scope = type === "formation_generale" ? "general" : "appro";
+  return allCatalogTimes(customTimes).filter((item) => item.scope === "both" || item.scope === scope);
 }
 
 export function resourceForActivity(activity: Pick<PlanActivity, "resourceId">) {
