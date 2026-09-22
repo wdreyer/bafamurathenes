@@ -11,6 +11,8 @@ export function asTime(totalMinutes: number) {
   return `${String(Math.floor(totalMinutes / 60)).padStart(2, "0")}:${String(totalMinutes % 60).padStart(2, "0")}`;
 }
 
+export const QUARTER_HOUR_OPTIONS = Array.from({ length: 96 }, (_, index) => asTime(index * 15));
+
 export function snapTimeToQuarterHour(value: string) {
   const minutes = minuteOfDay(value);
   if (!Number.isFinite(minutes)) return value;

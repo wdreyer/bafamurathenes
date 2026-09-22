@@ -48,6 +48,7 @@ export type PlanActivity = {
   catalogScope?: TrainingTimeScope;
   themeId?: string;
   color: "mint" | "coral" | "sky" | "lemon" | "lilac" | "neutral";
+  merged?: boolean;
 };
 
 export type PlanTheme = {

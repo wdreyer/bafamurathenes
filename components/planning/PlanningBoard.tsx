@@ -1,7 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { CalendarDays, ChevronLeft, ChevronRight, List, Plus, Settings2 } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, Link2, List, Plus, Settings2, Unlink } from "lucide-react";
+import { QUARTER_HOUR_OPTIONS } from "@/lib/planningMove";
 import { defaultThemes, themeFill, themeForActivity, themeSwatch } from "@/lib/planningThemes";
 import { ThemeEditor } from "@/components/planning/ThemeEditor";
 import type { PlanActivity, PlanTheme } from "@/lib/types";
@@ -14,9 +15,13 @@ type Props = {
   trainerNames?: Record<string, string>;
   formationTitle?: string;
   busy?: boolean;
+  arrivalTime?: string;
+  departureTime?: string;
   onEdit?: (activity: PlanActivity) => void;
   onAdd?: (day: number) => void;
   onSaveThemes?: (themes: PlanTheme[]) => Promise<boolean>;
+  onSetBounds?: (patch: { arrivalTime?: string; departureTime?: string }) => void;
+  onToggleMerge?: (activityIds: string[], merged: boolean) => void;
 };
 
 function dateForDay(startDate: string, day: number, short = false) {
@@ -45,18 +50,20 @@ function ActivityCell({ activity, themes, disabled, onEdit, merged = false }: {
   activity: PlanActivity; themes: PlanTheme[]; disabled: boolean; onEdit?: Props["onEdit"]; merged?: boolean;
 }) {
   const theme = themeForActivity(activity, themes);
+  const fullLabel = `${activity.title} · ${activity.start}–${activity.end}`;
   const label = <span className={merged
-    ? "block text-center text-[11px] font-bold leading-snug"
-    : "block whitespace-normal break-words text-[10.5px] font-semibold leading-snug"}>{activity.title}</span>;
-  const className = `flex h-full min-w-0 border-b border-r border-white/60 px-1.5 py-1 ${themeFill(theme.color)} ${merged ? "items-center justify-center text-center" : "items-start justify-start text-left"}`;
-  if (!onEdit) return <div className={className} title={`${activity.title} · ${activity.start}–${activity.end}`}>{label}</div>;
-  return <button type="button" disabled={disabled} onClick={() => onEdit(activity)} title={`${activity.title} · ${activity.start}–${activity.end}`}
-    className={`${className} w-full cursor-pointer disabled:cursor-wait`}>{label}</button>;
+    ? "block text-center text-[12px] font-bold leading-snug text-slate-900"
+    : "block whitespace-normal break-words text-[11px] font-bold leading-snug text-slate-900"}>{activity.title}</span>;
+  const tooltip = <span role="tooltip" className="pointer-events-none absolute left-0 top-full z-50 mt-1 hidden w-max max-w-[240px] rounded bg-slate-900 px-2 py-1 text-[11px] font-medium leading-snug text-white shadow-lg group-hover:block group-focus-visible:block">{fullLabel}</span>;
+  const className = `group relative flex h-full min-w-0 border-b border-r border-white/60 px-1.5 py-1 ${themeFill(theme.color)} ${merged ? "items-center justify-center text-center" : "items-start justify-start text-left"}`;
+  if (!onEdit) return <div className={className} aria-label={fullLabel}>{label}{tooltip}</div>;
+  return <button type="button" disabled={disabled} onClick={() => onEdit(activity)} aria-label={fullLabel}
+    className={`${className} w-full cursor-pointer disabled:cursor-wait`}>{label}{tooltip}</button>;
 }
 
-function OverviewGrid({ days, startDate, activities, themes, busy, onAdd, onEdit }: {
-  days: number[]; startDate: string; activities: PlanActivity[]; themes: PlanTheme[];
-  busy: boolean; onAdd?: Props["onAdd"]; onEdit?: Props["onEdit"];
+function OverviewGrid({ days, dayCount, startDate, activities, themes, busy, arrivalTime, departureTime, onAdd, onEdit, onToggleMerge }: {
+  days: number[]; dayCount: number; startDate: string; activities: PlanActivity[]; themes: PlanTheme[];
+  busy: boolean; arrivalTime?: string; departureTime?: string; onAdd?: Props["onAdd"]; onEdit?: Props["onEdit"]; onToggleMerge?: Props["onToggleMerge"];
 }) {
   const boundaries = Array.from(new Set(activities.flatMap((item) => [item.start, item.end]))).sort();
   const intervals = boundaries.slice(0, -1).map((start, index) => ({ start, end: boundaries[index + 1] }));
@@ -65,7 +72,8 @@ function OverviewGrid({ days, startDate, activities, themes, busy, onAdd, onEdit
     return <div className="rounded-md border border-slate-200 bg-white p-10 text-center text-sm text-slate-500">Aucun temps prévu pour l&rsquo;instant.</div>;
   }
 
-  // Days sharing the exact same time span and the exact same title get merged into one cell (repas, pauses, temps communs...).
+  // Candidate merges: consecutive days sharing the exact same time span and the exact same title (repas, pauses, temps communs...).
+  // They only render as one spanning cell once every activity in the run is explicitly flagged `merged` — the button below controls that flag.
   const countPerDaySpan = new Map<string, number>();
   activities.forEach((item) => {
     const key = `${item.day}|${item.start}|${item.end}`;
@@ -80,8 +88,8 @@ function OverviewGrid({ days, startDate, activities, themes, busy, onAdd, onEdit
     spanDayActivity.get(spanKey)!.set(item.day, item);
   });
 
-  type MergedRun = { start: string; end: string; activity: PlanActivity; dayIndexStart: number; dayCount: number };
-  const mergedRuns: MergedRun[] = [];
+  type Run = { start: string; end: string; activity: PlanActivity; activityIds: string[]; dayIndexStart: number; dayCount: number; isMerged: boolean };
+  const runs: Run[] = [];
   const consumed = new Set<string>();
 
   spanDayActivity.forEach((dayMap, spanKey) => {
@@ -97,12 +105,19 @@ function OverviewGrid({ days, startDate, activities, themes, busy, onAdd, onEdit
         j += 1;
       }
       if (j > i) {
-        mergedRuns.push({ start, end, activity, dayIndexStart: i, dayCount: j - i + 1 });
-        for (let d = i; d <= j; d += 1) consumed.add(`${days[d]}|${start}|${end}`);
+        const members: PlanActivity[] = [];
+        for (let d = i; d <= j; d += 1) members.push(dayMap.get(days[d])!);
+        const isMerged = members.every((member) => member.merged);
+        runs.push({ start, end, activity, activityIds: members.map((member) => member.id), dayIndexStart: i, dayCount: j - i + 1, isMerged });
+        if (isMerged) for (let d = i; d <= j; d += 1) consumed.add(`${days[d]}|${start}|${end}`);
       }
       i = j + 1;
     }
   });
+
+  const isOutOfBounds = (day: number, interval: { start: string; end: string }) =>
+    (day === 1 && Boolean(arrivalTime) && interval.end <= arrivalTime!) ||
+    (day === dayCount && Boolean(departureTime) && interval.start >= departureTime!);
 
   return <div className="planning-grid-scroll w-full overflow-x-auto rounded-md border border-slate-300 bg-white">
     <div className="grid min-w-full" style={{ gridTemplateColumns: `76px repeat(${days.length}, minmax(100px, 1fr))`, gridTemplateRows: `34px repeat(${intervals.length}, minmax(34px, auto))` }}>
@@ -118,7 +133,7 @@ function OverviewGrid({ days, startDate, activities, themes, busy, onAdd, onEdit
         {shortHour(interval.start)}–{shortHour(interval.end)}
       </div>)}
 
-      {days.flatMap((day, dayIndex) => intervals.map((interval, index) => <div key={`${day}-${interval.start}`} className="border-b border-r border-slate-100 bg-white" style={{ gridColumn: dayIndex + 2, gridRow: index + 2 }} />))}
+      {days.flatMap((day, dayIndex) => intervals.map((interval, index) => <div key={`${day}-${interval.start}`} className={`border-b border-r border-slate-100 ${isOutOfBounds(day, interval) ? "bg-slate-200" : "bg-white"}`} style={{ gridColumn: dayIndex + 2, gridRow: index + 2 }} />))}
 
       {days.flatMap((day, dayIndex) => {
         const groups = new Map<string, PlanActivity[]>();
@@ -130,7 +145,7 @@ function OverviewGrid({ days, startDate, activities, themes, busy, onAdd, onEdit
           const [start, end] = key.split("|");
           const startRow = boundaries.indexOf(start) + 2;
           const endRow = boundaries.indexOf(end) + 2;
-          return <div key={`${day}-${key}`} className="z-[5] flex min-h-0 flex-col overflow-hidden" style={{ gridColumn: dayIndex + 2, gridRow: `${startRow} / ${endRow}` }}>
+          return <div key={`${day}-${key}`} className="z-[5] flex min-h-0 flex-col" style={{ gridColumn: dayIndex + 2, gridRow: `${startRow} / ${endRow}` }}>
             {group.map((activity, activityIndex) => <div key={activity.id} className={`min-h-0 flex-1 ${activityIndex > 0 ? "border-t border-white/60" : ""}`}>
               <ActivityCell activity={activity} themes={themes} disabled={busy} onEdit={onEdit} />
             </div>)}
@@ -138,13 +153,21 @@ function OverviewGrid({ days, startDate, activities, themes, busy, onAdd, onEdit
         });
       })}
 
-      {mergedRuns.map((run) => {
+      {runs.map((run) => {
         const startRow = boundaries.indexOf(run.start) + 2;
         const endRow = boundaries.indexOf(run.end) + 2;
         const colStart = run.dayIndexStart + 2;
-        return <div key={`merge-${run.start}-${run.end}-${run.dayIndexStart}`} className="z-[6]" style={{ gridColumn: `${colStart} / ${colStart + run.dayCount}`, gridRow: `${startRow} / ${endRow}` }}>
-          <ActivityCell activity={run.activity} themes={themes} disabled={busy} onEdit={onEdit} merged />
-        </div>;
+        if (run.isMerged) {
+          return <div key={`merge-${run.start}-${run.end}-${run.dayIndexStart}`} className="relative z-[6]" style={{ gridColumn: `${colStart} / ${colStart + run.dayCount}`, gridRow: `${startRow} / ${endRow}` }}>
+            <ActivityCell activity={run.activity} themes={themes} disabled={busy} onEdit={onEdit} merged />
+            {onToggleMerge && <button type="button" disabled={busy} onClick={(event) => { event.stopPropagation(); onToggleMerge(run.activityIds, false); }} title="Défusionner ces jours" aria-label="Défusionner ces jours" className="absolute right-1 top-1 z-10 grid h-4 w-4 place-items-center rounded-full bg-white/90 text-slate-600 shadow hover:text-rose-700"><Unlink size={10} /></button>}
+          </div>;
+        }
+        if (!onToggleMerge) return null;
+        return <button key={`candidate-${run.start}-${run.end}-${run.dayIndexStart}`} type="button" disabled={busy} onClick={() => onToggleMerge(run.activityIds, true)}
+          title={`Fusionner ces ${run.dayCount} jours identiques`} aria-label={`Fusionner ces ${run.dayCount} jours identiques`}
+          className="z-[6] m-0.5 grid h-4 w-4 place-items-center self-start justify-self-end rounded-full border border-emerald-300 bg-white/90 text-emerald-700 shadow hover:bg-emerald-50"
+          style={{ gridColumn: colStart, gridRow: startRow }}><Link2 size={9} /></button>;
       })}
     </div>
   </div>;
@@ -180,7 +203,7 @@ function PrintPlanning({ activities, dayCount, startDate, formationTitle, themes
   </div>;
 }
 
-export function PlanningBoard({ activities, dayCount, startDate, themes = defaultThemes, formationTitle, busy = false, onEdit, onAdd, onSaveThemes }: Props) {
+export function PlanningBoard({ activities, dayCount, startDate, themes = defaultThemes, formationTitle, busy = false, arrivalTime, departureTime, onEdit, onAdd, onSaveThemes, onSetBounds, onToggleMerge }: Props) {
   const [view, setView] = useState<"all" | "day">("all");
   const [selectedDay, setSelectedDay] = useState(1);
   const [editingThemes, setEditingThemes] = useState(false);
@@ -206,13 +229,19 @@ export function PlanningBoard({ activities, dayCount, startDate, themes = defaul
         {days.map((day) => <DayNavButton key={day} day={day} label={dateForDay(startDate, day, true)} active={view === "day" && selectedDay === day} onClick={() => selectDay(day)} />)}
       </div>
 
+      {onSetBounds && <div className="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs">
+        <label className="flex items-center gap-1.5 font-semibold text-slate-600">Arrivée J1<select value={arrivalTime || ""} onChange={(event) => onSetBounds({ arrivalTime: event.target.value || undefined })} className="h-7 rounded border border-slate-300 bg-white px-1.5 text-xs font-normal"><option value="">—</option>{QUARTER_HOUR_OPTIONS.map((time) => <option key={time} value={time}>{time}</option>)}</select></label>
+        <label className="flex items-center gap-1.5 font-semibold text-slate-600">Départ J{dayCount}<select value={departureTime || ""} onChange={(event) => onSetBounds({ departureTime: event.target.value || undefined })} className="h-7 rounded border border-slate-300 bg-white px-1.5 text-xs font-normal"><option value="">—</option>{QUARTER_HOUR_OPTIONS.map((time) => <option key={time} value={time}>{time}</option>)}</select></label>
+        <span className="text-slate-400">Les créneaux hors de ces horaires les jours d&rsquo;arrivée/départ sont grisés et bloqués.</span>
+      </div>}
+
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-y border-slate-200 py-3">
         <span className="text-xs font-bold uppercase text-slate-500">Légende</span>
         {themes.map((theme) => <span key={theme.id} className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-700"><span className={`h-2.5 w-2.5 rounded-full ${themeSwatch(theme.color)}`} />{theme.name}<span className="text-slate-400">{activities.filter((item) => themeForActivity(item, themes).id === theme.id).length}</span></span>)}
         {onSaveThemes && <button type="button" onClick={() => setEditingThemes(true)} title="Gérer les thèmes" aria-label="Gérer les thèmes" className="ml-auto grid h-8 w-8 place-items-center rounded-md border border-slate-200 bg-white text-slate-600 hover:border-emerald-600 print:hidden"><Settings2 size={16} /></button>}
       </div>
 
-      <div ref={overviewRef} className="min-w-0 max-w-full"><OverviewGrid days={view === "all" ? days : [selectedDay]} startDate={startDate} activities={activities} themes={themes} busy={busy} onAdd={onAdd} onEdit={onEdit} /></div>
+      <div ref={overviewRef} className="min-w-0 max-w-full"><OverviewGrid days={view === "all" ? days : [selectedDay]} dayCount={dayCount} startDate={startDate} activities={activities} themes={themes} busy={busy} arrivalTime={arrivalTime} departureTime={departureTime} onAdd={onAdd} onEdit={onEdit} onToggleMerge={onToggleMerge} /></div>
     </div>
     <PrintPlanning activities={activities} dayCount={dayCount} startDate={startDate} formationTitle={formationTitle} themes={themes} />
     {editingThemes && onSaveThemes && <ThemeEditor themes={themes} activities={activities} onSave={onSaveThemes} onClose={() => setEditingThemes(false)} />}

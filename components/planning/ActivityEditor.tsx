@@ -6,7 +6,7 @@ import { catalogCategories, catalogForFormationWithCustom, resourceForActivity, 
 import { themeForActivity, themeSwatch } from "@/lib/planningThemes";
 import { useTrainingTimes } from "@/lib/useTrainingTimes";
 import { useGuideLibrary } from "@/lib/useGuideLibrary";
-import { snapTimeToQuarterHour } from "@/lib/planningMove";
+import { QUARTER_HOUR_OPTIONS } from "@/lib/planningMove";
 import type { FormationType, PlanActivity, PlanTheme } from "@/lib/types";
 
 type Props = {
@@ -25,7 +25,7 @@ type Props = {
 };
 
 export function ActivityEditor({ activity, existing, dayCount, formationType, trainers, themes, busy, error, onChange, onSave, onDelete, onClose }: Props) {
-  const [catalogOpen, setCatalogOpen] = useState(!existing);
+  const [catalogOpen, setCatalogOpen] = useState(false);
   const [category, setCategory] = useState<"all" | CatalogCategory>("all");
   const [search, setSearch] = useState("");
   const { times: customTimes, error: catalogError } = useTrainingTimes();
@@ -67,22 +67,24 @@ export function ActivityEditor({ activity, existing, dayCount, formationType, tr
       {error && <p role="alert" className="mb-4 rounded border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">{error}</p>}
       {catalogError && <p role="alert" className="mb-4 rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">{catalogError}</p>}
 
-      <div className="mb-5 border-y border-slate-200 py-3">
-        <div className="flex flex-wrap items-center justify-between gap-2"><button type="button" onClick={() => setCatalogOpen((value) => !value)} aria-expanded={catalogOpen} className="inline-flex items-center gap-2 text-sm font-semibold text-emerald-800"><BookOpen size={17} />Temps de formation ({catalog.length})</button><a href="/formateurs/ressources/temps-formation-indicatifs.docx" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs text-slate-600 underline">Liste indicative <ExternalLink size={12} /></a></div>
-        {catalogOpen && <div className="mt-3 space-y-2">
-          <div className="grid gap-2 sm:grid-cols-[180px_1fr]">
-            <label className="text-xs font-medium text-slate-600">Rubrique<select value={category} onChange={(event) => setCategory(event.target.value as "all" | CatalogCategory)} className="mt-1 h-9 w-full rounded border border-slate-300 bg-white px-2 text-sm"><option value="all">Toutes les rubriques</option>{catalogCategories.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
-            <label className="relative text-xs font-medium text-slate-600">Rechercher<Search size={15} className="pointer-events-none absolute bottom-2.5 left-2.5 text-slate-400" /><input value={search} onChange={(event) => setSearch(event.target.value)} className="mt-1 h-9 w-full rounded border border-slate-300 pl-8 pr-2 text-sm" /></label>
-          </div>
-          <div className="max-h-48 divide-y divide-slate-100 overflow-y-auto rounded border border-slate-200">
-            {matches.map((item) => <button key={item.id} type="button" onClick={() => chooseCatalogItem(item)} className="flex w-full items-start justify-between gap-2 px-3 py-2 text-left hover:bg-emerald-50"><span className="min-w-0"><span className="block text-sm font-medium text-slate-900">{item.title}</span><span className="block text-xs text-slate-500">{catalogCategories.find((entry) => entry.id === item.category)?.label}</span></span>{item.resourceId && <FileText size={15} className="mt-0.5 shrink-0 text-emerald-700" />}</button>)}
-            {!matches.length && <p className="px-3 py-5 text-sm text-slate-500">Aucun temps dans cette rubrique.</p>}
-          </div>
-        </div>}
-      </div>
-
       <form onSubmit={(event) => { event.preventDefault(); onSave(); }} className="space-y-4">
         <label className="block text-xs font-semibold text-slate-600">Titre<input required value={activity.title} onChange={(event) => changeTitle(event.target.value)} className="mt-1 h-10 w-full rounded border border-slate-300 px-3 text-sm font-normal text-slate-900" /></label>
+
+        <div className="text-xs">
+          <button type="button" onClick={() => setCatalogOpen((value) => !value)} aria-expanded={catalogOpen} className="inline-flex items-center gap-1 font-medium text-emerald-700 hover:underline"><BookOpen size={13} />Choisir depuis le guide ({catalog.length})</button>
+          {catalogOpen && <div className="mt-2 space-y-2 rounded border border-slate-200 bg-slate-50 p-3">
+            <div className="flex flex-wrap items-center justify-between gap-2"><span className="text-[11px] font-semibold uppercase text-slate-500">Temps de formation</span><a href="/formateurs/ressources/temps-formation-indicatifs.docx" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-slate-600 underline">Liste indicative <ExternalLink size={11} /></a></div>
+            <div className="grid gap-2 sm:grid-cols-[180px_1fr]">
+              <label className="text-xs font-medium text-slate-600">Rubrique<select value={category} onChange={(event) => setCategory(event.target.value as "all" | CatalogCategory)} className="mt-1 h-9 w-full rounded border border-slate-300 bg-white px-2 text-sm"><option value="all">Toutes les rubriques</option>{catalogCategories.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+              <label className="relative text-xs font-medium text-slate-600">Rechercher<Search size={15} className="pointer-events-none absolute bottom-2.5 left-2.5 text-slate-400" /><input value={search} onChange={(event) => setSearch(event.target.value)} className="mt-1 h-9 w-full rounded border border-slate-300 bg-white pl-8 pr-2 text-sm" /></label>
+            </div>
+            <div className="max-h-48 divide-y divide-slate-100 overflow-y-auto rounded border border-slate-200 bg-white">
+              {matches.map((item) => <button key={item.id} type="button" onClick={() => chooseCatalogItem(item)} className="flex w-full items-start justify-between gap-2 px-3 py-2 text-left hover:bg-emerald-50"><span className="min-w-0"><span className="block text-sm font-medium text-slate-900">{item.title}</span><span className="block text-xs text-slate-500">{catalogCategories.find((entry) => entry.id === item.category)?.label}</span></span>{item.resourceId && <FileText size={15} className="mt-0.5 shrink-0 text-emerald-700" />}</button>)}
+              {!matches.length && <p className="px-3 py-5 text-sm text-slate-500">Aucun temps dans cette rubrique.</p>}
+            </div>
+          </div>}
+        </div>
+
         {!existing && !activity.catalogId && <div className="grid gap-2 border-l-2 border-emerald-500 bg-emerald-50/70 p-3 sm:grid-cols-2">
           <label className="text-xs font-semibold text-slate-700">Rubrique du guide<select value={activity.catalogCategory || "animation"} onChange={(event) => onChange({ ...activity, catalogCategory: event.target.value as CatalogCategory })} className="mt-1 h-9 w-full rounded border border-slate-300 bg-white px-2 text-sm font-normal">{catalogCategories.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
           <label className="text-xs font-semibold text-slate-700">Réutilisable pour<select value={activity.catalogScope || "both"} onChange={(event) => onChange({ ...activity, catalogScope: event.target.value as TrainingCatalogItem["scope"] })} className="mt-1 h-9 w-full rounded border border-slate-300 bg-white px-2 text-sm font-normal"><option value="both">Toutes les formations</option><option value="general">Formation générale</option><option value="appro">Approfondissement</option></select></label>
@@ -90,8 +92,8 @@ export function ActivityEditor({ activity, existing, dayCount, formationType, tr
         </div>}
         <div className="grid grid-cols-3 gap-2">
           <label className="text-xs font-semibold text-slate-600">Jour<select value={activity.day} onChange={(event) => onChange({ ...activity, day: Number(event.target.value) })} className="mt-1 h-10 w-full rounded border border-slate-300 bg-white px-2 text-sm font-normal">{Array.from({ length: dayCount }, (_, index) => <option key={index} value={index + 1}>J{index + 1}</option>)}</select></label>
-          <label className="text-xs font-semibold text-slate-600">Début<input required type="time" value={activity.start} onChange={(event) => onChange({ ...activity, start: snapTimeToQuarterHour(event.target.value) })} className="mt-1 h-10 w-full rounded border border-slate-300 px-2 text-sm font-normal" /></label>
-          <label className="text-xs font-semibold text-slate-600">Fin<input required type="time" value={activity.end} onChange={(event) => onChange({ ...activity, end: snapTimeToQuarterHour(event.target.value) })} className="mt-1 h-10 w-full rounded border border-slate-300 px-2 text-sm font-normal" /></label>
+          <label className="text-xs font-semibold text-slate-600">Début<select required value={activity.start} onChange={(event) => onChange({ ...activity, start: event.target.value })} className="mt-1 h-10 w-full rounded border border-slate-300 bg-white px-2 text-sm font-normal">{QUARTER_HOUR_OPTIONS.map((time) => <option key={time} value={time}>{time}</option>)}</select></label>
+          <label className="text-xs font-semibold text-slate-600">Fin<select required value={activity.end} onChange={(event) => onChange({ ...activity, end: event.target.value })} className="mt-1 h-10 w-full rounded border border-slate-300 bg-white px-2 text-sm font-normal">{QUARTER_HOUR_OPTIONS.map((time) => <option key={time} value={time}>{time}</option>)}</select></label>
         </div>
         <label className="block text-xs font-semibold text-slate-600">Contenu / consignes<textarea value={activity.content} onChange={(event) => onChange({ ...activity, content: event.target.value })} rows={3} className="mt-1 w-full rounded border border-slate-300 p-3 text-sm font-normal text-slate-900" /></label>
         <div><p className="mb-2 text-xs font-semibold text-slate-600">Thème</p><div className="flex flex-wrap gap-2" role="group" aria-label="Thème du temps">{themes.map((theme) => <button key={theme.id} type="button" onClick={() => onChange({ ...activity, themeId: theme.id, color: theme.color })} aria-pressed={selectedTheme.id === theme.id} className={`inline-flex min-h-9 items-center gap-2 rounded-md border px-2.5 py-1.5 text-xs font-medium ${selectedTheme.id === theme.id ? "border-slate-800 bg-slate-50 text-slate-950" : "border-slate-200 bg-white text-slate-600"}`}><span className={`h-3 w-3 shrink-0 rounded-full ${themeSwatch(theme.color)}`} />{theme.name}</button>)}</div></div>

@@ -17,6 +17,8 @@ type FormationPlan = {
   trainerNames?: Record<string, string>;
   groupCount?: number;
   themes?: PlanTheme[];
+  arrivalTime?: string;
+  departureTime?: string;
 };
 
 const emptyActivity = (day: number): PlanActivity => ({
@@ -93,10 +95,34 @@ export default function TeamPage() {
     finally { setBusy(false); }
   };
 
+  const saveBounds = async (patch: { arrivalTime?: string; departureTime?: string }) => {
+    if (!formation || !plan) return;
+    setBusy(true); setError("");
+    try {
+      await setDoc(doc(db, "formationPlans", formation.id), {
+        arrivalTime: "arrivalTime" in patch ? patch.arrivalTime ?? null : plan.arrivalTime ?? null,
+        departureTime: "departureTime" in patch ? patch.departureTime ?? null : plan.departureTime ?? null,
+        updatedAt: serverTimestamp(),
+      }, { merge: true });
+    } catch { setError("Impossible d'enregistrer les horaires d'arrivée/départ."); }
+    finally { setBusy(false); }
+  };
+
+  const toggleMerge = (activityIds: string[], merged: boolean) => {
+    if (!plan) return;
+    void saveActivities(plan.activities.map((item) => activityIds.includes(item.id) ? { ...item, merged } : item));
+  };
+
   const saveEditing = async () => {
     if (!editing || !plan || !formation) return;
     if (!editing.title.trim() || editing.end <= editing.start) {
       setError("Renseigne un titre et une heure de fin après le début."); return;
+    }
+    if (editing.day === 1 && plan.arrivalTime && editing.end <= plan.arrivalTime) {
+      setError(`Le groupe arrive à ${plan.arrivalTime} le J1, ce temps est avant l'arrivée.`); return;
+    }
+    if (editing.day === dayCount && plan.departureTime && editing.start >= plan.departureTime) {
+      setError(`Le groupe part à ${plan.departureTime} le J${dayCount}, ce temps est après le départ.`); return;
     }
     setBusy(true); setError("");
     try {
@@ -152,7 +178,7 @@ export default function TeamPage() {
           <div className="print:hidden flex flex-wrap items-center justify-between gap-3 py-4">
             <p className="text-sm font-medium text-slate-700">J1 à J{dayCount} · {plan.activities.length} temps</p>
           </div>
-          <PlanningBoard key={formation.id} activities={plan.activities} dayCount={dayCount} startDate={formation.startDate} formationTitle={formation.title} themes={themes} trainerNames={plan.trainerNames} busy={busy} onEdit={(item) => { setError(""); setEditing({ ...item, trainerIds: item.trainerIds || [] }); }} onAdd={(day) => { setError(""); setEditing(emptyActivity(day)); }} onSaveThemes={saveThemes} />
+          <PlanningBoard key={formation.id} activities={plan.activities} dayCount={dayCount} startDate={formation.startDate} formationTitle={formation.title} themes={themes} trainerNames={plan.trainerNames} busy={busy} arrivalTime={plan.arrivalTime} departureTime={plan.departureTime} onEdit={(item) => { setError(""); setEditing({ ...item, trainerIds: item.trainerIds || [] }); }} onAdd={(day) => { setError(""); setEditing(emptyActivity(day)); }} onSaveThemes={saveThemes} onSetBounds={(patch) => void saveBounds(patch)} onToggleMerge={toggleMerge} />
         </div>
         {section === "trainees" && <div className="print:hidden"><TraineeRoster key={selectedFormationId} inscriptions={registrations} loading={registrationsLoading} groupCount={groupCount} busy={busy} onChangeGroupCount={changeGroupCount} onSaveField={saveTraineeField} /></div>}
       </>}
