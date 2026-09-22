@@ -808,8 +808,9 @@ select:focus-visible {
     border-radius: 1mm;
     background: #fff;
     padding: 1mm;
-    font-size: 6.8pt;
+    font-size: 6pt;
     line-height: 1.15;
+    overflow: hidden;
     overflow-wrap: anywhere;
     break-inside: avoid;
   }
@@ -818,7 +819,7 @@ select:focus-visible {
     grid-column: 2;
     grid-row: 1;
     color: #475569;
-    font-size: 5.8pt;
+    font-size: 5.4pt;
   }
 
   .team-print-activity strong {

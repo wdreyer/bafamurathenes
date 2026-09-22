@@ -121,7 +121,7 @@ function OverviewGrid({ days, startDate, activities, themes, trainerNames, busy,
 }) {
   const boundaries = Array.from(new Set(activities.flatMap((item) => [item.start, item.end]))).sort();
   const intervals = boundaries.slice(0, -1).map((start, index) => ({ start, end: boundaries[index + 1] }));
-  return <div className="overflow-x-auto rounded-md border border-slate-200 bg-white">
+  return <div className="w-full max-w-[calc(100vw-24px)] overflow-x-auto rounded-md border border-slate-200 bg-white sm:max-w-[calc(100vw-40px)] xl:max-w-[calc(100vw-48px)]">
     <div className="grid min-w-max" style={{ gridTemplateColumns: `54px repeat(${days.length}, minmax(140px, calc((100vw - 116px) / 7)))`, gridTemplateRows: `42px repeat(${intervals.length}, minmax(34px, auto))` }}>
       <div className="sticky left-0 top-0 z-30 grid place-items-center border-b border-r border-slate-200 bg-[#edf5f1] text-[9px] font-bold uppercase text-slate-500">Heure</div>
       {days.map((day) => <OverviewDayHeader key={day} day={day} startDate={startDate} busy={busy} dragging={dragging} onAdd={onAdd} />)}
@@ -201,7 +201,7 @@ function PrintPlanning({ activities, dayCount, startDate, formationTitle, themes
       const boundaries = Array.from(new Set(weekActivities.flatMap((item) => [item.start, item.end]))).sort();
       return <section key={index} className="team-print-week">
         <div className="team-print-heading"><strong>{formationTitle || "Planning de formation"}</strong><span>Semaine {index + 1} · J{week[0]} à J{week[week.length - 1]}</span></div>
-        <div className="team-print-grid" style={{ gridTemplateColumns: `13mm repeat(${week.length}, minmax(0, 1fr))`, gridTemplateRows: `8mm repeat(${boundaries.length - 1}, minmax(6.5mm, auto))` }}>
+        <div className="team-print-grid" style={{ gridTemplateColumns: `13mm repeat(${week.length}, minmax(0, 1fr))`, gridTemplateRows: `7mm repeat(${boundaries.length - 1}, ${boundaries.length > 19 ? "6mm" : "6.5mm"})` }}>
           <div className="team-print-corner">Heure</div>
           {week.map((day) => <h2 key={day} style={{ gridColumn: week.indexOf(day) + 2, gridRow: 1 }}>J{day} · {dateForDay(startDate, day)}</h2>)}
           {boundaries.slice(0, -1).map((time, row) => <div key={time} className="team-print-time" style={{ gridColumn: 1, gridRow: row + 2 }}>{time}</div>)}
@@ -273,7 +273,7 @@ export function PlanningBoard({ activities, dayCount, startDate, groupCount, the
         {onSaveThemes && <button type="button" onClick={() => setEditingThemes(true)} title="Gérer les thèmes" aria-label="Gérer les thèmes" className="ml-auto grid h-8 w-8 place-items-center rounded-md border border-slate-200 bg-white text-slate-600 hover:border-emerald-600 print:hidden"><Settings2 size={16} /></button>}
       </div>
 
-      {view === "all" ? <div ref={overviewRef}><OverviewGrid days={days} startDate={startDate} activities={displayActivities} themes={themes} trainerNames={trainerNames} busy={busy || moving} dragging={Boolean(activeId)} onAdd={onAdd} onEdit={onEdit} onMove={onMove} /></div>
+      {view === "all" ? <div ref={overviewRef} className="min-w-0 max-w-full"><OverviewGrid days={days} startDate={startDate} activities={displayActivities} themes={themes} trainerNames={trainerNames} busy={busy || moving} dragging={Boolean(activeId)} onAdd={onAdd} onEdit={onEdit} onMove={onMove} /></div>
         : <DayPanel day={selectedDay} startDate={startDate} activities={displayActivities} themes={themes} trainerNames={trainerNames} groupCount={groupCount} compact={false} dragging={Boolean(activeId)} busy={busy || moving} onAdd={onAdd} onEdit={onEdit} onMove={onMove} />}
       {moving && <p role="status" className="text-xs text-emerald-800">Déplacement en cours...</p>}
     </div>

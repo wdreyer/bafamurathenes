@@ -7,7 +7,7 @@ import { BookOpen, CalendarDays } from "lucide-react";
 
 export function TeamShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  return <div className="team-shell min-h-screen bg-[#f5f8f6] text-slate-950">
+  return <div className="team-shell min-h-screen overflow-x-clip bg-[#f5f8f6] text-slate-950">
     <header className="border-b border-emerald-900/10 bg-white print:hidden">
       <div className="flex w-full flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6 sm:py-5">
         <div className="flex min-w-0 items-center gap-3 sm:gap-4">

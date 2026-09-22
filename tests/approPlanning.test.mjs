@@ -18,7 +18,14 @@ test("appro template follows the seven-day source timetable", () => {
   assert.equal(appro.filter((item) => item.title === "Pause repas" && item.start === "12:00" && item.end === "14:00").length, 5);
 });
 
-test("the general training template remains unchanged", () => {
+test("general training follows the nine-day source timetable", () => {
   const general = buildPlanningTemplate({ type: "formation_generale" });
-  assert.equal(general.length, 61);
+  assert.equal(general.length, 111);
+  assert.deepEqual([...new Set(general.map((item) => item.day))], [1, 2, 3, 4, 5, 6, 7, 8, 9]);
+  assert.equal(general.filter((item) => item.title === "REPAS" && item.start === "12:00" && item.end === "14:00").length, 8);
+  assert.equal(general.filter((item) => item.title === "REPAS" && item.start === "19:00" && item.end === "20:30").length, 8);
+  assert.equal(general.filter((item) => item.title === "Journal du BAFA").length, 5);
+  assert.equal(general.filter((item) => item.title === "Prépa Missions Quotidienne (prépa libre)").length, 5);
+  assert.ok(general.some((item) => item.day === 6 && item.start === "09:00" && item.end === "12:00" && item.title === "Grass mat + chateau de Val"));
+  assert.ok(general.some((item) => item.day === 9 && item.start === "14:00" && item.end === "16:00" && item.title === "Activité manuelle Land'Art et Vernissage"));
 });
