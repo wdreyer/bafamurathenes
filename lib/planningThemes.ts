@@ -9,13 +9,13 @@ export const defaultThemes: PlanTheme[] = [
   { id: "theme-neutral", name: "Vie quotidienne", color: "neutral" },
 ];
 
-export const themeColors: { id: PlanTheme["color"]; name: string; swatch: string; surface: string }[] = [
-  { id: "sky", name: "Bleu", swatch: "bg-sky-500", surface: "border-sky-400 bg-sky-50 text-sky-950" },
-  { id: "mint", name: "Vert", swatch: "bg-emerald-500", surface: "border-emerald-400 bg-emerald-50 text-emerald-950" },
-  { id: "lilac", name: "Mauve", swatch: "bg-violet-500", surface: "border-violet-400 bg-violet-50 text-violet-950" },
-  { id: "lemon", name: "Jaune", swatch: "bg-amber-400", surface: "border-amber-400 bg-amber-50 text-amber-950" },
-  { id: "coral", name: "Corail", swatch: "bg-rose-400", surface: "border-rose-400 bg-rose-50 text-rose-950" },
-  { id: "neutral", name: "Gris", swatch: "bg-slate-400", surface: "border-slate-300 bg-slate-50 text-slate-800" },
+export const themeColors: { id: PlanTheme["color"]; name: string; swatch: string; surface: string; fill: string }[] = [
+  { id: "sky", name: "Bleu", swatch: "bg-sky-500", surface: "border-sky-400 bg-sky-50 text-sky-950", fill: "bg-sky-100 text-sky-950" },
+  { id: "mint", name: "Vert", swatch: "bg-emerald-500", surface: "border-emerald-400 bg-emerald-50 text-emerald-950", fill: "bg-emerald-100 text-emerald-950" },
+  { id: "lilac", name: "Mauve", swatch: "bg-violet-500", surface: "border-violet-400 bg-violet-50 text-violet-950", fill: "bg-violet-100 text-violet-950" },
+  { id: "lemon", name: "Jaune", swatch: "bg-amber-400", surface: "border-amber-400 bg-amber-50 text-amber-950", fill: "bg-amber-100 text-amber-950" },
+  { id: "coral", name: "Corail", swatch: "bg-rose-400", surface: "border-rose-400 bg-rose-50 text-rose-950", fill: "bg-rose-100 text-rose-950" },
+  { id: "neutral", name: "Gris", swatch: "bg-slate-400", surface: "border-slate-300 bg-slate-50 text-slate-800", fill: "bg-slate-100 text-slate-800" },
 ];
 
 export function themeForActivity(activity: PlanActivity, themes: PlanTheme[]): PlanTheme {
@@ -28,6 +28,10 @@ export function themeForActivity(activity: PlanActivity, themes: PlanTheme[]): P
 
 export function themeSurface(color: PlanTheme["color"]) {
   return themeColors.find((item) => item.id === color)?.surface || themeColors[5].surface;
+}
+
+export function themeFill(color: PlanTheme["color"]) {
+  return themeColors.find((item) => item.id === color)?.fill || themeColors[5].fill;
 }
 
 export function themeSwatch(color: PlanTheme["color"]) {

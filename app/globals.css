@@ -800,7 +800,29 @@ select:focus-visible {
   margin: 8mm;
 }
 
+@page guide-portrait {
+  size: A4 portrait;
+  margin: 16mm;
+}
+
 @media print {
+  .guide-resource-page {
+    page: guide-portrait;
+    background: #fff;
+    print-color-adjust: exact;
+  }
+
+  .guide-resource-page > div {
+    max-width: none;
+    padding: 0;
+  }
+
+  .guide-resource-page .guide-rich-content table,
+  .guide-resource-page .guide-rich-content figure,
+  .guide-resource-page .guide-rich-content blockquote {
+    break-inside: avoid;
+  }
+
   .team-page {
     page: planning-landscape;
     background: #fff;

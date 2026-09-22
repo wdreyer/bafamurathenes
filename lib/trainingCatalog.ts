@@ -1,5 +1,6 @@
 import type { FormationType, PlanActivity, TrainingTimeCategory, TrainingTimeScope } from "@/lib/types";
 import { trainerResources } from "@/lib/trainerGuide";
+import type { GuideResourceRecord } from "@/lib/guideLibrary";
 
 export type CatalogCategory = TrainingTimeCategory;
 export type TrainingCatalogItem = {
@@ -88,6 +89,13 @@ export function catalogForFormationWithCustom(type: FormationType, customTimes: 
   return allCatalogTimes(customTimes).filter((item) => item.scope === "both" || item.scope === scope);
 }
 
-export function resourceForActivity(activity: Pick<PlanActivity, "resourceId">) {
+export function resourceForActivity(activity: Pick<PlanActivity, "resourceId">, resources?: GuideResourceRecord[]) {
+  const dynamic = resources?.find((resource) => resource.id === activity.resourceId && resource.fileUrl);
+  if (dynamic) return {
+    id: dynamic.id,
+    title: dynamic.title,
+    href: dynamic.fileUrl!,
+    kind: dynamic.fileType || "pdf",
+  };
   return trainerResources.find((resource) => resource.id === activity.resourceId);
 }

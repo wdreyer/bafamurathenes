@@ -3,9 +3,9 @@
 import { useMemo, useState } from "react";
 import { BookOpen, ExternalLink, FileText, Search, Save, Trash2, X } from "lucide-react";
 import { catalogCategories, catalogForFormationWithCustom, resourceForActivity, type CatalogCategory, type TrainingCatalogItem } from "@/lib/trainingCatalog";
-import { trainerResources } from "@/lib/trainerGuide";
 import { themeForActivity, themeSwatch } from "@/lib/planningThemes";
 import { useTrainingTimes } from "@/lib/useTrainingTimes";
+import { useGuideLibrary } from "@/lib/useGuideLibrary";
 import { snapTimeToQuarterHour } from "@/lib/planningMove";
 import type { FormationType, PlanActivity, PlanTheme } from "@/lib/types";
 
@@ -29,13 +29,14 @@ export function ActivityEditor({ activity, existing, dayCount, formationType, tr
   const [category, setCategory] = useState<"all" | CatalogCategory>("all");
   const [search, setSearch] = useState("");
   const { times: customTimes, error: catalogError } = useTrainingTimes();
+  const { resources: guideResources } = useGuideLibrary();
   const catalog = useMemo(() => catalogForFormationWithCustom(formationType, customTimes), [formationType, customTimes]);
   const matches = catalog.filter((item) => (category === "all" || item.category === category) &&
     `${item.title} ${item.content}`.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
       .includes(search.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim()));
   const scope = formationType === "formation_generale" ? "general" : "appro";
-  const resources = trainerResources.filter((item) => item.kind === "pdf" && (item.scope === "both" || item.scope === scope));
-  const resource = resourceForActivity(activity);
+  const resources = guideResources.filter((item) => item.fileType === "pdf" && item.fileUrl && (item.scope === "both" || item.scope === scope));
+  const resource = resourceForActivity(activity, guideResources);
   const selectedTheme = themeForActivity(activity, themes);
 
   const chooseCatalogItem = (item: TrainingCatalogItem) => {
