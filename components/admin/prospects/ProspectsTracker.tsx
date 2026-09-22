@@ -43,11 +43,11 @@ type ProspectRow = {
 };
 
 const STATUS_LABELS: Record<ProspectStatus, string> = {
-  new: "Nouveau",
+  new: "À contacter",
   to_contact: "A relancer",
-  contacted: "Contacte",
-  registered: "Inscrit",
-  closed: "Fini / ne s'inscrit pas",
+  contacted: "Échange effectué",
+  registered: "Inscription validée",
+  closed: "Suivi clos",
 };
 
 const ORIGIN_LABELS: Record<Prospect["origin"], string> = {
@@ -60,8 +60,8 @@ const ORIGIN_LABELS: Record<Prospect["origin"], string> = {
 
 const QUALIFICATION_LABELS: Record<NonNullable<Prospect["qualification"]>, string> = {
   cold: "Normal",
-  warm: "Tiede",
-  hot: "Chaud",
+  warm: "À suivre",
+  hot: "Prioritaire",
 };
 
 function normalize(value?: string) {
@@ -297,7 +297,7 @@ export function ProspectsTracker() {
     if (!newLead.name.trim()) return;
     await addDoc(collection(db, "prospects"), {
       origin: "manual",
-      leadType: "Prospect ajoute manuellement",
+      leadType: "Contact ajouté manuellement",
       name: newLead.name.trim(),
       email: newLead.email.trim(),
       phone: newLead.phone.trim(),
@@ -360,7 +360,7 @@ export function ProspectsTracker() {
       otherAidAmount: 0,
       transferReference: "",
       prospectId: row.id,
-      source: "Validation prospect",
+      source: "Inscription issue d'un contact",
       notes: [row.notes, row.message].filter(Boolean).join("\n"),
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
@@ -396,8 +396,8 @@ export function ProspectsTracker() {
         <div className="flex flex-wrap gap-2">
           <Chip active={qualification === "all"} onClick={() => setQualification("all")}>Tous niveaux</Chip>
           <Chip active={qualification === "normal"} onClick={() => setQualification("normal")}>Normal</Chip>
-          <Chip active={qualification === "warm"} onClick={() => setQualification("warm")}>Tiede</Chip>
-          <Chip active={qualification === "hot"} onClick={() => setQualification("hot")}>Chaud</Chip>
+          <Chip active={qualification === "warm"} onClick={() => setQualification("warm")}>À suivre</Chip>
+          <Chip active={qualification === "hot"} onClick={() => setQualification("hot")}>Prioritaire</Chip>
           <Chip active={showClosed} onClick={() => setShowClosed((value) => !value)}>Voir les finis</Chip>
         </div>
 
@@ -433,7 +433,7 @@ export function ProspectsTracker() {
             <tr className="bg-slate-50 text-left text-xs font-semibold uppercase text-slate-500">
               <TH>Contact</TH>
               <TH>Niveau</TH>
-              <TH>Date prospect</TH>
+              <TH>Date du contact</TH>
               <TH>Dernier echange</TH>
               <TH>Formation</TH>
               <TH>Departement</TH>
@@ -444,7 +444,7 @@ export function ProspectsTracker() {
           <tbody>
             {filteredRows.length === 0 ? (
               <tr>
-                <td colSpan={8} className="px-3 py-10 text-center text-slate-500">Aucun prospect pour ces filtres.</td>
+                <td colSpan={8} className="px-3 py-10 text-center text-slate-500">Aucune personne intéressée pour ces filtres.</td>
               </tr>
             ) : (
               filteredRows.map((row) => (
@@ -492,7 +492,7 @@ function ProspectLine({
         <div className="font-semibold text-slate-900">{row.name}</div>
         <div className="mt-0.5 text-xs text-slate-500">{row.email || "-"} {row.phone ? ` / ${row.phone}` : ""}</div>
         <div className="mt-1 text-[11px] text-slate-400">
-          Prospect : {formatDate(row.createdAt, true)} · Dernier échange : {formatLastExchangeDate(row)}
+          Premier contact : {formatDate(row.createdAt, true)} · Dernier échange : {formatLastExchangeDate(row)}
         </div>
       </td>
       <td className="border-b border-slate-100 px-3 py-2.5">
@@ -584,10 +584,10 @@ function ProspectModal({
               <h4 className="text-xs font-semibold uppercase text-slate-500">Niveau</h4>
               <div className="mt-2 flex flex-wrap gap-2">
                 <SimpleToggle active={!row.qualification || row.qualification === "cold"} disabled={saving} onClick={() => onUpdate({ qualification: "cold", priority: "normal", status: row.status === "closed" ? "to_contact" : row.status })}>Normal</SimpleToggle>
-                <SimpleToggle active={row.qualification === "warm"} disabled={saving} onClick={() => onUpdate({ qualification: "warm", priority: "normal", status: row.status === "closed" ? "to_contact" : row.status })}>Tiede</SimpleToggle>
-                <SimpleToggle active={row.qualification === "hot" || row.priority === "high"} disabled={saving} onClick={() => onUpdate({ qualification: "hot", priority: "high", status: row.status === "closed" ? "to_contact" : row.status })}>Chaud</SimpleToggle>
-                <SimpleToggle active={row.status === "closed"} disabled={saving} onClick={() => onUpdate({ status: "closed" })}>Fini / ne s&apos;inscrit pas</SimpleToggle>
-                <SimpleToggle active={row.status === "registered"} disabled={saving} onClick={onRegister}>Inscrit</SimpleToggle>
+                <SimpleToggle active={row.qualification === "warm"} disabled={saving} onClick={() => onUpdate({ qualification: "warm", priority: "normal", status: row.status === "closed" ? "to_contact" : row.status })}>À suivre</SimpleToggle>
+                <SimpleToggle active={row.qualification === "hot" || row.priority === "high"} disabled={saving} onClick={() => onUpdate({ qualification: "hot", priority: "high", status: row.status === "closed" ? "to_contact" : row.status })}>Prioritaire</SimpleToggle>
+                <SimpleToggle active={row.status === "closed"} disabled={saving} onClick={() => onUpdate({ status: "closed" })}>Suivi clos</SimpleToggle>
+                <SimpleToggle active={row.status === "registered"} disabled={saving} onClick={onRegister}>Inscription validée</SimpleToggle>
               </div>
             </section>
           </aside>

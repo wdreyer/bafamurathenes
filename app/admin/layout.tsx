@@ -16,10 +16,10 @@ import {
 
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/prospects", label: "Prospects", icon: UserRoundSearch },
+  { href: "/admin/prospects", label: "Personnes intéressées", icon: UserRoundSearch },
   { href: "/admin/inscriptions", label: "Inscriptions", icon: Users },
   { href: "/admin/formations", label: "Formations", icon: GraduationCap },
-  { href: "/admin/formateurs", label: "Formateurs", icon: CalendarDays },
+  { href: "/admin/formateurs", label: "Formateur·ices", icon: CalendarDays },
 ];
 
 const ADMIN_CODE = process.env.NEXT_PUBLIC_ADMIN_CODE;

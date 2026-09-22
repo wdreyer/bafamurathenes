@@ -134,7 +134,7 @@ export default function TeamPage() {
           <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-600"><span>{dayCount} journées</span><span>{rosterCount} stagiaires</span><span className="inline-flex items-center gap-1"><Users size={15} />{trainers.length ? trainers.map((item) => item.name).join(", ") : "Équipe à préciser"}</span></div>
         </div>
 
-        <div className="print:hidden flex gap-1 border-b border-slate-200" role="tablist" aria-label="Espace formateurs">
+        <div className="print:hidden flex gap-1 border-b border-slate-200" role="tablist" aria-label="Espace formateur·ices">
           <button type="button" role="tab" aria-selected={section === "planning"} onClick={() => setSection("planning")} className={`border-b-2 px-4 py-3 text-sm font-medium ${section === "planning" ? "border-emerald-700 text-emerald-900" : "border-transparent text-slate-600"}`}>Planning</button>
           <button type="button" role="tab" aria-selected={section === "trainees"} onClick={() => setSection("trainees")} className={`border-b-2 px-4 py-3 text-sm font-medium ${section === "trainees" ? "border-emerald-700 text-emerald-900" : "border-transparent text-slate-600"}`}>Stagiaires ({rosterCount})</button>
         </div>

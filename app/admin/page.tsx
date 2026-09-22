@@ -169,16 +169,16 @@ export default function AdminDashboardPage() {
             <p className="mt-1 text-sm text-slate-500">Une vue simple : qui relancer, quoi encaisser, où cliquer.</p>
           </div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            <QuickLink href="/admin/prospects" label="Prospects" icon={UserRoundSearch} />
+            <QuickLink href="/admin/prospects" label="Personnes intéressées" icon={UserRoundSearch} />
             <QuickLink href="/admin/inscriptions" label="Inscriptions" icon={Users} />
             <QuickLink href="/admin/formations" label="Formations" icon={CheckCircle2} />
-            <QuickLink href="/admin/formateurs" label="Formateurs" icon={CalendarDays} />
+            <QuickLink href="/admin/formateurs" label="Formateur·ices" icon={CalendarDays} />
           </div>
         </header>
 
         <section className="grid gap-3 md:grid-cols-4">
-          <BigNumber label="Validés" value={data.validated.length.toString()} detail={`${data.ongoing.length} en cours`} icon={CheckCircle2} />
-          <BigNumber label="Prospects ouverts" value={data.openProspects.length.toString()} detail={`${data.hotProspects.length} très chauds`} icon={Flame} />
+          <BigNumber label="Inscriptions validées" value={data.validated.length.toString()} detail={`${data.ongoing.length} en cours`} icon={CheckCircle2} />
+          <BigNumber label="Contacts à suivre" value={data.openProspects.length.toString()} detail={`${data.hotProspects.length} prioritaires`} icon={Flame} />
           <BigNumber label="Famille à encaisser" value={euro(data.totals.familyRemaining)} detail={`${euro(data.totals.familyPaid)} reçus`} icon={CreditCard} />
           <BigNumber label="CAF à recevoir" value={euro(data.totals.cafRemaining)} detail="Avant accord" icon={HandCoins} />
         </section>
@@ -213,9 +213,9 @@ export default function AdminDashboardPage() {
             )}
           </Panel>
 
-          <Panel title="Prospects chauds" actionHref="/admin/prospects" actionLabel="Ouvrir prospects">
+          <Panel title="Contacts prioritaires" actionHref="/admin/prospects" actionLabel="Voir les contacts">
             {data.hotProspects.length === 0 ? (
-              <Empty text="Aucun prospect marqué très chaud." />
+              <Empty text="Aucun contact prioritaire." />
             ) : (
               <div className="divide-y divide-slate-100">
                 {data.hotProspects.slice(0, 8).map((prospect) => (
@@ -231,7 +231,7 @@ export default function AdminDashboardPage() {
                       </div>
                     </div>
                     <div className="flex flex-wrap gap-1 md:justify-end">
-                      <Tag tone="orange">Très chaud</Tag>
+                      <Tag tone="orange">Prioritaire</Tag>
                       <span className="text-xs text-slate-400">{formatDate(prospect.updatedAt || prospect.createdAt)}</span>
                     </div>
                   </Link>
@@ -241,7 +241,7 @@ export default function AdminDashboardPage() {
           </Panel>
         </section>
 
-        <Panel title="Inscrits par formation" actionHref="/admin/formations" actionLabel="Ouvrir formations">
+        <Panel title="Inscriptions par formation" actionHref="/admin/formations" actionLabel="Ouvrir formations">
           {data.formationRows.length === 0 ? (
             <Empty text="Aucune formation à afficher." />
           ) : (
@@ -259,9 +259,9 @@ export default function AdminDashboardPage() {
                     </div>
                   </div>
                   <div className="flex flex-wrap gap-1 md:justify-end">
-                    <Tag tone="slate">{count} inscrit{count > 1 ? "s" : ""}</Tag>
-                    <Tag tone="green">{validatedCount} validé{validatedCount > 1 ? "s" : ""}</Tag>
-                    <Tag tone="violet">{paidCount} payé{paidCount > 1 ? "s" : ""}</Tag>
+                    <Tag tone="slate">{count} inscription{count > 1 ? "s" : ""}</Tag>
+                    <Tag tone="green">{validatedCount} validée{validatedCount > 1 ? "s" : ""}</Tag>
+                    <Tag tone="violet">{paidCount} réglée{paidCount > 1 ? "s" : ""}</Tag>
                   </div>
                 </Link>
               ))}
@@ -270,7 +270,7 @@ export default function AdminDashboardPage() {
         </Panel>
 
         <section className="grid gap-4 lg:grid-cols-3">
-          <SimpleBox href="/admin/prospects" title="Relancer" value={data.openProspects.length} detail="prospects ouverts" />
+          <SimpleBox href="/admin/prospects" title="Relancer" value={data.openProspects.length} detail="personnes à contacter" />
           <SimpleBox href="/admin/inscriptions" title="Encaisser" value={data.paymentRows.length} detail="dossiers à suivre" />
           <SimpleBox href="/admin/inscriptions" title="Suivre CAF" value={data.paymentRows.filter((row) => row.money.cafRemaining > 0).length} detail="Dossiers avant accord" />
         </section>
@@ -283,9 +283,9 @@ function QuickLink({ href, label, icon: Icon }: { href: string; label: string; i
   return (
     <Link
       href={href}
-      className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-xs font-semibold text-slate-800 no-underline hover:bg-slate-100"
+      className="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-2 py-1 text-center text-xs font-semibold leading-tight text-slate-800 no-underline hover:bg-slate-100"
     >
-      <Icon className="h-4 w-4" />
+      <Icon className="h-4 w-4 shrink-0" />
       {label}
     </Link>
   );

@@ -589,7 +589,7 @@ export function InscriptionsTable({ formationId }: { formationId?: string } = {}
         <table className="min-w-[1320px] w-full border-collapse text-sm">
           <thead>
             <tr className="bg-slate-50 text-left text-xs font-semibold uppercase text-slate-500">
-              <SortTH sortKey="name" activeKey={sortKey} direction={sortDirection} onSort={changeSort}>Inscrit</SortTH>
+              <SortTH sortKey="name" activeKey={sortKey} direction={sortDirection} onSort={changeSort}>Personne inscrite</SortTH>
               <TH>Contact</TH>
               <SortTH sortKey="formation" activeKey={sortKey} direction={sortDirection} onSort={changeSort}>Formation</SortTH>
               <SortTH sortKey="total" activeKey={sortKey} direction={sortDirection} onSort={changeSort}>Total</SortTH>
@@ -634,7 +634,7 @@ export function InscriptionsTable({ formationId }: { formationId?: string } = {}
                       {contactName(inscription) || "Sans nom"}
                     </div>
                     <div className="mt-1 text-xs text-slate-500">
-                      Inscrit le {formatDate(inscription.createdAt)}
+                      Inscription du {formatDate(inscription.createdAt)}
                     </div>
                   </TD>
 

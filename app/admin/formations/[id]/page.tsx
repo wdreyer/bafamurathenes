@@ -34,7 +34,7 @@ export default function FormationDetailPage() {
     const unsubTrainers = onSnapshot(collection(db, "trainers"), (snapshot) =>
       setTrainers(snapshot.docs.map((entry) => ({ id: entry.id, ...entry.data() } as Trainer))
         .sort((a, b) => trainerName(a).localeCompare(trainerName(b), "fr"))),
-      () => setError("Impossible de charger les formateurs."));
+      () => setError("Impossible de charger les formateur·ices."));
     return () => { unsubFormation(); unsubInscriptions(); unsubTrainers(); };
   }, [id]);
 
@@ -89,7 +89,7 @@ export default function FormationDetailPage() {
     <section className="grid gap-px overflow-hidden rounded border border-slate-200 bg-slate-200 sm:grid-cols-3">
       <div className="bg-white p-4"><p className="text-xs font-medium text-slate-500">Inscriptions</p><p className="mt-1 text-2xl font-semibold">{related.length}</p></div>
       <div className="bg-white p-4"><p className="text-xs font-medium text-slate-500">Validées</p><p className="mt-1 text-2xl font-semibold">{validated}</p></div>
-      <div className="bg-white p-4"><p className="text-xs font-medium text-slate-500">Formateurs affectés</p><p className="mt-1 text-2xl font-semibold">{assigned.length}</p></div>
+      <div className="bg-white p-4"><p className="text-xs font-medium text-slate-500">Formateur·ices affecté·es</p><p className="mt-1 text-2xl font-semibold">{assigned.length}</p></div>
     </section>
 
     <div className="grid gap-8 xl:grid-cols-2">
@@ -105,9 +105,9 @@ export default function FormationDetailPage() {
       </section>
 
       <section className="min-w-0 border-t border-slate-200 pt-4">
-        <div className="flex flex-wrap items-start justify-between gap-2"><div><h2 className="text-lg font-semibold">Équipe & planning</h2><p className="mt-1 text-sm text-slate-600">{assigned.map(trainerName).join(", ") || "Aucun formateur affecté"}</p></div><Link href="/admin/formateurs" className="text-sm font-medium text-emerald-800 underline">Gérer les formateurs</Link></div>
-        <div className="mt-4 flex flex-wrap gap-2">{trainers.map((trainer) => <button key={trainer.id} type="button" disabled={busy} aria-pressed={formation.trainerIds?.includes(trainer.id) || false} onClick={() => void toggleTrainer(trainer.id)} className={`inline-flex min-h-9 items-center gap-1 rounded border px-3 text-sm disabled:opacity-50 ${formation.trainerIds?.includes(trainer.id) ? "border-emerald-700 bg-emerald-50 text-emerald-900" : "border-slate-300 bg-white text-slate-700"}`}>{formation.trainerIds?.includes(trainer.id) && <Check size={14} />}{trainerName(trainer)}</button>)}{!trainers.length && <p className="text-sm text-slate-500">Crée d&apos;abord un formateur dans l&apos;espace équipe.</p>}</div>
-        <div className="mt-5 flex flex-wrap gap-3"><Link href={`/admin/formateurs?formation=${encodeURIComponent(id)}`} className="inline-flex items-center gap-2 text-sm font-medium text-emerald-800 underline"><CalendarDays size={16} />Ouvrir le planning admin</Link><Link href="/equipe" target="_blank" className="inline-flex items-center gap-2 text-sm font-medium text-emerald-800 underline"><ExternalLink size={16} />Vue formateurs</Link></div>
+        <div className="flex flex-wrap items-start justify-between gap-2"><div><h2 className="text-lg font-semibold">Équipe & planning</h2><p className="mt-1 text-sm text-slate-600">{assigned.map(trainerName).join(", ") || "Aucun·e formateur·ice affecté·e"}</p></div><Link href="/admin/formateurs" className="text-sm font-medium text-emerald-800 underline">Gérer les formateur·ices</Link></div>
+        <div className="mt-4 flex flex-wrap gap-2">{trainers.map((trainer) => <button key={trainer.id} type="button" disabled={busy} aria-pressed={formation.trainerIds?.includes(trainer.id) || false} onClick={() => void toggleTrainer(trainer.id)} className={`inline-flex min-h-9 items-center gap-1 rounded border px-3 text-sm disabled:opacity-50 ${formation.trainerIds?.includes(trainer.id) ? "border-emerald-700 bg-emerald-50 text-emerald-900" : "border-slate-300 bg-white text-slate-700"}`}>{formation.trainerIds?.includes(trainer.id) && <Check size={14} />}{trainerName(trainer)}</button>)}{!trainers.length && <p className="text-sm text-slate-500">Crée d&apos;abord une fiche formateur·ice dans l&apos;espace équipe.</p>}</div>
+        <div className="mt-5 flex flex-wrap gap-3"><Link href={`/admin/formateurs?formation=${encodeURIComponent(id)}`} className="inline-flex items-center gap-2 text-sm font-medium text-emerald-800 underline"><CalendarDays size={16} />Ouvrir le planning admin</Link><Link href="/equipe" target="_blank" className="inline-flex items-center gap-2 text-sm font-medium text-emerald-800 underline"><ExternalLink size={16} />Vue formateur·ices</Link></div>
       </section>
     </div>
 
