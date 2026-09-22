@@ -5,8 +5,8 @@ import {
   DndContext, DragOverlay, KeyboardSensor, PointerSensor, pointerWithin, rectIntersection,
   useDraggable, useDroppable, useSensor, useSensors, type CollisionDetection, type DragEndEvent, type DragMoveEvent,
 } from "@dnd-kit/core";
-import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Clock3, FileText, GripVertical, List, Plus, Settings2 } from "lucide-react";
-import { expandActivityToBoundary, moveActivityToTarget, type PlanningDropTarget } from "@/lib/planningMove";
+import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, FileText, GripVertical, List, Plus, Settings2 } from "lucide-react";
+import { asTime, minuteOfDay, moveActivityToTarget, resizeActivityByQuarterHour, type PlanningDropTarget } from "@/lib/planningMove";
 import { defaultThemes, themeForActivity, themeSurface, themeSwatch } from "@/lib/planningThemes";
 import { resourceForActivity } from "@/lib/trainingCatalog";
 import { ThemeEditor } from "@/components/planning/ThemeEditor";
@@ -16,7 +16,6 @@ type Props = {
   activities: PlanActivity[];
   dayCount: number;
   startDate: string;
-  groupCount: number;
   themes?: PlanTheme[];
   trainerNames?: Record<string, string>;
   formationTitle?: string;
@@ -66,62 +65,133 @@ function ActivityItem({ activity, themes, trainerNames, compact, disabled, onEdi
   const resource = resourceForActivity(activity);
   const emoji = activityEmoji(activity.title);
   const trainers = (activity.trainerIds || []).map((id) => trainerNames[id]).filter(Boolean).join(", ");
-  return <div ref={setNodeRef} className={`h-full min-w-0 rounded border-l-[3px] ${compact ? "px-1.5 py-1" : "px-2.5 py-2"} ${themeSurface(theme.color)} ${isDragging ? "opacity-35" : ""}`}>
-    <div className="flex min-w-0 items-start gap-1">
+  return <div ref={setNodeRef} className={`group/item h-full min-w-0 overflow-hidden rounded border-l-[3px] ${compact ? "px-1 py-px" : "px-2.5 py-2"} ${themeSurface(theme.color)} ${isDragging ? "opacity-35" : ""}`}>
+    <div className={`flex min-w-0 ${compact ? "items-center gap-0" : "items-start gap-0.5"}`}>
       {draggable && <button ref={setActivatorNodeRef} type="button" title={`Déplacer ${activity.title}`} aria-label={`Déplacer ${activity.title}`} disabled={disabled} {...attributes} {...listeners}
-        className={`grid shrink-0 cursor-grab place-items-center rounded text-current/60 touch-none hover:bg-white/80 active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-40 ${compact ? "h-6 w-5" : "mt-0.5 h-6 w-6"}`}><GripVertical size={compact ? 14 : 15} /></button>}
+        className={`grid shrink-0 cursor-grab place-items-center rounded text-current/60 touch-none hover:bg-white/80 active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-40 ${compact ? "w-0 overflow-hidden opacity-0 transition-all group-hover/item:w-4 group-hover/item:opacity-100 focus:w-4 focus:opacity-100" : "mt-0.5 h-6 w-6"}`}><GripVertical size={compact ? 13 : 15} /></button>}
       <div className="min-w-0 flex-1">
-        {onEdit ? <button type="button" disabled={disabled} onClick={() => onEdit(activity)} title={`Modifier ${activity.title}`} className="block w-full cursor-pointer text-left disabled:cursor-wait">
-          <span className={`font-semibold ${compact ? "flex items-start justify-between gap-1 text-[11px] leading-[1.25]" : "block text-sm leading-5"}`}><span>{emoji && <span aria-hidden="true" className="mr-1">{emoji}</span>}{activity.title}</span>{compact && <small className="shrink-0 text-[9px] font-normal opacity-60">{activity.end}</small>}</span>
+        {onEdit ? <button type="button" disabled={disabled} onClick={() => onEdit(activity)} title={`${activity.title} · ${activity.start}–${activity.end}`} className="block w-full cursor-pointer text-left disabled:cursor-wait">
+          <span className={`flex items-center justify-between gap-1 font-semibold ${compact ? "text-[10px] leading-none" : "text-sm leading-5"}`}><span className={compact ? "min-w-0 truncate" : ""}>{emoji && <span aria-hidden="true" className="mr-1">{emoji}</span>}{activity.title}</span><small className={`shrink-0 whitespace-nowrap font-normal opacity-60 ${compact ? "text-[8px]" : "text-[10px]"}`}>{activity.start}–{activity.end}</small></span>
           {!compact && activity.content && <span className="mt-1 block line-clamp-2 text-xs leading-4 opacity-80">{activity.content}</span>}
-        </button> : <p className={`font-semibold ${compact ? "text-[11px] leading-[1.25]" : "text-sm leading-5"}`}>{emoji && <span aria-hidden="true" className="mr-1">{emoji}</span>}{activity.title}</p>}
-        {compact && activity.groupNumber ? <p className="mt-0.5 text-[10px] font-semibold opacity-70">Groupe {activity.groupNumber}</p> : null}
-        {(trainers || resource) && <div className={`flex flex-wrap items-center justify-between gap-1 opacity-80 ${compact ? "mt-0.5 text-[10px]" : "mt-1.5 text-[11px]"}`}>
-          {trainers && <span>{trainers}</span>}
-          {resource && <a href={resource.href} target="_blank" rel="noopener noreferrer" title={`Ouvrir ${resource.title}`} className="inline-flex cursor-pointer items-center gap-1 font-semibold underline"><FileText size={12} />PDF</a>}
+        </button> : <p title={`${activity.title} · ${activity.start}–${activity.end}`} className={`flex items-center justify-between gap-1 font-semibold ${compact ? "text-[10px] leading-none" : "text-sm leading-5"}`}><span className={compact ? "min-w-0 truncate" : ""}>{emoji && <span aria-hidden="true" className="mr-1">{emoji}</span>}{activity.title}</span><small className={`shrink-0 whitespace-nowrap font-normal opacity-60 ${compact ? "text-[8px]" : "text-[10px]"}`}>{activity.start}–{activity.end}</small></p>}
+        {(trainers || resource) && <div className={`flex items-center justify-between gap-1 overflow-hidden opacity-80 ${compact ? "text-[8px] leading-none" : "mt-1.5 flex-wrap text-[11px]"}`}>
+          {trainers && <span className={compact ? "min-w-0 truncate" : ""}>{trainers}</span>}
+          {resource && <a href={resource.href} target="_blank" rel="noopener noreferrer" title={`Ouvrir ${resource.title}`} className="inline-flex shrink-0 cursor-pointer items-center gap-1 font-semibold underline"><FileText size={12} />PDF</a>}
         </div>}
       </div>
     </div>
   </div>;
 }
 
-function OverviewDayHeader({ day, startDate, busy, dragging, onAdd }: {
-  day: number; startDate: string; busy: boolean; dragging: boolean; onAdd?: Props["onAdd"];
+function OverviewDayHeader({ day, column, startDate, busy, dragging, onAdd }: {
+  day: number; column: number; startDate: string; busy: boolean; dragging: boolean; onAdd?: Props["onAdd"];
 }) {
   const { isOver, setNodeRef } = useDroppable({ id: `overview-day-${day}`, data: { day } satisfies PlanningDropTarget });
-  return <div id={`planning-jour-${day}`} ref={setNodeRef} className={`sticky top-0 z-20 flex min-w-0 scroll-mt-4 items-center justify-between gap-1 border-b border-r border-slate-200 px-1.5 py-1.5 ${isOver && dragging ? "bg-emerald-100" : "bg-[#edf5f1]"}`}
-    style={{ gridColumn: day + 1, gridRow: 1 }}>
-    <div className="flex min-w-0 items-center gap-1"><span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-emerald-800 text-[10px] font-bold text-white">J{day}</span><span className="min-w-0 text-[11px] font-semibold capitalize leading-tight text-slate-900">{dateForDay(startDate, day)}</span></div>
-    {onAdd && <button type="button" disabled={busy} onClick={() => onAdd(day)} title={`Ajouter un temps au jour ${day}`} aria-label={`Ajouter un temps au jour ${day}`} className="grid h-6 w-6 shrink-0 place-items-center rounded-full border border-slate-300 bg-white text-slate-700 hover:border-emerald-600 disabled:cursor-not-allowed disabled:opacity-40"><Plus size={12} /></button>}
+  return <div id={`planning-jour-${day}`} ref={setNodeRef} className={`sticky top-0 z-20 flex min-w-0 scroll-mt-4 items-center justify-between gap-1 border-b border-r border-slate-200 px-1 py-1 ${isOver && dragging ? "bg-emerald-100" : "bg-[#edf5f1]"}`}
+    style={{ gridColumn: column, gridRow: 1 }}>
+    <div className="flex min-w-0 items-center gap-1"><span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-emerald-800 text-[9px] font-bold text-white">J{day}</span><span className="min-w-0 truncate text-[10.5px] font-semibold capitalize leading-tight text-slate-900">{dateForDay(startDate, day)}</span></div>
+    {onAdd && <button type="button" disabled={busy} onClick={() => onAdd(day)} title={`Ajouter un temps au jour ${day}`} aria-label={`Ajouter un temps au jour ${day}`} className="grid h-5 w-5 shrink-0 place-items-center rounded-full border border-slate-300 bg-white text-slate-700 hover:border-emerald-600 disabled:cursor-not-allowed disabled:opacity-40"><Plus size={11} /></button>}
   </div>;
 }
 
-function OverviewSlot({ day, start, end, row, dragging }: {
-  day: number; start: string; end: string; row: number; dragging: boolean;
+function OverviewSlot({ day, column, start, end, row, dragging }: {
+  day: number; column: number; start: string; end: string; row: number; dragging: boolean;
 }) {
   const { isOver, setNodeRef } = useDroppable({ id: `overview-slot-${day}-${start}`, data: { day, start } satisfies PlanningDropTarget });
-  return <div id={`overview-slot-${day}-${start}`} ref={setNodeRef} className={`min-h-8 border-b border-r border-slate-100 transition-colors ${isOver && dragging ? "bg-emerald-200 ring-1 ring-inset ring-emerald-600" : dragging ? "bg-emerald-50/50" : "bg-white"}`}
-    style={{ gridColumn: day + 1, gridRow: row }}>
+  return <div id={`overview-slot-${day}-${start}`} ref={setNodeRef} className={`border-b border-r border-slate-100 transition-colors ${isOver && dragging ? "bg-emerald-200 ring-1 ring-inset ring-emerald-600" : dragging ? "bg-emerald-50/50" : "bg-white"}`}
+    style={{ gridColumn: column, gridRow: row }}>
     <span className="sr-only">Créneau de {start} à {end}</span>
   </div>;
 }
 
-function OverviewActivityBlock({ day, startRow, endRow, activities, themes, trainerNames, boundaries, busy, onEdit, onMove }: {
-  day: number; startRow: number; endRow: number; activities: PlanActivity[]; themes: PlanTheme[];
-  trainerNames: Record<string, string>; boundaries: string[]; busy: boolean; onEdit?: Props["onEdit"]; onMove?: Props["onMove"];
+function ResizeButton({ activity, edge, direction, activities, disabled, onResize }: {
+  activity: PlanActivity;
+  edge: "start" | "end";
+  direction: "expand" | "shrink";
+  activities: PlanActivity[];
+  disabled: boolean;
+  onResize: NonNullable<Props["onMove"]>;
 }) {
-  return <div className="z-[5] flex min-h-0 flex-col gap-0.5 overflow-hidden p-0.5 pointer-events-none" style={{ gridColumn: day + 1, gridRow: `${startRow} / ${endRow}` }}>
-    {activities.map((activity) => {
-      const grow = (edge: "start" | "end") => {
-        const resized = expandActivityToBoundary(activity, edge, boundaries);
-        if (resized && onMove) void onMove(resized);
-      };
+  const pressed = useRef(false);
+  const current = useRef(activity);
+  const timer = useRef<number | null>(null);
+  const running = useRef(false);
+  const next = resizeActivityByQuarterHour(activity, edge, direction, activities);
+  const outward = direction === "expand";
+  const pointsUp = edge === "start" ? outward : !outward;
+  const verb = outward ? "Agrandir" : "Réduire";
+  const side = edge === "start" ? "le début" : "la fin";
+
+  useEffect(() => {
+    if (!pressed.current) current.current = activity;
+  }, [activity]);
+
+  const stop = () => {
+    pressed.current = false;
+    if (timer.current !== null) window.clearTimeout(timer.current);
+    timer.current = null;
+  };
+
+  useEffect(() => {
+    const release = () => stop();
+    window.addEventListener("pointerup", release);
+    window.addEventListener("pointercancel", release);
+    return () => {
+      window.removeEventListener("pointerup", release);
+      window.removeEventListener("pointercancel", release);
+      stop();
+    };
+  }, []);
+
+  const applyResize = async (repeatDelay?: number) => {
+    if (running.current) return;
+    const resized = resizeActivityByQuarterHour(current.current, edge, direction, activities);
+    if (!resized) { stop(); return; }
+    running.current = true;
+    const saved = await onResize(resized);
+    running.current = false;
+    if (!saved) { stop(); return; }
+    current.current = resized;
+    if (pressed.current && repeatDelay !== undefined) {
+      timer.current = window.setTimeout(() => void applyResize(140), repeatDelay);
+    }
+  };
+
+  if (!next) return null;
+  return <button type="button" disabled={disabled}
+    onPointerDown={(event) => {
+      if (event.button !== 0 || disabled) return;
+      event.preventDefault();
+      event.stopPropagation();
+      event.currentTarget.setPointerCapture(event.pointerId);
+      pressed.current = true;
+      void applyResize(380);
+    }}
+    onPointerUp={stop} onPointerCancel={stop}
+    onClick={(event) => { if (event.detail === 0) void applyResize(); }}
+    title={`${verb} ${activity.title} de 15 minutes (${side})`}
+    aria-label={`${verb} ${activity.title} de 15 minutes par ${side}`}
+    className="grid h-4 w-5 cursor-pointer place-items-center rounded bg-white/95 text-slate-600 shadow-sm transition hover:text-emerald-800 disabled:cursor-not-allowed disabled:opacity-30">
+    {pointsUp ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
+  </button>;
+}
+
+function OverviewActivityBlock({ column, startRow, endRow, blockActivities, allActivities, themes, trainerNames, busy, onEdit, onMove }: {
+  column: number; startRow: number; endRow: number; blockActivities: PlanActivity[]; allActivities: PlanActivity[]; themes: PlanTheme[];
+  trainerNames: Record<string, string>; busy: boolean; onEdit?: Props["onEdit"]; onMove?: Props["onMove"];
+}) {
+  return <div className="z-[5] flex min-h-0 flex-col gap-0.5 overflow-visible p-0.5 pointer-events-none" style={{ gridColumn: column, gridRow: `${startRow} / ${endRow}` }}>
+    {blockActivities.map((activity) => {
       return <div key={activity.id} className="group relative min-h-0 flex-1 pointer-events-auto">
-        {onMove && <button type="button" disabled={busy} onClick={() => grow("start")} title={`Agrandir ${activity.title} vers le haut`} aria-label={`Agrandir ${activity.title} vers le haut`}
-          className="absolute left-1/2 top-0 z-20 grid h-3.5 w-7 -translate-x-1/2 place-items-center rounded-b bg-white/90 text-slate-600 opacity-30 shadow-sm transition hover:bg-white hover:text-emerald-800 hover:opacity-100 focus:opacity-100 disabled:cursor-not-allowed disabled:opacity-20 sm:opacity-0 sm:group-hover:opacity-100"><ChevronUp size={11} /></button>}
+        {onMove && <div className="absolute left-1/2 top-0 z-20 flex -translate-x-1/2 -translate-y-1/2 gap-0.5 opacity-40 transition group-hover:opacity-100 focus-within:opacity-100">
+          <ResizeButton activity={activity} edge="start" direction="expand" activities={allActivities} disabled={busy} onResize={onMove} />
+          <ResizeButton activity={activity} edge="start" direction="shrink" activities={allActivities} disabled={busy} onResize={onMove} />
+        </div>}
         <ActivityItem activity={activity} themes={themes} trainerNames={trainerNames} compact disabled={busy} onEdit={onEdit} draggable={Boolean(onMove)} />
-        {onMove && <button type="button" disabled={busy} onClick={() => grow("end")} title={`Agrandir ${activity.title} vers le bas`} aria-label={`Agrandir ${activity.title} vers le bas`}
-          className="absolute bottom-0 left-1/2 z-20 grid h-3.5 w-7 -translate-x-1/2 place-items-center rounded-t bg-white/90 text-slate-600 opacity-30 shadow-sm transition hover:bg-white hover:text-emerald-800 hover:opacity-100 focus:opacity-100 disabled:cursor-not-allowed disabled:opacity-20 sm:opacity-0 sm:group-hover:opacity-100"><ChevronDown size={11} /></button>}
+        {onMove && <div className="absolute bottom-0 left-1/2 z-20 flex -translate-x-1/2 translate-y-1/2 gap-0.5 opacity-40 transition group-hover:opacity-100 focus-within:opacity-100">
+          <ResizeButton activity={activity} edge="end" direction="shrink" activities={allActivities} disabled={busy} onResize={onMove} />
+          <ResizeButton activity={activity} edge="end" direction="expand" activities={allActivities} disabled={busy} onResize={onMove} />
+        </div>}
       </div>;
     })}
   </div>;
@@ -131,15 +201,20 @@ function OverviewGrid({ days, startDate, activities, themes, trainerNames, busy,
   days: number[]; startDate: string; activities: PlanActivity[]; themes: PlanTheme[]; trainerNames: Record<string, string>;
   busy: boolean; dragging: boolean; onAdd?: Props["onAdd"]; onEdit?: Props["onEdit"]; onMove?: Props["onMove"];
 }) {
-  const boundaries = Array.from(new Set(activities.flatMap((item) => [item.start, item.end]))).sort();
+  const activityMinutes = activities.flatMap((item) => [minuteOfDay(item.start), minuteOfDay(item.end)])
+    .filter((value) => Number.isFinite(value));
+  const gridStart = activityMinutes.length ? Math.floor(Math.min(...activityMinutes) / 15) * 15 : 9 * 60;
+  const gridEnd = activityMinutes.length ? Math.ceil(Math.max(...activityMinutes) / 15) * 15 : 18 * 60;
+  const boundaries = Array.from({ length: Math.max(2, (gridEnd - gridStart) / 15 + 1) },
+    (_, index) => asTime(gridStart + index * 15));
   const intervals = boundaries.slice(0, -1).map((start, index) => ({ start, end: boundaries[index + 1] }));
-  return <div className="planning-grid-scroll w-full max-w-[calc(100vw-24px)] overflow-x-auto rounded-md border border-slate-200 bg-white sm:max-w-[calc(100vw-40px)] xl:max-w-[calc(100vw-48px)]">
-    <div className="grid min-w-max" style={{ gridTemplateColumns: `54px repeat(${days.length}, minmax(140px, calc((100vw - 116px) / 7)))`, gridTemplateRows: `42px repeat(${intervals.length}, minmax(34px, auto))` }}>
+  return <div className="planning-grid-scroll w-full overflow-x-auto rounded-md border border-slate-200 bg-white">
+    <div className="grid min-w-full" style={{ gridTemplateColumns: `44px repeat(${days.length}, minmax(100px, 1fr))`, gridTemplateRows: `30px repeat(${intervals.length}, 16px)` }}>
       <div className="sticky left-0 top-0 z-30 grid place-items-center border-b border-r border-slate-200 bg-[#edf5f1] text-[9px] font-bold uppercase text-slate-500">Heure</div>
-      {days.map((day) => <OverviewDayHeader key={day} day={day} startDate={startDate} busy={busy} dragging={dragging} onAdd={onAdd} />)}
-      {intervals.map((interval, index) => <div key={interval.start} className="sticky left-0 z-10 border-b border-r border-slate-200 bg-slate-50 px-1.5 pt-1 text-right text-[10px] font-semibold text-slate-500" style={{ gridColumn: 1, gridRow: index + 2 }}>{interval.start}</div>)}
-      {days.flatMap((day) => intervals.map((interval, index) => <OverviewSlot key={`${day}-${interval.start}`} day={day} start={interval.start} end={interval.end} row={index + 2} dragging={dragging} />))}
-      {days.flatMap((day) => {
+      {days.map((day, index) => <OverviewDayHeader key={day} day={day} column={index + 2} startDate={startDate} busy={busy} dragging={dragging} onAdd={onAdd} />)}
+      {intervals.map((interval, index) => <div key={interval.start} className={`sticky left-0 z-10 flex items-start justify-end border-r bg-slate-50 px-1 pt-0.5 text-[8.5px] font-semibold leading-none text-slate-500 ${index % 4 === 0 ? "border-b border-slate-300" : "border-b border-slate-100"}`} style={{ gridColumn: 1, gridRow: index + 2 }}>{index % 2 === 0 ? interval.start : ""}</div>)}
+      {days.flatMap((day, dayIndex) => intervals.map((interval, index) => <OverviewSlot key={`${day}-${interval.start}`} day={day} column={dayIndex + 2} start={interval.start} end={interval.end} row={index + 2} dragging={dragging} />))}
+      {days.flatMap((day, dayIndex) => {
         const groups = new Map<string, PlanActivity[]>();
         activities.filter((item) => item.day === day).forEach((item) => {
           const key = `${item.start}|${item.end}`;
@@ -147,59 +222,13 @@ function OverviewGrid({ days, startDate, activities, themes, trainerNames, busy,
         });
         return Array.from(groups.entries()).map(([key, group]) => {
           const [start, end] = key.split("|");
-          const startIndex = boundaries.indexOf(start);
-          const endIndex = boundaries.indexOf(end);
-          return <OverviewActivityBlock key={`${day}-${key}`} day={day} startRow={startIndex + 2} endRow={endIndex + 2} activities={group} themes={themes} trainerNames={trainerNames} boundaries={boundaries} busy={busy} onEdit={onEdit} onMove={onMove} />;
+          const startRow = Math.floor((minuteOfDay(start) - gridStart) / 15) + 2;
+          const endRow = Math.max(startRow + 1, Math.ceil((minuteOfDay(end) - gridStart) / 15) + 2);
+          return <OverviewActivityBlock key={`${day}-${group.map((item) => item.id).sort().join("-")}`} column={dayIndex + 2} startRow={startRow} endRow={endRow} blockActivities={group} allActivities={activities} themes={themes} trainerNames={trainerNames} busy={busy} onEdit={onEdit} onMove={onMove} />;
         });
       })}
     </div>
   </div>;
-}
-
-function SlotRow({ day, start, end, activities, themes, trainerNames, groupCount, compact, dragging, busy, onEdit, onMove }: {
-  day: number; start: string; end: string; activities: PlanActivity[]; themes: PlanTheme[];
-  trainerNames: Record<string, string>; groupCount: number; compact: boolean; dragging: boolean;
-  busy: boolean; onEdit?: Props["onEdit"]; onMove?: Props["onMove"];
-}) {
-  const { isOver, setNodeRef } = useDroppable({ id: `slot-${day}-${start}-${end}`, data: { day, start } satisfies PlanningDropTarget });
-  const columns = compact ? "minmax(0,1fr)" : groupCount === 0 ? "76px minmax(0,1fr)" : `76px repeat(${groupCount}, minmax(170px,1fr))`;
-  const minWidth = !compact && groupCount > 0 ? 76 + groupCount * 170 : undefined;
-  return <div ref={setNodeRef} className={`grid border-b border-slate-100 last:border-b-0 ${compact ? "gap-1 px-1.5 py-1.5" : "gap-2 px-2.5 py-2"} ${isOver && dragging ? "bg-emerald-100/80 ring-1 ring-inset ring-emerald-500" : ""}`}
-    style={{ gridTemplateColumns: columns, minWidth }}>
-    <div className={`flex items-start gap-1 font-semibold text-slate-700 ${compact ? "text-[10px]" : "pt-1 text-xs"}`}><Clock3 size={compact ? 10 : 12} className="mt-0.5 shrink-0 text-slate-400" /><span>{start}{compact ? " – " : <br />}<span className="font-normal text-slate-400">{end}</span></span></div>
-    {activities.map((activity) => {
-      const group = !compact && activity.groupNumber && activity.groupNumber <= groupCount ? activity.groupNumber : 0;
-      return <div key={activity.id} className="min-w-0" style={{ gridColumn: compact ? "1" : group ? String(group + 1) : "2 / -1" }}>
-        <ActivityItem activity={activity} themes={themes} trainerNames={trainerNames} compact={compact} disabled={busy} onEdit={onEdit} draggable={Boolean(onMove)} />
-      </div>;
-    })}
-  </div>;
-}
-
-function DayPanel({ day, startDate, activities, themes, trainerNames, groupCount, compact, dragging, busy, onAdd, onEdit, onMove }: {
-  day: number; startDate: string; activities: PlanActivity[]; themes: PlanTheme[]; trainerNames: Record<string, string>;
-  groupCount: number; compact: boolean; dragging: boolean; busy: boolean;
-  onAdd?: Props["onAdd"]; onEdit?: Props["onEdit"]; onMove?: Props["onMove"];
-}) {
-  const { isOver: headerOver, setNodeRef: setHeaderRef } = useDroppable({ id: `header-day-${day}`, data: { day } satisfies PlanningDropTarget });
-  const { isOver: emptyOver, setNodeRef: setEmptyRef } = useDroppable({ id: `empty-day-${day}`, data: { day } satisfies PlanningDropTarget });
-  const dayActivities = activities.filter((item) => item.day === day);
-  const slots = Array.from(new Set(dayActivities.map((item) => `${item.start}|${item.end}`))).sort((a, b) => a.localeCompare(b));
-  return <section id={`planning-jour-${day}`} className={`min-w-0 scroll-mt-4 overflow-hidden rounded-md border border-slate-200 bg-white ${compact ? "max-w-[85vw] shrink-0 snap-start" : "w-full"}`}
-    style={compact ? { width: "max(150px, calc((100% - 36px) / 7))" } : undefined}>
-    <div ref={setHeaderRef} className={`flex items-center justify-between gap-1 border-b border-slate-100 ${compact ? "px-1.5 py-1.5" : "px-3 py-3"} ${headerOver && dragging ? "bg-emerald-100 ring-1 ring-inset ring-emerald-500" : "bg-[#f4f8f6]"}`}>
-      <div className={`flex min-w-0 items-center ${compact ? "gap-1" : "gap-2.5"}`}><span className={`grid shrink-0 place-items-center rounded-full bg-emerald-800 font-bold text-white ${compact ? "h-6 w-6 text-[10px]" : "h-8 w-8 text-xs"}`}>J{day}</span><h2 className={`font-semibold capitalize text-slate-900 ${compact ? "text-[11px] leading-tight" : "text-sm"}`}>{dateForDay(startDate, day)}</h2></div>
-      {onAdd && <button type="button" disabled={busy} onClick={() => onAdd(day)} title={`Ajouter un temps au jour ${day}`} aria-label={`Ajouter un temps au jour ${day}`} className={`grid shrink-0 cursor-pointer place-items-center rounded-full border border-slate-300 bg-white text-slate-700 hover:border-emerald-600 disabled:cursor-not-allowed disabled:opacity-40 ${compact ? "h-6 w-6" : "h-8 w-8"}`}><Plus size={compact ? 12 : 15} /></button>}
-    </div>
-    {slots.length ? <div className="overflow-x-auto">
-      {!compact && groupCount > 0 && <div className="grid border-b border-slate-100 text-[11px] font-semibold text-slate-500" style={{ gridTemplateColumns: `76px repeat(${groupCount}, minmax(170px,1fr))`, minWidth: 76 + groupCount * 170 }}><span className="px-3 py-2">Horaire</span>{Array.from({ length: groupCount }, (_, index) => <span key={index} className="border-l border-slate-100 px-3 py-2">Groupe {index + 1}</span>)}</div>}
-      {slots.map((slot) => {
-        const [start, end] = slot.split("|");
-        const slotActivities = dayActivities.filter((item) => item.start === start && item.end === end).sort((a, b) => (a.groupNumber || 0) - (b.groupNumber || 0));
-        return <SlotRow key={slot} day={day} start={start} end={end} activities={slotActivities} themes={themes} trainerNames={trainerNames} groupCount={groupCount} compact={compact} dragging={dragging} busy={busy} onEdit={onEdit} onMove={onMove} />;
-      })}
-    </div> : <div ref={setEmptyRef} className={`px-4 py-10 text-sm ${emptyOver && dragging ? "bg-emerald-100 text-emerald-900" : "text-slate-500"}`}>Aucun temps prévu ce jour.</div>}
-  </section>;
 }
 
 function PrintPlanning({ activities, dayCount, startDate, formationTitle, themes }: {
@@ -222,7 +251,7 @@ function PrintPlanning({ activities, dayCount, startDate, formationTitle, themes
             const theme = themeForActivity(activity, themes);
             return <div key={activity.id} className="team-print-activity" style={{ gridColumn: week.indexOf(activity.day) + 2,
               gridRow: `${boundaries.indexOf(activity.start) + 2} / ${boundaries.indexOf(activity.end) + 2}`, borderLeftColor: `var(--planning-${theme.color})` }}>
-              <strong>{activity.title}</strong><span>{activity.end}</span>{activity.groupNumber ? <small>G{activity.groupNumber}</small> : null}
+              <strong>{activity.title}</strong><span>{activity.start}–{activity.end}</span>
             </div>;
           })}
         </div>
@@ -232,7 +261,7 @@ function PrintPlanning({ activities, dayCount, startDate, formationTitle, themes
   </div>;
 }
 
-export function PlanningBoard({ activities, dayCount, startDate, groupCount, themes = defaultThemes, trainerNames = {}, formationTitle, busy = false, onEdit, onAdd, onMove, onSaveThemes }: Props) {
+export function PlanningBoard({ activities, dayCount, startDate, themes = defaultThemes, trainerNames = {}, formationTitle, busy = false, onEdit, onAdd, onMove, onSaveThemes }: Props) {
   const [view, setView] = useState<"all" | "day">("all");
   const [selectedDay, setSelectedDay] = useState(1);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -316,8 +345,7 @@ export function PlanningBoard({ activities, dayCount, startDate, groupCount, the
         {onSaveThemes && <button type="button" onClick={() => setEditingThemes(true)} title="Gérer les thèmes" aria-label="Gérer les thèmes" className="ml-auto grid h-8 w-8 place-items-center rounded-md border border-slate-200 bg-white text-slate-600 hover:border-emerald-600 print:hidden"><Settings2 size={16} /></button>}
       </div>
 
-      {view === "all" ? <div ref={overviewRef} className="min-w-0 max-w-full"><OverviewGrid days={days} startDate={startDate} activities={displayActivities} themes={themes} trainerNames={trainerNames} busy={busy || moving} dragging={Boolean(activeId)} onAdd={onAdd} onEdit={onEdit} onMove={onMove} /></div>
-        : <DayPanel day={selectedDay} startDate={startDate} activities={displayActivities} themes={themes} trainerNames={trainerNames} groupCount={groupCount} compact={false} dragging={Boolean(activeId)} busy={busy || moving} onAdd={onAdd} onEdit={onEdit} onMove={onMove} />}
+      <div ref={overviewRef} className="min-w-0 max-w-full"><OverviewGrid days={view === "all" ? days : [selectedDay]} startDate={startDate} activities={displayActivities} themes={themes} trainerNames={trainerNames} busy={busy || moving} dragging={Boolean(activeId)} onAdd={onAdd} onEdit={onEdit} onMove={onMove} /></div>
       {moving && <p role="status" className="text-xs text-emerald-800">Déplacement en cours...</p>}
     </div>
     <PrintPlanning activities={displayActivities} dayCount={dayCount} startDate={startDate} formationTitle={formationTitle} themes={themes} />

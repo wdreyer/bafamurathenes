@@ -2,29 +2,45 @@ import type { PlanActivity } from "@/lib/types";
 
 export type PlanningDropTarget = { day: number; start?: string };
 
-function minuteOfDay(value: string) {
+export function minuteOfDay(value: string) {
   const [hours, minutes] = value.split(":").map(Number);
   return hours * 60 + minutes;
 }
 
-function asTime(totalMinutes: number) {
+export function asTime(totalMinutes: number) {
   return `${String(Math.floor(totalMinutes / 60)).padStart(2, "0")}:${String(totalMinutes % 60).padStart(2, "0")}`;
 }
 
-export function expandActivityToBoundary(activity: PlanActivity, edge: "start" | "end", boundaries: string[]): PlanActivity | null {
-  const times = Array.from(new Set(boundaries)).sort();
-  const current = edge === "start" ? activity.start : activity.end;
-  const index = times.indexOf(current);
-  if (index < 0) return null;
-  const currentMinutes = minuteOfDay(current);
-  const target = edge === "start"
-    ? (index > 0 ? times[index - 1] : asTime(currentMinutes - 15))
-    : (index < times.length - 1 ? times[index + 1] : asTime(currentMinutes + 15));
-  const targetMinutes = minuteOfDay(target);
-  if (!Number.isFinite(targetMinutes) || targetMinutes < 0 || targetMinutes >= 24 * 60) return null;
-  if (edge === "start" && target >= activity.end) return null;
-  if (edge === "end" && target <= activity.start) return null;
-  return edge === "start" ? { ...activity, start: target } : { ...activity, end: target };
+export function snapTimeToQuarterHour(value: string) {
+  const minutes = minuteOfDay(value);
+  if (!Number.isFinite(minutes)) return value;
+  return asTime(Math.min(23 * 60 + 45, Math.max(0, Math.round(minutes / 15) * 15)));
+}
+
+export function resizeActivityByQuarterHour(
+  activity: PlanActivity,
+  edge: "start" | "end",
+  direction: "expand" | "shrink",
+  activities: PlanActivity[],
+): PlanActivity | null {
+  const start = minuteOfDay(activity.start);
+  const end = minuteOfDay(activity.end);
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return null;
+
+  const delta = direction === "expand" ? 15 : -15;
+  const nextStart = edge === "start" ? start - delta : start;
+  const nextEnd = edge === "end" ? end + delta : end;
+  if (nextStart < 0 || nextEnd >= 24 * 60 || nextEnd - nextStart < 15) return null;
+
+  if (direction === "expand") {
+    const addedStart = edge === "start" ? nextStart : end;
+    const addedEnd = edge === "start" ? start : nextEnd;
+    const occupied = activities.some((item) => item.id !== activity.id && item.day === activity.day &&
+      minuteOfDay(item.start) < addedEnd && minuteOfDay(item.end) > addedStart);
+    if (occupied) return null;
+  }
+
+  return { ...activity, start: asTime(nextStart), end: asTime(nextEnd) };
 }
 
 export function moveActivityToTarget(activity: PlanActivity, target: PlanningDropTarget): PlanActivity | null {

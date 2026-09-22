@@ -1,15 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { addDoc, collection, doc, getDoc, getDocs, onSnapshot, query, serverTimestamp, setDoc, updateDoc, where } from "firebase/firestore";
-import { CalendarDays, Check, ExternalLink, Minus, Pencil, Plus, Save, Users } from "lucide-react";
+import { addDoc, collection, doc, getDoc, onSnapshot, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
+import { CalendarDays, Check, ExternalLink, Pencil, Plus, Save, Users } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { buildPlanningTemplate } from "@/lib/planningTemplates";
 import { savePlanningTime } from "@/lib/savePlanningTime";
 import { defaultThemes } from "@/lib/planningThemes";
 import { ActivityEditor } from "@/components/planning/ActivityEditor";
 import { PlanningBoard } from "@/components/planning/PlanningBoard";
-import type { Formation, Inscription, PlanActivity, PlanTheme, Trainer } from "@/lib/types";
+import type { Formation, PlanActivity, PlanTheme, Trainer } from "@/lib/types";
 
 const emptyActivity = (day: number): PlanActivity => ({
   id: crypto.randomUUID(), day, start: "09:00", end: "10:00", title: "", content: "", trainerIds: [], color: "mint",
@@ -22,7 +22,6 @@ export default function FormateursPage() {
   const [formations, setFormations] = useState<Formation[]>([]);
   const [formationId, setFormationId] = useState("");
   const [activities, setActivities] = useState<PlanActivity[]>([]);
-  const [groupCount, setGroupCount] = useState(0);
   const [themes, setThemes] = useState<PlanTheme[]>(defaultThemes);
   const [planExists, setPlanExists] = useState(false);
   const [tab, setTab] = useState<"planning" | "team">("team");
@@ -62,7 +61,6 @@ export default function FormateursPage() {
     return onSnapshot(doc(db, "formationPlans", formationId), (snapshot) => {
       setPlanExists(snapshot.exists());
       setActivities(snapshot.exists() ? (snapshot.data().activities || []) as PlanActivity[] : []);
-      setGroupCount(snapshot.exists() ? Number(snapshot.data().groupCount) || 0 : 0);
       setThemes(snapshot.exists() && snapshot.data().themes?.length ? snapshot.data().themes as PlanTheme[] : defaultThemes);
     }, () => setError("Impossible de charger le planning."));
   }, [formationId]);
@@ -126,22 +124,6 @@ export default function FormateursPage() {
     finally { setBusy(false); }
   };
 
-  const changeGroupCount = async (next: number) => {
-    if (!formation || !planExists || busy || next < 0 || next > 8) return;
-    setBusy(true); setError("");
-    try {
-      if (next < groupCount) {
-        const registrations = await getDocs(query(collection(db, "inscriptions"), where("formationId", "==", formation.id)));
-        if (activities.some((item) => item.groupNumber === groupCount) || registrations.docs.some((entry) => (entry.data() as Inscription).traineeGroupNumber === groupCount)) {
-          setError(`Le groupe ${groupCount} est encore utilisé. Retire ses affectations avant de supprimer la colonne.`);
-          return;
-        }
-      }
-      await updateDoc(doc(db, "formationPlans", formation.id), { groupCount: next, updatedAt: serverTimestamp() });
-    } catch { setError("Impossible de modifier les colonnes de groupe."); }
-    finally { setBusy(false); }
-  };
-
   const persistActivity = async () => {
     if (!formation || !editing || !editing.title.trim() || editing.end <= editing.start) {
       setError("Renseigne un titre et une heure de fin après le début."); return;
@@ -175,12 +157,12 @@ export default function FormateursPage() {
       {formation && <>
         <div className="border-y border-slate-200 py-3"><div className="mb-2 flex items-center justify-between"><h2 className="text-sm font-semibold">Formateur·ices de la session</h2><button type="button" onClick={() => setTab("team")} className="text-xs text-emerald-700">Gérer l&apos;équipe</button></div><div className="flex flex-wrap gap-2">{trainers.map((trainer) => <button key={trainer.id} type="button" disabled={busy} onClick={() => void toggleTrainer(trainer.id)} aria-pressed={formation.trainerIds?.includes(trainer.id) || false} className={`rounded-full border px-3 py-1.5 text-sm ${formation.trainerIds?.includes(trainer.id) ? "border-emerald-700 bg-emerald-50 text-emerald-900" : "border-slate-200 bg-white text-slate-600"}`}>{formation.trainerIds?.includes(trainer.id) && <Check size={13} className="mr-1 inline" />}{trainerName(trainer)}</button>)}{!trainers.length && <p className="text-sm text-slate-500">Ajoute d&apos;abord une fiche formateur·ice dans l&apos;onglet Équipe.</p>}</div></div>
         {!planExists ? <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-dashed border-slate-300 bg-white p-6"><div><h2 className="font-semibold">Planning à préparer</h2><p className="text-sm text-slate-500">Modèle {formation.type === "formation_generale" ? "formation générale · 9 jours" : "approfondissement · 7 jours"}, inspiré des plannings fournis.</p></div><button type="button" disabled={busy} onClick={() => void saveActivities(buildPlanningTemplate(formation))} className="flex items-center gap-2 rounded bg-slate-900 px-4 py-2 text-sm text-white"><Plus size={16} />Créer le planning</button></div> : <>
-          <div className="flex flex-wrap items-center justify-between gap-3"><p className="text-sm font-medium text-slate-700">Déroulé complet · J1 à J{dayCount}</p><div className="flex items-center gap-2"><span className="text-xs font-semibold text-slate-600">Colonnes de groupe : {groupCount}</span><button type="button" disabled={busy || groupCount === 0} onClick={() => void changeGroupCount(groupCount - 1)} title="Retirer une colonne de groupe" aria-label="Retirer une colonne de groupe" className="grid h-8 w-8 place-items-center rounded-full border border-slate-300 bg-white disabled:opacity-40"><Minus size={15} /></button><button type="button" disabled={busy || groupCount >= 8} onClick={() => void changeGroupCount(groupCount + 1)} title="Ajouter une colonne de groupe" aria-label="Ajouter une colonne de groupe" className="grid h-8 w-8 place-items-center rounded-full border border-slate-300 bg-white disabled:opacity-40"><Plus size={15} /></button></div></div>
-          <PlanningBoard key={formation.id} activities={activities} dayCount={dayCount} startDate={formation.startDate} groupCount={groupCount} themes={themes} trainerNames={Object.fromEntries(trainers.map((trainer) => [trainer.id, trainerName(trainer)]))} busy={busy} onEdit={(item) => { setError(""); setEditing({ ...item, trainerIds: item.trainerIds || [] }); }} onAdd={(day) => { setError(""); setEditing(emptyActivity(day)); }} onMove={(moved) => saveActivities(activities.map((item) => item.id === moved.id ? moved : item))} onSaveThemes={saveThemes} />
+          <p className="text-sm font-medium text-slate-700">Déroulé complet · J1 à J{dayCount}</p>
+          <PlanningBoard key={formation.id} activities={activities} dayCount={dayCount} startDate={formation.startDate} themes={themes} trainerNames={Object.fromEntries(trainers.map((trainer) => [trainer.id, trainerName(trainer)]))} busy={busy} onEdit={(item) => { setError(""); setEditing({ ...item, trainerIds: item.trainerIds || [] }); }} onAdd={(day) => { setError(""); setEditing(emptyActivity(day)); }} onMove={(moved) => saveActivities(activities.map((item) => item.id === moved.id ? moved : item))} onSaveThemes={saveThemes} />
         </>}
       </>}
     </div>}
 
-    {editing && formation && <ActivityEditor activity={editing} existing={activities.some((item) => item.id === editing.id)} dayCount={dayCount} groupCount={groupCount} formationType={formation.type} trainers={assigned.map((trainer) => ({ id: trainer.id, name: trainerName(trainer) }))} themes={themes} busy={busy} error={error} onChange={setEditing} onSave={() => void persistActivity()} onClose={() => setEditing(null)} onDelete={() => { if (window.confirm("Supprimer ce temps ?")) void saveActivities(activities.filter((item) => item.id !== editing.id)).then((saved) => { if (saved) setEditing(null); }); }} />}
+    {editing && formation && <ActivityEditor activity={editing} existing={activities.some((item) => item.id === editing.id)} dayCount={dayCount} formationType={formation.type} trainers={assigned.map((trainer) => ({ id: trainer.id, name: trainerName(trainer) }))} themes={themes} busy={busy} error={error} onChange={setEditing} onSave={() => void persistActivity()} onClose={() => setEditing(null)} onDelete={() => { if (window.confirm("Supprimer ce temps ?")) void saveActivities(activities.filter((item) => item.id !== editing.id)).then((saved) => { if (saved) setEditing(null); }); }} />}
   </div>;
 }

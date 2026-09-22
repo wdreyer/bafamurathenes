@@ -42,7 +42,6 @@ export type PlanActivity = {
   title: string;
   content: string;
   trainerIds: string[];
-  groupNumber?: number;
   resourceId?: string;
   catalogId?: string;
   catalogCategory?: TrainingTimeCategory;
@@ -119,6 +118,8 @@ export type Inscription = {
   notes?: string;
   trainerNotes?: string;
   traineeGroupNumber?: number | null;
+  starterNotes?: string;
+  participationNotes?: string;
   source?: string;
   tariff?: string;
   yaplaStatus?: string;

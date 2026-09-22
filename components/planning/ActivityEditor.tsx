@@ -6,13 +6,13 @@ import { catalogCategories, catalogForFormationWithCustom, resourceForActivity, 
 import { trainerResources } from "@/lib/trainerGuide";
 import { themeForActivity, themeSwatch } from "@/lib/planningThemes";
 import { useTrainingTimes } from "@/lib/useTrainingTimes";
+import { snapTimeToQuarterHour } from "@/lib/planningMove";
 import type { FormationType, PlanActivity, PlanTheme } from "@/lib/types";
 
 type Props = {
   activity: PlanActivity;
   existing: boolean;
   dayCount: number;
-  groupCount: number;
   formationType: FormationType;
   trainers: { id: string; name: string }[];
   themes: PlanTheme[];
@@ -24,7 +24,7 @@ type Props = {
   onClose: () => void;
 };
 
-export function ActivityEditor({ activity, existing, dayCount, groupCount, formationType, trainers, themes, busy, error, onChange, onSave, onDelete, onClose }: Props) {
+export function ActivityEditor({ activity, existing, dayCount, formationType, trainers, themes, busy, error, onChange, onSave, onDelete, onClose }: Props) {
   const [catalogOpen, setCatalogOpen] = useState(!existing);
   const [category, setCategory] = useState<"all" | CatalogCategory>("all");
   const [search, setSearch] = useState("");
@@ -89,10 +89,9 @@ export function ActivityEditor({ activity, existing, dayCount, groupCount, forma
         </div>}
         <div className="grid grid-cols-3 gap-2">
           <label className="text-xs font-semibold text-slate-600">Jour<select value={activity.day} onChange={(event) => onChange({ ...activity, day: Number(event.target.value) })} className="mt-1 h-10 w-full rounded border border-slate-300 bg-white px-2 text-sm font-normal">{Array.from({ length: dayCount }, (_, index) => <option key={index} value={index + 1}>J{index + 1}</option>)}</select></label>
-          <label className="text-xs font-semibold text-slate-600">Début<input required type="time" value={activity.start} onChange={(event) => onChange({ ...activity, start: event.target.value })} className="mt-1 h-10 w-full rounded border border-slate-300 px-2 text-sm font-normal" /></label>
-          <label className="text-xs font-semibold text-slate-600">Fin<input required type="time" value={activity.end} onChange={(event) => onChange({ ...activity, end: event.target.value })} className="mt-1 h-10 w-full rounded border border-slate-300 px-2 text-sm font-normal" /></label>
+          <label className="text-xs font-semibold text-slate-600">Début<input required type="time" value={activity.start} onChange={(event) => onChange({ ...activity, start: snapTimeToQuarterHour(event.target.value) })} className="mt-1 h-10 w-full rounded border border-slate-300 px-2 text-sm font-normal" /></label>
+          <label className="text-xs font-semibold text-slate-600">Fin<input required type="time" value={activity.end} onChange={(event) => onChange({ ...activity, end: snapTimeToQuarterHour(event.target.value) })} className="mt-1 h-10 w-full rounded border border-slate-300 px-2 text-sm font-normal" /></label>
         </div>
-        {groupCount > 0 && <label className="block text-xs font-semibold text-slate-600">Groupe d&apos;activité<select value={activity.groupNumber || 0} onChange={(event) => onChange({ ...activity, groupNumber: Number(event.target.value) })} className="mt-1 h-10 w-full rounded border border-slate-300 bg-white px-3 text-sm font-normal"><option value={0}>Tous les groupes</option>{Array.from({ length: groupCount }, (_, index) => <option key={index} value={index + 1}>Groupe {index + 1}</option>)}</select></label>}
         <label className="block text-xs font-semibold text-slate-600">Contenu / consignes<textarea value={activity.content} onChange={(event) => onChange({ ...activity, content: event.target.value })} rows={3} className="mt-1 w-full rounded border border-slate-300 p-3 text-sm font-normal text-slate-900" /></label>
         <div><p className="mb-2 text-xs font-semibold text-slate-600">Thème</p><div className="flex flex-wrap gap-2" role="group" aria-label="Thème du temps">{themes.map((theme) => <button key={theme.id} type="button" onClick={() => onChange({ ...activity, themeId: theme.id, color: theme.color })} aria-pressed={selectedTheme.id === theme.id} className={`inline-flex min-h-9 items-center gap-2 rounded-md border px-2.5 py-1.5 text-xs font-medium ${selectedTheme.id === theme.id ? "border-slate-800 bg-slate-50 text-slate-950" : "border-slate-200 bg-white text-slate-600"}`}><span className={`h-3 w-3 shrink-0 rounded-full ${themeSwatch(theme.color)}`} />{theme.name}</button>)}</div></div>
         <div className="grid gap-4 sm:grid-cols-2">

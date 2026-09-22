@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { collection, doc, onSnapshot, query, serverTimestamp, setDoc, updateDoc, where } from "firebase/firestore";
-import { Minus, Plus, Printer, Users } from "lucide-react";
+import { Printer, Users } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { savePlanningTime } from "@/lib/savePlanningTime";
 import { defaultThemes } from "@/lib/planningThemes";
@@ -109,19 +109,19 @@ export default function TeamPage() {
 
   const changeGroupCount = async (next: number) => {
     if (!formation || !plan || busy || (next < groupCount && registrationsLoading) || next < 0 || next > 8) return;
-    if (next < groupCount && (plan.activities.some((item) => item.groupNumber === groupCount) ||
-      registrations.some((item) => item.traineeGroupNumber === groupCount))) {
-      setError(`Le groupe ${groupCount} est encore utilisé. Retire ses affectations avant de supprimer la colonne.`);
+    if (next < groupCount && registrations.some((item) => (item.traineeGroupNumber || 0) > next)) {
+      setError(`Le groupe ${groupCount} est encore utilisé. Retire ses affectations avant de réduire le nombre de groupes.`);
       return;
     }
     setBusy(true); setError("");
     try {
       await updateDoc(doc(db, "formationPlans", formation.id), { groupCount: next, updatedAt: serverTimestamp() });
-    } catch { setError("Impossible de modifier les colonnes de groupe."); }
+    } catch { setError("Impossible de modifier le nombre de groupes."); }
     finally { setBusy(false); }
   };
 
-  const saveTraineeField = async (inscriptionId: string, patch: Partial<Pick<Inscription, "trainerNotes" | "traineeGroupNumber">>) => {
+  const saveTraineeField = async (inscriptionId: string, patch: Partial<Pick<Inscription,
+    "trainerNotes" | "traineeGroupNumber" | "starterNotes" | "participationNotes">>) => {
     if (!registrations.some((item) => item.id === inscriptionId)) return false;
     setError("");
     try {
@@ -151,13 +151,12 @@ export default function TeamPage() {
         <div className={section === "planning" ? "" : "hidden print:block"}>
           <div className="print:hidden flex flex-wrap items-center justify-between gap-3 py-4">
             <p className="text-sm font-medium text-slate-700">J1 à J{dayCount} · {plan.activities.length} temps</p>
-            <div className="flex items-center gap-2"><span className="mr-1 text-xs font-semibold text-slate-600">Colonnes de groupe : {groupCount}</span><button type="button" disabled={busy || registrationsLoading || groupCount === 0} onClick={() => void changeGroupCount(groupCount - 1)} title="Retirer une colonne de groupe" aria-label="Retirer une colonne de groupe" className="grid h-8 w-8 place-items-center rounded-full border border-slate-300 bg-white disabled:opacity-40"><Minus size={15} /></button><button type="button" disabled={busy || groupCount >= 8} onClick={() => void changeGroupCount(groupCount + 1)} title="Ajouter une colonne de groupe" aria-label="Ajouter une colonne de groupe" className="grid h-8 w-8 place-items-center rounded-full border border-slate-300 bg-white disabled:opacity-40"><Plus size={15} /></button></div>
           </div>
-          <PlanningBoard key={formation.id} activities={plan.activities} dayCount={dayCount} startDate={formation.startDate} formationTitle={formation.title} groupCount={groupCount} themes={themes} trainerNames={plan.trainerNames} busy={busy} onEdit={(item) => { setError(""); setEditing({ ...item, trainerIds: item.trainerIds || [] }); }} onAdd={(day) => { setError(""); setEditing(emptyActivity(day)); }} onMove={(moved) => saveActivities(plan.activities.map((item) => item.id === moved.id ? moved : item))} onSaveThemes={saveThemes} />
+          <PlanningBoard key={formation.id} activities={plan.activities} dayCount={dayCount} startDate={formation.startDate} formationTitle={formation.title} themes={themes} trainerNames={plan.trainerNames} busy={busy} onEdit={(item) => { setError(""); setEditing({ ...item, trainerIds: item.trainerIds || [] }); }} onAdd={(day) => { setError(""); setEditing(emptyActivity(day)); }} onMove={(moved) => saveActivities(plan.activities.map((item) => item.id === moved.id ? moved : item))} onSaveThemes={saveThemes} />
         </div>
-        {section === "trainees" && <div className="print:hidden"><TraineeRoster key={selectedFormationId} inscriptions={registrations} loading={registrationsLoading} groupCount={groupCount} onSaveNote={(id, note) => saveTraineeField(id, { trainerNotes: note })} onSaveGroup={(id, groupNumber) => saveTraineeField(id, { traineeGroupNumber: groupNumber })} /></div>}
+        {section === "trainees" && <div className="print:hidden"><TraineeRoster key={selectedFormationId} inscriptions={registrations} loading={registrationsLoading} groupCount={groupCount} busy={busy} onChangeGroupCount={changeGroupCount} onSaveField={saveTraineeField} /></div>}
       </>}
     </div>
-    {editing && formation && plan && <ActivityEditor activity={editing} existing={plan.activities.some((item) => item.id === editing.id)} dayCount={dayCount} groupCount={groupCount} formationType={formation.type} trainers={trainers} themes={themes} busy={busy} error={error} onChange={setEditing} onSave={() => void saveEditing()} onClose={() => setEditing(null)} onDelete={() => { if (window.confirm("Supprimer ce temps ?")) void saveActivities(plan.activities.filter((item) => item.id !== editing.id)).then((saved) => { if (saved) setEditing(null); }); }} />}
+    {editing && formation && plan && <ActivityEditor activity={editing} existing={plan.activities.some((item) => item.id === editing.id)} dayCount={dayCount} formationType={formation.type} trainers={trainers} themes={themes} busy={busy} error={error} onChange={setEditing} onSave={() => void saveEditing()} onClose={() => setEditing(null)} onDelete={() => { if (window.confirm("Supprimer ce temps ?")) void saveActivities(plan.activities.filter((item) => item.id !== editing.id)).then((saved) => { if (saved) setEditing(null); }); }} />}
   </main>;
 }
