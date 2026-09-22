@@ -47,7 +47,14 @@ export type PlanActivity = {
   catalogId?: string;
   catalogCategory?: TrainingTimeCategory;
   catalogScope?: TrainingTimeScope;
+  themeId?: string;
   color: "mint" | "coral" | "sky" | "lemon" | "lilac" | "neutral";
+};
+
+export type PlanTheme = {
+  id: string;
+  name: string;
+  color: PlanActivity["color"];
 };
 
 export type TrainingTimeCategory = "cadre" | "pedagogie" | "animation" | "vie" | "interculturel" | "bilan";

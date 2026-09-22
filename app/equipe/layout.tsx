@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { TeamShell } from "@/components/planning/TeamShell";
 
 export const metadata: Metadata = {
   title: "Équipe pédagogique | Murathènes",
@@ -6,5 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default function PlanningLayout({ children }: { children: React.ReactNode }) {
-  return children;
+  return <TeamShell>{children}</TeamShell>;
 }

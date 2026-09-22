@@ -1,35 +1,43 @@
 "use client";
 
-import { Clock3, FileText, Plus } from "lucide-react";
+import { useRef, useState } from "react";
+import {
+  DndContext, DragOverlay, KeyboardSensor, PointerSensor, pointerWithin, rectIntersection,
+  useDraggable, useDroppable, useSensor, useSensors, type CollisionDetection, type DragEndEvent,
+} from "@dnd-kit/core";
+import { CalendarDays, ChevronLeft, ChevronRight, Clock3, FileText, GripVertical, List, Plus, Settings2 } from "lucide-react";
+import { moveActivityToTarget, type PlanningDropTarget } from "@/lib/planningMove";
+import { defaultThemes, themeForActivity, themeSurface, themeSwatch } from "@/lib/planningThemes";
 import { resourceForActivity } from "@/lib/trainingCatalog";
-import type { PlanActivity } from "@/lib/types";
+import { ThemeEditor } from "@/components/planning/ThemeEditor";
+import type { PlanActivity, PlanTheme } from "@/lib/types";
 
 type Props = {
   activities: PlanActivity[];
   dayCount: number;
   startDate: string;
   groupCount: number;
+  themes?: PlanTheme[];
   trainerNames?: Record<string, string>;
+  busy?: boolean;
   onEdit?: (activity: PlanActivity) => void;
   onAdd?: (day: number) => void;
+  onMove?: (activity: PlanActivity) => Promise<boolean>;
+  onSaveThemes?: (themes: PlanTheme[]) => Promise<boolean>;
 };
 
-const tones: Record<PlanActivity["color"], string> = {
-  mint: "border-emerald-500 bg-emerald-50/80 text-emerald-950",
-  coral: "border-rose-400 bg-rose-50/80 text-rose-950",
-  sky: "border-sky-500 bg-sky-50/80 text-sky-950",
-  lemon: "border-amber-400 bg-amber-50/80 text-amber-950",
-  lilac: "border-violet-400 bg-violet-50/80 text-violet-950",
-  neutral: "border-slate-300 bg-slate-50 text-slate-800",
+const collisionDetection: CollisionDetection = (args) => {
+  const pointer = pointerWithin(args);
+  return pointer.length ? pointer : rectIntersection(args);
 };
 
-const dayTones = ["bg-emerald-700", "bg-rose-600", "bg-sky-700", "bg-amber-600"];
-
-function dateForDay(startDate: string, day: number) {
+function dateForDay(startDate: string, day: number, short = false) {
   const date = new Date(`${startDate.slice(0, 10)}T12:00:00`);
   if (Number.isNaN(date.getTime())) return `Jour ${day}`;
   date.setDate(date.getDate() + day - 1);
-  return new Intl.DateTimeFormat("fr-FR", { weekday: "long", day: "numeric", month: "long" }).format(date);
+  return new Intl.DateTimeFormat("fr-FR", short
+    ? { weekday: "short", day: "numeric" }
+    : { weekday: "long", day: "numeric", month: "long" }).format(date);
 }
 
 function activityEmoji(title: string) {
@@ -40,70 +48,148 @@ function activityEmoji(title: string) {
   return null;
 }
 
-function ActivityItem({ activity, trainerNames, onEdit }: {
-  activity: PlanActivity;
-  trainerNames: Record<string, string>;
-  onEdit?: Props["onEdit"];
+function DayNavButton({ day, label, active, onClick }: { day: number; label: string; active: boolean; onClick: () => void }) {
+  const { isOver, setNodeRef } = useDroppable({ id: `nav-day-${day}`, data: { day } satisfies PlanningDropTarget });
+  return <button ref={setNodeRef} type="button" onClick={onClick} aria-current={active ? "date" : undefined}
+    className={`shrink-0 rounded-md border px-3 py-2 text-left text-xs font-semibold transition ${isOver ? "border-emerald-700 bg-emerald-100 text-emerald-950" : active ? "border-emerald-700 bg-emerald-800 text-white" : "border-slate-200 bg-white text-slate-700 hover:border-emerald-500"}`}>
+    <span className="block">J{day}</span><span className="block font-normal opacity-80">{label}</span>
+  </button>;
+}
+
+function ActivityItem({ activity, themes, trainerNames, compact, disabled, onEdit, draggable }: {
+  activity: PlanActivity; themes: PlanTheme[]; trainerNames: Record<string, string>;
+  compact: boolean; disabled: boolean; onEdit?: Props["onEdit"]; draggable: boolean;
 }) {
+  const { attributes, listeners, setNodeRef, setActivatorNodeRef, isDragging } = useDraggable({ id: activity.id, disabled: !draggable || disabled });
+  const theme = themeForActivity(activity, themes);
   const resource = resourceForActivity(activity);
   const emoji = activityEmoji(activity.title);
   const trainers = (activity.trainerIds || []).map((id) => trainerNames[id]).filter(Boolean).join(", ");
-
-  return <div className={`min-w-0 rounded-md border-l-4 px-3 py-2 ${tones[activity.color] || tones.neutral}`}>
-    {onEdit ? <button type="button" onClick={() => onEdit(activity)} title={`Modifier ${activity.title}`} className="block w-full cursor-pointer text-left">
-      <span className="block text-sm font-semibold leading-5">{emoji && <span aria-hidden="true" className="mr-1.5">{emoji}</span>}{activity.title}</span>
-      {activity.content && <span className="mt-1 block line-clamp-2 text-xs leading-4 opacity-80">{activity.content}</span>}
-    </button> : <><p className="text-sm font-semibold leading-5">{emoji && <span aria-hidden="true" className="mr-1.5">{emoji}</span>}{activity.title}</p>{activity.content && <p className="mt-1 line-clamp-2 text-xs leading-4 opacity-80">{activity.content}</p>}</>}
-    {(trainers || resource) && <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-current/10 pt-1.5 text-[11px] opacity-85">
-      {trainers && <span>{trainers}</span>}
-      {resource && <a href={resource.href} target="_blank" rel="noopener noreferrer" title={`Ouvrir ${resource.title}`} className="inline-flex items-center gap-1 font-semibold underline underline-offset-2"><FileText size={12} />{resource.kind.toUpperCase()}</a>}
-    </div>}
+  return <div ref={setNodeRef} className={`min-w-0 rounded-md border-l-[3px] px-2.5 py-2 ${themeSurface(theme.color)} ${isDragging ? "opacity-35" : ""}`}>
+    <div className="flex min-w-0 items-start gap-1">
+      {draggable && <button ref={setActivatorNodeRef} type="button" title={`Déplacer ${activity.title}`} aria-label={`Déplacer ${activity.title}`} disabled={disabled} {...attributes} {...listeners}
+        className="mt-0.5 grid h-6 w-6 shrink-0 cursor-grab place-items-center rounded text-current/60 touch-none hover:bg-white/70 active:cursor-grabbing disabled:opacity-40"><GripVertical size={15} /></button>}
+      <div className="min-w-0 flex-1">
+        {onEdit ? <button type="button" disabled={disabled} onClick={() => onEdit(activity)} title={`Modifier ${activity.title}`} className="block w-full text-left disabled:cursor-wait">
+          <span className="block text-sm font-semibold leading-5">{emoji && <span aria-hidden="true" className="mr-1.5">{emoji}</span>}{activity.title}</span>
+          {!compact && activity.content && <span className="mt-1 block line-clamp-2 text-xs leading-4 opacity-80">{activity.content}</span>}
+        </button> : <p className="text-sm font-semibold leading-5">{emoji && <span aria-hidden="true" className="mr-1.5">{emoji}</span>}{activity.title}</p>}
+        {compact && activity.groupNumber ? <p className="mt-1 text-[11px] font-semibold opacity-70">Groupe {activity.groupNumber}</p> : null}
+        {(trainers || resource) && <div className="mt-1.5 flex flex-wrap items-center justify-between gap-1 text-[11px] opacity-80">
+          {trainers && <span>{trainers}</span>}
+          {resource && <a href={resource.href} target="_blank" rel="noopener noreferrer" title={`Ouvrir ${resource.title}`} className="inline-flex items-center gap-1 font-semibold underline"><FileText size={12} />PDF</a>}
+        </div>}
+      </div>
+    </div>
   </div>;
 }
 
-export function PlanningBoard({ activities, dayCount, startDate, groupCount, trainerNames = {}, onEdit, onAdd }: Props) {
-  const days = Array.from({ length: dayCount }, (_, index) => index + 1);
-  const columns = groupCount > 0 ? `88px repeat(${groupCount}, minmax(190px, 1fr))` : "88px minmax(0, 1fr)";
-  const minWidth = groupCount > 0 ? 88 + groupCount * 190 : undefined;
-
-  return <div className="space-y-4">
-    <nav className="flex gap-1.5 overflow-x-auto pb-2 print:hidden" aria-label="Aller à une journée">
-      {days.map((day) => <a key={day} href={`#planning-jour-${day}`} className="shrink-0 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 no-underline hover:border-emerald-600 hover:text-emerald-800">J{day}</a>)}
-    </nav>
-    <div className="overflow-hidden rounded-md border border-slate-200 bg-white">
-      {days.map((day) => {
-        const dayActivities = activities.filter((item) => item.day === day);
-        const slots = Array.from(new Set(dayActivities.map((item) => `${item.start}|${item.end}`)))
-          .sort((a, b) => a.localeCompare(b));
-        return <section key={day} id={`planning-jour-${day}`} className="scroll-mt-4 border-b border-slate-200 last:border-b-0">
-          <div className="flex flex-wrap items-center justify-between gap-3 bg-[#f9faf8] px-4 py-3">
-            <div className="flex min-w-0 items-center gap-3">
-              <span className={`grid h-9 w-9 shrink-0 place-items-center rounded-full text-xs font-bold text-white ${dayTones[(day - 1) % dayTones.length]}`}>J{day}</span>
-              <h2 className="text-base font-semibold text-slate-900">{dateForDay(startDate, day)}</h2>
-            </div>
-            {onAdd && <button type="button" onClick={() => onAdd(day)} title={`Ajouter un temps au jour ${day}`} className="inline-flex h-8 items-center gap-1.5 rounded-full border border-slate-300 bg-white px-3 text-xs font-medium text-slate-700 hover:border-emerald-600 hover:text-emerald-800"><Plus size={14} />Ajouter</button>}
-          </div>
-          {slots.length ? <div className="overflow-x-auto"><div style={{ minWidth }}>
-            {groupCount > 0 && <div className="grid border-b border-slate-100 bg-white text-[11px] font-semibold text-slate-500" style={{ gridTemplateColumns: columns }}>
-              <span className="px-3 py-2">Horaire</span>{Array.from({ length: groupCount }, (_, index) => <span key={index} className="border-l border-slate-100 px-3 py-2">Groupe {index + 1}</span>)}
-            </div>}
-            {slots.map((slot) => {
-              const [start, end] = slot.split("|");
-              const slotActivities = dayActivities.filter((item) => item.start === start && item.end === end)
-                .sort((a, b) => (a.groupNumber || 0) - (b.groupNumber || 0));
-              return <div key={slot} className="grid gap-x-2 gap-y-1 border-b border-slate-100 px-2 py-2 last:border-b-0" style={{ gridTemplateColumns: columns }}>
-                <div className="flex items-start gap-1 pt-1 text-xs font-semibold text-slate-600"><Clock3 size={13} className="mt-0.5 shrink-0 text-slate-400" /><span>{start}<br /><span className="font-normal text-slate-400">{end}</span></span></div>
-                {slotActivities.map((activity) => {
-                  const group = activity.groupNumber && activity.groupNumber <= groupCount ? activity.groupNumber : 0;
-                  return <div key={activity.id} className="min-w-0" style={{ gridColumn: group ? String(group + 1) : "2 / -1" }}>
-                    <ActivityItem activity={activity} trainerNames={trainerNames} onEdit={onEdit} />
-                  </div>;
-                })}
-              </div>;
-            })}
-          </div></div> : <p className="px-5 py-6 text-sm text-slate-500">Aucun temps prévu ce jour.</p>}
-        </section>;
-      })}
-    </div>
+function SlotRow({ day, start, end, activities, themes, trainerNames, groupCount, compact, dragging, busy, onEdit, onMove }: {
+  day: number; start: string; end: string; activities: PlanActivity[]; themes: PlanTheme[];
+  trainerNames: Record<string, string>; groupCount: number; compact: boolean; dragging: boolean;
+  busy: boolean; onEdit?: Props["onEdit"]; onMove?: Props["onMove"];
+}) {
+  const { isOver, setNodeRef } = useDroppable({ id: `slot-${day}-${start}-${end}`, data: { day, start } satisfies PlanningDropTarget });
+  const columns = compact || groupCount === 0 ? "68px minmax(0,1fr)" : `76px repeat(${groupCount}, minmax(170px,1fr))`;
+  const minWidth = !compact && groupCount > 0 ? 76 + groupCount * 170 : undefined;
+  return <div ref={setNodeRef} className={`grid gap-2 border-b border-slate-100 px-2.5 py-2 last:border-b-0 ${isOver && dragging ? "bg-emerald-100/80 ring-1 ring-inset ring-emerald-500" : ""}`}
+    style={{ gridTemplateColumns: columns, minWidth }}>
+    <div className="flex items-start gap-1 pt-1 text-xs font-semibold text-slate-700"><Clock3 size={12} className="mt-0.5 shrink-0 text-slate-400" /><span>{start}<br /><span className="font-normal text-slate-400">{end}</span></span></div>
+    {activities.map((activity) => {
+      const group = !compact && activity.groupNumber && activity.groupNumber <= groupCount ? activity.groupNumber : 0;
+      return <div key={activity.id} className="min-w-0" style={{ gridColumn: group ? String(group + 1) : "2 / -1" }}>
+        <ActivityItem activity={activity} themes={themes} trainerNames={trainerNames} compact={compact} disabled={busy} onEdit={onEdit} draggable={Boolean(onMove)} />
+      </div>;
+    })}
   </div>;
+}
+
+function DayPanel({ day, startDate, activities, themes, trainerNames, groupCount, compact, dragging, busy, onAdd, onEdit, onMove }: {
+  day: number; startDate: string; activities: PlanActivity[]; themes: PlanTheme[]; trainerNames: Record<string, string>;
+  groupCount: number; compact: boolean; dragging: boolean; busy: boolean;
+  onAdd?: Props["onAdd"]; onEdit?: Props["onEdit"]; onMove?: Props["onMove"];
+}) {
+  const { isOver: headerOver, setNodeRef: setHeaderRef } = useDroppable({ id: `header-day-${day}`, data: { day } satisfies PlanningDropTarget });
+  const { isOver: emptyOver, setNodeRef: setEmptyRef } = useDroppable({ id: `empty-day-${day}`, data: { day } satisfies PlanningDropTarget });
+  const dayActivities = activities.filter((item) => item.day === day);
+  const slots = Array.from(new Set(dayActivities.map((item) => `${item.start}|${item.end}`))).sort((a, b) => a.localeCompare(b));
+  return <section id={`planning-jour-${day}`} className={`min-w-0 scroll-mt-4 overflow-hidden rounded-md border border-slate-200 bg-white ${compact ? "w-[330px] max-w-[85vw] shrink-0 snap-start" : "w-full"}`}>
+    <div ref={setHeaderRef} className={`flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 px-3 py-3 ${headerOver && dragging ? "bg-emerald-100 ring-1 ring-inset ring-emerald-500" : "bg-[#f4f8f6]"}`}>
+      <div className="flex min-w-0 items-center gap-2.5"><span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-emerald-800 text-xs font-bold text-white">J{day}</span><h2 className="text-sm font-semibold capitalize text-slate-900">{dateForDay(startDate, day)}</h2></div>
+      {onAdd && <button type="button" disabled={busy} onClick={() => onAdd(day)} title={`Ajouter un temps au jour ${day}`} aria-label={`Ajouter un temps au jour ${day}`} className="grid h-8 w-8 place-items-center rounded-full border border-slate-300 bg-white text-slate-700 hover:border-emerald-600 disabled:opacity-40"><Plus size={15} /></button>}
+    </div>
+    {slots.length ? <div className="overflow-x-auto">
+      {!compact && groupCount > 0 && <div className="grid border-b border-slate-100 text-[11px] font-semibold text-slate-500" style={{ gridTemplateColumns: `76px repeat(${groupCount}, minmax(170px,1fr))`, minWidth: 76 + groupCount * 170 }}><span className="px-3 py-2">Horaire</span>{Array.from({ length: groupCount }, (_, index) => <span key={index} className="border-l border-slate-100 px-3 py-2">Groupe {index + 1}</span>)}</div>}
+      {slots.map((slot) => {
+        const [start, end] = slot.split("|");
+        const slotActivities = dayActivities.filter((item) => item.start === start && item.end === end).sort((a, b) => (a.groupNumber || 0) - (b.groupNumber || 0));
+        return <SlotRow key={slot} day={day} start={start} end={end} activities={slotActivities} themes={themes} trainerNames={trainerNames} groupCount={groupCount} compact={compact} dragging={dragging} busy={busy} onEdit={onEdit} onMove={onMove} />;
+      })}
+    </div> : <div ref={setEmptyRef} className={`px-4 py-10 text-sm ${emptyOver && dragging ? "bg-emerald-100 text-emerald-900" : "text-slate-500"}`}>Aucun temps prévu ce jour.</div>}
+  </section>;
+}
+
+export function PlanningBoard({ activities, dayCount, startDate, groupCount, themes = defaultThemes, trainerNames = {}, busy = false, onEdit, onAdd, onMove, onSaveThemes }: Props) {
+  const [view, setView] = useState<"all" | "day">("all");
+  const [selectedDay, setSelectedDay] = useState(1);
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [pending, setPending] = useState<PlanActivity | null>(null);
+  const [moving, setMoving] = useState(false);
+  const [editingThemes, setEditingThemes] = useState(false);
+  const overviewRef = useRef<HTMLDivElement>(null);
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }), useSensor(KeyboardSensor));
+  const days = Array.from({ length: dayCount }, (_, index) => index + 1);
+  const pendingConfirmed = pending && activities.some((item) => item.id === pending.id && item.day === pending.day && item.start === pending.start && item.end === pending.end);
+  const displayActivities = pending && !pendingConfirmed ? activities.map((item) => item.id === pending.id ? pending : item) : activities;
+  const activeActivity = displayActivities.find((item) => item.id === activeId);
+
+  const selectDay = (day: number) => {
+    if (view === "day") { setSelectedDay(day); return; }
+    const container = overviewRef.current;
+    const panel = container?.querySelector<HTMLElement>(`#planning-jour-${day}`);
+    if (container && panel) container.scrollTo({ left: panel.getBoundingClientRect().left - container.getBoundingClientRect().left + container.scrollLeft, behavior: "smooth" });
+  };
+
+  const onDragEnd = async ({ active, over }: DragEndEvent) => {
+    setActiveId(null);
+    if (!onMove || !over || busy || moving) return;
+    const activity = displayActivities.find((item) => item.id === active.id);
+    const target = over.data.current as PlanningDropTarget | undefined;
+    if (!activity || !target) return;
+    const moved = moveActivityToTarget(activity, target);
+    if (!moved || (moved.day === activity.day && moved.start === activity.start && moved.end === activity.end)) return;
+    setPending(moved); setMoving(true);
+    const saved = await onMove(moved);
+    if (!saved) setPending(null);
+    setMoving(false);
+  };
+
+  return <DndContext sensors={sensors} collisionDetection={collisionDetection} onDragStart={({ active }) => setActiveId(String(active.id))} onDragCancel={() => setActiveId(null)} onDragEnd={(event) => void onDragEnd(event)}>
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3 print:hidden">
+        <div className="inline-flex rounded-md border border-slate-200 bg-white p-1" role="group" aria-label="Affichage du planning">
+          <button type="button" onClick={() => setView("all")} aria-pressed={view === "all"} className={`inline-flex h-8 items-center gap-1.5 rounded px-3 text-xs font-semibold ${view === "all" ? "bg-emerald-800 text-white" : "text-slate-600"}`}><CalendarDays size={15} />Formation complète</button>
+          <button type="button" onClick={() => setView("day")} aria-pressed={view === "day"} className={`inline-flex h-8 items-center gap-1.5 rounded px-3 text-xs font-semibold ${view === "day" ? "bg-emerald-800 text-white" : "text-slate-600"}`}><List size={15} />Jour par jour</button>
+        </div>
+        <div className="flex items-center gap-1"><button type="button" onClick={() => view === "all" ? overviewRef.current?.scrollBy({ left: -340, behavior: "smooth" }) : setSelectedDay((day) => Math.max(1, day - 1))} disabled={view === "day" && selectedDay === 1} title="Jour précédent" aria-label="Jour précédent" className="grid h-9 w-9 place-items-center rounded-md border border-slate-200 bg-white disabled:opacity-40"><ChevronLeft size={17} /></button><button type="button" onClick={() => view === "all" ? overviewRef.current?.scrollBy({ left: 340, behavior: "smooth" }) : setSelectedDay((day) => Math.min(dayCount, day + 1))} disabled={view === "day" && selectedDay === dayCount} title="Jour suivant" aria-label="Jour suivant" className="grid h-9 w-9 place-items-center rounded-md border border-slate-200 bg-white disabled:opacity-40"><ChevronRight size={17} /></button></div>
+      </div>
+
+      <div className="flex gap-1.5 overflow-x-auto pb-1 print:hidden" aria-label="Choisir une journée">
+        {days.map((day) => <DayNavButton key={day} day={day} label={dateForDay(startDate, day, true)} active={view === "day" && selectedDay === day} onClick={() => selectDay(day)} />)}
+      </div>
+
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-y border-slate-200 py-3">
+        <span className="text-xs font-bold uppercase text-slate-500">Légende</span>
+        {themes.map((theme) => <span key={theme.id} className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-700"><span className={`h-2.5 w-2.5 rounded-full ${themeSwatch(theme.color)}`} />{theme.name}<span className="text-slate-400">{displayActivities.filter((item) => themeForActivity(item, themes).id === theme.id).length}</span></span>)}
+        {onSaveThemes && <button type="button" onClick={() => setEditingThemes(true)} title="Gérer les thèmes" aria-label="Gérer les thèmes" className="ml-auto grid h-8 w-8 place-items-center rounded-md border border-slate-200 bg-white text-slate-600 hover:border-emerald-600 print:hidden"><Settings2 size={16} /></button>}
+      </div>
+
+      {view === "all" ? <div ref={overviewRef} className="flex gap-3 overflow-x-auto pb-4 snap-x snap-mandatory print:flex-wrap print:overflow-visible">
+        {days.map((day) => <DayPanel key={day} day={day} startDate={startDate} activities={displayActivities} themes={themes} trainerNames={trainerNames} groupCount={groupCount} compact dragging={Boolean(activeId)} busy={busy || moving} onAdd={onAdd} onEdit={onEdit} onMove={onMove} />)}
+      </div> : <DayPanel day={selectedDay} startDate={startDate} activities={displayActivities} themes={themes} trainerNames={trainerNames} groupCount={groupCount} compact={false} dragging={Boolean(activeId)} busy={busy || moving} onAdd={onAdd} onEdit={onEdit} onMove={onMove} />}
+      {moving && <p role="status" className="text-xs text-emerald-800">Déplacement en cours...</p>}
+    </div>
+    <DragOverlay>{activeActivity ? <div className={`max-w-[280px] rounded-md border-l-4 px-3 py-2 text-sm font-semibold shadow-lg ${themeSurface(themeForActivity(activeActivity, themes).color)}`}>{activeActivity.title}</div> : null}</DragOverlay>
+    {editingThemes && onSaveThemes && <ThemeEditor themes={themes} activities={activities} onSave={onSaveThemes} onClose={() => setEditingThemes(false)} />}
+  </DndContext>;
 }

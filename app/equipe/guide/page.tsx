@@ -1,8 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState } from "react";
-import { ArrowLeft, BookOpen, CheckCircle2, Coffee, Download, FileText, Globe2, Search, Sparkles, Users } from "lucide-react";
+import { BookOpen, CheckCircle2, Coffee, Download, FileText, Globe2, Search, Sparkles, Users } from "lucide-react";
 import { allCatalogTimes, catalogCategories, resourceForActivity, type CatalogCategory } from "@/lib/trainingCatalog";
 import { trainerResources } from "@/lib/trainerGuide";
 import { useTrainingTimes } from "@/lib/useTrainingTimes";
@@ -40,12 +39,9 @@ export default function GuideFormateursPage() {
   const results = category === "all" ? matchingTimes : matchingTimes.filter((item) => item.category === category);
   const reference = trainerResources.find((item) => item.id === "temps-indicatifs");
 
-  return <main className="min-h-screen bg-[#f7faf8] text-slate-950">
+  return <main className="min-h-screen text-slate-950">
     <div className="mx-auto max-w-6xl px-4 pb-20 pt-5 sm:px-6">
-      <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-5">
-        <div><p className="text-xs font-bold uppercase text-emerald-700">Murathènes · équipe pédagogique</p><h1 className="mt-1 text-2xl font-semibold">Guide des temps de formation</h1></div>
-        <Link href="/equipe" className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-sm font-medium text-slate-700 no-underline hover:border-emerald-600"><ArrowLeft size={16} />Plannings</Link>
-      </header>
+      <div className="border-b border-slate-200 pb-5"><h2 className="text-lg font-semibold">Guide des temps de formation</h2></div>
 
       <div className="border-b border-slate-200 py-5">
         <div className="flex flex-wrap items-baseline justify-between gap-2"><p className="text-sm text-slate-700"><strong className="text-slate-950">{allTimes.length}</strong> temps disponibles <span className="mx-1 text-slate-300">·</span> <strong className="text-emerald-800">{withPdf}</strong> avec PDF</p>{reference && <a href={reference.href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-800 underline underline-offset-2"><Download size={14} />Liste indicative des temps</a>}</div>

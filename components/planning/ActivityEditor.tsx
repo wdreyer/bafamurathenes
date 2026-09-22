@@ -4,8 +4,9 @@ import { useMemo, useState } from "react";
 import { BookOpen, ExternalLink, FileText, Search, Save, Trash2, X } from "lucide-react";
 import { catalogCategories, catalogForFormationWithCustom, resourceForActivity, type CatalogCategory, type TrainingCatalogItem } from "@/lib/trainingCatalog";
 import { trainerResources } from "@/lib/trainerGuide";
+import { themeForActivity, themeSwatch } from "@/lib/planningThemes";
 import { useTrainingTimes } from "@/lib/useTrainingTimes";
-import type { FormationType, PlanActivity } from "@/lib/types";
+import type { FormationType, PlanActivity, PlanTheme } from "@/lib/types";
 
 type Props = {
   activity: PlanActivity;
@@ -14,6 +15,7 @@ type Props = {
   groupCount: number;
   formationType: FormationType;
   trainers: { id: string; name: string }[];
+  themes: PlanTheme[];
   busy: boolean;
   error: string;
   onChange: (activity: PlanActivity) => void;
@@ -22,16 +24,7 @@ type Props = {
   onClose: () => void;
 };
 
-const colorOptions: { value: PlanActivity["color"]; label: string; swatch: string }[] = [
-  { value: "mint", label: "Vert", swatch: "bg-emerald-100 border-emerald-300" },
-  { value: "coral", label: "Corail", swatch: "bg-rose-100 border-rose-300" },
-  { value: "sky", label: "Bleu", swatch: "bg-sky-100 border-sky-300" },
-  { value: "lemon", label: "Jaune", swatch: "bg-amber-100 border-amber-300" },
-  { value: "lilac", label: "Mauve", swatch: "bg-violet-100 border-violet-300" },
-  { value: "neutral", label: "Neutre", swatch: "bg-slate-100 border-slate-300" },
-];
-
-export function ActivityEditor({ activity, existing, dayCount, groupCount, formationType, trainers, busy, error, onChange, onSave, onDelete, onClose }: Props) {
+export function ActivityEditor({ activity, existing, dayCount, groupCount, formationType, trainers, themes, busy, error, onChange, onSave, onDelete, onClose }: Props) {
   const [catalogOpen, setCatalogOpen] = useState(!existing);
   const [category, setCategory] = useState<"all" | CatalogCategory>("all");
   const [search, setSearch] = useState("");
@@ -43,11 +36,12 @@ export function ActivityEditor({ activity, existing, dayCount, groupCount, forma
   const scope = formationType === "formation_generale" ? "general" : "appro";
   const resources = trainerResources.filter((item) => item.kind === "pdf" && (item.scope === "both" || item.scope === scope));
   const resource = resourceForActivity(activity);
+  const selectedTheme = themeForActivity(activity, themes);
 
   const chooseCatalogItem = (item: TrainingCatalogItem) => {
     const { resourceId: _resourceId, ...base } = activity;
     void _resourceId;
-    onChange({ ...base, title: item.title, content: item.content, color: item.color,
+    onChange({ ...base, title: item.title, content: item.content, color: item.color, themeId: `theme-${item.color}`,
       catalogId: item.id, catalogCategory: item.category, catalogScope: item.scope,
       ...(item.resourceId ? { resourceId: item.resourceId } : {}) });
     setCatalogOpen(false);
@@ -100,8 +94,8 @@ export function ActivityEditor({ activity, existing, dayCount, groupCount, forma
         </div>
         {groupCount > 0 && <label className="block text-xs font-semibold text-slate-600">Groupe d&apos;activité<select value={activity.groupNumber || 0} onChange={(event) => onChange({ ...activity, groupNumber: Number(event.target.value) })} className="mt-1 h-10 w-full rounded border border-slate-300 bg-white px-3 text-sm font-normal"><option value={0}>Tous les groupes</option>{Array.from({ length: groupCount }, (_, index) => <option key={index} value={index + 1}>Groupe {index + 1}</option>)}</select></label>}
         <label className="block text-xs font-semibold text-slate-600">Contenu / consignes<textarea value={activity.content} onChange={(event) => onChange({ ...activity, content: event.target.value })} rows={3} className="mt-1 w-full rounded border border-slate-300 p-3 text-sm font-normal text-slate-900" /></label>
+        <div><p className="mb-2 text-xs font-semibold text-slate-600">Thème</p><div className="flex flex-wrap gap-2" role="group" aria-label="Thème du temps">{themes.map((theme) => <button key={theme.id} type="button" onClick={() => onChange({ ...activity, themeId: theme.id, color: theme.color })} aria-pressed={selectedTheme.id === theme.id} className={`inline-flex min-h-9 items-center gap-2 rounded-md border px-2.5 py-1.5 text-xs font-medium ${selectedTheme.id === theme.id ? "border-slate-800 bg-slate-50 text-slate-950" : "border-slate-200 bg-white text-slate-600"}`}><span className={`h-3 w-3 shrink-0 rounded-full ${themeSwatch(theme.color)}`} />{theme.name}</button>)}</div></div>
         <div className="grid gap-4 sm:grid-cols-2">
-          <div><p className="mb-2 text-xs font-semibold text-slate-600">Couleur</p><div className="flex gap-2">{colorOptions.map((color) => <button key={color.value} type="button" onClick={() => onChange({ ...activity, color: color.value })} title={color.label} aria-label={color.label} aria-pressed={activity.color === color.value} className={`h-8 w-8 rounded border-2 ${color.swatch} ${activity.color === color.value ? "ring-2 ring-slate-900 ring-offset-2" : ""}`} />)}</div></div>
           <label className="text-xs font-semibold text-slate-600">Document PDF<select value={activity.resourceId || ""} onChange={(event) => changeResource(event.target.value)} className="mt-1 h-10 w-full rounded border border-slate-300 bg-white px-2 text-sm font-normal"><option value="">Aucun document</option>{resources.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}</select>{resource && <a href={resource.href} target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-emerald-800 underline">Voir le PDF <ExternalLink size={12} /></a>}</label>
         </div>
         <div><p className="mb-2 text-xs font-semibold text-slate-600">Animation</p><div className="flex flex-wrap gap-2">{trainers.map((trainer) => <button key={trainer.id} type="button" onClick={() => onChange({ ...activity, trainerIds: (activity.trainerIds || []).includes(trainer.id) ? activity.trainerIds.filter((id) => id !== trainer.id) : [...(activity.trainerIds || []), trainer.id] })} aria-pressed={(activity.trainerIds || []).includes(trainer.id)} className={`rounded-full border px-3 py-1.5 text-xs font-medium ${(activity.trainerIds || []).includes(trainer.id) ? "border-emerald-700 bg-emerald-50 text-emerald-900" : "border-slate-300 bg-white text-slate-700"}`}>{trainer.name}</button>)}{!trainers.length && <p className="text-xs text-slate-500">Aucun·e formateur·ice affecté·e à cette session.</p>}</div></div>
