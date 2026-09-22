@@ -5,8 +5,8 @@ import {
   DndContext, DragOverlay, KeyboardSensor, PointerSensor, pointerWithin, rectIntersection,
   useDraggable, useDroppable, useSensor, useSensors, type CollisionDetection, type DragEndEvent,
 } from "@dnd-kit/core";
-import { CalendarDays, ChevronLeft, ChevronRight, Clock3, FileText, GripVertical, List, Plus, Settings2 } from "lucide-react";
-import { moveActivityToTarget, type PlanningDropTarget } from "@/lib/planningMove";
+import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Clock3, FileText, GripVertical, List, Plus, Settings2 } from "lucide-react";
+import { expandActivityToBoundary, moveActivityToTarget, type PlanningDropTarget } from "@/lib/planningMove";
 import { defaultThemes, themeForActivity, themeSurface, themeSwatch } from "@/lib/planningThemes";
 import { resourceForActivity } from "@/lib/trainingCatalog";
 import { ThemeEditor } from "@/components/planning/ThemeEditor";
@@ -66,7 +66,7 @@ function ActivityItem({ activity, themes, trainerNames, compact, disabled, onEdi
   const resource = resourceForActivity(activity);
   const emoji = activityEmoji(activity.title);
   const trainers = (activity.trainerIds || []).map((id) => trainerNames[id]).filter(Boolean).join(", ");
-  return <div ref={setNodeRef} className={`min-w-0 rounded border-l-[3px] ${compact ? "px-1.5 py-1" : "px-2.5 py-2"} ${themeSurface(theme.color)} ${isDragging ? "opacity-35" : ""}`}>
+  return <div ref={setNodeRef} className={`h-full min-w-0 rounded border-l-[3px] ${compact ? "px-1.5 py-1" : "px-2.5 py-2"} ${themeSurface(theme.color)} ${isDragging ? "opacity-35" : ""}`}>
     <div className="flex min-w-0 items-start gap-1">
       {draggable && <button ref={setActivatorNodeRef} type="button" title={`Déplacer ${activity.title}`} aria-label={`Déplacer ${activity.title}`} disabled={disabled} {...attributes} {...listeners}
         className={`grid shrink-0 cursor-grab place-items-center rounded text-current/60 touch-none hover:bg-white/70 active:cursor-grabbing disabled:cursor-not-allowed disabled:opacity-40 ${compact ? "h-4 w-4" : "mt-0.5 h-6 w-6"}`}><GripVertical size={compact ? 12 : 15} /></button>}
@@ -106,12 +106,24 @@ function OverviewSlot({ day, start, end, row, dragging }: {
   </div>;
 }
 
-function OverviewActivityBlock({ day, startRow, endRow, activities, themes, trainerNames, busy, onEdit, onMove }: {
+function OverviewActivityBlock({ day, startRow, endRow, activities, themes, trainerNames, boundaries, busy, onEdit, onMove }: {
   day: number; startRow: number; endRow: number; activities: PlanActivity[]; themes: PlanTheme[];
-  trainerNames: Record<string, string>; busy: boolean; onEdit?: Props["onEdit"]; onMove?: Props["onMove"];
+  trainerNames: Record<string, string>; boundaries: string[]; busy: boolean; onEdit?: Props["onEdit"]; onMove?: Props["onMove"];
 }) {
   return <div className="z-[5] flex min-h-0 flex-col gap-0.5 overflow-hidden p-0.5 pointer-events-none" style={{ gridColumn: day + 1, gridRow: `${startRow} / ${endRow}` }}>
-    {activities.map((activity) => <div key={activity.id} className="min-h-0 flex-1 pointer-events-auto"><ActivityItem activity={activity} themes={themes} trainerNames={trainerNames} compact disabled={busy} onEdit={onEdit} draggable={Boolean(onMove)} /></div>)}
+    {activities.map((activity) => {
+      const grow = (edge: "start" | "end") => {
+        const resized = expandActivityToBoundary(activity, edge, boundaries);
+        if (resized && onMove) void onMove(resized);
+      };
+      return <div key={activity.id} className="group relative min-h-0 flex-1 pointer-events-auto">
+        {onMove && <button type="button" disabled={busy} onClick={() => grow("start")} title={`Agrandir ${activity.title} vers le haut`} aria-label={`Agrandir ${activity.title} vers le haut`}
+          className="absolute left-1/2 top-0 z-20 grid h-3.5 w-7 -translate-x-1/2 place-items-center rounded-b bg-white/90 text-slate-600 opacity-30 shadow-sm transition hover:bg-white hover:text-emerald-800 hover:opacity-100 focus:opacity-100 disabled:cursor-not-allowed disabled:opacity-20 sm:opacity-0 sm:group-hover:opacity-100"><ChevronUp size={11} /></button>}
+        <ActivityItem activity={activity} themes={themes} trainerNames={trainerNames} compact disabled={busy} onEdit={onEdit} draggable={Boolean(onMove)} />
+        {onMove && <button type="button" disabled={busy} onClick={() => grow("end")} title={`Agrandir ${activity.title} vers le bas`} aria-label={`Agrandir ${activity.title} vers le bas`}
+          className="absolute bottom-0 left-1/2 z-20 grid h-3.5 w-7 -translate-x-1/2 place-items-center rounded-t bg-white/90 text-slate-600 opacity-30 shadow-sm transition hover:bg-white hover:text-emerald-800 hover:opacity-100 focus:opacity-100 disabled:cursor-not-allowed disabled:opacity-20 sm:opacity-0 sm:group-hover:opacity-100"><ChevronDown size={11} /></button>}
+      </div>;
+    })}
   </div>;
 }
 
@@ -137,7 +149,7 @@ function OverviewGrid({ days, startDate, activities, themes, trainerNames, busy,
           const [start, end] = key.split("|");
           const startIndex = boundaries.indexOf(start);
           const endIndex = boundaries.indexOf(end);
-          return <OverviewActivityBlock key={`${day}-${key}`} day={day} startRow={startIndex + 2} endRow={endIndex + 2} activities={group} themes={themes} trainerNames={trainerNames} busy={busy} onEdit={onEdit} onMove={onMove} />;
+          return <OverviewActivityBlock key={`${day}-${key}`} day={day} startRow={startIndex + 2} endRow={endIndex + 2} activities={group} themes={themes} trainerNames={trainerNames} boundaries={boundaries} busy={busy} onEdit={onEdit} onMove={onMove} />;
         });
       })}
     </div>
