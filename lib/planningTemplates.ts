@@ -14,20 +14,93 @@ const general: TemplateItem[] = [
   [9,"09:00","12:00","Stage pratique, bilan et rangement","lilac"],[9,"14:00","16:00","Évaluations individuelles et clôture","mint"],
 ];
 
+// Source: "Planning 21-27 avril 2025 APPRO .xlsx", Feuille 1; days are relative to the session.
 const appro: TemplateItem[] = [
-  [1,"18:00","19:00","Accueil des stagiaires","mint"],[1,"20:30","22:00","Présentations, cursus et projet de session","sky"],
-  [2,"09:00","12:00","Chants, visite du domaine et commissions","mint"],[2,"14:00","16:00","Hygiène, repas et gestion du budget","lemon"],[2,"16:30","18:20","Courses et préparation des repas","sky"],[2,"20:30","22:00","Veillée imaginaire et théâtre","coral"],
-  [3,"09:00","12:00","Dispositifs à l'étranger et projet de jeunes","lilac"],[3,"14:00","16:00","Retour des stages pratiques","sky"],[3,"16:30","18:20","Répartition des grands jeux","mint"],[3,"20:30","22:00","Violences ordinaires et maltraitance","coral"],
-  [4,"09:00","12:00","Préparation du grand jeu et entretiens mi-stage","lemon"],[4,"14:00","16:00","Visite et découverte du territoire","mint"],[4,"16:30","18:20","Réglementation et transports","sky"],[4,"20:30","22:00","Veillée expression artistique","coral"],
-  [5,"09:00","12:00","Handicap et activités multilingues","lilac"],[5,"14:00","16:00","Grand jeu et public préadolescent","mint"],[5,"16:30","18:20","Activités multilingues","sky"],[5,"20:30","22:00","Veillée conte interculturel","coral"],
-  [6,"09:00","12:00","Gestion des conflits, sanctions et VSS","lilac"],[6,"14:00","16:00","Grand jeu sportif 3-5 ans","mint"],[6,"16:30","18:20","Activités multilingues","sky"],[6,"20:30","22:00","Veillée de clôture","coral"],
-  [7,"09:00","12:00","Rangement, bilans et évaluations individuelles","lemon"],[7,"14:00","15:00","Clôture de la session","mint"],
+  [1,"18:00","18:45","Accueil stagiaires","neutral"],
+  [1,"19:00","20:30","Pause repas","neutral"],
+  [1,"20:30","22:00","Présentations (équipes, stagiaires, cursus)","neutral"],
+
+  [2,"09:00","09:15","Chants/Danses formatrices","sky"],
+  [2,"09:15","10:00","Visite du domaine","sky"],
+  [2,"10:00","10:15","Pause","neutral"],
+  [2,"10:15","11:00","Prépa Commissions (Map, Inventaire, Aménagement, Règles de vie, Planning)","sky"],
+  [2,"11:00","11:45","Restitutions commissions","sky"],
+  [2,"14:00","14:30","Starters formatrices","sky"],
+  [2,"14:30","15:15","HACCP - règles hygiène repas","sky"],
+  [2,"15:15","16:00","Préparation des repas / Gestion de budget","coral"],
+  [2,"16:00","16:30","Goûter","neutral"],
+  [2,"16:30","18:00","Courses (Bort les orgues)","neutral"],
+  [2,"18:00","18:45","Préparation repas","coral"],
+  [2,"19:00","20:30","Pause repas","neutral"],
+  [2,"20:30","22:00","Veillée imaginaire / Théâtre","sky"],
+
+  [3,"09:00","09:15","Chants / Danses stagiaires","lemon"],
+  [3,"09:15","10:00","Présentation des dispositifs à l'étranger","sky"],
+  [3,"10:00","10:15","Pause","neutral"],
+  [3,"10:15","11:00","Projet jeune fil rouge (intervenantes exterieures)","mint"],
+  [3,"11:00","11:45","Prépa repas / Prépa projet jeune","coral"],
+  [3,"14:00","14:30","Starters stagiaires","lemon"],
+  [3,"14:30","16:00","Retour stages pratiques","sky"],
+  [3,"16:00","16:30","Goûter","neutral"],
+  [3,"16:30","17:15","PSADRAFRA SIOU","sky"],
+  [3,"17:15","18:00","Repartition Grand jeux","sky"],
+  [3,"18:00","18:45","Prépa repas / prépa projet jeunes","coral"],
+  [3,"19:00","20:30","Pause repas","neutral"],
+  [3,"20:30","22:00","Violences ordinaires / maltraitance","sky"],
+
+  [4,"09:00","09:15","Chants / Danses stagiaires","lemon"],
+  [4,"09:15","10:00","Prépa Grand jeux","lilac"],
+  [4,"10:00","10:15","Pause","neutral"],
+  [4,"10:15","11:45","Prépa Grand jeux / Entretiens mi-stage","lilac"],
+  [4,"12:00","14:00","repas exterieur","neutral"],
+  [4,"14:00","15:15","Visite Chateau de Val","mint"],
+  [4,"15:15","16:00","Reperage Bort les Orgues","lemon"],
+  [4,"16:00","16:30","Goûter","neutral"],
+  [4,"16:30","17:15","Reglementation","sky"],
+  [4,"17:15","18:00","Remobilisation","sky"],
+  [4,"18:00","18:45","Gestion des transports","sky"],
+  [4,"19:00","20:30","Pause repas","neutral"],
+  [4,"20:30","22:00","Veillée expression artistique 6-9ans","lemon"],
+
+  [5,"09:00","09:15","Chants / Danses stagiaires","lemon"],
+  [5,"09:15","10:00","Situations de handicapes","sky"],
+  [5,"10:00","10:15","Pause","neutral"],
+  [5,"10:15","11:00","Prépa activités multilingues","lilac"],
+  [5,"11:00","11:45","Prépa repas / Prépa projet jeune","coral"],
+  [5,"14:00","16:00","Grand jeux (Bort les Orgues) pré-ado","lemon"],
+  [5,"16:00","16:30","Goûter","neutral"],
+  [5,"16:30","17:15","Activités multilingues","lemon"],
+  [5,"17:15","18:00","Activités multilingues","lemon"],
+  [5,"18:00","18:45","Prépa repas / prépa projet jeunes","coral"],
+  [5,"19:00","20:30","Pause repas","neutral"],
+  [5,"20:30","22:00","Veillée conte (ado, interculturel)","lemon"],
+
+  [6,"09:00","09:15","Chants / Danses stagiaires","lemon"],
+  [6,"09:15","10:00","Sanction / Punition Gestion de conflit (mises en situations)","sky"],
+  [6,"10:00","10:15","Pause","neutral"],
+  [6,"10:15","11:00","VSS","sky"],
+  [6,"11:00","11:45","Prépa repas / Prépa projet jeune","coral"],
+  [6,"14:00","14:30","starters stagiaires","lemon"],
+  [6,"14:30","16:00","Grand jeu sportif 3-5ans","lemon"],
+  [6,"16:00","16:30","Goûter","neutral"],
+  [6,"16:30","17:15","Activités multilingues","lemon"],
+  [6,"17:15","18:00","Activités multilingues","lemon"],
+  [6,"18:00","18:45","Prépa repas / prépa projet jeunes","coral"],
+  [6,"19:00","20:30","Pause repas","neutral"],
+  [6,"20:30","22:00","Veillée clotûre (spectacle interactif)","lemon"],
+
+  [7,"09:00","09:15","Chants / Danses stagiaires","lemon"],
+  [7,"09:15","10:00","Rangement","neutral"],
+  [7,"10:00","10:15","Pause","neutral"],
+  [7,"10:15","11:00","Evaluations individuelles","sky"],
+  [7,"11:00","11:45","Bilan de fin de formation","sky"],
+  [7,"14:00","14:30","Clotûre de session","sky"],
 ];
 
 export function buildPlanningTemplate(formation: Formation): PlanActivity[] {
-  const items = formation.type === "formation_generale" ? general : appro;
-  const dayCount = formation.type === "formation_generale" ? 9 : 7;
-  const recurring: TemplateItem[] = Array.from({ length: dayCount - 2 }, (_, index) => index + 2)
+  const isGeneral = formation.type === "formation_generale";
+  const items = isGeneral ? general : appro;
+  const recurring: TemplateItem[] = (isGeneral ? Array.from({ length: 7 }, (_, index) => index + 2) : [])
     .flatMap((day) => [
       [day, "10:30", "10:45", "Pause", "neutral"],
       [day, "12:00", "14:00", "Repas", "neutral"],
