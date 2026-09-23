@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, type FocusEvent, type MouseEvent } from "react";
 import { CalendarDays, ChevronLeft, ChevronRight, Link2, List, Plus, Settings2, Unlink } from "lucide-react";
 import { QUARTER_HOUR_OPTIONS } from "@/lib/planningMove";
 import { defaultThemes, themeFill, themeForActivity, themeSwatch } from "@/lib/planningThemes";
@@ -18,7 +18,7 @@ type Props = {
   arrivalTime?: string;
   departureTime?: string;
   onEdit?: (activity: PlanActivity) => void;
-  onAdd?: (day: number) => void;
+  onAdd?: (day: number, start?: string, end?: string) => void;
   onSaveThemes?: (themes: PlanTheme[]) => Promise<boolean>;
   onSetBounds?: (patch: { arrivalTime?: string; departureTime?: string }) => void;
   onToggleMerge?: (activityIds: string[], merged: boolean) => void;
@@ -46,19 +46,24 @@ function DayNavButton({ day, label, active, onClick }: { day: number; label: str
   </button>;
 }
 
-function ActivityCell({ activity, themes, disabled, onEdit, merged = false }: {
-  activity: PlanActivity; themes: PlanTheme[]; disabled: boolean; onEdit?: Props["onEdit"]; merged?: boolean;
+function ActivityCell({ activity, themes, disabled, onEdit, onHover, merged = false }: {
+  activity: PlanActivity; themes: PlanTheme[]; disabled: boolean; onEdit?: Props["onEdit"]; onHover: (text: string | null, x?: number, y?: number) => void; merged?: boolean;
 }) {
   const theme = themeForActivity(activity, themes);
   const fullLabel = `${activity.title} · ${activity.start}–${activity.end}`;
   const label = <span className={merged
-    ? "block text-center text-[12px] font-bold leading-snug text-slate-900"
-    : "block whitespace-normal break-words text-[11px] font-bold leading-snug text-slate-900"}>{activity.title}</span>;
-  const tooltip = <span role="tooltip" className="pointer-events-none absolute left-0 top-full z-50 mt-1 hidden w-max max-w-[240px] rounded bg-slate-900 px-2 py-1 text-[11px] font-medium leading-snug text-white shadow-lg group-hover:block group-focus-visible:block">{fullLabel}</span>;
-  const className = `group relative flex h-full min-w-0 border-b border-r border-white/60 px-1.5 py-1 ${themeFill(theme.color)} ${merged ? "items-center justify-center text-center" : "items-start justify-start text-left"}`;
-  if (!onEdit) return <div className={className} aria-label={fullLabel}>{label}{tooltip}</div>;
-  return <button type="button" disabled={disabled} onClick={() => onEdit(activity)} aria-label={fullLabel}
-    className={`${className} w-full cursor-pointer disabled:cursor-wait`}>{label}{tooltip}</button>;
+    ? "line-clamp-2 text-center text-[12px] font-bold leading-snug text-slate-900"
+    : "line-clamp-3 whitespace-normal break-words text-[11px] font-bold leading-snug text-slate-900"}>{activity.title}</span>;
+  const className = `flex h-full min-w-0 overflow-hidden border-b border-r border-white/60 px-1.5 py-1 ${themeFill(theme.color)} ${merged ? "items-center justify-center text-center" : "items-start justify-start text-left"}`;
+  const handlers = {
+    onMouseMove: (event: MouseEvent) => onHover(fullLabel, event.clientX, event.clientY),
+    onMouseLeave: () => onHover(null),
+    onFocus: (event: FocusEvent<HTMLElement>) => { const rect = event.currentTarget.getBoundingClientRect(); onHover(fullLabel, rect.left + rect.width / 2, rect.bottom); },
+    onBlur: () => onHover(null),
+  };
+  if (!onEdit) return <div className={className} aria-label={fullLabel} {...handlers}>{label}</div>;
+  return <button type="button" disabled={disabled} onClick={() => onEdit(activity)} aria-label={fullLabel} {...handlers}
+    className={`${className} w-full cursor-pointer disabled:cursor-wait`}>{label}</button>;
 }
 
 function OverviewGrid({ days, dayCount, startDate, activities, themes, busy, arrivalTime, departureTime, onAdd, onEdit, onToggleMerge }: {
@@ -119,57 +124,78 @@ function OverviewGrid({ days, dayCount, startDate, activities, themes, busy, arr
     (day === 1 && Boolean(arrivalTime) && interval.end <= arrivalTime!) ||
     (day === dayCount && Boolean(departureTime) && interval.start >= departureTime!);
 
-  return <div className="planning-grid-scroll w-full overflow-x-auto rounded-md border border-slate-300 bg-white">
-    <div className="grid min-w-full" style={{ gridTemplateColumns: `76px repeat(${days.length}, minmax(100px, 1fr))`, gridTemplateRows: `34px repeat(${intervals.length}, minmax(34px, auto))` }}>
-      <div className="sticky left-0 top-0 z-30 grid place-items-center border-b border-r border-slate-300 bg-[#edf5f1] text-[9px] font-bold uppercase text-slate-500">Heure</div>
+  const occupied = new Set<string>();
+  activities.forEach((item) => {
+    const startIndex = boundaries.indexOf(item.start);
+    const endIndex = boundaries.indexOf(item.end);
+    for (let index = startIndex; index < endIndex; index += 1) occupied.add(`${item.day}|${index}`);
+  });
 
-      {days.map((day, index) => <div key={day} id={`planning-jour-${day}`} className="sticky top-0 z-20 flex min-w-0 scroll-mt-4 items-center justify-between gap-1 border-b border-r border-slate-300 bg-[#edf5f1] px-1"
-        style={{ gridColumn: index + 2, gridRow: 1 }}>
-        <span className="flex min-w-0 items-center gap-1"><span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-emerald-800 text-[9px] font-bold text-white">J{day}</span><span className="min-w-0 truncate text-[10.5px] font-semibold capitalize leading-tight text-slate-900">{dateForDay(startDate, day)}</span></span>
-        {onAdd && <button type="button" disabled={busy} onClick={() => onAdd(day)} title={`Ajouter un temps au jour ${day}`} aria-label={`Ajouter un temps au jour ${day}`} className="grid h-4 w-4 shrink-0 place-items-center rounded-full border border-slate-300 bg-white text-slate-700 hover:border-emerald-600 disabled:cursor-not-allowed disabled:opacity-40"><Plus size={10} /></button>}
-      </div>)}
+  const [hover, setHover] = useState<{ text: string; x: number; y: number } | null>(null);
+  const onHover = (text: string | null, x?: number, y?: number) => setHover(text && x !== undefined && y !== undefined ? { text, x, y } : null);
 
-      {intervals.map((interval, index) => <div key={interval.start} className="sticky left-0 z-10 flex items-center justify-end whitespace-nowrap border-b border-r border-slate-300 bg-slate-50 px-1.5 text-[8.5px] font-semibold leading-none text-slate-500" style={{ gridColumn: 1, gridRow: index + 2 }}>
-        {shortHour(interval.start)}–{shortHour(interval.end)}
-      </div>)}
+  return <div className="relative">
+    <div className="planning-grid-scroll w-full overflow-x-auto rounded-md border border-slate-300 bg-white">
+      <div className="grid min-w-full" style={{ gridTemplateColumns: `76px repeat(${days.length}, minmax(100px, 1fr))`, gridTemplateRows: `34px repeat(${intervals.length}, minmax(34px, auto))` }}>
+        <div className="sticky left-0 top-0 z-30 grid place-items-center border-b border-r border-slate-300 bg-[#edf5f1] text-[9px] font-bold uppercase text-slate-500">Heure</div>
 
-      {days.flatMap((day, dayIndex) => intervals.map((interval, index) => <div key={`${day}-${interval.start}`} className={`border-b border-r border-slate-100 ${isOutOfBounds(day, interval) ? "bg-slate-200" : "bg-white"}`} style={{ gridColumn: dayIndex + 2, gridRow: index + 2 }} />))}
+        {days.map((day, index) => <div key={day} id={`planning-jour-${day}`} className="sticky top-0 z-20 flex min-w-0 scroll-mt-4 items-center justify-between gap-1 border-b border-r border-slate-300 bg-[#edf5f1] px-1"
+          style={{ gridColumn: index + 2, gridRow: 1 }}>
+          <span className="flex min-w-0 items-center gap-1"><span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-emerald-800 text-[9px] font-bold text-white">J{day}</span><span className="min-w-0 truncate text-[10.5px] font-semibold capitalize leading-tight text-slate-900">{dateForDay(startDate, day)}</span></span>
+          {onAdd && <button type="button" disabled={busy} onClick={() => onAdd(day)} title={`Ajouter un temps au jour ${day}`} aria-label={`Ajouter un temps au jour ${day}`} className="grid h-4 w-4 shrink-0 place-items-center rounded-full border border-slate-300 bg-white text-slate-700 hover:border-emerald-600 disabled:cursor-not-allowed disabled:opacity-40"><Plus size={10} /></button>}
+        </div>)}
 
-      {days.flatMap((day, dayIndex) => {
-        const groups = new Map<string, PlanActivity[]>();
-        activities.filter((item) => item.day === day).forEach((item) => {
-          const key = `${item.start}|${item.end}`;
-          if (!consumed.has(`${day}|${item.start}|${item.end}`)) groups.set(key, [...(groups.get(key) || []), item]);
-        });
-        return Array.from(groups.entries()).map(([key, group]) => {
-          const [start, end] = key.split("|");
-          const startRow = boundaries.indexOf(start) + 2;
-          const endRow = boundaries.indexOf(end) + 2;
-          return <div key={`${day}-${key}`} className="z-[5] flex min-h-0 flex-col" style={{ gridColumn: dayIndex + 2, gridRow: `${startRow} / ${endRow}` }}>
-            {group.map((activity, activityIndex) => <div key={activity.id} className={`min-h-0 flex-1 ${activityIndex > 0 ? "border-t border-white/60" : ""}`}>
-              <ActivityCell activity={activity} themes={themes} disabled={busy} onEdit={onEdit} />
-            </div>)}
+        {intervals.map((interval, index) => <div key={interval.start} className="sticky left-0 z-10 flex items-center justify-end whitespace-nowrap border-b border-r border-slate-300 bg-slate-50 px-1.5 text-[8.5px] font-semibold leading-none text-slate-500" style={{ gridColumn: 1, gridRow: index + 2 }}>
+          {shortHour(interval.start)}–{shortHour(interval.end)}
+        </div>)}
+
+        {days.flatMap((day, dayIndex) => intervals.map((interval, index) => {
+          const outOfBounds = isOutOfBounds(day, interval);
+          const free = !outOfBounds && !occupied.has(`${day}|${index}`);
+          return <div key={`${day}-${interval.start}`} className={`group/empty relative border-b border-r border-slate-100 ${outOfBounds ? "bg-slate-200" : "bg-white"}`} style={{ gridColumn: dayIndex + 2, gridRow: index + 2 }}>
+            {free && onAdd && <button type="button" disabled={busy} onClick={() => onAdd(day, interval.start, interval.end)} title={`Ajouter un temps de ${interval.start} à ${interval.end}`} aria-label={`Ajouter un temps de ${interval.start} à ${interval.end}`}
+              className="absolute inset-0 grid place-items-center text-slate-300 opacity-0 transition-opacity hover:bg-emerald-50 hover:text-emerald-700 hover:opacity-100 focus:opacity-100 disabled:cursor-not-allowed"><Plus size={12} /></button>}
           </div>;
-        });
-      })}
+        }))}
 
-      {runs.map((run) => {
-        const startRow = boundaries.indexOf(run.start) + 2;
-        const endRow = boundaries.indexOf(run.end) + 2;
-        const colStart = run.dayIndexStart + 2;
-        if (run.isMerged) {
-          return <div key={`merge-${run.start}-${run.end}-${run.dayIndexStart}`} className="relative z-[6]" style={{ gridColumn: `${colStart} / ${colStart + run.dayCount}`, gridRow: `${startRow} / ${endRow}` }}>
-            <ActivityCell activity={run.activity} themes={themes} disabled={busy} onEdit={onEdit} merged />
-            {onToggleMerge && <button type="button" disabled={busy} onClick={(event) => { event.stopPropagation(); onToggleMerge(run.activityIds, false); }} title="Défusionner ces jours" aria-label="Défusionner ces jours" className="absolute right-1 top-1 z-10 grid h-4 w-4 place-items-center rounded-full bg-white/90 text-slate-600 shadow hover:text-rose-700"><Unlink size={10} /></button>}
-          </div>;
-        }
-        if (!onToggleMerge) return null;
-        return <button key={`candidate-${run.start}-${run.end}-${run.dayIndexStart}`} type="button" disabled={busy} onClick={() => onToggleMerge(run.activityIds, true)}
-          title={`Fusionner ces ${run.dayCount} jours identiques`} aria-label={`Fusionner ces ${run.dayCount} jours identiques`}
-          className="z-[6] m-0.5 grid h-4 w-4 place-items-center self-start justify-self-end rounded-full border border-emerald-300 bg-white/90 text-emerald-700 shadow hover:bg-emerald-50"
-          style={{ gridColumn: colStart, gridRow: startRow }}><Link2 size={9} /></button>;
-      })}
+        {days.flatMap((day, dayIndex) => {
+          const groups = new Map<string, PlanActivity[]>();
+          activities.filter((item) => item.day === day).forEach((item) => {
+            const key = `${item.start}|${item.end}`;
+            if (!consumed.has(`${day}|${item.start}|${item.end}`)) groups.set(key, [...(groups.get(key) || []), item]);
+          });
+          return Array.from(groups.entries()).map(([key, group]) => {
+            const [start, end] = key.split("|");
+            const startRow = boundaries.indexOf(start) + 2;
+            const endRow = boundaries.indexOf(end) + 2;
+            return <div key={`${day}-${key}`} className="z-[5] flex flex-col" style={{ gridColumn: dayIndex + 2, gridRow: `${startRow} / ${endRow}` }}>
+              {group.map((activity, activityIndex) => <div key={activity.id} className={`min-h-0 flex-1 ${activityIndex > 0 ? "border-t border-white/60" : ""}`}>
+                <ActivityCell activity={activity} themes={themes} disabled={busy} onEdit={onEdit} onHover={onHover} />
+              </div>)}
+            </div>;
+          });
+        })}
+
+        {runs.map((run) => {
+          const startRow = boundaries.indexOf(run.start) + 2;
+          const endRow = boundaries.indexOf(run.end) + 2;
+          const colStart = run.dayIndexStart + 2;
+          if (run.isMerged) {
+            return <div key={`merge-${run.start}-${run.end}-${run.dayIndexStart}`} className="relative z-[6]" style={{ gridColumn: `${colStart} / ${colStart + run.dayCount}`, gridRow: `${startRow} / ${endRow}` }}>
+              <ActivityCell activity={run.activity} themes={themes} disabled={busy} onEdit={onEdit} onHover={onHover} merged />
+              {onToggleMerge && <button type="button" disabled={busy} onClick={(event) => { event.stopPropagation(); onToggleMerge(run.activityIds, false); }} title="Défusionner ces jours" aria-label="Défusionner ces jours" className="absolute right-1 top-1 z-10 grid h-4 w-4 place-items-center rounded-full bg-white/90 text-slate-600 shadow hover:text-rose-700"><Unlink size={10} /></button>}
+            </div>;
+          }
+          if (!onToggleMerge) return null;
+          return <button key={`candidate-${run.start}-${run.end}-${run.dayIndexStart}`} type="button" disabled={busy} onClick={() => onToggleMerge(run.activityIds, true)}
+            title={`Fusionner ces ${run.dayCount} jours identiques`} aria-label={`Fusionner ces ${run.dayCount} jours identiques`}
+            className="z-[6] m-0.5 grid h-4 w-4 place-items-center self-start justify-self-end rounded-full border border-emerald-300 bg-white/90 text-emerald-700 shadow hover:bg-emerald-50"
+            style={{ gridColumn: colStart, gridRow: startRow }}><Link2 size={9} /></button>;
+        })}
+      </div>
     </div>
+    {hover && <div className="pointer-events-none fixed z-[200] max-w-[260px] rounded bg-slate-900 px-2 py-1 text-[11px] font-medium leading-snug text-white shadow-lg"
+      style={{ left: Math.min(hover.x + 14, window.innerWidth - 270), top: hover.y + 14 }}>{hover.text}</div>}
   </div>;
 }
 
