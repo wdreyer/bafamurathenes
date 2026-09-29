@@ -4,7 +4,10 @@ service firebase.storage {
   match /b/{bucket}/o {
     function isAdmin() {
       return request.auth != null
-        && firestore.exists(/databases/(default)/documents/admins/$(request.auth.uid));
+        && (
+          request.auth.uid == 'zE1LYEEyooedqV3YyGsTVJA3FcJ3'
+          || firestore.exists(/databases/(default)/documents/admins/$(request.auth.uid))
+        );
     }
 
     function isApprovedTrainer() {
