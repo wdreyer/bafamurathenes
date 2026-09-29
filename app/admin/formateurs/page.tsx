@@ -10,6 +10,7 @@ import { defaultThemes } from "@/lib/planningThemes";
 import { ActivityEditor } from "@/components/planning/ActivityEditor";
 import { PlanningBoard } from "@/components/planning/PlanningBoard";
 import type { Formation, PlanActivity, PlanTheme, Trainer } from "@/lib/types";
+import { isAdminUid } from "@/lib/adminAccess";
 
 const emptyActivity = (day: number, start = "09:00", end = "10:00"): PlanActivity => ({
   id: crypto.randomUUID(), day, start, end, title: "", content: "", trainerIds: [], color: "mint",
@@ -113,7 +114,7 @@ export default function FormateursPage() {
   };
 
   const toggleTrainer = async (trainerId: string) => {
-    if (!formation) return;
+    if (!formation || isAdminUid(trainerId)) return;
     const next = formation.trainerIds?.includes(trainerId)
       ? formation.trainerIds.filter((id) => id !== trainerId)
       : [...(formation.trainerIds || []), trainerId];
@@ -176,7 +177,7 @@ export default function FormateursPage() {
     </div> : <div className="space-y-5">
       <div className="flex flex-wrap items-center gap-3"><label htmlFor="admin-plan-formation" className="text-xs font-semibold uppercase text-slate-500">Session</label><select id="admin-plan-formation" value={formationId} onChange={(event) => { setFormationId(event.target.value); setEditing(null); }} className="h-10 min-w-[260px] max-w-full rounded border border-slate-200 bg-white px-3 text-sm">{formations.map((item) => <option key={item.id} value={item.id}>{item.title} · {item.startDate.slice(0, 10)}</option>)}</select>{formation && <a href={`/admin/formations/${formation.id}`} className="inline-flex items-center gap-1 text-sm text-emerald-800 underline">Fiche formation <ExternalLink size={13} /></a>}</div>
       {formation && <>
-        <div className="border-y border-slate-200 py-3"><div className="mb-2 flex items-center justify-between"><h2 className="text-sm font-semibold">Formateur·ices de la session</h2><button type="button" onClick={() => setTab("team")} className="text-xs text-emerald-700">Gérer l&apos;équipe</button></div><div className="flex flex-wrap gap-2">{assignableTrainers.map((trainer) => <button key={trainer.id} type="button" disabled={busy} onClick={() => void toggleTrainer(trainer.id)} aria-pressed={formation.trainerIds?.includes(trainer.id) || false} className={`rounded-full border px-3 py-1.5 text-sm ${formation.trainerIds?.includes(trainer.id) ? "border-emerald-700 bg-emerald-50 text-emerald-900" : "border-slate-200 bg-white text-slate-600"}`}>{formation.trainerIds?.includes(trainer.id) && <Check size={13} className="mr-1 inline" />}{trainerName(trainer)}</button>)}{!assignableTrainers.length && <p className="text-sm text-slate-500">Valide d&apos;abord un compte formateur·ice dans l&apos;onglet Équipe.</p>}</div></div>
+        <div className="border-y border-slate-200 py-3"><div className="mb-2 flex items-center justify-between"><h2 className="text-sm font-semibold">Formateur·ices de la session</h2><button type="button" onClick={() => setTab("team")} className="text-xs text-emerald-700">Gérer l&apos;équipe</button></div><div className="flex flex-wrap gap-2">{assignableTrainers.map((trainer) => <button key={trainer.id} type="button" disabled={busy || isAdminUid(trainer.id)} title={isAdminUid(trainer.id) ? "Admin · affectation automatique" : undefined} onClick={() => void toggleTrainer(trainer.id)} aria-pressed={formation.trainerIds?.includes(trainer.id) || false} className={`rounded-full border px-3 py-1.5 text-sm disabled:opacity-70 ${formation.trainerIds?.includes(trainer.id) ? "border-emerald-700 bg-emerald-50 text-emerald-900" : "border-slate-200 bg-white text-slate-600"}`}>{formation.trainerIds?.includes(trainer.id) && <Check size={13} className="mr-1 inline" />}{trainerName(trainer)}</button>)}{!assignableTrainers.length && <p className="text-sm text-slate-500">Valide d&apos;abord un compte formateur·ice dans l&apos;onglet Équipe.</p>}</div></div>
         {!planExists ? <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-dashed border-slate-300 bg-white p-6"><div><h2 className="font-semibold">Planning à préparer</h2><p className="text-sm text-slate-500">Modèle {formation.type === "formation_generale" ? "formation générale · 9 jours" : "approfondissement · 7 jours"}, inspiré des plannings fournis.</p></div><button type="button" disabled={busy} onClick={() => void saveActivities(buildPlanningTemplate(formation))} className="flex items-center gap-2 rounded bg-slate-900 px-4 py-2 text-sm text-white"><Plus size={16} />Créer le planning</button></div> : <>
           <p className="text-sm font-medium text-slate-700">Déroulé complet · J1 à J{dayCount}</p>
           <PlanningBoard key={formation.id} activities={activities} dayCount={dayCount} startDate={formation.startDate} themes={themes} trainerNames={Object.fromEntries(trainers.map((trainer) => [trainer.id, trainerName(trainer)]))} busy={busy} onEdit={(item) => { setError(""); setEditing({ ...item, trainerIds: item.trainerIds || [] }); }} onAdd={(day, start, end) => { setError(""); setEditing(emptyActivity(day, start, end)); }} onSaveThemes={saveThemes} />

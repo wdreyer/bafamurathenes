@@ -21,6 +21,7 @@ import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
 import { buildPlanningTemplate } from "@/lib/planningTemplates";
 import { defaultThemes } from "@/lib/planningThemes";
+import { ADMIN_TRAINER_IDS, ADMIN_TRAINER_NAMES } from "@/lib/adminAccess";
 
 type Props = {
   initialData?: Formation;
@@ -130,19 +131,19 @@ export function FormationForm({ initialData, formationId, onSaved }: Props) {
           price,
           transportOptions: cleanedTransportOptions,
           inscriptionsCount: 0,
-          trainerIds: [],
+          trainerIds: ADMIN_TRAINER_IDS,
         };
         const batch = writeBatch(db);
         batch.set(created, {
           type, title, startDate, endDate, imageUrl, description, price,
-          transportOptions: cleanedTransportOptions, inscriptionsCount: 0, trainerIds: [],
+          transportOptions: cleanedTransportOptions, inscriptionsCount: 0, trainerIds: ADMIN_TRAINER_IDS,
           createdAt: serverTimestamp(),
         });
         batch.set(doc(db, "formationPlans", created.id), {
           formationId: created.id,
           activities: buildPlanningTemplate(formationData),
           themes: defaultThemes,
-          trainerNames: {},
+          trainerNames: ADMIN_TRAINER_NAMES,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
         });

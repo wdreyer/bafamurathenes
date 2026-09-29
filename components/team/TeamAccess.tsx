@@ -13,11 +13,13 @@ import {
 import { doc, onSnapshot, serverTimestamp, setDoc } from "firebase/firestore";
 import { CheckCircle2, Clock3, KeyRound, LogOut, ShieldCheck, UserPlus } from "lucide-react";
 import { auth, db } from "@/lib/firebase";
+import { ADMIN_TRAINERS, isAdminEmail } from "@/lib/adminAccess";
 import type { Trainer } from "@/lib/types";
 
 type TeamAuthValue = {
   user: User;
   trainer: Trainer;
+  isAdmin: boolean;
   logout: () => Promise<void>;
 };
 
@@ -121,6 +123,7 @@ export function TeamAccess({ children }: { children: React.ReactNode }) {
   const [trainer, setTrainer] = useState<Trainer | null>(null);
   const [authReady, setAuthReady] = useState(false);
   const [profileReady, setProfileReady] = useState(false);
+  const isAdmin = isAdminEmail(user?.email);
 
   useEffect(() => onAuthStateChanged(auth, (nextUser) => {
     setUser(nextUser);
@@ -139,14 +142,21 @@ export function TeamAccess({ children }: { children: React.ReactNode }) {
 
   if (!authReady || (user && !profileReady)) return <div className="grid min-h-screen place-items-center bg-[#f5f8f6] text-sm text-slate-600">Chargement de l’espace équipe...</div>;
   if (!user) return <AccountForm />;
-  if (!trainer) return <StatusScreen status="pending" email={user.email || "Compte équipe"} />;
-  if (trainer.approvalStatus === "pending") return <StatusScreen status="pending" email={trainer.email || user.email || ""} />;
-  if (trainer.approvalStatus === "rejected") return <StatusScreen status="rejected" email={trainer.email || user.email || ""} />;
+  const adminProfile = ADMIN_TRAINERS.find((admin) => admin.email === user.email?.toLowerCase());
+  const activeTrainer = trainer ?? (isAdmin && adminProfile ? {
+    ...adminProfile,
+    accountUid: user.uid,
+    approvalStatus: "approved" as const,
+  } : null);
 
-  const approved = trainer.approvalStatus === "approved" || !trainer.approvalStatus;
-  if (!approved) return <StatusScreen status="pending" email={trainer.email || user.email || ""} />;
+  if (!activeTrainer) return <StatusScreen status="pending" email={user.email || "Compte équipe"} />;
+  if (!isAdmin && activeTrainer.approvalStatus === "pending") return <StatusScreen status="pending" email={activeTrainer.email || user.email || ""} />;
+  if (!isAdmin && activeTrainer.approvalStatus === "rejected") return <StatusScreen status="rejected" email={activeTrainer.email || user.email || ""} />;
 
-  if ((!trainer.profileComplete || !trainer.hasSocialSecurityNumber) && pathname !== "/equipe/profil") {
+  const approved = activeTrainer.approvalStatus === "approved" || !activeTrainer.approvalStatus;
+  if (!isAdmin && !approved) return <StatusScreen status="pending" email={activeTrainer.email || user.email || ""} />;
+
+  if (!isAdmin && (!activeTrainer.profileComplete || !activeTrainer.hasSocialSecurityNumber) && pathname !== "/equipe/profil") {
     return <div className="grid min-h-screen place-items-center bg-[#f5f8f6] px-4 text-slate-950">
       <main className="w-full max-w-lg rounded-lg border border-slate-200 bg-white p-7 shadow-lg">
         <span className="grid h-12 w-12 place-items-center rounded-md bg-emerald-100 text-emerald-800"><CheckCircle2 /></span>
@@ -157,5 +167,5 @@ export function TeamAccess({ children }: { children: React.ReactNode }) {
     </div>;
   }
 
-  return <TeamAuthContext.Provider value={{ user, trainer, logout: () => signOut(auth) }}>{children}</TeamAuthContext.Provider>;
+  return <TeamAuthContext.Provider value={{ user, trainer: activeTrainer, isAdmin, logout: () => signOut(auth) }}>{children}</TeamAuthContext.Provider>;
 }
