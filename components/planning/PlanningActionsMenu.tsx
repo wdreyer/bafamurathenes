@@ -105,3 +105,25 @@ export function PlanningNoticeBar({ actions, busy }: { actions: PlanningActions;
     <button type="button" onClick={actions.dismiss} aria-label="Fermer" className="grid h-7 w-7 shrink-0 cursor-pointer place-items-center rounded-full text-white/60 hover:bg-white/10 hover:text-white"><X size={14} /></button>
   </div>;
 }
+
+export function MoveConflictDialog({ actions, busy }: { actions: PlanningActions; busy: boolean }) {
+  const plan = actions.pendingMove;
+  if (!plan) return null;
+  const { moved, conflicts, shrunk } = plan;
+  return <div className="planning-controls fixed inset-0 z-[170] flex items-center justify-center bg-slate-950/40 p-3" onMouseDown={(event) => { if (event.target === event.currentTarget) actions.resolveMove("cancel"); }}>
+    <div role="dialog" aria-modal="true" aria-label="Créneau occupé" className="w-full max-w-md rounded-xl bg-white p-5 shadow-2xl">
+      <h2 className="text-base font-semibold text-slate-950">Ce créneau est déjà pris</h2>
+      <p className="mt-1 text-sm text-slate-600">« {moved.title} » irait au J{moved.day} de {moved.start} à {moved.end}, à la place de :</p>
+      <ul className="mt-2 space-y-1 text-sm">
+        {conflicts.map((item) => <li key={item.id} className="rounded-md bg-slate-50 px-3 py-1.5"><strong className="font-semibold">{item.title}</strong> <span className="text-slate-500">· {item.start}–{item.end}</span></li>)}
+      </ul>
+      {shrunk && <p className="mt-3 text-xs text-slate-500">Réduire : {shrunk.map((item) => `${item.title} → ${item.start}–${item.end}`).join(" · ")}</p>}
+      <div className="mt-5 flex flex-wrap justify-end gap-2">
+        <button type="button" onClick={() => actions.resolveMove("cancel")} className="h-9 cursor-pointer rounded-full px-4 text-sm font-medium text-slate-600 hover:bg-slate-100">Annuler</button>
+        <button type="button" disabled={busy || !shrunk} onClick={() => actions.resolveMove("shrink")} title={shrunk ? undefined : "Impossible : le temps en place serait entièrement recouvert ou coupé en deux"}
+          className="h-9 cursor-pointer rounded-full border border-[#792bb9] px-4 text-sm font-semibold text-[#792bb9] hover:bg-[#f8f3fb] disabled:cursor-not-allowed disabled:border-slate-200 disabled:text-slate-300 disabled:hover:bg-transparent">Réduire les horaires</button>
+        <button type="button" disabled={busy} onClick={() => actions.resolveMove("replace")} className="h-9 cursor-pointer rounded-full bg-[#792bb9] px-4 text-sm font-semibold text-white hover:bg-[#66239d] disabled:opacity-50">Remplacer</button>
+      </div>
+    </div>
+  </div>;
+}

@@ -1,13 +1,13 @@
 "use client";
 
-import { useRef, useState, type FocusEvent, type MouseEvent } from "react";
+import { useRef, useState, type DragEvent, type FocusEvent, type MouseEvent } from "react";
 import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight, FileText, Plus, Settings2 } from "lucide-react";
-import { minuteOfDay } from "@/lib/planningMove";
+import { asTime, minuteOfDay } from "@/lib/planningMove";
 import { iconForActivity } from "@/lib/planningIcons";
 import { defaultThemes, themeFill, themeForActivity, themeSurface, themeSwatch } from "@/lib/planningThemes";
 import { type PlanningActions } from "@/lib/usePlanningActions";
-import { PlanningContextMenu, PlanningNoticeBar, type MenuTarget } from "@/components/planning/PlanningActionsMenu";
+import { MoveConflictDialog, PlanningContextMenu, PlanningNoticeBar, type MenuTarget } from "@/components/planning/PlanningActionsMenu";
 import { PlanningSettings, defaultPlanningPrefs, type PlanningPrefs } from "@/components/planning/PlanningSettings";
 import type { PlanActivity, PlanTheme } from "@/lib/types";
 
@@ -19,13 +19,10 @@ type Props = {
   trainerNames?: Record<string, string>;
   formationTitle?: string;
   busy?: boolean;
-  arrivalTime?: string;
-  departureTime?: string;
   actions?: PlanningActions;
   onEdit?: (activity: PlanActivity) => void;
   onAdd?: (day: number, start?: string, end?: string) => void;
   onSaveThemes?: (themes: PlanTheme[]) => Promise<boolean>;
-  onSetBounds?: (patch: { arrivalTime?: string; departureTime?: string }) => void;
 };
 
 type OpenMenu = ((target: MenuTarget) => void) | undefined;
@@ -70,9 +67,10 @@ const namesFor = (activity: PlanActivity, trainerNames?: Record<string, string>)
 const menuHandler = (onMenu: OpenMenu, target: (event: MouseEvent) => MenuTarget) =>
   onMenu ? (event: MouseEvent) => { event.preventDefault(); onMenu(target(event)); } : undefined;
 
-function ActivityCell({ activity, themes, trainerNames, prefs, disabled, onEdit, onHover, onMenu, merged = false, dimmed = false }: {
+function ActivityCell({ activity, themes, trainerNames, prefs, disabled, onEdit, onHover, onMenu, onDragStart, onDragEnd, dragging = false, merged = false, dimmed = false }: {
   activity: PlanActivity; themes: PlanTheme[]; trainerNames?: Record<string, string>; prefs: PlanningPrefs; disabled: boolean; onEdit?: Props["onEdit"];
-  onHover: (text: string | null, x?: number, y?: number) => void; onMenu?: OpenMenu; merged?: boolean; dimmed?: boolean;
+  onHover: (text: string | null, x?: number, y?: number) => void; onMenu?: OpenMenu; onDragStart?: (activity: PlanActivity) => void; onDragEnd?: () => void;
+  dragging?: boolean; merged?: boolean; dimmed?: boolean;
 }) {
   const contentRef = useRef<HTMLDivElement>(null);
   const theme = themeForActivity(activity, themes);
@@ -86,7 +84,8 @@ function ActivityCell({ activity, themes, trainerNames, prefs, disabled, onEdit,
     {prefs.hours && <span className="mt-0.5 text-[8px] font-semibold leading-none opacity-70">{shortHour(activity.start)}–{shortHour(activity.end)}</span>}
     {prefs.names && names.length > 0 && <span data-overflow-check className="mt-0.5 text-[8.5px] font-semibold leading-tight opacity-80">{names.join(" · ")}</span>}
   </div>;
-  const className = `relative block h-full min-h-0 min-w-0 overflow-hidden rounded-md text-center shadow-[inset_0_-2px_0_rgba(26,21,48,0.1)] transition ${themeFill(theme.color)} ${dimmed ? "opacity-20 grayscale" : ""}`;
+  const className = `relative block h-full min-h-0 min-w-0 overflow-hidden rounded-md text-center shadow-[inset_0_-2px_0_rgba(26,21,48,0.1)] transition ${themeFill(theme.color)} ${dimmed ? "opacity-20 grayscale" : ""} ${dragging ? "opacity-40 ring-2 ring-[#1a1530]" : ""}`;
+  const canDrag = Boolean(onDragStart) && !merged && !disabled;
   const isClipped = () => {
     const element = contentRef.current;
     if (!element) return false;
@@ -99,20 +98,35 @@ function ActivityCell({ activity, themes, trainerNames, prefs, disabled, onEdit,
     onFocus: (event: FocusEvent<HTMLElement>) => { const rect = event.currentTarget.getBoundingClientRect(); if (isClipped()) onHover(fullLabel, rect.left + rect.width / 2, rect.bottom); },
     onBlur: () => onHover(null),
     onContextMenu: menuHandler(onMenu, (event) => { onHover(null); return { kind: "activity", activity, x: event.clientX, y: event.clientY }; }),
+    draggable: canDrag,
+    onDragStart: canDrag ? (event: DragEvent) => {
+      onHover(null);
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("text/plain", activity.id);
+      onDragStart!(activity);
+    } : undefined,
+    onDragEnd: canDrag ? () => onDragEnd?.() : undefined,
   };
   if (!onEdit) return <button type="button" aria-label={fullLabel} {...handlers}
     onClick={(event) => onHover(`${fullLabel}${activity.content ? `
 ${activity.content}` : ""}`, event.clientX, event.clientY)}
     className={`${className} w-full cursor-pointer`}>{label}</button>;
   return <button type="button" disabled={disabled} onClick={() => onEdit(activity)} aria-label={fullLabel} {...handlers}
-    className={`${className} w-full cursor-pointer hover:brightness-[1.04] hover:shadow-md disabled:cursor-wait`}>{label}</button>;
+    className={`${className} w-full ${canDrag ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"} hover:brightness-[1.04] hover:shadow-md disabled:cursor-wait`}>{label}</button>;
 }
 
-function OverviewGrid({ days, dayCount, startDate, activities, themes, trainerNames, prefs, busy, arrivalTime, departureTime, isLit, onAdd, onEdit, onMenu }: {
+function OverviewGrid({ days, dayCount, startDate, activities, themes, trainerNames, prefs, busy, isLit, onAdd, onEdit, onMenu, onMove }: {
   days: number[]; dayCount: number; startDate: string; activities: PlanActivity[]; themes: PlanTheme[]; trainerNames?: Record<string, string>; prefs: PlanningPrefs;
-  busy: boolean; arrivalTime?: string; departureTime?: string; isLit: (activity: PlanActivity) => boolean; onAdd?: Props["onAdd"]; onEdit?: Props["onEdit"]; onMenu?: OpenMenu;
+  busy: boolean; isLit: (activity: PlanActivity) => boolean; onAdd?: Props["onAdd"]; onEdit?: Props["onEdit"]; onMenu?: OpenMenu;
+  onMove?: (activity: PlanActivity, day: number, start: string) => void;
 }) {
   const [hover, setHover] = useState<{ text: string; x: number; y: number } | null>(null);
+  const [dragged, setDragged] = useState<PlanActivity | null>(null);
+  // Set one tick after dragstart: switching the time layer to pointer-events:none synchronously would cancel the drag.
+  const [dragLayerOff, setDragLayerOff] = useState(false);
+  const [drop, setDrop] = useState<{ day: number; start: string; end: string } | null>(null);
+  const startDrag = (activity: PlanActivity) => { setDragged(activity); setTimeout(() => setDragLayerOff(true), 0); };
+  const endDrag = () => { setDragged(null); setDragLayerOff(false); setDrop(null); };
   const boundaries = Array.from(new Set(activities.flatMap((item) => [item.start, item.end]))).sort();
   const intervals = boundaries.slice(0, -1).map((start, index) => ({ start, end: boundaries[index + 1] }));
 
@@ -166,9 +180,12 @@ function OverviewGrid({ days, dayCount, startDate, activities, themes, trainerNa
     }
   });
 
+  // The formation starts with the first time of day 1 and ends with the last time of the last day; outside is greyed.
+  const firstStart = activities.filter((item) => item.day === 1).map((item) => item.start).sort()[0];
+  const lastEnd = activities.filter((item) => item.day === dayCount).map((item) => item.end).sort().at(-1);
   const isOutOfBounds = (day: number, interval: { start: string; end: string }) =>
-    (day === 1 && Boolean(arrivalTime) && interval.end <= arrivalTime!) ||
-    (day === dayCount && Boolean(departureTime) && interval.start >= departureTime!);
+    (day === 1 && Boolean(firstStart) && interval.end <= firstStart!) ||
+    (day === dayCount && Boolean(lastEnd) && interval.start >= lastEnd!);
 
   const occupied = new Set<string>();
   activities.forEach((item) => {
@@ -198,8 +215,18 @@ function OverviewGrid({ days, dayCount, startDate, activities, themes, trainerNa
 
         {days.flatMap((day, dayIndex) => intervals.map((interval, index) => {
           const outOfBounds = isOutOfBounds(day, interval);
-          const free = !outOfBounds && !occupied.has(`${day}|${index}`);
-          return <div key={`${day}-${interval.start}`} className={`group/empty relative border-b border-r border-[#f3edf8] ${outOfBounds ? "bg-[repeating-linear-gradient(135deg,#f4eef9_0_6px,#ffffff_6px_12px)]" : "bg-white"}`} style={{ gridColumn: dayIndex + 2, gridRow: index + 2 }}
+          const free = !occupied.has(`${day}|${index}`);
+          const dropHere = drop && drop.day === day && interval.start >= drop.start && interval.start < drop.end;
+          const dropTarget = dragged && onMove ? {
+            onDragOver: (event: DragEvent) => {
+              event.preventDefault();
+              event.dataTransfer.dropEffect = "move";
+              const end = asTime(Math.min(24 * 60 - 1, minuteOfDay(interval.start) + minuteOfDay(dragged.end) - minuteOfDay(dragged.start)));
+              if (drop?.day !== day || drop.start !== interval.start) setDrop({ day, start: interval.start, end });
+            },
+            onDrop: (event: DragEvent) => { event.preventDefault(); onMove(dragged, day, interval.start); endDrag(); },
+          } : {};
+          return <div key={`${day}-${interval.start}`} data-slot={`${day}|${interval.start}`} {...dropTarget} className={`group/empty relative border-b border-r border-[#f3edf8] ${dropHere ? "bg-[#f0e8f8] outline-2 -outline-offset-2 outline-dashed outline-[#792bb9]" : outOfBounds ? "bg-[repeating-linear-gradient(135deg,#f4eef9_0_6px,#ffffff_6px_12px)]" : "bg-white"}`} style={{ gridColumn: dayIndex + 2, gridRow: index + 2 }}
             onContextMenu={free ? menuHandler(onMenu, (event) => ({ kind: "cell", day, start: interval.start, end: interval.end, x: event.clientX, y: event.clientY })) : undefined}>
             {free && onAdd && <button type="button" disabled={busy} onClick={() => onAdd(day, interval.start, interval.end)} title={`Ajouter un temps de ${interval.start} à ${interval.end}`} aria-label={`Ajouter un temps de ${interval.start} à ${interval.end}`}
               className="absolute inset-0.5 grid place-items-center rounded-md text-[#b08ad0] opacity-0 transition-opacity hover:bg-[#f8f3fb] hover:opacity-100 focus:opacity-100 disabled:cursor-not-allowed"><Plus size={13} /></button>}
@@ -214,15 +241,16 @@ function OverviewGrid({ days, dayCount, startDate, activities, themes, trainerNa
           });
           return Array.from(groups.entries()).map(([key, group]) => {
             const [start, end] = key.split("|");
-            return <div key={`${day}-${key}`} className="z-[5] flex flex-col gap-[2px] p-[2px]" style={{ gridColumn: dayIndex + 2, gridRow: `${boundaries.indexOf(start) + 2} / ${boundaries.indexOf(end) + 2}` }}>
+            return <div key={`${day}-${key}`} className={`z-[5] flex flex-col gap-[2px] p-[2px] ${dragLayerOff ? "pointer-events-none" : ""}`} style={{ gridColumn: dayIndex + 2, gridRow: `${boundaries.indexOf(start) + 2} / ${boundaries.indexOf(end) + 2}` }}>
               {group.map((activity) => <div key={activity.id} className="min-h-0 flex-1">
-                <ActivityCell activity={activity} themes={themes} trainerNames={trainerNames} prefs={prefs} disabled={busy} onEdit={onEdit} onHover={onHover} onMenu={onMenu} dimmed={!isLit(activity)} />
+                <ActivityCell activity={activity} themes={themes} trainerNames={trainerNames} prefs={prefs} disabled={busy} onEdit={onEdit} onHover={onHover} onMenu={onMenu}
+                  onDragStart={onMove ? startDrag : undefined} onDragEnd={endDrag} dragging={dragged?.id === activity.id} dimmed={!isLit(activity)} />
               </div>)}
             </div>;
           });
         })}
 
-        {runs.map((run) => <div key={`merge-${run.start}-${run.end}-${run.dayIndexStart}`} className="relative z-[6] p-[2px]"
+        {runs.map((run) => <div key={`merge-${run.start}-${run.end}-${run.dayIndexStart}`} className={`relative z-[6] p-[2px] ${dragLayerOff ? "pointer-events-none" : ""}`}
           style={{ gridColumn: `${run.dayIndexStart + 2} / ${run.dayIndexStart + 2 + run.dayCount}`, gridRow: `${boundaries.indexOf(run.start) + 2} / ${boundaries.indexOf(run.end) + 2}` }}>
           <ActivityCell activity={run.activity} themes={themes} trainerNames={trainerNames} prefs={prefs} disabled={busy} onEdit={onEdit} onHover={onHover} onMenu={onMenu} merged dimmed={!isLit(run.activity)} />
         </div>)}
@@ -337,7 +365,7 @@ function PrintPlanning({ activities, dayCount, startDate, formationTitle, themes
   </div>, document.body);
 }
 
-export function PlanningBoard({ activities, dayCount, startDate, themes = defaultThemes, trainerNames, formationTitle, busy = false, arrivalTime, departureTime, actions, onEdit, onAdd, onSaveThemes, onSetBounds }: Props) {
+export function PlanningBoard({ activities, dayCount, startDate, themes = defaultThemes, trainerNames, formationTitle, busy = false, actions, onEdit, onAdd, onSaveThemes }: Props) {
   // The board only renders client-side, once Firebase data has loaded, so reading localStorage on init is safe.
   const [prefs, setPrefs] = useState<PlanningPrefs>(readPrefs);
   const [view, setView] = useState<"all" | "day">(() => prefs.defaultView);
@@ -384,15 +412,16 @@ export function PlanningBoard({ activities, dayCount, startDate, themes = defaul
       </div>
 
       <div className="min-w-0 max-w-full pt-1">{view === "all"
-        ? <OverviewGrid days={days} dayCount={dayCount} startDate={startDate} activities={activities} themes={themes} trainerNames={trainerNames} prefs={prefs} busy={busy} arrivalTime={arrivalTime} departureTime={departureTime} isLit={isLit} onAdd={onAdd} onEdit={onEdit} onMenu={onMenu} />
+        ? <OverviewGrid days={days} dayCount={dayCount} startDate={startDate} activities={activities} themes={themes} trainerNames={trainerNames} prefs={prefs} busy={busy} isLit={isLit} onAdd={onAdd} onEdit={onEdit} onMenu={onMenu} onMove={actions?.move} />
         : <DayAgenda day={selectedDay} dayCount={dayCount} startDate={startDate} activities={activities} themes={themes} trainerNames={trainerNames} prefs={prefs} busy={busy} isLit={isLit}
           onChangeDay={(day) => setSelectedDay(Math.min(dayCount, Math.max(1, day)))} onEdit={onEdit} onAdd={onAdd} onMenu={onMenu} />}</div>
-      {actions && <p className="text-center text-[11px] text-slate-400">💡 Clic droit sur un temps, une case vide ou un jour pour copier, coller, dupliquer ou fusionner.</p>}
+      {actions && <p className="text-center text-[11px] text-slate-400">💡 Glisse un temps pour le déplacer · clic droit pour copier, coller, dupliquer ou fusionner.</p>}
     </div>
     <PrintPlanning activities={activities} dayCount={dayCount} startDate={startDate} formationTitle={formationTitle} themes={themes} trainerNames={trainerNames} />
     {menu && actions && <PlanningContextMenu target={menu} activities={activities} dayCount={dayCount} actions={actions} busy={busy} onEdit={onEdit} onAdd={onAdd} onClose={() => setMenu(null)} />}
     {actions && <PlanningNoticeBar actions={actions} busy={busy} />}
-    {settingsOpen && <PlanningSettings prefs={prefs} onChangePrefs={changePrefs} themes={themes} activities={activities} dayCount={dayCount}
-      arrivalTime={arrivalTime} departureTime={departureTime} onSaveThemes={onSaveThemes} onSetBounds={onSetBounds} onClose={() => setSettingsOpen(false)} />}
+    {actions && <MoveConflictDialog actions={actions} busy={busy} />}
+    {settingsOpen && <PlanningSettings prefs={prefs} onChangePrefs={changePrefs} themes={themes} activities={activities}
+      onSaveThemes={onSaveThemes} onClose={() => setSettingsOpen(false)} />}
   </>;
 }

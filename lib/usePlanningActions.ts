@@ -6,6 +6,27 @@ import type { PlanActivity } from "@/lib/types";
 
 export type PlanningNotice = { text: string; undo?: PlanActivity[] };
 
+/** A drag & drop waiting for a decision because the target slot is taken. */
+export type PendingMove = {
+  moved: PlanActivity;
+  conflicts: PlanActivity[];
+  /** The conflicting times trimmed around the moved one, or null when trimming can't work (fully covered, or would need a split). */
+  shrunk: PlanActivity[] | null;
+};
+
+function shrinkAround(moved: PlanActivity, conflicts: PlanActivity[]) {
+  const result: PlanActivity[] = [];
+  for (const item of conflicts) {
+    const before = item.start < moved.start;
+    const after = item.end > moved.end;
+    if (before === after) return null;
+    const trimmed = before ? { ...item, end: moved.start } : { ...item, start: moved.end };
+    if (minuteOfDay(trimmed.end) - minuteOfDay(trimmed.start) < 15) return null;
+    result.push(trimmed);
+  }
+  return result;
+}
+
 const overlaps = (activities: PlanActivity[], day: number, start: string, end: string, ignoreId?: string) =>
   activities.some((item) => item.id !== ignoreId && item.day === day && item.start < end && item.end > start);
 
@@ -42,6 +63,7 @@ export function mergedBlock(activity: PlanActivity, activities: PlanActivity[]) 
 export function usePlanningActions(activities: PlanActivity[], save: (next: PlanActivity[]) => Promise<boolean>) {
   const [clipboard, setClipboard] = useState<PlanActivity | null>(null);
   const [notice, setNotice] = useState<PlanningNotice | null>(null);
+  const [pendingMove, setPendingMove] = useState<PendingMove | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => () => clearTimeout(timer.current), []);
@@ -108,6 +130,29 @@ export function usePlanningActions(activities: PlanActivity[], save: (next: Plan
     void apply(next, `Fusionné avec J${neighbourDay} · texte de droite gardé`);
   };
 
+  /** Drag & drop: the moved time always keeps its duration; a taken slot asks whether to replace or trim the others. */
+  const move = (activity: PlanActivity, day: number, start: string) => {
+    const duration = minuteOfDay(activity.end) - minuteOfDay(activity.start);
+    const end = asTime(minuteOfDay(start) + duration);
+    if (minuteOfDay(start) + duration > 24 * 60) { notify({ text: "Ce temps dépasserait minuit." }); return; }
+    if (day === activity.day && start === activity.start) return;
+    const moved = { ...activity, day, start, end, merged: false };
+    const conflicts = activities.filter((item) => item.id !== activity.id && item.day === day && item.start < end && item.end > start);
+    const plan = { moved, conflicts, shrunk: shrinkAround(moved, conflicts) };
+    if (conflicts.length) setPendingMove(plan);
+    else resolveMove("replace", plan);
+  };
+
+  const resolveMove = (mode: "replace" | "shrink" | "cancel", plan = pendingMove) => {
+    setPendingMove(null);
+    if (!plan || mode === "cancel" || (mode === "shrink" && !plan.shrunk)) return;
+    const conflictIds = new Set(plan.conflicts.map((item) => item.id));
+    const kept = activities.filter((item) => item.id !== plan.moved.id && !conflictIds.has(item.id));
+    const next = [...kept, plan.moved, ...(mode === "shrink" ? plan.shrunk! : [])];
+    const where = `J${plan.moved.day} à ${plan.moved.start}`;
+    void apply(next, !plan.conflicts.length ? `Déplacé au ${where}` : mode === "replace" ? `Déplacé au ${where} · ${plan.conflicts.length} temps remplacé${plan.conflicts.length > 1 ? "s" : ""}` : `Déplacé au ${where} · horaires voisins réduits`);
+  };
+
   const remove = (activity: PlanActivity) =>
     apply(activities.filter((item) => item.id !== activity.id), `« ${activity.title} » supprimé`);
 
@@ -118,7 +163,7 @@ export function usePlanningActions(activities: PlanActivity[], save: (next: Plan
     if (await save(previous)) notify({ text: "Modification annulée" });
   };
 
-  return { clipboard, notice, copy, paste, duplicateTo, copyDay, setMerged, mergeWithNeighbour, blockOf, remove, undo, dismiss: () => notify(null) };
+  return { clipboard, notice, copy, paste, duplicateTo, copyDay, setMerged, mergeWithNeighbour, blockOf, move, pendingMove, resolveMove, remove, undo, dismiss: () => notify(null) };
 }
 
 export type PlanningActions = ReturnType<typeof usePlanningActions>;

@@ -29,7 +29,6 @@ export default function FormateursPage() {
   const [formationId, setFormationId] = useState("");
   const [activities, setActivities] = useState<PlanActivity[]>([]);
   const [themes, setThemes] = useState<PlanTheme[]>(defaultThemes);
-  const [bounds, setBounds] = useState<{ arrivalTime?: string; departureTime?: string }>({});
   const [planExists, setPlanExists] = useState(false);
   const [tab, setTab] = useState<"planning" | "team">("team");
   const [editing, setEditing] = useState<PlanActivity | null>(null);
@@ -78,7 +77,6 @@ export default function FormateursPage() {
       setPlanExists(snapshot.exists());
       setActivities(snapshot.exists() ? (snapshot.data().activities || []) as PlanActivity[] : []);
       setThemes(normalizeThemes(snapshot.exists() ? snapshot.data().themes as PlanTheme[] : null));
-      setBounds(snapshot.exists() ? { arrivalTime: snapshot.data().arrivalTime || undefined, departureTime: snapshot.data().departureTime || undefined } : {});
     }, () => setError("Impossible de charger le planning."));
   }, [formationId]);
 
@@ -126,19 +124,6 @@ export default function FormateursPage() {
       await setDoc(doc(db, "formationPlans", formation.id), { themes: next, updatedAt: serverTimestamp() }, { merge: true });
       return true;
     } catch { setError("Impossible d'enregistrer les thèmes."); return false; }
-    finally { setBusy(false); }
-  };
-
-  const saveBounds = async (patch: { arrivalTime?: string; departureTime?: string }) => {
-    if (!formation) return;
-    setBusy(true); setError("");
-    try {
-      await setDoc(doc(db, "formationPlans", formation.id), {
-        arrivalTime: "arrivalTime" in patch ? patch.arrivalTime ?? null : bounds.arrivalTime ?? null,
-        departureTime: "departureTime" in patch ? patch.departureTime ?? null : bounds.departureTime ?? null,
-        updatedAt: serverTimestamp(),
-      }, { merge: true });
-    } catch { setError("Impossible d'enregistrer les horaires d'arrivée/départ."); }
     finally { setBusy(false); }
   };
 
@@ -298,7 +283,7 @@ Cette action est irréversible.`;
       {formation && <>
         <div className="border-y border-[#d8c9e6] py-3"><div className="mb-2 flex items-center justify-between"><h2 className="text-sm font-semibold">Formateur·ices de la session</h2><button type="button" onClick={() => setTab("team")} className="text-xs text-[#792bb9]">Gérer l&apos;équipe</button></div><div className="flex flex-wrap gap-2">{assignableTrainers.map((trainer) => <button key={trainer.id} type="button" disabled={busy} onClick={() => void toggleTrainer(trainer.id)} aria-pressed={formation.trainerIds?.includes(trainer.id) || false} className={`rounded-full border px-3 py-1.5 text-sm ${formation.trainerIds?.includes(trainer.id) ? "border-[#792bb9] bg-[#f0e8f8] text-[#552080]" : "border-slate-200 bg-white text-slate-600"}`}>{formation.trainerIds?.includes(trainer.id) && <Check size={13} className="mr-1 inline" />}{trainerName(trainer)}</button>)}{!assignableTrainers.length && <p className="text-sm text-slate-500">Valide d&apos;abord un compte formateur·ice dans l&apos;onglet Équipe.</p>}</div></div>
         {!planExists ? <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-dashed border-slate-300 bg-white p-6"><div><h2 className="font-semibold">Planning à préparer</h2><p className="text-sm text-slate-500">Modèle {formation.type === "formation_generale" ? "formation générale · 9 jours" : "approfondissement · 7 jours"}, inspiré des plannings fournis.</p></div><button type="button" disabled={busy} onClick={() => void saveActivities(buildPlanningTemplate(formation))} className="flex items-center gap-2 rounded bg-slate-900 px-4 py-2 text-sm text-white"><Plus size={16} />Créer le planning</button></div> : <>
-          <PlanningBoard key={formation.id} activities={activities} dayCount={dayCount} startDate={formation.startDate} formationTitle={formation.title} themes={themes} trainerNames={Object.fromEntries(trainers.map((trainer) => [trainer.id, trainerName(trainer)]))} busy={busy} arrivalTime={bounds.arrivalTime} departureTime={bounds.departureTime} actions={planningActions} onEdit={(item) => { setError(""); setEditing({ ...item, trainerIds: item.trainerIds || [] }); }} onAdd={(day, start, end) => { setError(""); setEditing(emptyActivity(day, start, end)); }} onSaveThemes={saveThemes} onSetBounds={(patch) => void saveBounds(patch)} />
+          <PlanningBoard key={formation.id} activities={activities} dayCount={dayCount} startDate={formation.startDate} formationTitle={formation.title} themes={themes} trainerNames={Object.fromEntries(trainers.map((trainer) => [trainer.id, trainerName(trainer)]))} busy={busy} actions={planningActions} onEdit={(item) => { setError(""); setEditing({ ...item, trainerIds: item.trainerIds || [] }); }} onAdd={(day, start, end) => { setError(""); setEditing(emptyActivity(day, start, end)); }} onSaveThemes={saveThemes} />
         </>}
       </>}
     </div>}

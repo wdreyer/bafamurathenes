@@ -2,7 +2,6 @@
 
 import { useState, type ReactNode } from "react";
 import { Plus, Printer, Save, Trash2, X } from "lucide-react";
-import { QUARTER_HOUR_OPTIONS } from "@/lib/planningMove";
 import { defaultThemes, themeColors, themeForActivity, themeSwatch } from "@/lib/planningThemes";
 import type { PlanActivity, PlanTheme } from "@/lib/types";
 
@@ -21,11 +20,7 @@ type Props = {
   onChangePrefs: (prefs: PlanningPrefs) => void;
   themes: PlanTheme[];
   activities: PlanActivity[];
-  dayCount: number;
-  arrivalTime?: string;
-  departureTime?: string;
   onSaveThemes?: (themes: PlanTheme[]) => Promise<boolean>;
-  onSetBounds?: (patch: { arrivalTime?: string; departureTime?: string }) => void;
   onClose: () => void;
 };
 
@@ -107,9 +102,8 @@ function ThemeSettings({ themes, activities, onSave }: { themes: PlanTheme[]; ac
   </div>;
 }
 
-export function PlanningSettings({ prefs, onChangePrefs, themes, activities, dayCount, arrivalTime, departureTime, onSaveThemes, onSetBounds, onClose }: Props) {
+export function PlanningSettings({ prefs, onChangePrefs, themes, activities, onSaveThemes, onClose }: Props) {
   const set = <K extends keyof PlanningPrefs>(key: K, value: PlanningPrefs[K]) => onChangePrefs({ ...prefs, [key]: value });
-  const select = "h-8 rounded-md border border-slate-300 bg-white px-2 text-sm";
 
   return <div className="planning-controls fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-3" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
     <div role="dialog" aria-modal="true" aria-label="Réglages du planning" className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-md bg-white p-5 shadow-xl">
@@ -126,12 +120,6 @@ export function PlanningSettings({ prefs, onChangePrefs, themes, activities, day
         <Segmented label="Vue à l'ouverture" value={prefs.defaultView} onChange={(value) => set("defaultView", value)} options={[{ id: "all", label: "Formation complète" }, { id: "day", label: "Jour par jour" }]} />
       </Section>
 
-      {onSetBounds && <Section title="Arrivée et départ" hint="Les créneaux avant l'arrivée et après le départ sont grisés.">
-        <div className="flex flex-wrap gap-4 text-sm text-slate-700">
-          <label className="flex items-center gap-2">Arrivée J1<select value={arrivalTime || ""} onChange={(event) => onSetBounds({ arrivalTime: event.target.value || undefined })} className={select}><option value="">—</option>{QUARTER_HOUR_OPTIONS.map((time) => <option key={time} value={time}>{time}</option>)}</select></label>
-          <label className="flex items-center gap-2">Départ J{dayCount}<select value={departureTime || ""} onChange={(event) => onSetBounds({ departureTime: event.target.value || undefined })} className={select}><option value="">—</option>{QUARTER_HOUR_OPTIONS.map((time) => <option key={time} value={time}>{time}</option>)}</select></label>
-        </div>
-      </Section>}
 
       {onSaveThemes && <Section title="Thèmes et couleurs">
         <ThemeSettings themes={themes} activities={activities} onSave={onSaveThemes} />

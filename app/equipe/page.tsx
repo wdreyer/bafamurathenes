@@ -20,8 +20,6 @@ type FormationPlan = {
   trainerNames?: Record<string, string>;
   groupCount?: number;
   themes?: PlanTheme[];
-  arrivalTime?: string;
-  departureTime?: string;
 };
 
 const emptyActivity = (day: number, start = "09:00", end = "10:00"): PlanActivity => ({
@@ -117,31 +115,12 @@ export default function TeamPage() {
     finally { setBusy(false); }
   };
 
-  const saveBounds = async (patch: { arrivalTime?: string; departureTime?: string }) => {
-    if (!formation || !plan) return;
-    setBusy(true); setError("");
-    try {
-      await setDoc(doc(db, "formationPlans", formation.id), {
-        arrivalTime: "arrivalTime" in patch ? patch.arrivalTime ?? null : plan.arrivalTime ?? null,
-        departureTime: "departureTime" in patch ? patch.departureTime ?? null : plan.departureTime ?? null,
-        updatedAt: serverTimestamp(),
-      }, { merge: true });
-    } catch { setError("Impossible d'enregistrer les horaires d'arrivée/départ."); }
-    finally { setBusy(false); }
-  };
-
   const planningActions = usePlanningActions(plan?.activities || [], saveActivities);
 
   const saveEditing = async () => {
     if (!editing || !plan || !formation) return;
     if (!editing.title.trim() || editing.end <= editing.start) {
       setError("Renseigne un titre et une heure de fin après le début."); return;
-    }
-    if (editing.day === 1 && plan.arrivalTime && editing.end <= plan.arrivalTime) {
-      setError(`Le groupe arrive à ${plan.arrivalTime} le J1, ce temps est avant l'arrivée.`); return;
-    }
-    if (editing.day === dayCount && plan.departureTime && editing.start >= plan.departureTime) {
-      setError(`Le groupe part à ${plan.departureTime} le J${dayCount}, ce temps est après le départ.`); return;
     }
     setBusy(true); setError("");
     try {
@@ -194,7 +173,7 @@ export default function TeamPage() {
         </div>
 
         <div className={section === "planning" ? "pt-4" : "hidden print:block"}>
-          <PlanningBoard key={formation.id} activities={plan.activities} dayCount={dayCount} startDate={formation.startDate} formationTitle={formation.title} themes={themes} trainerNames={plan.trainerNames} busy={busy} arrivalTime={plan.arrivalTime} departureTime={plan.departureTime} actions={planningActions} onEdit={(item) => { setError(""); setEditing({ ...item, trainerIds: item.trainerIds || [] }); }} onAdd={(day, start, end) => { setError(""); setEditing(emptyActivity(day, start, end)); }} onSaveThemes={saveThemes} onSetBounds={(patch) => void saveBounds(patch)} />
+          <PlanningBoard key={formation.id} activities={plan.activities} dayCount={dayCount} startDate={formation.startDate} formationTitle={formation.title} themes={themes} trainerNames={plan.trainerNames} busy={busy} actions={planningActions} onEdit={(item) => { setError(""); setEditing({ ...item, trainerIds: item.trainerIds || [] }); }} onAdd={(day, start, end) => { setError(""); setEditing(emptyActivity(day, start, end)); }} onSaveThemes={saveThemes} />
         </div>
         {section === "trainees" && <div className="print:hidden"><TraineeRoster key={selectedFormationId} inscriptions={registrations} loading={registrationsLoading} groupCount={groupCount} busy={busy} onChangeGroupCount={changeGroupCount} onSaveField={saveTraineeField} /></div>}
       </>}
