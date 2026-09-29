@@ -60,6 +60,10 @@ function shortHour(time: string) {
   return minutes === "00" ? `${hour}h` : `${hour}h${minutes}`;
 }
 
+function firstNameOnly(name: string) {
+  return name.trim().split(/\s+/)[0] || name;
+}
+
 function DayNavButton({ day, label, active, onClick }: { day: number; label: string; active: boolean; onClick: () => void }) {
   return <button type="button" onClick={onClick} aria-current={active ? "date" : undefined}
     className={`shrink-0 cursor-pointer rounded-md border px-3 py-2 text-left text-xs font-semibold transition ${active ? "border-[#792bb9] bg-[#792bb9] text-white" : "border-[#d8c9e6] bg-white text-slate-700 hover:border-[#792bb9]"}`}>
@@ -73,7 +77,7 @@ function ActivityCell({ activity, themes, trainerNames, disabled, density = "nor
   const contentRef = useRef<HTMLDivElement>(null);
   const drag = useDraggable({ id: `activity:${activity.id}`, disabled: !draggable || disabled || merged, data: { activity } });
   const theme = themeForActivity(activity, themes);
-  const names = (activity.trainerIds || []).map((id) => trainerNames?.[id]).filter(Boolean) as string[];
+  const names = (activity.trainerIds || []).map((id) => trainerNames?.[id] ? firstNameOnly(trainerNames[id]) : "").filter(Boolean);
   const fullLabel = `${activity.title} · ${activity.start}–${activity.end}${names.length ? ` · ${names.join(", ")}` : ""}`;
   const label = <div ref={contentRef} className="h-full min-h-0 w-full overflow-hidden">
     <span data-overflow-check className={merged
@@ -138,7 +142,7 @@ function DayAgenda({ day, startDate, activities, themes, trainerNames, busy, sel
     {!sorted.length ? <div className="rounded-md border border-dashed border-[#cdbbdd] bg-white px-5 py-10 text-center text-sm text-slate-500">Aucun temps à afficher pour cette journée.</div> : <div className="space-y-2.5">
       {sorted.map((activity) => {
         const theme = themeForActivity(activity, themes);
-        const names = (activity.trainerIds || []).map((id) => trainerNames?.[id]).filter(Boolean) as string[];
+        const names = (activity.trainerIds || []).map((id) => trainerNames?.[id] ? firstNameOnly(trainerNames[id]) : "").filter(Boolean);
         const duration = minuteOfDay(activity.end) - minuteOfDay(activity.start);
         const selected = selectedIds.has(activity.id);
         return <div key={activity.id} className="grid grid-cols-[64px_minmax(0,1fr)] items-stretch gap-3 sm:grid-cols-[84px_minmax(0,1fr)]">
@@ -301,7 +305,7 @@ function PrintPlanning({ activities, dayCount, startDate, formationTitle, themes
             const theme = themeForActivity(activity, themes);
             return <div key={activity.id} className="team-print-activity" style={{ gridColumn: week.indexOf(activity.day) + 2,
               gridRow: `${boundaries.indexOf(activity.start) + 2} / ${boundaries.indexOf(activity.end) + 2}`, borderLeftColor: `var(--planning-${theme.color})` }}>
-              <strong>{activity.title}</strong><span>{activity.start}–{activity.end}</span>{activity.trainerIds?.length > 0 && <small>{activity.trainerIds.map((id) => trainerNames?.[id]).filter(Boolean).join(" · ")}</small>}
+              <strong>{activity.title}</strong><span>{activity.start}–{activity.end}</span>{activity.trainerIds?.length > 0 && <small>{activity.trainerIds.map((id) => trainerNames?.[id] ? firstNameOnly(trainerNames[id]) : "").filter(Boolean).join(" · ")}</small>}
             </div>;
           })}
         </div>
@@ -477,7 +481,7 @@ export function PlanningBoard({ activities, backupActivities = [], dayCount, sta
       </div>}
 
       {filtersOpen && <div className="flex flex-wrap items-end gap-3 rounded-md border border-[#d8c9e6] bg-[#f8f3fb] p-3">
-        <label className="min-w-[220px] flex-1 text-xs font-semibold text-slate-600">Formateur·ice<select value={trainerFilter} onChange={(event) => { setTrainerFilter(event.target.value); setSelectedIds(new Set()); }} className="mt-1 h-9 w-full rounded border border-[#d8c9e6] bg-white px-2 text-sm font-normal"><option value="all">Tout le monde</option><option value="unassigned">Non assignés</option>{Object.entries(trainerNames || {}).map(([id, name]) => <option key={id} value={id}>{name}</option>)}</select></label>
+        <label className="min-w-[220px] flex-1 text-xs font-semibold text-slate-600">Formateur·ice<select value={trainerFilter} onChange={(event) => { setTrainerFilter(event.target.value); setSelectedIds(new Set()); }} className="mt-1 h-9 w-full rounded border border-[#d8c9e6] bg-white px-2 text-sm font-normal"><option value="all">Tout le monde</option><option value="unassigned">Non assignés</option>{Object.entries(trainerNames || {}).map(([id, name]) => <option key={id} value={id}>{firstNameOnly(name)}</option>)}</select></label>
         <label className="min-w-[220px] flex-1 text-xs font-semibold text-slate-600">Thème<select value={themeFilter} onChange={(event) => { setThemeFilter(event.target.value); setSelectedIds(new Set()); }} className="mt-1 h-9 w-full rounded border border-[#d8c9e6] bg-white px-2 text-sm font-normal"><option value="all">Tous les thèmes</option>{themes.map((theme) => <option key={theme.id} value={theme.id}>{theme.name}</option>)}</select></label>
         {activeFilterCount > 0 && <button type="button" onClick={() => { setTrainerFilter("all"); setThemeFilter("all"); }} className="inline-flex h-9 items-center gap-1 rounded px-3 text-xs font-semibold text-[#792bb9]"><X size={14} />Effacer</button>}
         <span className="pb-2 text-xs text-slate-500">{displayedActivities.length}/{activities.length} temps affichés</span>
@@ -492,7 +496,7 @@ export function PlanningBoard({ activities, backupActivities = [], dayCount, sta
         <button type="button" disabled={!selectedIds.size || busy} onClick={duplicateSelected} className="inline-flex h-8 items-center gap-1 rounded bg-white/10 px-2.5 hover:bg-white/20 disabled:opacity-40"><Copy size={13} />Dupliquer J+1</button>
         <button type="button" disabled={selectedIds.size < 2 || busy} onClick={mergeSelected} className="inline-flex h-8 items-center gap-1 rounded bg-white/10 px-2.5 hover:bg-white/20 disabled:opacity-40"><Link2 size={13} />Fusionner</button>
         <select aria-label="Changer le thème" defaultValue="" disabled={!selectedIds.size || busy} onChange={(event) => { const theme = themes.find((item) => item.id === event.target.value); if (theme) updateSelected((activity) => ({ ...activity, themeId: theme.id, color: theme.color }), "Thème mis à jour."); event.target.value = ""; }} className="h-8 rounded border-white/20 bg-[#332b49] px-2 text-white"><option value="" disabled>Thème…</option>{themes.map((theme) => <option key={theme.id} value={theme.id}>{theme.name}</option>)}</select>
-        <select aria-label="Assigner un formateur ou une formatrice" defaultValue="" disabled={!selectedIds.size || busy} onChange={(event) => { updateSelected((activity) => ({ ...activity, trainerIds: event.target.value === "none" ? [] : [event.target.value] }), "Animation mise à jour."); event.target.value = ""; }} className="h-8 rounded border-white/20 bg-[#332b49] px-2 text-white"><option value="" disabled>Animation…</option><option value="none">Sans assignation</option>{Object.entries(trainerNames || {}).map(([id, name]) => <option key={id} value={id}>{name}</option>)}</select>
+        <select aria-label="Assigner un formateur ou une formatrice" defaultValue="" disabled={!selectedIds.size || busy} onChange={(event) => { updateSelected((activity) => ({ ...activity, trainerIds: event.target.value === "none" ? [] : [event.target.value] }), "Animation mise à jour."); event.target.value = ""; }} className="h-8 rounded border-white/20 bg-[#332b49] px-2 text-white"><option value="" disabled>Animation…</option><option value="none">Sans assignation</option>{Object.entries(trainerNames || {}).map(([id, name]) => <option key={id} value={id}>{firstNameOnly(name)}</option>)}</select>
         <button type="button" disabled={!selectedIds.size || busy} onClick={deleteSelected} title="Supprimer la sélection" aria-label="Supprimer la sélection" className="grid h-8 w-8 place-items-center rounded text-rose-200 hover:bg-white/10 disabled:opacity-40"><Trash2 size={14} /></button>
         <button type="button" onClick={() => { setSelectionMode(false); setSelectedIds(new Set()); }} title="Quitter la sélection" aria-label="Quitter la sélection" className="ml-auto grid h-8 w-8 place-items-center rounded hover:bg-white/10"><X size={15} /></button>
       </div>}
