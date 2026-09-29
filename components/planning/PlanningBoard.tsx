@@ -79,11 +79,20 @@ function ActivityCell({ activity, themes, trainerNames, prefs, disabled, onEdit,
   const fullLabel = `${activity.title} · ${activity.start}–${activity.end}${names.length ? ` · ${names.join(", ")}` : ""}`;
   // Absolutely positioned so text never stretches the grid: what doesn't fit is simply hidden (no "…"),
   // and the full content shows on hover and on click.
-  const label = <div ref={contentRef} className="absolute inset-x-1.5 bottom-0.5 top-1 flex flex-col items-center justify-start overflow-hidden text-center [mask-image:linear-gradient(to_bottom,black_calc(100%-7px),transparent)]">
-    <span data-overflow-check className={`w-full whitespace-normal break-words [overflow-wrap:anywhere] font-bold leading-snug ${merged ? "text-[12px]" : "text-[11px]"}`}>{icon && <span className={`mr-1 ${merged ? "text-[15px]" : "text-[12px]"}`}>{icon}</span>}{activity.title}</span>
-    {prefs.hours && <span className="mt-0.5 text-[8px] font-semibold leading-none opacity-70">{shortHour(activity.start)}–{shortHour(activity.end)}</span>}
-    {prefs.names && names.length > 0 && <span data-overflow-check className="mt-0.5 text-[8.5px] font-semibold leading-tight opacity-80">{names.join(" · ")}</span>}
-  </div>;
+  // Short (≤ 15 min) and merged cells have room in width, not height: hours and names go on the title's right.
+  const inline = merged || minuteOfDay(activity.end) - minuteOfDay(activity.start) <= 15;
+  const meta = [prefs.hours ? `${shortHour(activity.start)}–${shortHour(activity.end)}` : "", prefs.names ? names.join(" · ") : ""].filter(Boolean).join(" · ");
+  const title = <span data-overflow-check className={`whitespace-normal break-words [overflow-wrap:anywhere] font-bold leading-snug ${inline ? "" : "w-full"} ${merged ? "text-[12px]" : "text-[11px]"}`}>{icon && <span className={`mr-1 ${merged ? "text-[15px]" : "text-[12px]"}`}>{icon}</span>}{activity.title}</span>;
+  const label = inline
+    ? <div ref={contentRef} className="absolute inset-x-1.5 inset-y-0.5 flex flex-wrap items-center justify-center gap-x-1.5 overflow-hidden text-center">
+      {title}
+      {meta && <span className="whitespace-nowrap text-[8.5px] font-semibold leading-none opacity-75">{meta}</span>}
+    </div>
+    : <div ref={contentRef} className="absolute inset-x-1.5 bottom-0.5 top-1 flex flex-col items-center justify-start overflow-hidden text-center [mask-image:linear-gradient(to_bottom,black_calc(100%-7px),transparent)]">
+      {title}
+      {prefs.hours && <span className="mt-0.5 text-[8px] font-semibold leading-none opacity-70">{shortHour(activity.start)}–{shortHour(activity.end)}</span>}
+      {prefs.names && names.length > 0 && <span data-overflow-check className="mt-0.5 text-[8.5px] font-semibold leading-tight opacity-80">{names.join(" · ")}</span>}
+    </div>;
   const className = `relative block h-full min-h-0 min-w-0 overflow-hidden rounded-md text-center shadow-[inset_0_-2px_0_rgba(26,21,48,0.1)] transition ${themeFill(theme.color)} ${dimmed ? "opacity-20 grayscale" : ""} ${dragging ? "opacity-40 ring-2 ring-[#1a1530]" : ""}`;
   const canDrag = Boolean(onDragStart) && !merged && !disabled;
   const isClipped = () => {

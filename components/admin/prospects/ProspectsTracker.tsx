@@ -14,7 +14,7 @@ import {
   updateDoc,
   writeBatch,
 } from "firebase/firestore";
-import { ChevronDown, Mail, Phone, Plus, Search } from "lucide-react";
+import { Check, ChevronDown, Copy, Mail, Phone, Plus, Search } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { cleanFormationTitle } from "@/lib/formationTitles";
 import type { Formation, Inscription, Prospect, ProspectStatus } from "@/lib/types";
@@ -174,6 +174,7 @@ export function ProspectsTracker() {
   const [showClosed, setShowClosed] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [copied, setCopied] = useState<"filtered" | "all" | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [newLead, setNewLead] = useState({
     name: "",
@@ -280,6 +281,25 @@ export function ProspectsTracker() {
       return dateFromUnknown(b.createdAt).getTime() - dateFromUnknown(a.createdAt).getTime();
     });
   }, [departments, formation, qualification, rows, search, showClosed, sortMode]);
+
+  // Unique, valid addresses separated by commas: ready to paste in the Bcc field of a mail.
+  const emailsOf = (list: ProspectRow[]) => Array.from(new Set(list
+    .map((row) => (row.email || "").trim().toLowerCase())
+    .filter((email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))));
+  const filteredEmails = emailsOf(filteredRows);
+  const allEmails = emailsOf(rows);
+
+  async function copyEmails(kind: "filtered" | "all") {
+    const emails = kind === "filtered" ? filteredEmails : allEmails;
+    if (!emails.length) return;
+    try {
+      await navigator.clipboard.writeText(emails.join(", "));
+    } catch {
+      window.prompt("Copie ces adresses :", emails.join(", "));
+    }
+    setCopied(kind);
+    window.setTimeout(() => setCopied((value) => (value === kind ? null : value)), 2500);
+  }
 
   const selectedRow = selectedId ? rows.find((row) => row.id === selectedId) ?? null : null;
 
@@ -408,6 +428,16 @@ export function ProspectsTracker() {
         </div>
 
         <div className="flex flex-wrap justify-end gap-2 border-t border-slate-100 pt-3">
+          <button type="button" disabled={!filteredEmails.length} onClick={() => void copyEmails("filtered")} title="Emails des personnes affichées avec les filtres actuels"
+            className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-md border border-slate-200 px-3 text-sm font-medium text-slate-700 hover:border-slate-400 disabled:cursor-not-allowed disabled:opacity-40">
+            {copied === "filtered" ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
+            {copied === "filtered" ? "Copié !" : `Copier les emails filtrés (${filteredEmails.length})`}
+          </button>
+          <button type="button" disabled={!allEmails.length} onClick={() => void copyEmails("all")} title="Emails de toutes les personnes intéressées, sans filtre"
+            className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-md border border-slate-200 px-3 text-sm font-medium text-slate-700 hover:border-slate-400 disabled:cursor-not-allowed disabled:opacity-40">
+            {copied === "all" ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
+            {copied === "all" ? "Copié !" : `Copier tous les emails (${allEmails.length})`}
+          </button>
           <button type="button" onClick={() => setShowAdd((value) => !value)} className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-md bg-slate-900 px-3 text-sm font-medium text-white hover:bg-slate-800">
             <Plus className="h-4 w-4" />
             Ajouter
