@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
 import { getFirebaseApiKey } from "@/lib/firebaseApiKey";
-
-const ADMIN_EMAIL = "bafa@murathenes.org";
+import { isAdminEmail } from "@/lib/adminAccess";
 
 export async function POST(request: Request) {
   try {
     const { email } = await request.json();
     const normalizedEmail = String(email || "").trim().toLowerCase();
-    if (normalizedEmail !== ADMIN_EMAIL) {
+    if (!isAdminEmail(normalizedEmail)) {
       return NextResponse.json({ error: "Unknown admin account" }, { status: 400 });
     }
 

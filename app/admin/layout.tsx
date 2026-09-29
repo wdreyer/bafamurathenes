@@ -19,6 +19,7 @@ import {
   Users,
 } from "lucide-react";
 import { auth, db } from "@/lib/firebase";
+import { isAdminEmail } from "@/lib/adminAccess";
 
 const BOOTSTRAP_ADMIN_UID = "zE1LYEEyooedqV3YyGsTVJA3FcJ3";
 
@@ -50,7 +51,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!user) return;
-    if (user.uid === BOOTSTRAP_ADMIN_UID) {
+    if (user.uid === BOOTSTRAP_ADMIN_UID || isAdminEmail(user.email)) {
       setIsAllowed(true);
       setLoading(false);
       return;

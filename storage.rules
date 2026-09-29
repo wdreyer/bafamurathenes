@@ -6,6 +6,10 @@ service firebase.storage {
       return request.auth != null
         && (
           request.auth.uid == 'zE1LYEEyooedqV3YyGsTVJA3FcJ3'
+          || request.auth.token.email in [
+            'bafa@murathenes.org',
+            'lorette.k@murathenes.org'
+          ]
           || firestore.exists(/databases/(default)/documents/admins/$(request.auth.uid))
         );
     }
