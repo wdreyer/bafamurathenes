@@ -45,6 +45,44 @@ export function resizeActivityByQuarterHour(
   return { ...activity, start: asTime(nextStart), end: asTime(nextEnd) };
 }
 
+export function resizePlanningActivityByQuarterHour(
+  activityId: string,
+  edge: "start" | "end",
+  direction: "expand" | "shrink",
+  activities: PlanActivity[],
+): PlanActivity[] | null {
+  const activity = activities.find((item) => item.id === activityId);
+  if (!activity) return null;
+
+  if (direction === "shrink") {
+    const resized = resizeActivityByQuarterHour(activity, edge, direction, activities);
+    return resized ? activities.map((item) => item.id === activityId ? resized : item) : null;
+  }
+
+  const touching = activities.filter((item) => item.id !== activity.id && item.day === activity.day &&
+    (edge === "start" ? item.end === activity.start : item.start === activity.end));
+  if (touching.length > 1) return null;
+
+  if (touching.length === 1) {
+    const neighbour = touching[0];
+    const neighbourDuration = minuteOfDay(neighbour.end) - minuteOfDay(neighbour.start);
+    if (neighbourDuration <= 15) return null;
+
+    const nextActivity = edge === "start"
+      ? { ...activity, start: asTime(minuteOfDay(activity.start) - 15) }
+      : { ...activity, end: asTime(minuteOfDay(activity.end) + 15) };
+    const nextNeighbour = edge === "start"
+      ? { ...neighbour, end: asTime(minuteOfDay(neighbour.end) - 15) }
+      : { ...neighbour, start: asTime(minuteOfDay(neighbour.start) + 15) };
+
+    if (minuteOfDay(nextActivity.start) < 0 || minuteOfDay(nextActivity.end) >= 24 * 60) return null;
+    return activities.map((item) => item.id === activity.id ? nextActivity : item.id === neighbour.id ? nextNeighbour : item);
+  }
+
+  const resized = resizeActivityByQuarterHour(activity, edge, direction, activities);
+  return resized ? activities.map((item) => item.id === activityId ? resized : item) : null;
+}
+
 export function moveActivityToTarget(activity: PlanActivity, target: PlanningDropTarget): PlanActivity | null {
   if (!Number.isInteger(target.day) || target.day < 1) return null;
   if (!target.start) return { ...activity, day: target.day };

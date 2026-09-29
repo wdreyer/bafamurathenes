@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, type FocusEvent, type MouseEvent } from "react";
-import { CalendarDays, ChevronLeft, ChevronRight, Link2, List, Plus, Settings2, Unlink } from "lucide-react";
+import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Link2, List, Plus, Settings2, Unlink } from "lucide-react";
 import { QUARTER_HOUR_OPTIONS } from "@/lib/planningMove";
 import { defaultThemes, themeFill, themeForActivity, themeSwatch } from "@/lib/planningThemes";
 import { ThemeEditor } from "@/components/planning/ThemeEditor";
@@ -22,6 +22,7 @@ type Props = {
   onSaveThemes?: (themes: PlanTheme[]) => Promise<boolean>;
   onSetBounds?: (patch: { arrivalTime?: string; departureTime?: string }) => void;
   onToggleMerge?: (activityIds: string[], merged: boolean) => void;
+  onResize?: (activityId: string, edge: "start" | "end", direction: "expand" | "shrink") => void;
 };
 
 function dateForDay(startDate: string, day: number, short = false) {
@@ -41,35 +42,58 @@ function shortHour(time: string) {
 
 function DayNavButton({ day, label, active, onClick }: { day: number; label: string; active: boolean; onClick: () => void }) {
   return <button type="button" onClick={onClick} aria-current={active ? "date" : undefined}
-    className={`shrink-0 cursor-pointer rounded-md border px-3 py-2 text-left text-xs font-semibold transition ${active ? "border-emerald-700 bg-emerald-800 text-white" : "border-slate-200 bg-white text-slate-700 hover:border-emerald-500"}`}>
+    className={`shrink-0 cursor-pointer rounded-md border px-3 py-2 text-left text-xs font-semibold transition ${active ? "border-[#792bb9] bg-[#792bb9] text-white" : "border-[#d8c9e6] bg-white text-slate-700 hover:border-[#792bb9]"}`}>
     <span className="block">J{day}</span><span className="block font-normal opacity-80">{label}</span>
   </button>;
 }
 
-function ActivityCell({ activity, themes, trainerNames, disabled, onEdit, onHover, merged = false }: {
-  activity: PlanActivity; themes: PlanTheme[]; trainerNames?: Record<string, string>; disabled: boolean; onEdit?: Props["onEdit"]; onHover: (text: string | null, x?: number, y?: number) => void; merged?: boolean;
+function ActivityCell({ activity, themes, trainerNames, disabled, onEdit, onHover, onResize, merged = false }: {
+  activity: PlanActivity; themes: PlanTheme[]; trainerNames?: Record<string, string>; disabled: boolean; onEdit?: Props["onEdit"]; onHover: (text: string | null, x?: number, y?: number) => void; onResize?: Props["onResize"]; merged?: boolean;
 }) {
+  const contentRef = useRef<HTMLDivElement>(null);
   const theme = themeForActivity(activity, themes);
   const names = (activity.trainerIds || []).map((id) => trainerNames?.[id]).filter(Boolean) as string[];
   const fullLabel = `${activity.title} · ${activity.start}–${activity.end}${names.length ? ` · ${names.join(", ")}` : ""}`;
-  const label = <><span className={merged
-    ? "line-clamp-2 text-center text-[12px] font-bold leading-snug text-slate-900"
-    : "line-clamp-3 whitespace-normal break-words text-[11px] font-bold leading-snug text-slate-900"}>{activity.title}</span>{names.length > 0 && <span className="mt-0.5 line-clamp-1 text-[8px] font-semibold leading-tight text-slate-600">{names.join(" · ")}</span>}</>;
-  const className = `flex h-full min-w-0 flex-col overflow-hidden border-b border-r border-white/60 px-1.5 py-1 ${themeFill(theme.color)} ${merged ? "items-center justify-center text-center" : "items-start justify-start text-left"}`;
+  const label = <div ref={contentRef} className="h-full min-h-0 w-full overflow-hidden">
+    <span data-overflow-check className={merged
+      ? "line-clamp-2 text-center text-[12px] font-bold leading-snug text-slate-900"
+      : "line-clamp-3 whitespace-normal break-words text-[11px] font-bold leading-snug text-slate-900"}>{activity.title}</span>
+    <span className="absolute right-1 top-0.5 text-[8px] font-semibold text-slate-700/80">{shortHour(activity.start)}–{shortHour(activity.end)}</span>
+    {names.length > 0 && <span data-overflow-check className="mt-0.5 line-clamp-1 text-[8px] font-semibold leading-tight text-slate-600">{names.join(" · ")}</span>}
+  </div>;
+  const className = `relative flex h-full min-w-0 flex-col overflow-hidden border-b border-r border-white/60 px-1.5 py-1 pr-12 ${themeFill(theme.color)} ${merged ? "items-center justify-center text-center" : "items-start justify-start text-left"}`;
+  const isClipped = () => {
+    const element = contentRef.current;
+    if (!element) return false;
+    const candidates = [element, ...element.querySelectorAll<HTMLElement>("[data-overflow-check]")];
+    return candidates.some((candidate) => candidate.scrollHeight > candidate.clientHeight + 1 || candidate.scrollWidth > candidate.clientWidth + 1);
+  };
   const handlers = {
-    onMouseMove: (event: MouseEvent) => onHover(fullLabel, event.clientX, event.clientY),
+    onMouseEnter: (event: MouseEvent) => isClipped() ? onHover(fullLabel, event.clientX, event.clientY) : onHover(null),
     onMouseLeave: () => onHover(null),
-    onFocus: (event: FocusEvent<HTMLElement>) => { const rect = event.currentTarget.getBoundingClientRect(); onHover(fullLabel, rect.left + rect.width / 2, rect.bottom); },
+    onFocus: (event: FocusEvent<HTMLElement>) => { const rect = event.currentTarget.getBoundingClientRect(); if (isClipped()) onHover(fullLabel, rect.left + rect.width / 2, rect.bottom); },
     onBlur: () => onHover(null),
   };
   if (!onEdit) return <div className={className} aria-label={fullLabel} {...handlers}>{label}</div>;
-  return <button type="button" disabled={disabled} onClick={() => onEdit(activity)} aria-label={fullLabel} {...handlers}
-    className={`${className} w-full cursor-pointer disabled:cursor-wait`}>{label}</button>;
+  return <div className="group/activity relative h-full min-h-0">
+    <button type="button" disabled={disabled} onClick={() => onEdit(activity)} aria-label={fullLabel} {...handlers}
+      className={`${className} w-full cursor-pointer disabled:cursor-wait`}>{label}</button>
+    {onResize && !merged && <>
+      <div className="absolute left-0 top-0 z-10 flex opacity-0 transition-opacity group-hover/activity:opacity-100 group-focus-within/activity:opacity-100">
+        <button type="button" disabled={disabled} onClick={() => onResize(activity.id, "start", "expand")} title="Commencer 15 min plus tôt" aria-label="Commencer 15 min plus tôt" className="grid h-5 w-5 place-items-center rounded-br bg-[#1a1530] text-white"><ChevronUp size={12} /></button>
+        <button type="button" disabled={disabled} onClick={() => onResize(activity.id, "start", "shrink")} title="Commencer 15 min plus tard" aria-label="Commencer 15 min plus tard" className="grid h-5 w-5 place-items-center rounded-br bg-white/95 text-[#792bb9]"><ChevronDown size={12} /></button>
+      </div>
+      <div className="absolute bottom-0 right-0 z-10 flex opacity-0 transition-opacity group-hover/activity:opacity-100 group-focus-within/activity:opacity-100">
+        <button type="button" disabled={disabled} onClick={() => onResize(activity.id, "end", "shrink")} title="Finir 15 min plus tôt" aria-label="Finir 15 min plus tôt" className="grid h-5 w-5 place-items-center rounded-tl bg-white/95 text-[#792bb9]"><ChevronUp size={12} /></button>
+        <button type="button" disabled={disabled} onClick={() => onResize(activity.id, "end", "expand")} title="Finir 15 min plus tard" aria-label="Finir 15 min plus tard" className="grid h-5 w-5 place-items-center rounded-tl bg-[#1a1530] text-white"><ChevronDown size={12} /></button>
+      </div>
+    </>}
+  </div>;
 }
 
-function OverviewGrid({ days, dayCount, startDate, activities, themes, trainerNames, busy, arrivalTime, departureTime, onAdd, onEdit, onToggleMerge }: {
+function OverviewGrid({ days, dayCount, startDate, activities, themes, trainerNames, busy, arrivalTime, departureTime, onAdd, onEdit, onToggleMerge, onResize }: {
   days: number[]; dayCount: number; startDate: string; activities: PlanActivity[]; themes: PlanTheme[];
-  trainerNames?: Record<string, string>; busy: boolean; arrivalTime?: string; departureTime?: string; onAdd?: Props["onAdd"]; onEdit?: Props["onEdit"]; onToggleMerge?: Props["onToggleMerge"];
+  trainerNames?: Record<string, string>; busy: boolean; arrivalTime?: string; departureTime?: string; onAdd?: Props["onAdd"]; onEdit?: Props["onEdit"]; onToggleMerge?: Props["onToggleMerge"]; onResize?: Props["onResize"];
 }) {
   const [hover, setHover] = useState<{ text: string; x: number; y: number } | null>(null);
   const boundaries = Array.from(new Set(activities.flatMap((item) => [item.start, item.end]))).sort();
@@ -138,12 +162,12 @@ function OverviewGrid({ days, dayCount, startDate, activities, themes, trainerNa
   return <div className="relative">
     <div className="planning-grid-scroll w-full overflow-x-auto rounded-md border border-slate-300 bg-white">
       <div className="grid min-w-full" style={{ gridTemplateColumns: `76px repeat(${days.length}, minmax(100px, 1fr))`, gridTemplateRows: `34px repeat(${intervals.length}, minmax(34px, auto))` }}>
-        <div className="sticky left-0 top-0 z-30 grid place-items-center border-b border-r border-slate-300 bg-[#edf5f1] text-[9px] font-bold uppercase text-slate-500">Heure</div>
+        <div className="sticky left-0 top-0 z-30 grid place-items-center border-b border-r border-[#cdbbdd] bg-[#eadcf4] text-[9px] font-bold uppercase text-[#552080]">Heure</div>
 
-        {days.map((day, index) => <div key={day} id={`planning-jour-${day}`} className="sticky top-0 z-20 flex min-w-0 scroll-mt-4 items-center justify-between gap-1 border-b border-r border-slate-300 bg-[#edf5f1] px-1"
+        {days.map((day, index) => <div key={day} id={`planning-jour-${day}`} className="sticky top-0 z-20 flex min-w-0 scroll-mt-4 items-center justify-between gap-1 border-b border-r border-[#cdbbdd] bg-[#eadcf4] px-1"
           style={{ gridColumn: index + 2, gridRow: 1 }}>
-          <span className="flex min-w-0 items-center gap-1"><span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-emerald-800 text-[9px] font-bold text-white">J{day}</span><span className="min-w-0 truncate text-[10.5px] font-semibold capitalize leading-tight text-slate-900">{dateForDay(startDate, day)}</span></span>
-          {onAdd && <button type="button" disabled={busy} onClick={() => onAdd(day)} title={`Ajouter un temps au jour ${day}`} aria-label={`Ajouter un temps au jour ${day}`} className="grid h-4 w-4 shrink-0 place-items-center rounded-full border border-slate-300 bg-white text-slate-700 hover:border-emerald-600 disabled:cursor-not-allowed disabled:opacity-40"><Plus size={10} /></button>}
+          <span className="flex min-w-0 items-center gap-1"><span className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-[#792bb9] text-[9px] font-bold text-white">J{day}</span><span className="min-w-0 truncate text-[10.5px] font-semibold capitalize leading-tight text-[#1a1530]">{dateForDay(startDate, day)}</span></span>
+          {onAdd && <button type="button" disabled={busy} onClick={() => onAdd(day)} title={`Ajouter un temps au jour ${day}`} aria-label={`Ajouter un temps au jour ${day}`} className="grid h-4 w-4 shrink-0 place-items-center rounded-full border border-[#aa82c8] bg-white text-[#552080] hover:border-[#792bb9] disabled:cursor-not-allowed disabled:opacity-40"><Plus size={10} /></button>}
         </div>)}
 
         {intervals.map((interval, index) => <div key={interval.start} className="sticky left-0 z-10 flex items-center justify-end whitespace-nowrap border-b border-r border-slate-300 bg-slate-50 px-1.5 text-[8.5px] font-semibold leading-none text-slate-500" style={{ gridColumn: 1, gridRow: index + 2 }}>
@@ -155,7 +179,7 @@ function OverviewGrid({ days, dayCount, startDate, activities, themes, trainerNa
           const free = !outOfBounds && !occupied.has(`${day}|${index}`);
           return <div key={`${day}-${interval.start}`} className={`group/empty relative border-b border-r border-slate-100 ${outOfBounds ? "bg-slate-200" : "bg-white"}`} style={{ gridColumn: dayIndex + 2, gridRow: index + 2 }}>
             {free && onAdd && <button type="button" disabled={busy} onClick={() => onAdd(day, interval.start, interval.end)} title={`Ajouter un temps de ${interval.start} à ${interval.end}`} aria-label={`Ajouter un temps de ${interval.start} à ${interval.end}`}
-              className="absolute inset-0 grid place-items-center text-slate-300 opacity-0 transition-opacity hover:bg-emerald-50 hover:text-emerald-700 hover:opacity-100 focus:opacity-100 disabled:cursor-not-allowed"><Plus size={12} /></button>}
+              className="absolute inset-0 grid place-items-center text-slate-300 opacity-0 transition-opacity hover:bg-[#f0e8f8] hover:text-[#792bb9] hover:opacity-100 focus:opacity-100 disabled:cursor-not-allowed"><Plus size={12} /></button>}
           </div>;
         }))}
 
@@ -171,7 +195,7 @@ function OverviewGrid({ days, dayCount, startDate, activities, themes, trainerNa
             const endRow = boundaries.indexOf(end) + 2;
             return <div key={`${day}-${key}`} className="z-[5] flex flex-col" style={{ gridColumn: dayIndex + 2, gridRow: `${startRow} / ${endRow}` }}>
               {group.map((activity, activityIndex) => <div key={activity.id} className={`min-h-0 flex-1 ${activityIndex > 0 ? "border-t border-white/60" : ""}`}>
-                <ActivityCell activity={activity} themes={themes} trainerNames={trainerNames} disabled={busy} onEdit={onEdit} onHover={onHover} />
+                <ActivityCell activity={activity} themes={themes} trainerNames={trainerNames} disabled={busy} onEdit={onEdit} onHover={onHover} onResize={onResize} />
               </div>)}
             </div>;
           });
@@ -190,7 +214,7 @@ function OverviewGrid({ days, dayCount, startDate, activities, themes, trainerNa
           if (!onToggleMerge) return null;
           return <button key={`candidate-${run.start}-${run.end}-${run.dayIndexStart}`} type="button" disabled={busy} onClick={() => onToggleMerge(run.activityIds, true)}
             title={`Fusionner ces ${run.dayCount} jours identiques`} aria-label={`Fusionner ces ${run.dayCount} jours identiques`}
-            className="z-[6] m-0.5 grid h-4 w-4 place-items-center self-start justify-self-end rounded-full border border-emerald-300 bg-white/90 text-emerald-700 shadow hover:bg-emerald-50"
+            className="z-[6] m-0.5 grid h-5 w-5 place-items-center self-start justify-self-end rounded-full border border-[#aa82c8] bg-white/95 text-[#792bb9] shadow hover:bg-[#f0e8f8]"
             style={{ gridColumn: colStart, gridRow: startRow }}><Link2 size={9} /></button>;
         })}
       </div>
@@ -230,7 +254,7 @@ function PrintPlanning({ activities, dayCount, startDate, formationTitle, themes
   </div>;
 }
 
-export function PlanningBoard({ activities, dayCount, startDate, themes = defaultThemes, trainerNames, formationTitle, busy = false, arrivalTime, departureTime, onEdit, onAdd, onSaveThemes, onSetBounds, onToggleMerge }: Props) {
+export function PlanningBoard({ activities, dayCount, startDate, themes = defaultThemes, trainerNames, formationTitle, busy = false, arrivalTime, departureTime, onEdit, onAdd, onSaveThemes, onSetBounds, onToggleMerge, onResize }: Props) {
   const [view, setView] = useState<"all" | "day">("all");
   const [selectedDay, setSelectedDay] = useState(1);
   const [editingThemes, setEditingThemes] = useState(false);
@@ -246,8 +270,8 @@ export function PlanningBoard({ activities, dayCount, startDate, themes = defaul
     <div className="planning-controls space-y-4 print:hidden">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-3 print:hidden">
         <div className="inline-flex rounded-md border border-slate-200 bg-white p-1" role="group" aria-label="Affichage du planning">
-          <button type="button" onClick={() => setView("all")} aria-pressed={view === "all"} className={`inline-flex h-8 cursor-pointer items-center gap-1.5 rounded px-3 text-xs font-semibold ${view === "all" ? "bg-emerald-800 text-white" : "text-slate-600"}`}><CalendarDays size={15} />Formation complète</button>
-          <button type="button" onClick={() => setView("day")} aria-pressed={view === "day"} className={`inline-flex h-8 cursor-pointer items-center gap-1.5 rounded px-3 text-xs font-semibold ${view === "day" ? "bg-emerald-800 text-white" : "text-slate-600"}`}><List size={15} />Jour par jour</button>
+          <button type="button" onClick={() => setView("all")} aria-pressed={view === "all"} className={`inline-flex h-8 cursor-pointer items-center gap-1.5 rounded px-3 text-xs font-semibold ${view === "all" ? "bg-[#792bb9] text-white" : "text-slate-600"}`}><CalendarDays size={15} />Formation complète</button>
+          <button type="button" onClick={() => setView("day")} aria-pressed={view === "day"} className={`inline-flex h-8 cursor-pointer items-center gap-1.5 rounded px-3 text-xs font-semibold ${view === "day" ? "bg-[#792bb9] text-white" : "text-slate-600"}`}><List size={15} />Jour par jour</button>
         </div>
         <div className="flex items-center gap-1"><button type="button" onClick={() => view === "all" ? overviewRef.current?.querySelector<HTMLElement>(".overflow-x-auto")?.scrollBy({ left: -340, behavior: "smooth" }) : setSelectedDay((day) => Math.max(1, day - 1))} disabled={view === "day" && selectedDay === 1} title="Jour précédent" aria-label="Jour précédent" className="grid h-9 w-9 place-items-center rounded-md border border-slate-200 bg-white disabled:opacity-40"><ChevronLeft size={17} /></button><button type="button" onClick={() => view === "all" ? overviewRef.current?.querySelector<HTMLElement>(".overflow-x-auto")?.scrollBy({ left: 340, behavior: "smooth" }) : setSelectedDay((day) => Math.min(dayCount, day + 1))} disabled={view === "day" && selectedDay === dayCount} title="Jour suivant" aria-label="Jour suivant" className="grid h-9 w-9 place-items-center rounded-md border border-slate-200 bg-white disabled:opacity-40"><ChevronRight size={17} /></button></div>
       </div>
@@ -265,10 +289,10 @@ export function PlanningBoard({ activities, dayCount, startDate, themes = defaul
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 border-y border-slate-200 py-3">
         <span className="text-xs font-bold uppercase text-slate-500">Légende</span>
         {themes.map((theme) => <span key={theme.id} className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-700"><span className={`h-2.5 w-2.5 rounded-full ${themeSwatch(theme.color)}`} />{theme.name}<span className="text-slate-400">{activities.filter((item) => themeForActivity(item, themes).id === theme.id).length}</span></span>)}
-        {onSaveThemes && <button type="button" onClick={() => setEditingThemes(true)} title="Gérer les thèmes" aria-label="Gérer les thèmes" className="ml-auto grid h-8 w-8 place-items-center rounded-md border border-slate-200 bg-white text-slate-600 hover:border-emerald-600 print:hidden"><Settings2 size={16} /></button>}
+        {onSaveThemes && <button type="button" onClick={() => setEditingThemes(true)} title="Gérer les thèmes" aria-label="Gérer les thèmes" className="ml-auto grid h-8 w-8 place-items-center rounded-md border border-[#d8c9e6] bg-white text-[#792bb9] hover:border-[#792bb9] print:hidden"><Settings2 size={16} /></button>}
       </div>
 
-      <div ref={overviewRef} className="min-w-0 max-w-full"><OverviewGrid days={view === "all" ? days : [selectedDay]} dayCount={dayCount} startDate={startDate} activities={activities} themes={themes} trainerNames={trainerNames} busy={busy} arrivalTime={arrivalTime} departureTime={departureTime} onAdd={onAdd} onEdit={onEdit} onToggleMerge={onToggleMerge} /></div>
+      <div ref={overviewRef} className="min-w-0 max-w-full"><OverviewGrid days={view === "all" ? days : [selectedDay]} dayCount={dayCount} startDate={startDate} activities={activities} themes={themes} trainerNames={trainerNames} busy={busy} arrivalTime={arrivalTime} departureTime={departureTime} onAdd={onAdd} onEdit={onEdit} onToggleMerge={onToggleMerge} onResize={onResize} /></div>
     </div>
     <PrintPlanning activities={activities} dayCount={dayCount} startDate={startDate} formationTitle={formationTitle} themes={themes} trainerNames={trainerNames} />
     {editingThemes && onSaveThemes && <ThemeEditor themes={themes} activities={activities} onSave={onSaveThemes} onClose={() => setEditingThemes(false)} />}

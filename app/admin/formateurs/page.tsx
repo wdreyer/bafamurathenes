@@ -3,11 +3,13 @@
 import { useEffect, useState } from "react";
 import { addDoc, collection, doc, getDoc, onSnapshot, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
 import { getDownloadURL, ref } from "firebase/storage";
-import { BadgeCheck, CalendarDays, Check, ChevronRight, ExternalLink, FileText, Pencil, Plus, Save, ShieldX, UserPlus, Users, X } from "lucide-react";
+import { AlertCircle, BadgeCheck, CalendarDays, Check, ChevronRight, ExternalLink, FileText, Pencil, Plus, Save, ShieldX, UserPlus, Users, X } from "lucide-react";
 import { db, storage } from "@/lib/firebase";
 import { buildPlanningTemplate } from "@/lib/planningTemplates";
 import { savePlanningTime } from "@/lib/savePlanningTime";
 import { defaultThemes } from "@/lib/planningThemes";
+import { resizePlanningActivityByQuarterHour } from "@/lib/planningMove";
+import { trainerProfileProgress } from "@/lib/trainerProfile";
 import { ActivityEditor } from "@/components/planning/ActivityEditor";
 import { PlanningBoard } from "@/components/planning/PlanningBoard";
 import type { Formation, PlanActivity, PlanTheme, Trainer } from "@/lib/types";
@@ -122,6 +124,21 @@ export default function FormateursPage() {
     finally { setBusy(false); }
   };
 
+  const toggleMerge = (activityIds: string[], merged: boolean) => {
+    void saveActivities(activities.map((item) => activityIds.includes(item.id) ? { ...item, merged } : item));
+  };
+
+  const resizeActivity = (activityId: string, edge: "start" | "end", direction: "expand" | "shrink") => {
+    const next = resizePlanningActivityByQuarterHour(activityId, edge, direction, activities);
+    if (!next) {
+      setError(direction === "expand"
+        ? "Impossible d’agrandir ce temps : le créneau voisin ne peut pas être réduit davantage."
+        : "Un temps doit durer au moins 15 minutes.");
+      return;
+    }
+    void saveActivities(next);
+  };
+
   const saveTrainer = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!trainerDraft.firstName.trim() || !trainerDraft.lastName.trim()) return;
@@ -199,41 +216,43 @@ export default function FormateursPage() {
 
   return <div className="mx-auto max-w-[1440px] space-y-5 pb-10">
     <div className="flex flex-wrap items-end justify-between gap-4 border-b border-slate-200 pb-5">
-      <div><p className="text-xs font-semibold uppercase text-emerald-700">Espace formateur·ices</p><h1 className="mt-1 text-2xl font-semibold text-slate-950">Équipe & planning</h1></div>
-      <div className="flex rounded-md border border-slate-200 bg-white p-1" role="tablist"><button role="tab" aria-selected={tab === "planning"} onClick={() => setTab("planning")} className={`flex items-center gap-2 rounded px-3 py-2 text-sm ${tab === "planning" ? "bg-slate-900 text-white" : "text-slate-600"}`}><CalendarDays size={16} />Planning</button><button role="tab" aria-selected={tab === "team"} onClick={() => setTab("team")} className={`flex items-center gap-2 rounded px-3 py-2 text-sm ${tab === "team" ? "bg-slate-900 text-white" : "text-slate-600"}`}><Users size={16} />Équipe</button></div>
+      <div><p className="text-xs font-semibold uppercase text-[#792bb9]">Espace formateur·ices</p><h1 className="mt-1 text-2xl font-semibold text-slate-950">Équipe & planning</h1></div>
+      <div className="flex rounded-md border border-[#d8c9e6] bg-white p-1" role="tablist"><button role="tab" aria-selected={tab === "planning"} onClick={() => setTab("planning")} className={`flex items-center gap-2 rounded px-3 py-2 text-sm ${tab === "planning" ? "bg-[#792bb9] text-white" : "text-slate-600"}`}><CalendarDays size={16} />Planning</button><button role="tab" aria-selected={tab === "team"} onClick={() => setTab("team")} className={`flex items-center gap-2 rounded px-3 py-2 text-sm ${tab === "team" ? "bg-[#792bb9] text-white" : "text-slate-600"}`}><Users size={16} />Équipe</button></div>
     </div>
-    <div className="flex flex-wrap gap-4"><a href="/equipe" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm font-medium text-emerald-800 underline underline-offset-2">Ouvrir la vue formateur·ices <ExternalLink size={15} /></a><a href="/equipe/guide" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm font-medium text-emerald-800 underline underline-offset-2">Ouvrir le guide <ExternalLink size={15} /></a></div>
+    <div className="flex flex-wrap gap-4"><a href="/equipe" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm font-medium text-[#66239d] underline underline-offset-2">Ouvrir la vue formateur·ices <ExternalLink size={15} /></a><a href="/equipe/guide" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm font-medium text-[#66239d] underline underline-offset-2">Ouvrir le guide <ExternalLink size={15} /></a></div>
     {error && <p role="alert" className="rounded border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">{error}</p>}
 
     {tab === "team" ? <section className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div><h2 className="font-semibold">Formateur·ices ({trainers.length})</h2><p className="text-sm text-slate-500">Validation, affectations et dossiers administratifs.</p></div>
-        <button type="button" onClick={() => openTrainerEditor()} className="inline-flex h-10 cursor-pointer items-center gap-2 rounded bg-slate-900 px-4 text-sm font-semibold text-white"><UserPlus size={16} />Nouvelle fiche</button>
+        <button type="button" onClick={() => openTrainerEditor()} className="inline-flex h-10 cursor-pointer items-center gap-2 rounded bg-[#792bb9] px-4 text-sm font-semibold text-white"><UserPlus size={16} />Nouvelle fiche</button>
       </div>
       <div className="overflow-x-auto border border-slate-200 bg-white">
         <table className="w-full min-w-[880px] border-collapse text-left text-sm">
           <thead className="bg-slate-50 text-xs font-semibold uppercase text-slate-500"><tr><th className="px-4 py-3">Formateur·ice</th><th className="px-4 py-3">Statut</th><th className="px-4 py-3">Formations assignées</th><th className="px-4 py-3">Contact</th><th className="px-4 py-3">Dossier</th><th className="w-10 px-3 py-3"><span className="sr-only">Ouvrir</span></th></tr></thead>
           <tbody className="divide-y divide-slate-200">{trainers.map((trainer) => {
             const trainerFormations = formations.filter((item) => item.trainerIds?.includes(trainer.id));
-            const documentCount = [trainer.diplomaPath || trainer.diplomaUrl, trainer.identityDocumentPath || trainer.identityDocumentUrl, trainer.socialSecurityNumberPath].filter(Boolean).length;
+            const profile = trainerProfileProgress(trainer);
             return <tr key={trainer.id} tabIndex={0} role="button" onClick={() => setSelectedTrainerId(trainer.id)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") setSelectedTrainerId(trainer.id); }} className="cursor-pointer bg-white hover:bg-slate-50 focus:bg-slate-50 focus:outline-none">
               <td className="px-4 py-3"><p className="font-semibold text-slate-900">{trainerName(trainer)}</p><p className="mt-0.5 text-xs text-slate-500">{trainer.accountUid ? "Compte actif" : "Fiche interne"}</p></td>
               <td className="px-4 py-3"><span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${trainer.approvalStatus === "approved" || !trainer.approvalStatus ? "bg-emerald-100 text-emerald-800" : trainer.approvalStatus === "pending" ? "bg-amber-100 text-amber-800" : "bg-rose-100 text-rose-800"}`}>{trainer.approvalStatus === "pending" ? "À valider" : trainer.approvalStatus === "rejected" ? "Refusé" : "Validé"}</span></td>
               <td className="max-w-sm px-4 py-3 text-slate-700">{trainerFormations.length ? trainerFormations.map((item) => item.title).join(" · ") : <span className="text-slate-400">Aucune</span>}</td>
               <td className="px-4 py-3 text-slate-600"><p>{trainer.email || "—"}</p><p className="text-xs">{trainer.phone || "—"}</p></td>
-              <td className="px-4 py-3"><span className={documentCount ? "text-slate-700" : "text-slate-400"}>{documentCount}/3 document{documentCount > 1 ? "s" : ""}</span></td>
+              <td className="px-4 py-3">{profile.complete
+                ? <span className="font-medium text-emerald-700">Complet</span>
+                : <span className="inline-flex items-center gap-1.5 font-medium text-amber-700"><AlertCircle size={14} />À compléter <span className="text-xs font-normal text-slate-500">({profile.informationCount}/7 infos · {profile.documentCount}/3 docs)</span></span>}</td>
               <td className="px-3 py-3 text-slate-400"><ChevronRight size={18} /></td>
             </tr>;
           })}</tbody>
         </table>
       </div>
     </section> : <div className="space-y-5">
-      <div className="flex flex-wrap items-center gap-3"><label htmlFor="admin-plan-formation" className="text-xs font-semibold uppercase text-slate-500">Session</label><select id="admin-plan-formation" value={formationId} onChange={(event) => { setFormationId(event.target.value); setEditing(null); }} className="h-10 min-w-[260px] max-w-full rounded border border-slate-200 bg-white px-3 text-sm">{formations.map((item) => <option key={item.id} value={item.id}>{item.title} · {item.startDate.slice(0, 10)}</option>)}</select>{formation && <a href={`/admin/formations/${formation.id}`} className="inline-flex items-center gap-1 text-sm text-emerald-800 underline">Fiche formation <ExternalLink size={13} /></a>}</div>
+      <div className="flex flex-wrap items-center gap-3"><label htmlFor="admin-plan-formation" className="text-xs font-semibold uppercase text-slate-500">Session</label><select id="admin-plan-formation" value={formationId} onChange={(event) => { setFormationId(event.target.value); setEditing(null); }} className="h-10 min-w-[260px] max-w-full rounded border border-[#d8c9e6] bg-white px-3 text-sm">{formations.map((item) => <option key={item.id} value={item.id}>{item.title} · {item.startDate.slice(0, 10)}</option>)}</select>{formation && <a href={`/admin/formations/${formation.id}`} className="inline-flex items-center gap-1 text-sm text-[#66239d] underline">Fiche formation <ExternalLink size={13} /></a>}</div>
       {formation && <>
-        <div className="border-y border-slate-200 py-3"><div className="mb-2 flex items-center justify-between"><h2 className="text-sm font-semibold">Formateur·ices de la session</h2><button type="button" onClick={() => setTab("team")} className="text-xs text-emerald-700">Gérer l&apos;équipe</button></div><div className="flex flex-wrap gap-2">{assignableTrainers.map((trainer) => <button key={trainer.id} type="button" disabled={busy} onClick={() => void toggleTrainer(trainer.id)} aria-pressed={formation.trainerIds?.includes(trainer.id) || false} className={`rounded-full border px-3 py-1.5 text-sm ${formation.trainerIds?.includes(trainer.id) ? "border-emerald-700 bg-emerald-50 text-emerald-900" : "border-slate-200 bg-white text-slate-600"}`}>{formation.trainerIds?.includes(trainer.id) && <Check size={13} className="mr-1 inline" />}{trainerName(trainer)}</button>)}{!assignableTrainers.length && <p className="text-sm text-slate-500">Valide d&apos;abord un compte formateur·ice dans l&apos;onglet Équipe.</p>}</div></div>
+        <div className="border-y border-[#d8c9e6] py-3"><div className="mb-2 flex items-center justify-between"><h2 className="text-sm font-semibold">Formateur·ices de la session</h2><button type="button" onClick={() => setTab("team")} className="text-xs text-[#792bb9]">Gérer l&apos;équipe</button></div><div className="flex flex-wrap gap-2">{assignableTrainers.map((trainer) => <button key={trainer.id} type="button" disabled={busy} onClick={() => void toggleTrainer(trainer.id)} aria-pressed={formation.trainerIds?.includes(trainer.id) || false} className={`rounded-full border px-3 py-1.5 text-sm ${formation.trainerIds?.includes(trainer.id) ? "border-[#792bb9] bg-[#f0e8f8] text-[#552080]" : "border-slate-200 bg-white text-slate-600"}`}>{formation.trainerIds?.includes(trainer.id) && <Check size={13} className="mr-1 inline" />}{trainerName(trainer)}</button>)}{!assignableTrainers.length && <p className="text-sm text-slate-500">Valide d&apos;abord un compte formateur·ice dans l&apos;onglet Équipe.</p>}</div></div>
         {!planExists ? <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-dashed border-slate-300 bg-white p-6"><div><h2 className="font-semibold">Planning à préparer</h2><p className="text-sm text-slate-500">Modèle {formation.type === "formation_generale" ? "formation générale · 9 jours" : "approfondissement · 7 jours"}, inspiré des plannings fournis.</p></div><button type="button" disabled={busy} onClick={() => void saveActivities(buildPlanningTemplate(formation))} className="flex items-center gap-2 rounded bg-slate-900 px-4 py-2 text-sm text-white"><Plus size={16} />Créer le planning</button></div> : <>
           <p className="text-sm font-medium text-slate-700">Déroulé complet · J1 à J{dayCount}</p>
-          <PlanningBoard key={formation.id} activities={activities} dayCount={dayCount} startDate={formation.startDate} themes={themes} trainerNames={Object.fromEntries(trainers.map((trainer) => [trainer.id, trainerName(trainer)]))} busy={busy} onEdit={(item) => { setError(""); setEditing({ ...item, trainerIds: item.trainerIds || [] }); }} onAdd={(day, start, end) => { setError(""); setEditing(emptyActivity(day, start, end)); }} onSaveThemes={saveThemes} />
+          <PlanningBoard key={formation.id} activities={activities} dayCount={dayCount} startDate={formation.startDate} themes={themes} trainerNames={Object.fromEntries(trainers.map((trainer) => [trainer.id, trainerName(trainer)]))} busy={busy} onEdit={(item) => { setError(""); setEditing({ ...item, trainerIds: item.trainerIds || [] }); }} onAdd={(day, start, end) => { setError(""); setEditing(emptyActivity(day, start, end)); }} onSaveThemes={saveThemes} onToggleMerge={toggleMerge} onResize={resizeActivity} />
         </>}
       </>}
     </div>}
@@ -245,6 +264,7 @@ export default function FormateursPage() {
           <button type="button" onClick={() => setSelectedTrainerId(null)} title="Fermer" aria-label="Fermer" className="grid h-9 w-9 cursor-pointer place-items-center rounded text-slate-500 hover:bg-slate-100"><X size={19} /></button>
         </header>
         <div className="space-y-7 p-5 sm:p-7">
+          {!trainerProfileProgress(selectedTrainer).complete && <div className="flex items-start gap-2 rounded border border-amber-300 bg-amber-50 px-3 py-2.5 text-sm text-amber-950"><AlertCircle size={17} className="mt-0.5 shrink-0" /><span>Dossier incomplet : {trainerProfileProgress(selectedTrainer).missingInformation} information{trainerProfileProgress(selectedTrainer).missingInformation > 1 ? "s" : ""} et {trainerProfileProgress(selectedTrainer).missingDocuments} document{trainerProfileProgress(selectedTrainer).missingDocuments > 1 ? "s" : ""} à ajouter. Cela ne bloque pas l’accès.</span></div>}
           <div className="flex flex-wrap gap-2">
             {selectedTrainer.approvalStatus === "pending" && <><button type="button" disabled={busy} onClick={() => void setApproval(selectedTrainer, "approved")} className="inline-flex h-9 cursor-pointer items-center gap-2 rounded bg-emerald-800 px-3 text-sm font-semibold text-white"><BadgeCheck size={15} />Valider le compte</button><button type="button" disabled={busy} onClick={() => void setApproval(selectedTrainer, "rejected")} className="inline-flex h-9 cursor-pointer items-center gap-2 rounded border border-rose-200 px-3 text-sm text-rose-700"><ShieldX size={15} />Refuser</button></>}
             {selectedTrainer.approvalStatus === "rejected" && <button type="button" disabled={busy} onClick={() => void setApproval(selectedTrainer, "approved")} className="inline-flex h-9 cursor-pointer items-center gap-2 rounded bg-emerald-800 px-3 text-sm font-semibold text-white"><BadgeCheck size={15} />Valider le compte</button>}

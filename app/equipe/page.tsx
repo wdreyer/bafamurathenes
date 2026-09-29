@@ -6,6 +6,7 @@ import { Printer, Users } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { savePlanningTime } from "@/lib/savePlanningTime";
 import { defaultThemes } from "@/lib/planningThemes";
+import { resizePlanningActivityByQuarterHour } from "@/lib/planningMove";
 import { ActivityEditor } from "@/components/planning/ActivityEditor";
 import { PlanningBoard } from "@/components/planning/PlanningBoard";
 import { TraineeRoster } from "@/components/planning/TraineeRoster";
@@ -133,6 +134,18 @@ export default function TeamPage() {
     void saveActivities(plan.activities.map((item) => activityIds.includes(item.id) ? { ...item, merged } : item));
   };
 
+  const resizeActivity = (activityId: string, edge: "start" | "end", direction: "expand" | "shrink") => {
+    if (!plan) return;
+    const next = resizePlanningActivityByQuarterHour(activityId, edge, direction, plan.activities);
+    if (!next) {
+      setError(direction === "expand"
+        ? "Impossible d’agrandir ce temps : le créneau voisin ne peut pas être réduit davantage."
+        : "Un temps doit durer au moins 15 minutes.");
+      return;
+    }
+    void saveActivities(next);
+  };
+
   const saveEditing = async () => {
     if (!editing || !plan || !formation) return;
     if (!editing.title.trim() || editing.end <= editing.start) {
@@ -198,7 +211,7 @@ export default function TeamPage() {
           <div className="print:hidden flex flex-wrap items-center justify-between gap-3 py-4">
             <p className="text-sm font-medium text-slate-700">J1 à J{dayCount} · {plan.activities.length} temps</p>
           </div>
-          <PlanningBoard key={formation.id} activities={plan.activities} dayCount={dayCount} startDate={formation.startDate} formationTitle={formation.title} themes={themes} trainerNames={plan.trainerNames} busy={busy} arrivalTime={plan.arrivalTime} departureTime={plan.departureTime} onEdit={(item) => { setError(""); setEditing({ ...item, trainerIds: item.trainerIds || [] }); }} onAdd={(day, start, end) => { setError(""); setEditing(emptyActivity(day, start, end)); }} onSaveThemes={saveThemes} onSetBounds={(patch) => void saveBounds(patch)} onToggleMerge={toggleMerge} />
+          <PlanningBoard key={formation.id} activities={plan.activities} dayCount={dayCount} startDate={formation.startDate} formationTitle={formation.title} themes={themes} trainerNames={plan.trainerNames} busy={busy} arrivalTime={plan.arrivalTime} departureTime={plan.departureTime} onEdit={(item) => { setError(""); setEditing({ ...item, trainerIds: item.trainerIds || [] }); }} onAdd={(day, start, end) => { setError(""); setEditing(emptyActivity(day, start, end)); }} onSaveThemes={saveThemes} onSetBounds={(patch) => void saveBounds(patch)} onToggleMerge={toggleMerge} onResize={resizeActivity} />
         </div>
         {section === "trainees" && <div className="print:hidden"><TraineeRoster key={selectedFormationId} inscriptions={registrations} loading={registrationsLoading} groupCount={groupCount} busy={busy} onChangeGroupCount={changeGroupCount} onSaveField={saveTraineeField} /></div>}
       </>}

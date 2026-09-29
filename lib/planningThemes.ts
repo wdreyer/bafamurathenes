@@ -10,12 +10,12 @@ export const defaultThemes: PlanTheme[] = [
 ];
 
 export const themeColors: { id: PlanTheme["color"]; name: string; swatch: string; surface: string; fill: string }[] = [
-  { id: "sky", name: "Bleu", swatch: "bg-sky-500", surface: "border-sky-400 bg-sky-50 text-sky-950", fill: "bg-sky-200 text-sky-950" },
-  { id: "mint", name: "Vert", swatch: "bg-emerald-500", surface: "border-emerald-400 bg-emerald-50 text-emerald-950", fill: "bg-emerald-200 text-emerald-950" },
-  { id: "lilac", name: "Mauve", swatch: "bg-violet-500", surface: "border-violet-400 bg-violet-50 text-violet-950", fill: "bg-violet-200 text-violet-950" },
-  { id: "lemon", name: "Jaune", swatch: "bg-amber-400", surface: "border-amber-400 bg-amber-50 text-amber-950", fill: "bg-amber-200 text-amber-950" },
-  { id: "coral", name: "Corail", swatch: "bg-rose-400", surface: "border-rose-400 bg-rose-50 text-rose-950", fill: "bg-rose-200 text-rose-950" },
-  { id: "neutral", name: "Gris", swatch: "bg-slate-400", surface: "border-slate-300 bg-slate-50 text-slate-800", fill: "bg-slate-200 text-slate-800" },
+  { id: "sky", name: "Bleu", swatch: "bg-[#3aaed8]", surface: "border-[#3aaed8] bg-[#d8f1fa] text-[#12384a]", fill: "bg-[#89d2ec] text-[#102f3d]" },
+  { id: "mint", name: "Vert", swatch: "bg-[#299b78]", surface: "border-[#299b78] bg-[#d7f2e8] text-[#153d32]", fill: "bg-[#7ed3b8] text-[#15362d]" },
+  { id: "lilac", name: "Mauve", swatch: "bg-[#792bb9]", surface: "border-[#792bb9] bg-[#eee1f8] text-[#381153]", fill: "bg-[#bd8be0] text-[#281039]" },
+  { id: "lemon", name: "Jaune", swatch: "bg-[#d6c900]", surface: "border-[#d6c900] bg-[#fffbd0] text-[#443f00]", fill: "bg-[#f5ef72] text-[#332f00]" },
+  { id: "coral", name: "Corail", swatch: "bg-[#e85d68]", surface: "border-[#e85d68] bg-[#ffe1e3] text-[#56191f]", fill: "bg-[#f49aa1] text-[#46151a]" },
+  { id: "neutral", name: "Gris", swatch: "bg-[#625d70]", surface: "border-[#837d91] bg-[#eceaf0] text-[#292532]", fill: "bg-[#bbb6c5] text-[#292532]" },
 ];
 
 export function themeForActivity(activity: PlanActivity, themes: PlanTheme[]): PlanTheme {

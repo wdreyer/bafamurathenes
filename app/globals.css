@@ -687,12 +687,21 @@ select:focus-visible {
 }
 
 .team-shell {
-  --planning-sky: #0ea5e9;
-  --planning-mint: #10b981;
-  --planning-lilac: #8b5cf6;
-  --planning-lemon: #f59e0b;
-  --planning-coral: #fb7185;
-  --planning-neutral: #94a3b8;
+  --planning-sky: #3aaed8;
+  --planning-mint: #299b78;
+  --planning-lilac: #792bb9;
+  --planning-lemon: #d6c900;
+  --planning-coral: #e85d68;
+  --planning-neutral: #625d70;
+}
+
+.admin-shell {
+  --planning-sky: #3aaed8;
+  --planning-mint: #299b78;
+  --planning-lilac: #792bb9;
+  --planning-lemon: #d6c900;
+  --planning-coral: #e85d68;
+  --planning-neutral: #625d70;
 }
 
 .guide-rich-content:empty::before {

@@ -75,12 +75,12 @@ function AccountForm() {
     }
   };
 
-  return <div className="min-h-screen bg-[#f5f8f6] px-4 py-10 text-slate-950 sm:py-16">
-    <main className="mx-auto w-full max-w-md overflow-hidden rounded-lg border border-emerald-900/10 bg-white shadow-xl shadow-emerald-950/5">
-      <div className="border-b border-slate-200 bg-emerald-950 px-6 py-6 text-white">
-        <p className="text-xs font-bold uppercase text-emerald-200">Murathènes</p>
+  return <div className="min-h-screen bg-[#fff8ec] px-4 py-10 text-slate-950 sm:py-16">
+    <main className="mx-auto w-full max-w-md overflow-hidden rounded-lg border border-[#792bb9]/20 bg-white shadow-xl shadow-[#792bb9]/10">
+      <div className="border-b border-[#792bb9]/30 bg-[#1a1530] px-6 py-6 text-white">
+        <p className="text-xs font-bold uppercase text-[#f5ef72]">Murathènes</p>
         <h1 className="mt-1 text-2xl font-bold">Espace formateur·ice</h1>
-        <p className="mt-2 text-sm text-emerald-100">Un espace privé pour les plannings et les ressources pédagogiques.</p>
+        <p className="mt-2 text-sm text-[#eadcf4]">Un espace privé pour les plannings et les ressources pédagogiques.</p>
       </div>
       <div className="p-6">
         <div className="mb-5 grid grid-cols-2 rounded-md bg-slate-100 p-1">
@@ -92,10 +92,10 @@ function AccountForm() {
             <h2 className="text-lg font-semibold">{mode === "login" ? "Se connecter" : "Créer mon compte"}</h2>
             <p className="mt-1 text-sm text-slate-600">{mode === "login" ? "Retrouve les formations auxquelles tu es affecté·e." : "Ton accès sera activé après validation par l’équipe admin."}</p>
           </div>
-          <label className="block text-sm font-medium text-slate-700">Adresse email<input required type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} className="mt-1.5 h-11 w-full rounded-md border border-slate-300 px-3 outline-none focus:border-emerald-700" /></label>
-          <label className="block text-sm font-medium text-slate-700">Mot de passe<input required minLength={6} type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} value={password} onChange={(event) => setPassword(event.target.value)} className="mt-1.5 h-11 w-full rounded-md border border-slate-300 px-3 outline-none focus:border-emerald-700" /></label>
+          <label className="block text-sm font-medium text-slate-700">Adresse email<input required type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} className="mt-1.5 h-11 w-full rounded-md border border-slate-300 px-3 outline-none focus:border-[#792bb9]" /></label>
+          <label className="block text-sm font-medium text-slate-700">Mot de passe<input required minLength={6} type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} value={password} onChange={(event) => setPassword(event.target.value)} className="mt-1.5 h-11 w-full rounded-md border border-slate-300 px-3 outline-none focus:border-[#792bb9]" /></label>
           {error && <p role="alert" className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">{error}</p>}
-          <button disabled={busy} className="flex h-11 w-full items-center justify-center gap-2 rounded-md bg-emerald-800 px-4 text-sm font-semibold text-white hover:bg-emerald-900 disabled:opacity-50">{mode === "login" ? <KeyRound size={17} /> : <UserPlus size={17} />}{busy ? "Patiente..." : mode === "login" ? "Se connecter" : "Créer mon compte"}</button>
+          <button disabled={busy} className="flex h-11 w-full items-center justify-center gap-2 rounded-md bg-[#792bb9] px-4 text-sm font-semibold text-white hover:bg-[#66239d] disabled:opacity-50">{mode === "login" ? <KeyRound size={17} /> : <UserPlus size={17} />}{busy ? "Patiente..." : mode === "login" ? "Se connecter" : "Créer mon compte"}</button>
         </form>
       </div>
     </main>
@@ -104,7 +104,7 @@ function AccountForm() {
 
 function StatusScreen({ status, email }: { status: "pending" | "rejected"; email: string }) {
   const pending = status === "pending";
-  return <div className="grid min-h-screen place-items-center bg-[#f5f8f6] px-4 text-slate-950">
+  return <div className="grid min-h-screen place-items-center bg-[#fff8ec] px-4 text-slate-950">
     <main className="w-full max-w-lg rounded-lg border border-slate-200 bg-white p-7 shadow-lg">
       <span className={`grid h-12 w-12 place-items-center rounded-md ${pending ? "bg-amber-100 text-amber-800" : "bg-rose-100 text-rose-800"}`}>{pending ? <Clock3 /> : <ShieldCheck />}</span>
       <h1 className="mt-5 text-2xl font-bold">{pending ? "Compte en attente de validation" : "Accès non validé"}</h1>

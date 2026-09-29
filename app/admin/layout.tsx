@@ -167,11 +167,11 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-950">
-      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 border-r border-slate-200 bg-slate-950 text-white lg:flex lg:flex-col">
+    <div className="admin-shell min-h-screen bg-[#fff8ec] text-[#1a1530]">
+      <aside className="fixed inset-y-0 left-0 z-40 hidden w-64 border-r border-[#792bb9]/30 bg-[#1a1530] text-white lg:flex lg:flex-col">
         <div className="border-b border-white/10 px-5 py-5">
           <Link href="/admin" className="flex items-center gap-3 text-white no-underline">
-            <span className="grid h-10 w-10 place-items-center rounded-lg bg-white text-slate-950">
+            <span className="grid h-10 w-10 place-items-center rounded-lg bg-[#f5ef72] text-[#1a1530]">
               <ShieldCheck className="h-5 w-5" />
             </span>
             <span>
@@ -195,7 +195,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                 href={item.href}
                 className={[
                   "flex h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium no-underline transition",
-                  active ? "bg-white text-slate-950" : "text-slate-300 hover:bg-white/10 hover:text-white",
+                  active ? "bg-[#f5ef72] text-[#1a1530]" : "text-slate-200 hover:bg-[#792bb9] hover:text-white",
                 ].join(" ")}
               >
                 <Icon className="h-4 w-4" />
@@ -217,14 +217,14 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       </aside>
 
       <div className="lg:pl-64">
-        <header className="sticky top-0 z-30 border-b border-slate-200 bg-white px-4 py-3 lg:hidden">
+        <header className="sticky top-0 z-30 border-b border-[#792bb9]/20 bg-white px-4 py-3 lg:hidden">
           <div className="flex items-center justify-between">
             <Link href="/admin" className="font-semibold text-slate-950 no-underline">BAFA Admin</Link>
             <button onClick={logout} className="text-sm font-medium text-slate-600">Déconnexion</button>
           </div>
           <nav className="mt-3 flex gap-2 overflow-x-auto">
             {navItems.map((item) => (
-              <Link key={item.href} href={item.href} className="shrink-0 rounded-md bg-slate-100 px-3 py-2 text-xs font-medium text-slate-700 no-underline">
+              <Link key={item.href} href={item.href} className="shrink-0 rounded-md bg-[#f0e8f8] px-3 py-2 text-xs font-medium text-[#552080] no-underline">
                 {item.label}
               </Link>
             ))}
