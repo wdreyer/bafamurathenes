@@ -30,7 +30,7 @@ service firebase.storage {
           request.resource.contentType.matches('image/.*')
           || request.resource.contentType == 'application/pdf'
           || (fileName == 'social-security-number.txt' && request.resource.contentType == 'text/plain')
-        );
+        )
       );
       allow delete: if isAdmin() || (request.auth != null && request.auth.uid == userId);
     }
