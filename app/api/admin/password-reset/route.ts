@@ -17,7 +17,12 @@ export async function POST(request: Request) {
     const response = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${apiKey}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ requestType: "PASSWORD_RESET", email: normalizedEmail }),
+      body: JSON.stringify({
+        requestType: "PASSWORD_RESET",
+        email: normalizedEmail,
+        continueUrl: "https://bafa.murathenes.org/admin",
+        canHandleCodeInApp: false,
+      }),
       cache: "no-store",
     });
 
