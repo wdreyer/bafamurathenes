@@ -8,7 +8,7 @@ import { NO_ICON, iconForActivity, planningIconGroups } from "@/lib/planningIcon
 import { themeForActivity, themeSwatch } from "@/lib/planningThemes";
 import { useTrainingTimes } from "@/lib/useTrainingTimes";
 import { useGuideLibrary } from "@/lib/useGuideLibrary";
-import { QUARTER_HOUR_OPTIONS } from "@/lib/planningMove";
+import { TimeRangeFields } from "@/components/planning/TimeField";
 import type { FormationType, PlanActivity, PlanTheme } from "@/lib/types";
 
 type Props = {
@@ -108,10 +108,9 @@ export function ActivityEditor({ activity, existing, dayCount, formationType, tr
           <label className="text-xs font-semibold text-slate-700">Réutilisable pour<select value={activity.catalogScope || "both"} onChange={(event) => onChange({ ...activity, catalogScope: event.target.value as TrainingCatalogItem["scope"] })} className="mt-1 h-9 w-full rounded border border-slate-300 bg-white px-2 text-sm font-normal"><option value="both">Toutes les formations</option><option value="general">Formation générale</option><option value="appro">Approfondissement</option></select></label>
           <p className="text-xs text-[#552080] sm:col-span-2">Ce nouveau temps sera ajouté au guide et proposé dans les prochains plannings.</p>
         </div>}
-        <div className="grid grid-cols-3 gap-2">
-          <label className="text-xs font-semibold text-slate-600">Jour<select value={activity.day} onChange={(event) => onChange({ ...activity, day: Number(event.target.value) })} className="mt-1 h-10 w-full rounded border border-slate-300 bg-white px-2 text-sm font-normal">{Array.from({ length: dayCount }, (_, index) => <option key={index} value={index + 1}>J{index + 1}</option>)}</select></label>
-          <label className="text-xs font-semibold text-slate-600">Début<select required value={activity.start} onChange={(event) => onChange({ ...activity, start: event.target.value })} className="mt-1 h-10 w-full rounded border border-slate-300 bg-white px-2 text-sm font-normal">{QUARTER_HOUR_OPTIONS.map((time) => <option key={time} value={time}>{time}</option>)}</select></label>
-          <label className="text-xs font-semibold text-slate-600">Fin<select required value={activity.end} onChange={(event) => onChange({ ...activity, end: event.target.value })} className="mt-1 h-10 w-full rounded border border-slate-300 bg-white px-2 text-sm font-normal">{QUARTER_HOUR_OPTIONS.map((time) => <option key={time} value={time}>{time}</option>)}</select></label>
+        <div className="flex flex-wrap items-start gap-4">
+          <label className="text-xs font-semibold text-slate-600">Jour<select value={activity.day} onChange={(event) => onChange({ ...activity, day: Number(event.target.value) })} className="mt-1 block h-10 cursor-pointer rounded-md border border-slate-300 bg-white px-2 text-sm font-semibold text-slate-900">{Array.from({ length: dayCount }, (_, index) => <option key={index} value={index + 1}>J{index + 1}</option>)}</select></label>
+          <TimeRangeFields start={activity.start} end={activity.end} onChange={(range) => onChange({ ...activity, ...range })} />
         </div>
         <label className="block text-xs font-semibold text-slate-600">Contenu / consignes<textarea value={activity.content} onChange={(event) => onChange({ ...activity, content: event.target.value })} rows={3} className="mt-1 w-full rounded border border-slate-300 p-3 text-sm font-normal text-slate-900" /></label>
         <div><p className="mb-2 text-xs font-semibold text-slate-600">Thème</p><div className="flex flex-wrap gap-2" role="group" aria-label="Thème du temps">{themes.map((theme) => <button key={theme.id} type="button" onClick={() => onChange({ ...activity, themeId: theme.id, color: theme.color })} aria-pressed={selectedTheme.id === theme.id} className={`inline-flex min-h-9 items-center gap-2 rounded-md border px-2.5 py-1.5 text-xs font-medium ${selectedTheme.id === theme.id ? "border-slate-800 bg-slate-50 text-slate-950" : "border-slate-200 bg-white text-slate-600"}`}><span className={`h-3 w-3 shrink-0 rounded-full ${themeSwatch(theme.color)}`} />{theme.name}</button>)}</div></div>

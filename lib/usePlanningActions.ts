@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { asTime, minuteOfDay } from "@/lib/planningMove";
+import { asTime, minuteOfDay, timeRangeError } from "@/lib/planningMove";
 import type { PlanActivity } from "@/lib/types";
 
 export type PlanningNotice = { text: string; undo?: PlanActivity[] };
@@ -87,7 +87,9 @@ export function usePlanningActions(activities: PlanActivity[], save: (next: Plan
   const paste = (day: number, start: string) => {
     if (!clipboard) return;
     const end = asTime(minuteOfDay(start) + minuteOfDay(clipboard.end) - minuteOfDay(clipboard.start));
-    if (end <= start || overlaps(activities, day, start, end)) { notify({ text: "Pas assez de place ici pour coller ce temps." }); return; }
+    const rangeError = timeRangeError(start, end);
+    if (rangeError) { notify({ text: rangeError }); return; }
+    if (overlaps(activities, day, start, end)) { notify({ text: "Pas assez de place ici pour coller ce temps." }); return; }
     void apply([...activities, withNewId(clipboard, { day, start, end })], `Collé au J${day} à ${start}`);
   };
 
@@ -134,7 +136,8 @@ export function usePlanningActions(activities: PlanActivity[], save: (next: Plan
   const move = (activity: PlanActivity, day: number, start: string) => {
     const duration = minuteOfDay(activity.end) - minuteOfDay(activity.start);
     const end = asTime(minuteOfDay(start) + duration);
-    if (minuteOfDay(start) + duration > 24 * 60) { notify({ text: "Ce temps dépasserait minuit." }); return; }
+    const rangeError = minuteOfDay(start) + duration >= 24 * 60 ? "Les temps doivent se tenir entre 9h et 22h." : timeRangeError(start, end);
+    if (rangeError) { notify({ text: rangeError }); return; }
     if (day === activity.day && start === activity.start) return;
     const moved = { ...activity, day, start, end, merged: false };
     const conflicts = activities.filter((item) => item.id !== activity.id && item.day === day && item.start < end && item.end > start);

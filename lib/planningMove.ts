@@ -11,7 +11,19 @@ export function asTime(totalMinutes: number) {
   return `${String(Math.floor(totalMinutes / 60)).padStart(2, "0")}:${String(totalMinutes % 60).padStart(2, "0")}`;
 }
 
-export const QUARTER_HOUR_OPTIONS = Array.from({ length: 96 }, (_, index) => asTime(index * 15));
+/** Planning days run from 9:00 to 22:00: no time may start before or end after. */
+export const DAY_START = "09:00";
+export const DAY_END = "22:00";
+
+export const QUARTER_HOUR_OPTIONS = Array.from({ length: 96 }, (_, index) => asTime(index * 15))
+  .filter((time) => time >= DAY_START && time <= DAY_END);
+
+/** Why a time range can't be saved, or null when it's fine. */
+export function timeRangeError(start: string, end: string) {
+  if (end <= start) return "L'heure de fin doit être après le début.";
+  if (start < DAY_START || end > DAY_END) return "Les temps doivent se tenir entre 9h et 22h.";
+  return null;
+}
 
 export function snapTimeToQuarterHour(value: string) {
   const minutes = minuteOfDay(value);

@@ -9,6 +9,7 @@ import { buildPlanningTemplate } from "@/lib/planningTemplates";
 import { savePlanningTime } from "@/lib/savePlanningTime";
 import { defaultThemes, normalizeThemes } from "@/lib/planningThemes";
 import { usePlanningActions } from "@/lib/usePlanningActions";
+import { timeRangeError } from "@/lib/planningMove";
 import { trainerProfileProgress } from "@/lib/trainerProfile";
 import { ADMIN_TRAINER_IDS } from "@/lib/adminAccess";
 import { TrainerHistory } from "@/components/admin/TrainerHistory";
@@ -234,9 +235,10 @@ Cette action est irréversible.`;
   };
 
   const persistActivity = async () => {
-    if (!formation || !editing || !editing.title.trim() || editing.end <= editing.start) {
-      setError("Renseigne un titre et une heure de fin après le début."); return;
-    }
+    if (!formation || !editing) return;
+    if (!editing.title.trim()) { setError("Renseigne un titre."); return; }
+    const rangeError = timeRangeError(editing.start, editing.end);
+    if (rangeError) { setError(rangeError); return; }
     setBusy(true); setError("");
     try {
       await savePlanningTime({ formationId: formation.id, activities, activity: editing,

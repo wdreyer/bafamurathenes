@@ -7,6 +7,7 @@ import { db } from "@/lib/firebase";
 import { savePlanningTime } from "@/lib/savePlanningTime";
 import { normalizeThemes } from "@/lib/planningThemes";
 import { usePlanningActions } from "@/lib/usePlanningActions";
+import { timeRangeError } from "@/lib/planningMove";
 import { ActivityEditor } from "@/components/planning/ActivityEditor";
 import { PlanningBoard } from "@/components/planning/PlanningBoard";
 import { ActivityQuickActions } from "@/components/planning/PlanningActionsMenu";
@@ -119,9 +120,9 @@ export default function TeamPage() {
 
   const saveEditing = async () => {
     if (!editing || !plan || !formation) return;
-    if (!editing.title.trim() || editing.end <= editing.start) {
-      setError("Renseigne un titre et une heure de fin après le début."); return;
-    }
+    if (!editing.title.trim()) { setError("Renseigne un titre."); return; }
+    const rangeError = timeRangeError(editing.start, editing.end);
+    if (rangeError) { setError(rangeError); return; }
     setBusy(true); setError("");
     try {
       await savePlanningTime({ formationId: formation.id, activities: plan.activities, activity: editing,
