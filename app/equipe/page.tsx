@@ -16,6 +16,7 @@ import type { Formation, Inscription, PlanActivity, PlanTheme } from "@/lib/type
 type FormationPlan = {
   formationId: string;
   activities: PlanActivity[];
+  activityBackup?: PlanActivity[];
   trainerNames?: Record<string, string>;
   groupCount?: number;
   themes?: PlanTheme[];
@@ -97,7 +98,7 @@ export default function TeamPage() {
     setBusy(true); setError("");
     try {
       await setDoc(doc(db, "formationPlans", formation.id), {
-        formationId: formation.id, activities: next, updatedAt: serverTimestamp(),
+        formationId: formation.id, activities: next, activityBackup: plan.activities, updatedAt: serverTimestamp(),
       }, { merge: true });
       return true;
     } catch {
@@ -203,15 +204,15 @@ export default function TeamPage() {
         </div>
 
         <div className="print:hidden flex gap-1 border-b border-slate-200" role="tablist" aria-label="Espace formateur·ices">
-          <button type="button" role="tab" aria-selected={section === "planning"} onClick={() => setSection("planning")} className={`border-b-2 px-4 py-3 text-sm font-medium ${section === "planning" ? "border-emerald-700 text-emerald-900" : "border-transparent text-slate-600"}`}>Planning</button>
-          <button type="button" role="tab" aria-selected={section === "trainees"} onClick={() => setSection("trainees")} className={`border-b-2 px-4 py-3 text-sm font-medium ${section === "trainees" ? "border-emerald-700 text-emerald-900" : "border-transparent text-slate-600"}`}>Stagiaires ({rosterCount})</button>
+          <button type="button" role="tab" aria-selected={section === "planning"} onClick={() => setSection("planning")} className={`border-b-2 px-4 py-3 text-sm font-medium ${section === "planning" ? "border-[#792bb9] text-[#552080]" : "border-transparent text-slate-600"}`}>Planning</button>
+          <button type="button" role="tab" aria-selected={section === "trainees"} onClick={() => setSection("trainees")} className={`border-b-2 px-4 py-3 text-sm font-medium ${section === "trainees" ? "border-[#792bb9] text-[#552080]" : "border-transparent text-slate-600"}`}>Stagiaires ({rosterCount})</button>
         </div>
 
         <div className={section === "planning" ? "" : "hidden print:block"}>
           <div className="print:hidden flex flex-wrap items-center justify-between gap-3 py-4">
             <p className="text-sm font-medium text-slate-700">J1 à J{dayCount} · {plan.activities.length} temps</p>
           </div>
-          <PlanningBoard key={formation.id} activities={plan.activities} dayCount={dayCount} startDate={formation.startDate} formationTitle={formation.title} themes={themes} trainerNames={plan.trainerNames} busy={busy} arrivalTime={plan.arrivalTime} departureTime={plan.departureTime} onEdit={(item) => { setError(""); setEditing({ ...item, trainerIds: item.trainerIds || [] }); }} onAdd={(day, start, end) => { setError(""); setEditing(emptyActivity(day, start, end)); }} onSaveThemes={saveThemes} onSetBounds={(patch) => void saveBounds(patch)} onToggleMerge={toggleMerge} onResize={resizeActivity} />
+          <PlanningBoard key={formation.id} activities={plan.activities} backupActivities={plan.activityBackup} dayCount={dayCount} startDate={formation.startDate} formationTitle={formation.title} themes={themes} trainerNames={plan.trainerNames} busy={busy} arrivalTime={plan.arrivalTime} departureTime={plan.departureTime} onEdit={(item) => { setError(""); setEditing({ ...item, trainerIds: item.trainerIds || [] }); }} onAdd={(day, start, end) => { setError(""); setEditing(emptyActivity(day, start, end)); }} onSaveActivities={saveActivities} onSaveThemes={saveThemes} onSetBounds={(patch) => void saveBounds(patch)} onToggleMerge={toggleMerge} onResize={resizeActivity} />
         </div>
         {section === "trainees" && <div className="print:hidden"><TraineeRoster key={selectedFormationId} inscriptions={registrations} loading={registrationsLoading} groupCount={groupCount} busy={busy} onChangeGroupCount={changeGroupCount} onSaveField={saveTraineeField} /></div>}
       </>}
