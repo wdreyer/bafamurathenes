@@ -9,7 +9,6 @@ import { db } from "@/lib/firebase";
 import { getFormationPublicHref } from "@/lib/formationSlugs";
 import { InscriptionsTable } from "@/components/admin/inscriptions/InscriptionsTable";
 import type { Formation, Inscription, Trainer } from "@/lib/types";
-import { isAdminUid } from "@/lib/adminAccess";
 
 const euro = (value: number) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(value);
 const dateLabel = (value: string) => value ? new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", year: "numeric" }).format(new Date(`${value.slice(0, 10)}T12:00:00`)) : "Date à préciser";
@@ -45,7 +44,7 @@ export default function FormationDetailPage() {
   const assignableTrainers = trainers.filter((trainer) => !trainer.approvalStatus || trainer.approvalStatus === "approved");
 
   const toggleTrainer = async (trainerId: string) => {
-    if (!formation || isAdminUid(trainerId)) return;
+    if (!formation) return;
     const nextIds = formation.trainerIds?.includes(trainerId)
       ? formation.trainerIds.filter((value) => value !== trainerId)
       : [...(formation.trainerIds || []), trainerId];
@@ -108,7 +107,7 @@ export default function FormationDetailPage() {
 
       <section className="min-w-0 border-t border-slate-200 pt-4">
         <div className="flex flex-wrap items-start justify-between gap-2"><div><h2 className="text-lg font-semibold">Équipe & planning</h2><p className="mt-1 text-sm text-slate-600">{assigned.map(trainerName).join(", ") || "Aucun·e formateur·ice affecté·e"}</p></div><Link href="/admin/formateurs" className="text-sm font-medium text-emerald-800 underline">Gérer les formateur·ices</Link></div>
-        <div className="mt-4 flex flex-wrap gap-2">{assignableTrainers.map((trainer) => <button key={trainer.id} type="button" disabled={busy || isAdminUid(trainer.id)} title={isAdminUid(trainer.id) ? "Admin · affectation automatique" : undefined} aria-pressed={formation.trainerIds?.includes(trainer.id) || false} onClick={() => void toggleTrainer(trainer.id)} className={`inline-flex min-h-9 items-center gap-1 rounded border px-3 text-sm disabled:opacity-70 ${formation.trainerIds?.includes(trainer.id) ? "border-emerald-700 bg-emerald-50 text-emerald-900" : "border-slate-300 bg-white text-slate-700"}`}>{formation.trainerIds?.includes(trainer.id) && <Check size={14} />}{trainerName(trainer)}</button>)}{!assignableTrainers.length && <p className="text-sm text-slate-500">Valide d&apos;abord un compte formateur·ice dans l&apos;espace équipe.</p>}</div>
+        <div className="mt-4 flex flex-wrap gap-2">{assignableTrainers.map((trainer) => <button key={trainer.id} type="button" disabled={busy} aria-pressed={formation.trainerIds?.includes(trainer.id) || false} onClick={() => void toggleTrainer(trainer.id)} className={`inline-flex min-h-9 items-center gap-1 rounded border px-3 text-sm disabled:opacity-50 ${formation.trainerIds?.includes(trainer.id) ? "border-emerald-700 bg-emerald-50 text-emerald-900" : "border-slate-300 bg-white text-slate-700"}`}>{formation.trainerIds?.includes(trainer.id) && <Check size={14} />}{trainerName(trainer)}</button>)}{!assignableTrainers.length && <p className="text-sm text-slate-500">Valide d&apos;abord un compte formateur·ice dans l&apos;espace équipe.</p>}</div>
         <div className="mt-5 flex flex-wrap gap-3"><Link href={`/admin/formateurs?formation=${encodeURIComponent(id)}`} className="inline-flex items-center gap-2 text-sm font-medium text-emerald-800 underline"><CalendarDays size={16} />Ouvrir le planning admin</Link><Link href="/equipe" target="_blank" className="inline-flex items-center gap-2 text-sm font-medium text-emerald-800 underline"><ExternalLink size={16} />Vue formateur·ices</Link></div>
       </section>
     </div>

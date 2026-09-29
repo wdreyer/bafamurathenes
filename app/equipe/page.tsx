@@ -27,7 +27,7 @@ const emptyActivity = (day: number, start = "09:00", end = "10:00"): PlanActivit
 });
 
 export default function TeamPage() {
-  const { user } = useTeamAuth();
+  const { user, isAdmin } = useTeamAuth();
   const [formations, setFormations] = useState<Formation[]>([]);
   const [plans, setPlans] = useState<FormationPlan[]>([]);
   const [formationId, setFormationId] = useState("");
@@ -40,7 +40,9 @@ export default function TeamPage() {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    const formationsQuery = query(collection(db, "formations"), where("trainerIds", "array-contains", user.uid));
+    const formationsQuery = isAdmin
+      ? query(collection(db, "formations"))
+      : query(collection(db, "formations"), where("trainerIds", "array-contains", user.uid));
     const unsubFormations = onSnapshot(formationsQuery, (snapshot) => {
       const next = snapshot.docs.map((entry) => ({ id: entry.id, ...entry.data() } as Formation))
         .sort((a, b) => a.startDate.localeCompare(b.startDate));
@@ -49,7 +51,7 @@ export default function TeamPage() {
       if (!next.length) setPlans([]);
     }, () => { setError("Impossible de charger les formations."); setLoaded(true); });
     return unsubFormations;
-  }, [user.uid]);
+  }, [isAdmin, user.uid]);
 
   useEffect(() => {
     if (!formations.length) return;

@@ -1,8 +1,6 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
@@ -11,7 +9,7 @@ import {
   type User,
 } from "firebase/auth";
 import { doc, onSnapshot, serverTimestamp, setDoc } from "firebase/firestore";
-import { CheckCircle2, Clock3, KeyRound, LogOut, ShieldCheck, UserPlus } from "lucide-react";
+import { Clock3, KeyRound, LogOut, ShieldCheck, UserPlus } from "lucide-react";
 import { auth, db } from "@/lib/firebase";
 import { ADMIN_TRAINERS, isAdminEmail } from "@/lib/adminAccess";
 import type { Trainer } from "@/lib/types";
@@ -118,7 +116,6 @@ function StatusScreen({ status, email }: { status: "pending" | "rejected"; email
 }
 
 export function TeamAccess({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
   const [trainer, setTrainer] = useState<Trainer | null>(null);
   const [authReady, setAuthReady] = useState(false);
@@ -155,17 +152,6 @@ export function TeamAccess({ children }: { children: React.ReactNode }) {
 
   const approved = activeTrainer.approvalStatus === "approved" || !activeTrainer.approvalStatus;
   if (!isAdmin && !approved) return <StatusScreen status="pending" email={activeTrainer.email || user.email || ""} />;
-
-  if (!isAdmin && (!activeTrainer.profileComplete || !activeTrainer.hasSocialSecurityNumber) && pathname !== "/equipe/profil") {
-    return <div className="grid min-h-screen place-items-center bg-[#f5f8f6] px-4 text-slate-950">
-      <main className="w-full max-w-lg rounded-lg border border-slate-200 bg-white p-7 shadow-lg">
-        <span className="grid h-12 w-12 place-items-center rounded-md bg-emerald-100 text-emerald-800"><CheckCircle2 /></span>
-        <h1 className="mt-5 text-2xl font-bold">Ton accès est validé</h1>
-        <p className="mt-2 text-sm leading-6 text-slate-600">Complète maintenant les informations obligatoires et ajoute tes deux justificatifs pour accéder à l’espace équipe.</p>
-        <Link href="/equipe/profil" className="mt-5 inline-flex h-11 items-center rounded-md bg-emerald-800 px-4 text-sm font-semibold text-white no-underline">Compléter mon profil</Link>
-      </main>
-    </div>;
-  }
 
   return <TeamAuthContext.Provider value={{ user, trainer: activeTrainer, isAdmin, logout: () => signOut(auth) }}>{children}</TeamAuthContext.Provider>;
 }
