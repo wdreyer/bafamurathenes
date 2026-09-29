@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type FocusEvent, type MouseEvent } from "react";
 import { DndContext, DragOverlay, PointerSensor, closestCenter, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent, type DragStartEvent } from "@dnd-kit/core";
-import { AlertTriangle, CalendarDays, Check, CheckSquare, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Copy, Filter, Link2, List, MoreHorizontal, Plus, RotateCcw, Settings2, Trash2, Unlink, X } from "lucide-react";
+import { AlertTriangle, CalendarDays, Check, CheckSquare, ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Copy, FileText, Filter, Link2, List, MoreHorizontal, Plus, RotateCcw, Settings2, Trash2, Unlink, X } from "lucide-react";
 import { QUARTER_HOUR_OPTIONS, asTime, minuteOfDay, moveActivityToTarget } from "@/lib/planningMove";
 import { defaultThemes, themeFill, themeForActivity, themeSwatch } from "@/lib/planningThemes";
 import { ThemeEditor } from "@/components/planning/ThemeEditor";
@@ -124,6 +124,35 @@ function PlanningSlot({ day, interval, column, row, free, outOfBounds, busy, onA
     {free && onAdd && <button type="button" disabled={busy} onClick={() => onAdd(day, interval.start, interval.end)} aria-label={`Ajouter un temps à ${interval.start}`}
       className="absolute inset-0 grid place-items-center text-slate-300 opacity-0 transition-opacity hover:bg-[#f0e8f8] hover:text-[#792bb9] hover:opacity-100 focus:opacity-100 disabled:cursor-not-allowed"><Plus size={12} /></button>}
   </div>;
+}
+
+function DayAgenda({ day, startDate, activities, themes, trainerNames, busy, selectionMode, selectedIds, onEdit, onAdd, onSelect }: {
+  day: number; startDate: string; activities: PlanActivity[]; themes: PlanTheme[]; trainerNames?: Record<string, string>; busy: boolean; selectionMode: boolean; selectedIds: Set<string>; onEdit?: Props["onEdit"]; onAdd?: Props["onAdd"]; onSelect: (id: string) => void;
+}) {
+  const sorted = [...activities].sort((a, b) => a.start.localeCompare(b.start) || a.end.localeCompare(b.end));
+  return <section className="mx-auto w-full max-w-3xl">
+    <header className="mb-3 flex items-center justify-between gap-3 border-b border-[#d8c9e6] pb-3">
+      <div><p className="text-xs font-semibold uppercase text-[#792bb9]">Jour {day}</p><h3 className="mt-0.5 text-lg font-semibold capitalize text-[#1a1530]">{dateForDay(startDate, day)}</h3></div>
+      {onAdd && <button type="button" disabled={busy} onClick={() => onAdd(day)} title="Ajouter un temps" aria-label="Ajouter un temps" className="grid h-9 w-9 place-items-center rounded-full bg-[#792bb9] text-white shadow-sm disabled:opacity-50"><Plus size={17} /></button>}
+    </header>
+    {!sorted.length ? <div className="rounded-md border border-dashed border-[#cdbbdd] bg-white px-5 py-10 text-center text-sm text-slate-500">Aucun temps à afficher pour cette journée.</div> : <div className="space-y-2.5">
+      {sorted.map((activity) => {
+        const theme = themeForActivity(activity, themes);
+        const names = (activity.trainerIds || []).map((id) => trainerNames?.[id]).filter(Boolean) as string[];
+        const duration = minuteOfDay(activity.end) - minuteOfDay(activity.start);
+        const selected = selectedIds.has(activity.id);
+        return <div key={activity.id} className="grid grid-cols-[64px_minmax(0,1fr)] items-stretch gap-3 sm:grid-cols-[84px_minmax(0,1fr)]">
+          <div className="flex flex-col items-end border-r border-[#d8c9e6] pr-3 pt-3 text-right"><strong className="text-sm text-[#1a1530]">{shortHour(activity.start)}</strong><span className="mt-0.5 text-[10px] text-slate-500">{shortHour(activity.end)}</span><span className="mt-2 text-[9px] font-semibold uppercase text-slate-400">{duration >= 60 ? `${Math.floor(duration / 60)}h${duration % 60 ? String(duration % 60).padStart(2, "0") : ""}` : `${duration} min`}</span></div>
+          <button type="button" disabled={busy || !onEdit} onClick={() => selectionMode ? onSelect(activity.id) : onEdit?.(activity)} className={`relative min-h-20 w-full rounded-md border border-white/70 px-4 py-3 text-left shadow-sm transition hover:-translate-y-px hover:shadow-md disabled:cursor-wait ${themeFill(theme.color)} ${selected ? "ring-2 ring-[#1a1530]" : ""}`}>
+            <span className="block pr-8 text-sm font-bold leading-5 text-[#1a1530] sm:text-base">{activity.title}</span>
+            {activity.content && <span className="mt-1.5 block whitespace-pre-wrap text-xs leading-5 text-slate-700">{activity.content}</span>}
+            <span className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] font-semibold text-slate-700"><span className="inline-flex items-center gap-1"><span className={`h-2 w-2 rounded-full ${themeSwatch(theme.color)}`} />{theme.name}</span>{names.length > 0 && <span>{names.join(" · ")}</span>}{activity.resourceId && <span className="inline-flex items-center gap-1"><FileText size={11} />PDF</span>}</span>
+            {selected && <span className="absolute right-3 top-3 grid h-5 w-5 place-items-center rounded-full bg-[#1a1530] text-white"><Check size={12} /></span>}
+          </button>
+        </div>;
+      })}
+    </div>}
+  </section>;
 }
 
 function OverviewGrid({ days, dayCount, startDate, activities, displayedActivities, themes, trainerNames, busy, density, selectionMode, selectedIds, arrivalTime, departureTime, onAdd, onEdit, onToggleMerge, onResize, onSelect, draggable }: {
@@ -410,14 +439,14 @@ export function PlanningBoard({ activities, backupActivities = [], dayCount, sta
   };
 
   const selectDay = (day: number) => {
-    if (view === "day") { setSelectedDay(day); return; }
-    if (view === "week") { setSelectedDay(day); return; }
+    if (view === "day") { setSelectedDay(day); setSelectedIds(new Set()); return; }
+    if (view === "week") { setSelectedDay(day); setSelectedIds(new Set()); return; }
     overviewRef.current?.querySelector<HTMLElement>(`#planning-jour-${day}`)?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "start" });
   };
 
   const movePeriod = (direction: -1 | 1) => {
     if (view === "all") overviewRef.current?.querySelector<HTMLElement>(".overflow-x-auto")?.scrollBy({ left: direction * 340, behavior: "smooth" });
-    else setSelectedDay((day) => Math.min(dayCount, Math.max(1, day + direction * (view === "week" ? 7 : 1))));
+    else { setSelectedDay((day) => Math.min(dayCount, Math.max(1, day + direction * (view === "week" ? 7 : 1)))); setSelectedIds(new Set()); }
   };
 
   return <>
@@ -480,10 +509,10 @@ export function PlanningBoard({ activities, backupActivities = [], dayCount, sta
         {onSaveThemes && <button type="button" onClick={() => setEditingThemes(true)} title="Gérer les thèmes" aria-label="Gérer les thèmes" className="ml-auto grid h-8 w-8 place-items-center rounded-md border border-[#d8c9e6] bg-white text-[#792bb9] hover:border-[#792bb9] print:hidden"><Settings2 size={16} /></button>}
       </div>
 
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={() => setActiveActivity(null)}>
+      {view === "day" ? <DayAgenda day={selectedDay} startDate={startDate} activities={displayedActivities.filter((activity) => activity.day === selectedDay)} themes={themes} trainerNames={trainerNames} busy={busy} selectionMode={selectionMode} selectedIds={selectedIds} onEdit={onEdit} onAdd={onAdd} onSelect={toggleSelected} /> : <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={() => setActiveActivity(null)}>
         <div ref={overviewRef} className="min-w-0 max-w-full"><OverviewGrid days={visibleDays} dayCount={dayCount} startDate={startDate} activities={activities} displayedActivities={displayedActivities} themes={themes} trainerNames={trainerNames} busy={busy} density={density} selectionMode={selectionMode} selectedIds={selectedIds} arrivalTime={arrivalTime} departureTime={departureTime} onAdd={onAdd} onEdit={onEdit} onToggleMerge={onToggleMerge} onResize={selectionMode ? undefined : onResize} onSelect={toggleSelected} draggable={Boolean(onSaveActivities) && !selectionMode} /></div>
         <DragOverlay>{activeActivity && <div className={`w-48 rounded border border-white/60 px-3 py-2 text-xs font-bold shadow-xl ${themeFill(themeForActivity(activeActivity, themes).color)}`}>{activeActivity.title}<span className="mt-1 block text-[10px] font-medium">{activeActivity.start}–{activeActivity.end}</span></div>}</DragOverlay>
-      </DndContext>
+      </DndContext>}
     </div>
     <PrintPlanning activities={activities} dayCount={dayCount} startDate={startDate} formationTitle={formationTitle} themes={themes} trainerNames={trainerNames} />
     {editingThemes && onSaveThemes && <ThemeEditor themes={themes} activities={activities} onSave={onSaveThemes} onClose={() => setEditingThemes(false)} />}
