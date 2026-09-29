@@ -10,7 +10,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unknown admin account" }, { status: 400 });
     }
 
-    const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+    const configuredApiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY?.trim();
+    const apiKey = configuredApiKey?.startsWith("XAIza") ? configuredApiKey.slice(1) : configuredApiKey;
     if (!apiKey) return NextResponse.json({ error: "Firebase configuration missing" }, { status: 500 });
 
     const response = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${apiKey}`, {
@@ -21,8 +22,10 @@ export async function POST(request: Request) {
     });
 
     if (!response.ok) {
-      console.error("[admin-password-reset] Firebase rejected the request", response.status);
-      return NextResponse.json({ error: "Firebase reset failed" }, { status: 502 });
+      const payload = await response.json().catch(() => null) as { error?: { message?: string } } | null;
+      const firebaseCode = payload?.error?.message || `HTTP_${response.status}`;
+      console.error("[admin-password-reset] Firebase rejected the request", firebaseCode);
+      return NextResponse.json({ error: firebaseCode }, { status: 502 });
     }
 
     return NextResponse.json({ ok: true });
