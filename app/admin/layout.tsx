@@ -7,6 +7,8 @@ import { usePathname } from "next/navigation";
 import { onAuthStateChanged, signInWithEmailAndPassword, signOut, type User } from "firebase/auth";
 import { doc, onSnapshot } from "firebase/firestore";
 import {
+  Eye,
+  EyeOff,
   GraduationCap,
   BookOpen,
   CalendarDays,
@@ -17,6 +19,8 @@ import {
   Users,
 } from "lucide-react";
 import { auth, db } from "@/lib/firebase";
+
+const BOOTSTRAP_ADMIN_UID = "zE1LYEEyooedqV3YyGsTVJA3FcJ3";
 
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
@@ -34,6 +38,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -45,6 +50,11 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!user) return;
+    if (user.uid === BOOTSTRAP_ADMIN_UID) {
+      setIsAllowed(true);
+      setLoading(false);
+      return;
+    }
     return onSnapshot(doc(db, "admins", user.uid), (snapshot) => {
       setIsAllowed(snapshot.exists() && snapshot.data().active !== false);
       setLoading(false);
@@ -61,14 +71,23 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     setNotice(null);
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email.trim(), password);
+      const normalizedEmail = email.trim().toLowerCase().replace(/\\+@/g, "@");
+      await signInWithEmailAndPassword(auth, normalizedEmail, password);
       setPassword("");
     } catch (caught) {
       setLoading(false);
       const code = typeof caught === "object" && caught && "code" in caught ? String(caught.code) : "";
-      setError(code.includes("too-many-requests")
-        ? "Trop de tentatives. Attendez quelques minutes ou réinitialisez le mot de passe."
-        : "Email ou mot de passe incorrect pour ce projet Firebase.");
+      if (code.includes("too-many-requests")) {
+        setError("Trop de tentatives. Attendez quelques minutes avant de réessayer. (auth/too-many-requests)");
+      } else if (code.includes("user-disabled")) {
+        setError("Ce compte Firebase est désactivé. (auth/user-disabled)");
+      } else if (code.includes("invalid-email")) {
+        setError("L’adresse email n’est pas valide. (auth/invalid-email)");
+      } else if (code.includes("network-request-failed")) {
+        setError("Le navigateur n’arrive pas à joindre Firebase. (auth/network-request-failed)");
+      } else {
+        setError(`Firebase refuse ces identifiants. (${code || "erreur inconnue"})`);
+      }
     }
   };
 
@@ -119,15 +138,18 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               placeholder="Adresse email"
               className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm outline-none focus:border-slate-950"
             />
-            <input
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              type="password"
-              autoComplete="current-password"
-              required
-              placeholder="Mot de passe"
-              className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm outline-none focus:border-slate-950"
-            />
+            <div className="relative">
+              <input
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                type={showPassword ? "text" : "password"}
+                autoComplete="current-password"
+                required
+                placeholder="Mot de passe"
+                className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 pr-11 text-sm outline-none focus:border-slate-950"
+              />
+              <button type="button" onClick={() => setShowPassword((visible) => !visible)} title={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"} aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"} className="absolute right-1 top-1 grid h-9 w-9 place-items-center rounded-md text-slate-500 hover:bg-slate-100">{showPassword ? <EyeOff size={17} /> : <Eye size={17} />}</button>
+            </div>
             {user && !isAllowed && !error && <p className="text-sm font-medium text-rose-600">Ce compte n’a pas les droits administrateur.</p>}
             {error && <p className="text-sm font-medium text-rose-600">{error}</p>}
             {notice && <p className="rounded-md bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800">{notice}</p>}
