@@ -36,9 +36,29 @@ export const themeColors: { id: PlanTheme["color"]; name: string; swatch: string
   { id: "neutral", name: "Gris", swatch: "bg-[#6c6485]", surface: "border-[#6c6485] bg-[#ecebf2] text-[#26222f]", fill: "bg-[#a7a1bb] text-[#1f1b29]" },
 ];
 
+// Sorting rules on the (accent-free, lowercase) title, first match wins — order matters:
+// "prépa repas" is daily life, "Méthode grand jeu" is theory, "Jeux de présentation" is practice…
+const titleRules: [RegExp, string][] = [
+  [/haccp|hygiene/, "theme-theorie"],
+  [/^prepa(ration)?\s*(des\s*)?repas/, "theme-quotidien"],
+  [/^prepa|^preparation|prepa libre|^reperage|^repartition|^assignation|^restitution|^choix musique|^projet collectif|^presentation projet collectif/, "theme-preparation"],
+  [/^(repas|pause|gouter|courses|rangement|accueil|visite du domaine|regles de vie|journal du bafa)/, "theme-quotidien"],
+  [/methode|^presentation bafa/, "theme-theorie"],
+  [/jeu|veillee|chore|starter|quiz|chant|danse|activite|clip|fiesta|grass|visite|representation|projet jeune|imaginaire|mises? en situation|actifs|multilingue|conte/, "theme-pratique"],
+  [/presentation|cursus|animateur|besoins|education populaire|connaissance public|debat|reglementation|rc\/rp|mixite|cnv|conflit|role as|handicap|vss|violence|psadrafra|dispositif|transport|remobilisation|travail en equipe|retour stage|bilan|eval|clot[uo]re|vie quotidienne|sante/, "theme-theorie"],
+];
+
+export function themeIdFromTitle(title: string) {
+  const clean = title.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+  return titleRules.find(([pattern]) => pattern.test(clean))?.[1];
+}
+
+/** Explicitly chosen current theme first, then the title rules, then the old six-theme colour. */
 export function themeForActivity(activity: PlanActivity, themes: PlanTheme[]): PlanTheme {
   const legacyId = (activity.themeId && legacyThemeIds[activity.themeId]) || legacyColorThemes[activity.color];
+  const titleId = themeIdFromTitle(activity.title);
   return themes.find((theme) => theme.id === activity.themeId)
+    || (titleId && themes.find((theme) => theme.id === titleId))
     || themes.find((theme) => theme.id === legacyId)
     || defaultThemes.find((theme) => theme.id === legacyId)
     || defaultThemes[0];
