@@ -9,6 +9,7 @@ import { defaultThemes } from "@/lib/planningThemes";
 import { ActivityEditor } from "@/components/planning/ActivityEditor";
 import { PlanningBoard } from "@/components/planning/PlanningBoard";
 import { TraineeRoster } from "@/components/planning/TraineeRoster";
+import { useTeamAuth } from "@/components/team/TeamAccess";
 import type { Formation, Inscription, PlanActivity, PlanTheme } from "@/lib/types";
 
 type FormationPlan = {
@@ -26,6 +27,7 @@ const emptyActivity = (day: number, start = "09:00", end = "10:00"): PlanActivit
 });
 
 export default function TeamPage() {
+  const { user } = useTeamAuth();
   const [formations, setFormations] = useState<Formation[]>([]);
   const [plans, setPlans] = useState<FormationPlan[]>([]);
   const [formationId, setFormationId] = useState("");
@@ -38,16 +40,32 @@ export default function TeamPage() {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    const unsubFormations = onSnapshot(collection(db, "formations"), (snapshot) => {
-      setFormations(snapshot.docs.map((entry) => ({ id: entry.id, ...entry.data() } as Formation))
-        .sort((a, b) => a.startDate.localeCompare(b.startDate)));
-    }, () => setError("Impossible de charger les formations."));
-    const unsubPlans = onSnapshot(collection(db, "formationPlans"), (snapshot) => {
-      setPlans(snapshot.docs.map((entry) => ({ formationId: entry.id, ...entry.data() } as FormationPlan)));
-      setLoaded(true);
-    }, () => { setError("Impossible de charger les plannings."); setLoaded(true); });
-    return () => { unsubFormations(); unsubPlans(); };
-  }, []);
+    const formationsQuery = query(collection(db, "formations"), where("trainerIds", "array-contains", user.uid));
+    const unsubFormations = onSnapshot(formationsQuery, (snapshot) => {
+      const next = snapshot.docs.map((entry) => ({ id: entry.id, ...entry.data() } as Formation))
+        .sort((a, b) => a.startDate.localeCompare(b.startDate));
+      setFormations(next);
+      setLoaded(next.length === 0);
+      if (!next.length) setPlans([]);
+    }, () => { setError("Impossible de charger les formations."); setLoaded(true); });
+    return unsubFormations;
+  }, [user.uid]);
+
+  useEffect(() => {
+    if (!formations.length) return;
+    const received = new Set<string>();
+    const unsubscribers = formations.map((formation) => onSnapshot(doc(db, "formationPlans", formation.id), (snapshot) => {
+      setPlans((current) => {
+        const withoutCurrent = current.filter((item) => item.formationId !== formation.id);
+        return snapshot.exists()
+          ? [...withoutCurrent, { formationId: snapshot.id, ...snapshot.data() } as FormationPlan]
+          : withoutCurrent;
+      });
+      received.add(formation.id);
+      if (received.size === formations.length) setLoaded(true);
+    }, () => { setError("Impossible de charger un planning affecté."); setLoaded(true); }));
+    return () => unsubscribers.forEach((unsubscribe) => unsubscribe());
+  }, [formations]);
 
   const available = useMemo(() => formations.filter((formation) =>
     plans.some((plan) => plan.formationId === formation.id && plan.activities?.length)), [formations, plans]);
@@ -161,7 +179,7 @@ export default function TeamPage() {
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4 print:hidden"><h2 className="text-lg font-semibold">Planning & stagiaires</h2><button type="button" onClick={() => window.print()} title="Imprimer le planning en A4 paysage" className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-sm hover:bg-slate-50"><Printer size={16} />Imprimer</button></div>
       {error && <p role="alert" className="mt-5 rounded border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800 print:hidden">{error}</p>}
       {!loaded && <p className="py-12 text-sm text-slate-500">Chargement des plannings...</p>}
-      {loaded && !available.length && !error && <p className="py-12 text-sm text-slate-500">Aucun planning disponible pour le moment.</p>}
+      {loaded && !available.length && !error && <div className="my-10 max-w-2xl rounded-md border border-slate-200 bg-white p-6"><h2 className="font-semibold">Aucune formation affectée</h2><p className="mt-2 text-sm leading-6 text-slate-600">Ton compte est bien actif, mais aucune formation avec un planning publié ne t’a encore été attribuée. L’affectation se fait depuis l’espace admin.</p></div>}
 
       {formation && plan && <>
         <div className="flex flex-wrap items-end justify-between gap-4 py-5 print:hidden">

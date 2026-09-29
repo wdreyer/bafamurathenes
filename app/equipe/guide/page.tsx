@@ -4,7 +4,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
-  BookOpen, CheckCircle2, Coffee, FileText, Globe2, Image as ImageIcon,
+  BookOpen, CalendarRange, CheckCircle2, Coffee, FileText, Globe2, Image as ImageIcon,
   Search, Sparkles, Users,
 } from "lucide-react";
 import { allCatalogTimes, catalogCategories, resourceForActivity, type CatalogCategory } from "@/lib/trainingCatalog";
@@ -56,6 +56,8 @@ export default function GuideFormateursPage() {
           <button type="button" onClick={() => { setView("times"); setCategory("all"); }} className={`inline-flex h-9 items-center gap-2 rounded px-3 text-sm font-semibold ${view === "times" ? "bg-emerald-800 text-white" : "text-slate-600"}`}><Sparkles size={15} />Temps de formation</button>
         </div>
       </div>
+
+      <Link href="/equipe/guide/plannings" className="mt-5 flex items-center justify-between gap-4 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-950 no-underline"><span><strong className="block text-sm">Plannings types FG et approfondissement</strong><span className="mt-0.5 block text-xs text-emerald-800">Consulter les modèles utilisés à la création des formations.</span></span><CalendarRange size={21} className="shrink-0" /></Link>
 
       <div className="grid gap-3 border-b border-slate-200 py-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
         <label className="relative block text-xs font-semibold text-slate-600">Rechercher<Search size={17} className="pointer-events-none absolute bottom-2.5 left-3 text-slate-400" /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={view === "resources" ? "Titre, résumé, utilisation..." : "Titre ou contenu..."} className="mt-1 h-10 w-full rounded-md border border-slate-300 bg-white pl-9 pr-3 text-sm font-normal outline-none focus:border-emerald-700" /></label>

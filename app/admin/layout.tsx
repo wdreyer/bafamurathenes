@@ -1,9 +1,11 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { onAuthStateChanged, signInWithEmailAndPassword, signOut, type User } from "firebase/auth";
+import { doc, onSnapshot } from "firebase/firestore";
 import {
   GraduationCap,
   BookOpen,
@@ -14,6 +16,7 @@ import {
   UserRoundSearch,
   Users,
 } from "lucide-react";
+import { auth, db } from "@/lib/firebase";
 
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
@@ -24,34 +27,49 @@ const navItems = [
   { href: "/admin/ressources", label: "Ressources", icon: BookOpen },
 ];
 
-const ADMIN_CODE = process.env.NEXT_PUBLIC_ADMIN_CODE;
-const STORAGE_KEY = "murathenes_admin_ok";
-
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const [isAllowed, setIsAllowed] = useState(
-    () => typeof window !== "undefined" && sessionStorage.getItem(STORAGE_KEY) === "1",
-  );
-  const [code, setCode] = useState("");
+  const [user, setUser] = useState<User | null>(null);
+  const [isAllowed, setIsAllowed] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const onSubmit = (event: React.FormEvent) => {
+  useEffect(() => onAuthStateChanged(auth, (nextUser) => {
+    setUser(nextUser);
+    setIsAllowed(false);
+    if (!nextUser) setLoading(false);
+  }), []);
+
+  useEffect(() => {
+    if (!user) return;
+    return onSnapshot(doc(db, "admins", user.uid), (snapshot) => {
+      setIsAllowed(snapshot.exists() && snapshot.data().active !== false);
+      setLoading(false);
+    }, () => {
+      setIsAllowed(false);
+      setLoading(false);
+      setError("Impossible de vérifier les droits administrateur.");
+    });
+  }, [user]);
+
+  const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError(null);
-
-    if (code.trim() === ADMIN_CODE) {
-      sessionStorage.setItem(STORAGE_KEY, "1");
-      setIsAllowed(true);
-      setCode("");
-    } else {
-      setError("Code incorrect.");
+    setLoading(true);
+    try {
+      await signInWithEmailAndPassword(auth, email.trim(), password);
+      setPassword("");
+    } catch {
+      setLoading(false);
+      setError("Email ou mot de passe incorrect.");
     }
   };
 
-  const logout = () => {
-    sessionStorage.removeItem(STORAGE_KEY);
-    setIsAllowed(false);
-  };
+  const logout = () => void signOut(auth);
+
+  if (loading) return <div className="grid min-h-screen place-items-center bg-slate-950 text-sm text-slate-300">Vérification de l’accès admin...</div>;
 
   if (!isAllowed) {
     return (
@@ -62,26 +80,39 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           </div>
           <h1 className="text-2xl font-semibold tracking-tight text-slate-950">Accès admin</h1>
           <p className="mt-2 text-sm leading-6 text-slate-600">
-            Entrez le code pour accéder au pilotage BAFA.
+            Connectez-vous avec votre compte administrateur Firebase.
           </p>
 
           <form onSubmit={onSubmit} className="mt-5 space-y-3">
             <input
-              value={code}
-              onChange={(event) => setCode(event.target.value)}
-              type="password"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              type="email"
+              autoComplete="email"
+              required
               autoFocus
-              placeholder="Code admin"
+              placeholder="Adresse email"
               className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm outline-none focus:border-slate-950"
             />
+            <input
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              type="password"
+              autoComplete="current-password"
+              required
+              placeholder="Mot de passe"
+              className="h-11 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm outline-none focus:border-slate-950"
+            />
+            {user && !isAllowed && !error && <p className="text-sm font-medium text-rose-600">Ce compte n’a pas les droits administrateur.</p>}
             {error && <p className="text-sm font-medium text-rose-600">{error}</p>}
             <button
               type="submit"
               className="h-11 w-full cursor-pointer rounded-lg bg-slate-950 text-sm font-semibold text-white hover:bg-slate-800"
             >
-              Entrer
+              Se connecter
             </button>
           </form>
+          {user && <button type="button" onClick={logout} className="mt-3 w-full text-sm font-medium text-slate-500 underline">Utiliser un autre compte</button>}
         </main>
       </div>
     );

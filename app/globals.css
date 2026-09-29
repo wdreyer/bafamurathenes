@@ -941,6 +941,7 @@ select:focus-visible {
   }
 
   .team-print-activity small {
+    grid-column: 1 / -1;
     font-size: 7pt;
   }
 

@@ -1,0 +1,115 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function isApprovedTrainer() {
+      return signedIn()
+        && get(/databases/$(database)/documents/trainers/$(request.auth.uid)).data.approvalStatus == 'approved';
+    }
+
+    function assignedTo(formationId) {
+      return isApprovedTrainer()
+        && request.auth.uid in get(/databases/$(database)/documents/formations/$(formationId)).data.trainerIds;
+    }
+
+    match /admins/{userId} {
+      allow read: if isAdmin() || (signedIn() && request.auth.uid == userId);
+      allow write: if isAdmin();
+    }
+
+    match /trainers/{userId} {
+      allow create: if signedIn()
+        && request.auth.uid == userId
+        && request.resource.data.accountUid == request.auth.uid
+        && request.resource.data.approvalStatus == 'pending';
+      allow read: if isAdmin() || (signedIn() && request.auth.uid == userId);
+      allow update: if isAdmin() || (
+        signedIn()
+        && request.auth.uid == userId
+        && resource.data.approvalStatus == 'approved'
+        && request.resource.data.approvalStatus == resource.data.approvalStatus
+        && request.resource.data.accountUid == resource.data.accountUid
+      );
+      allow delete: if isAdmin();
+    }
+
+    match /formations/{formationId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /formationPlans/{formationId} {
+      allow read, write: if isAdmin() || assignedTo(formationId);
+    }
+
+    match /inscriptions/{inscriptionId} {
+      allow read: if isAdmin() || assignedTo(resource.data.formationId);
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || (
+        assignedTo(resource.data.formationId)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'trainerNotes', 'traineeGroupNumber', 'starterNotes',
+          'participationNotes', 'updatedAt'
+        ])
+      );
+    }
+
+    match /guideCategories/{documentId} {
+      allow read: if isAdmin() || isApprovedTrainer();
+      allow write: if isAdmin();
+    }
+
+    match /guideResources/{documentId} {
+      allow read: if isAdmin() || isApprovedTrainer();
+      allow write: if isAdmin();
+    }
+
+    match /trainingTimes/{documentId} {
+      allow read: if isAdmin() || isApprovedTrainer();
+      allow write: if isAdmin() || isApprovedTrainer();
+    }
+
+    match /guideFiles/{fileId} {
+      allow read: if true;
+      allow write: if isAdmin();
+
+      match /chunks/{chunkId} {
+        allow read: if true;
+        allow write: if isAdmin();
+      }
+    }
+
+    match /prospects/{prospectId} {
+      allow create: if request.resource.data.keys().hasOnly([
+          'origin', 'leadType', 'name', 'firstName', 'lastName', 'email',
+          'phone', 'message', 'notes', 'pageUrl', 'source', 'callbackMoment',
+          'department', 'quotient', 'formationId', 'formationTitle', 'status',
+          'createdAt', 'updatedAt'
+        ])
+        && request.resource.data.origin in ['contact_form', 'aides_form']
+        && request.resource.data.status == 'new'
+        && request.resource.data.leadType is string
+        && request.resource.data.leadType.size() <= 120
+        && request.resource.data.formationId is string
+        && request.resource.data.formationId.size() <= 120
+        && request.resource.data.formationTitle is string
+        && request.resource.data.formationTitle.size() <= 200
+        && request.resource.data.email is string
+        && request.resource.data.email.size() <= 320
+        && request.resource.data.phone is string
+        && request.resource.data.phone.size() <= 40
+        && request.resource.data.notes is string
+        && request.resource.data.notes.size() <= 5000;
+      allow read, update, delete: if isAdmin();
+    }
+  }
+}

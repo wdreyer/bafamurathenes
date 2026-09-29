@@ -32,6 +32,21 @@ export type Trainer = {
   email?: string;
   phone?: string;
   notes?: string;
+  accountUid?: string;
+  approvalStatus?: "pending" | "approved" | "rejected";
+  birthDate?: string;
+  birthPlace?: string;
+  hasSocialSecurityNumber?: boolean;
+  socialSecurityNumberPath?: string;
+  address?: string;
+  diplomaUrl?: string;
+  diplomaPath?: string;
+  diplomaName?: string;
+  identityDocumentUrl?: string;
+  identityDocumentPath?: string;
+  identityDocumentName?: string;
+  profileComplete?: boolean;
+  approvedAt?: Date;
 };
 
 export type PlanActivity = {

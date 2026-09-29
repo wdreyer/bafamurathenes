@@ -1,0 +1,36 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    function isAdmin() {
+      return request.auth != null
+        && firestore.exists(/databases/(default)/documents/admins/$(request.auth.uid));
+    }
+
+    function isApprovedTrainer() {
+      return request.auth != null
+        && firestore.get(/databases/(default)/documents/trainers/$(request.auth.uid)).data.approvalStatus == 'approved';
+    }
+
+    match /trainer-documents/{userId}/{fileName} {
+      allow read: if isAdmin() || (request.auth != null && request.auth.uid == userId);
+      allow create, update: if isAdmin() || (
+        request.auth != null
+        && request.auth.uid == userId
+        && isApprovedTrainer()
+        && request.resource.size <= 10 * 1024 * 1024
+        && (
+          request.resource.contentType.matches('image/.*')
+          || request.resource.contentType == 'application/pdf'
+          || (fileName == 'social-security-number.txt' && request.resource.contentType == 'text/plain')
+        );
+      );
+      allow delete: if isAdmin() || (request.auth != null && request.auth.uid == userId);
+    }
+
+    match /guide-resources/{allPaths=**} {
+      allow read: if isAdmin() || isApprovedTrainer();
+      allow write: if isAdmin();
+    }
+  }
+}

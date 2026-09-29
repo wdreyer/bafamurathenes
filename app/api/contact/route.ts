@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { upsertProspect } from "@/lib/server/prospectUpsert";
+import { createProspect } from "@/lib/server/prospectUpsert";
 
 export async function POST(req: Request) {
   try {
@@ -10,7 +10,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing fields" }, { status: 400 });
     }
 
-    await upsertProspect({
+    await createProspect({
       origin: "contact_form",
       leadType: String(leadType || "Message formulaire"),
       name: String(name).trim(),

@@ -46,15 +46,16 @@ function DayNavButton({ day, label, active, onClick }: { day: number; label: str
   </button>;
 }
 
-function ActivityCell({ activity, themes, disabled, onEdit, onHover, merged = false }: {
-  activity: PlanActivity; themes: PlanTheme[]; disabled: boolean; onEdit?: Props["onEdit"]; onHover: (text: string | null, x?: number, y?: number) => void; merged?: boolean;
+function ActivityCell({ activity, themes, trainerNames, disabled, onEdit, onHover, merged = false }: {
+  activity: PlanActivity; themes: PlanTheme[]; trainerNames?: Record<string, string>; disabled: boolean; onEdit?: Props["onEdit"]; onHover: (text: string | null, x?: number, y?: number) => void; merged?: boolean;
 }) {
   const theme = themeForActivity(activity, themes);
-  const fullLabel = `${activity.title} · ${activity.start}–${activity.end}`;
-  const label = <span className={merged
+  const names = (activity.trainerIds || []).map((id) => trainerNames?.[id]).filter(Boolean) as string[];
+  const fullLabel = `${activity.title} · ${activity.start}–${activity.end}${names.length ? ` · ${names.join(", ")}` : ""}`;
+  const label = <><span className={merged
     ? "line-clamp-2 text-center text-[12px] font-bold leading-snug text-slate-900"
-    : "line-clamp-3 whitespace-normal break-words text-[11px] font-bold leading-snug text-slate-900"}>{activity.title}</span>;
-  const className = `flex h-full min-w-0 overflow-hidden border-b border-r border-white/60 px-1.5 py-1 ${themeFill(theme.color)} ${merged ? "items-center justify-center text-center" : "items-start justify-start text-left"}`;
+    : "line-clamp-3 whitespace-normal break-words text-[11px] font-bold leading-snug text-slate-900"}>{activity.title}</span>{names.length > 0 && <span className="mt-0.5 line-clamp-1 text-[8px] font-semibold leading-tight text-slate-600">{names.join(" · ")}</span>}</>;
+  const className = `flex h-full min-w-0 flex-col overflow-hidden border-b border-r border-white/60 px-1.5 py-1 ${themeFill(theme.color)} ${merged ? "items-center justify-center text-center" : "items-start justify-start text-left"}`;
   const handlers = {
     onMouseMove: (event: MouseEvent) => onHover(fullLabel, event.clientX, event.clientY),
     onMouseLeave: () => onHover(null),
@@ -66,10 +67,11 @@ function ActivityCell({ activity, themes, disabled, onEdit, onHover, merged = fa
     className={`${className} w-full cursor-pointer disabled:cursor-wait`}>{label}</button>;
 }
 
-function OverviewGrid({ days, dayCount, startDate, activities, themes, busy, arrivalTime, departureTime, onAdd, onEdit, onToggleMerge }: {
+function OverviewGrid({ days, dayCount, startDate, activities, themes, trainerNames, busy, arrivalTime, departureTime, onAdd, onEdit, onToggleMerge }: {
   days: number[]; dayCount: number; startDate: string; activities: PlanActivity[]; themes: PlanTheme[];
-  busy: boolean; arrivalTime?: string; departureTime?: string; onAdd?: Props["onAdd"]; onEdit?: Props["onEdit"]; onToggleMerge?: Props["onToggleMerge"];
+  trainerNames?: Record<string, string>; busy: boolean; arrivalTime?: string; departureTime?: string; onAdd?: Props["onAdd"]; onEdit?: Props["onEdit"]; onToggleMerge?: Props["onToggleMerge"];
 }) {
+  const [hover, setHover] = useState<{ text: string; x: number; y: number } | null>(null);
   const boundaries = Array.from(new Set(activities.flatMap((item) => [item.start, item.end]))).sort();
   const intervals = boundaries.slice(0, -1).map((start, index) => ({ start, end: boundaries[index + 1] }));
 
@@ -131,7 +133,6 @@ function OverviewGrid({ days, dayCount, startDate, activities, themes, busy, arr
     for (let index = startIndex; index < endIndex; index += 1) occupied.add(`${item.day}|${index}`);
   });
 
-  const [hover, setHover] = useState<{ text: string; x: number; y: number } | null>(null);
   const onHover = (text: string | null, x?: number, y?: number) => setHover(text && x !== undefined && y !== undefined ? { text, x, y } : null);
 
   return <div className="relative">
@@ -170,7 +171,7 @@ function OverviewGrid({ days, dayCount, startDate, activities, themes, busy, arr
             const endRow = boundaries.indexOf(end) + 2;
             return <div key={`${day}-${key}`} className="z-[5] flex flex-col" style={{ gridColumn: dayIndex + 2, gridRow: `${startRow} / ${endRow}` }}>
               {group.map((activity, activityIndex) => <div key={activity.id} className={`min-h-0 flex-1 ${activityIndex > 0 ? "border-t border-white/60" : ""}`}>
-                <ActivityCell activity={activity} themes={themes} disabled={busy} onEdit={onEdit} onHover={onHover} />
+                <ActivityCell activity={activity} themes={themes} trainerNames={trainerNames} disabled={busy} onEdit={onEdit} onHover={onHover} />
               </div>)}
             </div>;
           });
@@ -182,7 +183,7 @@ function OverviewGrid({ days, dayCount, startDate, activities, themes, busy, arr
           const colStart = run.dayIndexStart + 2;
           if (run.isMerged) {
             return <div key={`merge-${run.start}-${run.end}-${run.dayIndexStart}`} className="relative z-[6]" style={{ gridColumn: `${colStart} / ${colStart + run.dayCount}`, gridRow: `${startRow} / ${endRow}` }}>
-              <ActivityCell activity={run.activity} themes={themes} disabled={busy} onEdit={onEdit} onHover={onHover} merged />
+              <ActivityCell activity={run.activity} themes={themes} trainerNames={trainerNames} disabled={busy} onEdit={onEdit} onHover={onHover} merged />
               {onToggleMerge && <button type="button" disabled={busy} onClick={(event) => { event.stopPropagation(); onToggleMerge(run.activityIds, false); }} title="Défusionner ces jours" aria-label="Défusionner ces jours" className="absolute right-1 top-1 z-10 grid h-4 w-4 place-items-center rounded-full bg-white/90 text-slate-600 shadow hover:text-rose-700"><Unlink size={10} /></button>}
             </div>;
           }
@@ -199,8 +200,8 @@ function OverviewGrid({ days, dayCount, startDate, activities, themes, busy, arr
   </div>;
 }
 
-function PrintPlanning({ activities, dayCount, startDate, formationTitle, themes }: {
-  activities: PlanActivity[]; dayCount: number; startDate: string; formationTitle?: string; themes: PlanTheme[];
+function PrintPlanning({ activities, dayCount, startDate, formationTitle, themes, trainerNames }: {
+  activities: PlanActivity[]; dayCount: number; startDate: string; formationTitle?: string; themes: PlanTheme[]; trainerNames?: Record<string, string>;
 }) {
   const weeks = Array.from({ length: Math.ceil(dayCount / 7) }, (_, index) =>
     Array.from({ length: Math.min(7, dayCount - index * 7) }, (_, offset) => index * 7 + offset + 1));
@@ -219,7 +220,7 @@ function PrintPlanning({ activities, dayCount, startDate, formationTitle, themes
             const theme = themeForActivity(activity, themes);
             return <div key={activity.id} className="team-print-activity" style={{ gridColumn: week.indexOf(activity.day) + 2,
               gridRow: `${boundaries.indexOf(activity.start) + 2} / ${boundaries.indexOf(activity.end) + 2}`, borderLeftColor: `var(--planning-${theme.color})` }}>
-              <strong>{activity.title}</strong><span>{activity.start}–{activity.end}</span>
+              <strong>{activity.title}</strong><span>{activity.start}–{activity.end}</span>{activity.trainerIds?.length > 0 && <small>{activity.trainerIds.map((id) => trainerNames?.[id]).filter(Boolean).join(" · ")}</small>}
             </div>;
           })}
         </div>
@@ -229,7 +230,7 @@ function PrintPlanning({ activities, dayCount, startDate, formationTitle, themes
   </div>;
 }
 
-export function PlanningBoard({ activities, dayCount, startDate, themes = defaultThemes, formationTitle, busy = false, arrivalTime, departureTime, onEdit, onAdd, onSaveThemes, onSetBounds, onToggleMerge }: Props) {
+export function PlanningBoard({ activities, dayCount, startDate, themes = defaultThemes, trainerNames, formationTitle, busy = false, arrivalTime, departureTime, onEdit, onAdd, onSaveThemes, onSetBounds, onToggleMerge }: Props) {
   const [view, setView] = useState<"all" | "day">("all");
   const [selectedDay, setSelectedDay] = useState(1);
   const [editingThemes, setEditingThemes] = useState(false);
@@ -267,9 +268,9 @@ export function PlanningBoard({ activities, dayCount, startDate, themes = defaul
         {onSaveThemes && <button type="button" onClick={() => setEditingThemes(true)} title="Gérer les thèmes" aria-label="Gérer les thèmes" className="ml-auto grid h-8 w-8 place-items-center rounded-md border border-slate-200 bg-white text-slate-600 hover:border-emerald-600 print:hidden"><Settings2 size={16} /></button>}
       </div>
 
-      <div ref={overviewRef} className="min-w-0 max-w-full"><OverviewGrid days={view === "all" ? days : [selectedDay]} dayCount={dayCount} startDate={startDate} activities={activities} themes={themes} busy={busy} arrivalTime={arrivalTime} departureTime={departureTime} onAdd={onAdd} onEdit={onEdit} onToggleMerge={onToggleMerge} /></div>
+      <div ref={overviewRef} className="min-w-0 max-w-full"><OverviewGrid days={view === "all" ? days : [selectedDay]} dayCount={dayCount} startDate={startDate} activities={activities} themes={themes} trainerNames={trainerNames} busy={busy} arrivalTime={arrivalTime} departureTime={departureTime} onAdd={onAdd} onEdit={onEdit} onToggleMerge={onToggleMerge} /></div>
     </div>
-    <PrintPlanning activities={activities} dayCount={dayCount} startDate={startDate} formationTitle={formationTitle} themes={themes} />
+    <PrintPlanning activities={activities} dayCount={dayCount} startDate={startDate} formationTitle={formationTitle} themes={themes} trainerNames={trainerNames} />
     {editingThemes && onSaveThemes && <ThemeEditor themes={themes} activities={activities} onSave={onSaveThemes} onClose={() => setEditingThemes(false)} />}
   </>;
 }

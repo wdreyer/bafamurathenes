@@ -3,11 +3,11 @@
 import { useState } from "react";
 import { db } from "@/lib/firebase";
 import {
-  addDoc,
   collection,
   doc,
   serverTimestamp,
   updateDoc,
+  writeBatch,
 } from "firebase/firestore";
 import type {
   Formation,
@@ -19,6 +19,8 @@ import { Textarea } from "@/components/ui/Textarea";
 import { Label } from "@/components/ui/Label";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
+import { buildPlanningTemplate } from "@/lib/planningTemplates";
+import { defaultThemes } from "@/lib/planningThemes";
 
 type Props = {
   initialData?: Formation;
@@ -116,7 +118,9 @@ export function FormationForm({ initialData, formationId, onSaved }: Props) {
           updatedAt: serverTimestamp(),
         });
       } else {
-        const created = await addDoc(collection(db, "formations"), {
+        const created = doc(collection(db, "formations"));
+        const formationData: Formation = {
+          id: created.id,
           type,
           title,
           startDate,
@@ -126,8 +130,23 @@ export function FormationForm({ initialData, formationId, onSaved }: Props) {
           price,
           transportOptions: cleanedTransportOptions,
           inscriptionsCount: 0,
+          trainerIds: [],
+        };
+        const batch = writeBatch(db);
+        batch.set(created, {
+          type, title, startDate, endDate, imageUrl, description, price,
+          transportOptions: cleanedTransportOptions, inscriptionsCount: 0, trainerIds: [],
           createdAt: serverTimestamp(),
         });
+        batch.set(doc(db, "formationPlans", created.id), {
+          formationId: created.id,
+          activities: buildPlanningTemplate(formationData),
+          themes: defaultThemes,
+          trainerNames: {},
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+        await batch.commit();
         savedFormationId = created.id;
       }
 
