@@ -79,12 +79,14 @@ function ActivityCell({ activity, themes, trainerNames, prefs, disabled, onEdit,
   const names = namesFor(activity, trainerNames);
   const icon = prefs.icons ? iconForActivity(activity) : "";
   const fullLabel = `${activity.title} · ${activity.start}–${activity.end}${names.length ? ` · ${names.join(", ")}` : ""}`;
-  const label = <div ref={contentRef} className="flex h-full min-h-0 w-full flex-col items-center justify-center overflow-hidden text-center">
-    <span data-overflow-check className={`whitespace-normal break-words font-bold leading-snug ${merged ? "line-clamp-2 text-[12px]" : "line-clamp-3 text-[11px]"}`}>{icon && <span className={`mr-1 ${merged ? "text-[15px]" : "text-[12px]"}`}>{icon}</span>}{activity.title}</span>
+  // Absolutely positioned so text never stretches the grid: what doesn't fit is simply hidden (no "…"),
+  // and the full content shows on hover and on click.
+  const label = <div ref={contentRef} className="absolute inset-x-1.5 bottom-0.5 top-1 flex flex-col items-center justify-start overflow-hidden text-center [mask-image:linear-gradient(to_bottom,black_calc(100%-7px),transparent)]">
+    <span data-overflow-check className={`w-full whitespace-normal break-words [overflow-wrap:anywhere] font-bold leading-snug ${merged ? "text-[12px]" : "text-[11px]"}`}>{icon && <span className={`mr-1 ${merged ? "text-[15px]" : "text-[12px]"}`}>{icon}</span>}{activity.title}</span>
     {prefs.hours && <span className="mt-0.5 text-[8px] font-semibold leading-none opacity-70">{shortHour(activity.start)}–{shortHour(activity.end)}</span>}
-    {prefs.names && names.length > 0 && <span data-overflow-check className="mt-0.5 line-clamp-1 text-[8.5px] font-semibold leading-tight opacity-80">{names.join(" · ")}</span>}
+    {prefs.names && names.length > 0 && <span data-overflow-check className="mt-0.5 text-[8.5px] font-semibold leading-tight opacity-80">{names.join(" · ")}</span>}
   </div>;
-  const className = `relative flex h-full min-w-0 flex-col items-center justify-center overflow-hidden rounded-md px-1.5 py-1 text-center shadow-[inset_0_-2px_0_rgba(26,21,48,0.1)] transition ${themeFill(theme.color)} ${dimmed ? "opacity-20 grayscale" : ""}`;
+  const className = `relative block h-full min-h-0 min-w-0 overflow-hidden rounded-md text-center shadow-[inset_0_-2px_0_rgba(26,21,48,0.1)] transition ${themeFill(theme.color)} ${dimmed ? "opacity-20 grayscale" : ""}`;
   const isClipped = () => {
     const element = contentRef.current;
     if (!element) return false;
@@ -98,7 +100,10 @@ function ActivityCell({ activity, themes, trainerNames, prefs, disabled, onEdit,
     onBlur: () => onHover(null),
     onContextMenu: menuHandler(onMenu, (event) => { onHover(null); return { kind: "activity", activity, x: event.clientX, y: event.clientY }; }),
   };
-  if (!onEdit) return <div className={className} aria-label={fullLabel} {...handlers}>{label}</div>;
+  if (!onEdit) return <button type="button" aria-label={fullLabel} {...handlers}
+    onClick={(event) => onHover(`${fullLabel}${activity.content ? `
+${activity.content}` : ""}`, event.clientX, event.clientY)}
+    className={`${className} w-full cursor-pointer`}>{label}</button>;
   return <button type="button" disabled={disabled} onClick={() => onEdit(activity)} aria-label={fullLabel} {...handlers}
     className={`${className} w-full cursor-pointer hover:brightness-[1.04] hover:shadow-md disabled:cursor-wait`}>{label}</button>;
 }
@@ -177,7 +182,7 @@ function OverviewGrid({ days, dayCount, startDate, activities, themes, trainerNa
 
   return <div className="relative">
     <div className="planning-grid-scroll w-full overflow-x-auto rounded-xl border border-[#e6d9f0] bg-white shadow-sm">
-      <div className="grid min-w-full" style={{ gridTemplateColumns: `68px repeat(${days.length}, minmax(${compact ? 100 : 130}px, 1fr))`, gridTemplateRows: `40px repeat(${intervals.length}, minmax(${compact ? 30 : 44}px, auto))` }}>
+      <div className="grid min-w-full" style={{ gridTemplateColumns: `68px repeat(${days.length}, minmax(${compact ? 100 : 130}px, 1fr))`, gridTemplateRows: `40px repeat(${intervals.length}, ${compact ? 40 : 56}px)` }}>
         <div className="sticky left-0 top-0 z-30 grid place-items-center bg-[#1a1530] text-[9px] font-bold uppercase tracking-wide text-[#f5ef72]">Heure</div>
 
         {days.map((day, index) => <div key={day} className="sticky top-0 z-20 flex min-w-0 items-center justify-between gap-1 border-r border-white/15 bg-[#792bb9] px-1.5 text-white"
@@ -223,7 +228,7 @@ function OverviewGrid({ days, dayCount, startDate, activities, themes, trainerNa
         </div>)}
       </div>
     </div>
-    {hover && <div className="pointer-events-none fixed z-[200] max-w-[260px] rounded-lg bg-[#1a1530] px-2.5 py-1.5 text-[11px] font-medium leading-snug text-white shadow-lg"
+    {hover && <div className="pointer-events-none fixed z-[200] max-w-[260px] whitespace-pre-line rounded-lg bg-[#1a1530] px-2.5 py-1.5 text-[11px] font-medium leading-snug text-white shadow-lg"
       style={{ left: Math.min(hover.x + 14, window.innerWidth - 270), top: hover.y + 14 }}>{hover.text}</div>}
   </div>;
 }

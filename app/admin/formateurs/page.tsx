@@ -167,15 +167,17 @@ export default function FormateursPage() {
     finally { setBusy(false); }
   };
 
-  const toggleTrainer = async (trainerId: string) => {
-    if (!formation) return;
-    const next = formation.trainerIds?.includes(trainerId)
-      ? formation.trainerIds.filter((id) => id !== trainerId)
-      : [...(formation.trainerIds || []), trainerId];
+  // Used from the session view (current formation) and from a trainer's file (any formation).
+  const toggleTrainer = async (trainerId: string, target: Formation | undefined = formation) => {
+    if (!target) return;
+    const next = target.trainerIds?.includes(trainerId)
+      ? target.trainerIds.filter((id) => id !== trainerId)
+      : [...(target.trainerIds || []), trainerId];
     setBusy(true); setError("");
     try {
-      await updateDoc(doc(db, "formations", formation.id), { trainerIds: next, updatedAt: serverTimestamp() });
-      if (planExists) await updateDoc(doc(db, "formationPlans", formation.id), {
+      await updateDoc(doc(db, "formations", target.id), { trainerIds: next, updatedAt: serverTimestamp() });
+      const hasPlan = target.id === formation?.id ? planExists : (await getDoc(doc(db, "formationPlans", target.id))).exists();
+      if (hasPlan) await updateDoc(doc(db, "formationPlans", target.id), {
         trainerNames: Object.fromEntries(trainers.filter((trainer) => next.includes(trainer.id)).map((trainer) => [trainer.id, trainerName(trainer)])),
       });
     } catch { setError("L'affectation n'a pas pu être enregistrée."); }
@@ -319,6 +321,26 @@ Cette action est irréversible.`;
           <section><h3 className="text-sm font-semibold text-slate-900">Informations</h3><dl className="mt-3 grid gap-x-5 gap-y-4 border-t border-slate-200 pt-4 sm:grid-cols-2">
             {[["Prénom", selectedTrainer.firstName], ["Nom", selectedTrainer.lastName], ["Email", selectedTrainer.email], ["Téléphone", selectedTrainer.phone], ["Date de naissance", selectedTrainer.birthDate], ["Lieu de naissance", selectedTrainer.birthPlace], ["Adresse", selectedTrainer.address], ["Numéro de sécurité sociale", selectedTrainer.hasSocialSecurityNumber ? "Renseigné" : "Non renseigné"]].map(([label, value]) => <div key={label}><dt className="text-xs font-medium text-slate-500">{label}</dt><dd className="mt-1 whitespace-pre-wrap text-sm text-slate-800">{value || "Non renseigné"}</dd></div>)}
           </dl>{selectedTrainer.notes && <div className="mt-4 border-t border-slate-200 pt-4"><p className="text-xs font-medium text-slate-500">Notes internes</p><p className="mt-1 whitespace-pre-wrap text-sm text-slate-800">{selectedTrainer.notes}</p></div>}</section>
+
+          <section>
+            <h3 className="text-sm font-semibold text-slate-900">Formations à venir</h3>
+            {selectedTrainer.approvalStatus && selectedTrainer.approvalStatus !== "approved"
+              ? <p className="mt-2 text-sm text-slate-500">Valide d&apos;abord le compte pour pouvoir l&apos;assigner à une formation.</p>
+              : <>
+                <p className="mt-1 text-xs text-slate-500">Clique sur une formation pour l&apos;assigner ou la retirer.</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {formations.filter((item) => (item.endDate || item.startDate).slice(0, 10) >= new Date().toISOString().slice(0, 10)).map((item) => {
+                    const assignedHere = item.trainerIds?.includes(selectedTrainer.id) || false;
+                    return <button key={item.id} type="button" disabled={busy} onClick={() => void toggleTrainer(selectedTrainer.id, item)} aria-pressed={assignedHere}
+                      className={`inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 text-left text-sm transition disabled:cursor-wait disabled:opacity-60 ${assignedHere ? "border-[#792bb9] bg-[#792bb9] text-white" : "border-slate-200 bg-white text-slate-700 hover:border-[#792bb9]"}`}>
+                      {assignedHere ? <Check size={14} /> : <Plus size={14} />}
+                      <span>{item.title}<span className={`ml-1.5 text-xs ${assignedHere ? "text-white/75" : "text-slate-400"}`}>{new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "short" }).format(new Date(`${item.startDate.slice(0, 10)}T12:00:00`))}</span></span>
+                    </button>;
+                  })}
+                  {!formations.some((item) => (item.endDate || item.startDate).slice(0, 10) >= new Date().toISOString().slice(0, 10)) && <p className="text-sm text-slate-500">Aucune formation à venir.</p>}
+                </div>
+              </>}
+          </section>
 
           <section><h3 className="text-sm font-semibold text-slate-900">Historique des formations</h3><TrainerHistory trainerId={selectedTrainer.id} formations={selectedTrainerFormations} /></section>
 
