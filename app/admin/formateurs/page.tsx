@@ -1,15 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { addDoc, collection, doc, getDoc, onSnapshot, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
-import { getDownloadURL, ref } from "firebase/storage";
-import { AlertCircle, BadgeCheck, CalendarDays, Check, ChevronRight, ExternalLink, FileText, Pencil, Plus, Save, ShieldX, UserPlus, Users, X } from "lucide-react";
+import { addDoc, arrayRemove, collection, doc, getDoc, onSnapshot, serverTimestamp, setDoc, updateDoc, writeBatch } from "firebase/firestore";
+import { deleteObject, getDownloadURL, listAll, ref } from "firebase/storage";
+import { AlertCircle, BadgeCheck, CalendarDays, Check, ChevronRight, ExternalLink, FileText, Pencil, Plus, Save, ShieldX, Trash2, UserPlus, Users, X } from "lucide-react";
 import { db, storage } from "@/lib/firebase";
 import { buildPlanningTemplate } from "@/lib/planningTemplates";
 import { savePlanningTime } from "@/lib/savePlanningTime";
-import { defaultThemes } from "@/lib/planningThemes";
+import { defaultThemes, normalizeThemes } from "@/lib/planningThemes";
 import { usePlanningActions } from "@/lib/usePlanningActions";
 import { trainerProfileProgress } from "@/lib/trainerProfile";
+import { ADMIN_TRAINER_IDS } from "@/lib/adminAccess";
+import { TrainerHistory } from "@/components/admin/TrainerHistory";
 import { ActivityEditor } from "@/components/planning/ActivityEditor";
 import { PlanningBoard } from "@/components/planning/PlanningBoard";
 import { ActivityQuickActions } from "@/components/planning/PlanningActionsMenu";
@@ -75,7 +77,7 @@ export default function FormateursPage() {
     return onSnapshot(doc(db, "formationPlans", formationId), (snapshot) => {
       setPlanExists(snapshot.exists());
       setActivities(snapshot.exists() ? (snapshot.data().activities || []) as PlanActivity[] : []);
-      setThemes(snapshot.exists() && snapshot.data().themes?.length ? snapshot.data().themes as PlanTheme[] : defaultThemes);
+      setThemes(normalizeThemes(snapshot.exists() ? snapshot.data().themes as PlanTheme[] : null));
       setBounds(snapshot.exists() ? { arrivalTime: snapshot.data().arrivalTime || undefined, departureTime: snapshot.data().departureTime || undefined } : {});
     }, () => setError("Impossible de charger le planning."));
   }, [formationId]);
@@ -192,6 +194,46 @@ export default function FormateursPage() {
     finally { setBusy(false); }
   };
 
+  // Past formations are left untouched so their plannings stay as they happened.
+  const deleteTrainer = async (trainer: Trainer) => {
+    const today = new Date().toISOString().slice(0, 10);
+    const upcoming = formations.filter((item) => item.trainerIds?.includes(trainer.id) && (item.endDate || item.startDate).slice(0, 10) >= today);
+    const message = `Supprimer définitivement ${trainerName(trainer)} ?
+
+`
+      + `• Sa fiche et ses documents (diplôme, identité, n° de sécurité sociale) seront effacés.
+`
+      + (upcoming.length ? `• Elle ou il sera retiré·e de ${upcoming.length} formation${upcoming.length > 1 ? "s" : ""} à venir et de ses temps dans ces plannings.
+` : "")
+      + `• Les formations passées ne sont pas modifiées.
+
+Cette action est irréversible.`;
+    if (!window.confirm(message)) return;
+    setBusy(true); setError("");
+    try {
+      try {
+        const files = await listAll(ref(storage, `trainer-documents/${trainer.id}`));
+        await Promise.all(files.items.map((item) => deleteObject(item)));
+      } catch { /* No stored documents, or Storage unavailable: the profile is still removed. */ }
+      const batch = writeBatch(db);
+      for (const formation of upcoming) {
+        batch.update(doc(db, "formations", formation.id), { trainerIds: arrayRemove(trainer.id) });
+        const plan = await getDoc(doc(db, "formationPlans", formation.id));
+        if (plan.exists()) {
+          const planActivities = (plan.data().activities || []) as PlanActivity[];
+          batch.set(doc(db, "formationPlans", formation.id), {
+            activities: planActivities.map((item) => item.trainerIds?.includes(trainer.id) ? { ...item, trainerIds: item.trainerIds.filter((id) => id !== trainer.id) } : item),
+            updatedAt: serverTimestamp(),
+          }, { merge: true });
+        }
+      }
+      batch.delete(doc(db, "trainers", trainer.id));
+      await batch.commit();
+      setSelectedTrainerId(null);
+    } catch { setError("La suppression n’a pas pu aboutir. Vérifie ta connexion puis réessaie."); }
+    finally { setBusy(false); }
+  };
+
   const openTrainerEditor = (trainer?: Trainer) => {
     setEditingTrainerId(trainer?.id ?? null);
     setTrainerDraft(trainer ? {
@@ -271,13 +313,14 @@ export default function FormateursPage() {
             {selectedTrainer.approvalStatus === "pending" && <><button type="button" disabled={busy} onClick={() => void setApproval(selectedTrainer, "approved")} className="inline-flex h-9 cursor-pointer items-center gap-2 rounded bg-emerald-800 px-3 text-sm font-semibold text-white"><BadgeCheck size={15} />Valider le compte</button><button type="button" disabled={busy} onClick={() => void setApproval(selectedTrainer, "rejected")} className="inline-flex h-9 cursor-pointer items-center gap-2 rounded border border-rose-200 px-3 text-sm text-rose-700"><ShieldX size={15} />Refuser</button></>}
             {selectedTrainer.approvalStatus === "rejected" && <button type="button" disabled={busy} onClick={() => void setApproval(selectedTrainer, "approved")} className="inline-flex h-9 cursor-pointer items-center gap-2 rounded bg-emerald-800 px-3 text-sm font-semibold text-white"><BadgeCheck size={15} />Valider le compte</button>}
             <button type="button" onClick={() => openTrainerEditor(selectedTrainer)} className="inline-flex h-9 cursor-pointer items-center gap-2 rounded border border-slate-300 px-3 text-sm font-medium text-slate-700"><Pencil size={15} />Modifier</button>
+            {!(ADMIN_TRAINER_IDS as readonly string[]).includes(selectedTrainer.id) && <button type="button" disabled={busy} onClick={() => void deleteTrainer(selectedTrainer)} className="ml-auto inline-flex h-9 cursor-pointer items-center gap-2 rounded border border-rose-200 px-3 text-sm font-medium text-rose-700 hover:bg-rose-50 disabled:opacity-40"><Trash2 size={15} />Supprimer</button>}
           </div>
 
           <section><h3 className="text-sm font-semibold text-slate-900">Informations</h3><dl className="mt-3 grid gap-x-5 gap-y-4 border-t border-slate-200 pt-4 sm:grid-cols-2">
             {[["Prénom", selectedTrainer.firstName], ["Nom", selectedTrainer.lastName], ["Email", selectedTrainer.email], ["Téléphone", selectedTrainer.phone], ["Date de naissance", selectedTrainer.birthDate], ["Lieu de naissance", selectedTrainer.birthPlace], ["Adresse", selectedTrainer.address], ["Numéro de sécurité sociale", selectedTrainer.hasSocialSecurityNumber ? "Renseigné" : "Non renseigné"]].map(([label, value]) => <div key={label}><dt className="text-xs font-medium text-slate-500">{label}</dt><dd className="mt-1 whitespace-pre-wrap text-sm text-slate-800">{value || "Non renseigné"}</dd></div>)}
           </dl>{selectedTrainer.notes && <div className="mt-4 border-t border-slate-200 pt-4"><p className="text-xs font-medium text-slate-500">Notes internes</p><p className="mt-1 whitespace-pre-wrap text-sm text-slate-800">{selectedTrainer.notes}</p></div>}</section>
 
-          <section><h3 className="text-sm font-semibold text-slate-900">Formations assignées</h3><div className="mt-3 flex flex-wrap gap-2">{selectedTrainerFormations.map((item) => <a key={item.id} href={`/admin/formations/${item.id}`} className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-medium text-emerald-900 no-underline">{item.title}</a>)}{!selectedTrainerFormations.length && <p className="text-sm text-slate-500">Aucune formation assignée.</p>}</div></section>
+          <section><h3 className="text-sm font-semibold text-slate-900">Historique des formations</h3><TrainerHistory trainerId={selectedTrainer.id} formations={selectedTrainerFormations} /></section>
 
           <section><h3 className="text-sm font-semibold text-slate-900">Documents</h3><div className="mt-3 divide-y divide-slate-200 border-y border-slate-200">
             {([["diploma", "Diplôme", selectedTrainer.diplomaName], ["identity", "Carte d’identité", selectedTrainer.identityDocumentName], ["socialSecurity", "Numéro de sécurité sociale", selectedTrainer.hasSocialSecurityNumber ? "Fichier sécurisé" : ""]] as const).map(([key, label, fileName]) => <div key={key} className="flex min-h-12 items-center justify-between gap-3 py-2"><div className="flex min-w-0 items-center gap-2"><FileText size={17} className="shrink-0 text-slate-500" /><div className="min-w-0"><p className="text-sm font-medium">{label}</p><p className="truncate text-xs text-slate-500">{fileName || "Non ajouté"}</p></div></div>{documentLinks[key] ? <a href={documentLinks[key]} target="_blank" rel="noopener noreferrer" className="shrink-0 text-sm font-semibold text-emerald-800">Ouvrir</a> : documentsLoading ? <span className="text-xs text-slate-400">Chargement...</span> : null}</div>)}

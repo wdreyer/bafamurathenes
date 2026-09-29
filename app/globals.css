@@ -696,21 +696,21 @@ select:focus {
 
 .team-shell,
 .planning-print {
-  --planning-sky: #3aaed8;
-  --planning-mint: #299b78;
-  --planning-lilac: #792bb9;
-  --planning-lemon: #d6c900;
-  --planning-coral: #e85d68;
-  --planning-neutral: #625d70;
+  --planning-sky: #00b4d8;
+  --planning-mint: #06d6a0;
+  --planning-lilac: #8a2be2;
+  --planning-lemon: #ffd000;
+  --planning-coral: #ff4d6d;
+  --planning-neutral: #6c6485;
 }
 
 .admin-shell {
-  --planning-sky: #3aaed8;
-  --planning-mint: #299b78;
-  --planning-lilac: #792bb9;
-  --planning-lemon: #d6c900;
-  --planning-coral: #e85d68;
-  --planning-neutral: #625d70;
+  --planning-sky: #00b4d8;
+  --planning-mint: #06d6a0;
+  --planning-lilac: #8a2be2;
+  --planning-lemon: #ffd000;
+  --planning-coral: #ff4d6d;
+  --planning-neutral: #6c6485;
 }
 
 .guide-rich-content:empty::before {
@@ -951,6 +951,9 @@ select:focus {
     z-index: 1;
     display: flex;
     flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
     min-width: 0;
     min-height: 0;
     margin: 0.3mm;

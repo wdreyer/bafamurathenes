@@ -5,7 +5,7 @@ import { collection, doc, onSnapshot, query, serverTimestamp, setDoc, updateDoc,
 import { Printer, Users } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { savePlanningTime } from "@/lib/savePlanningTime";
-import { defaultThemes } from "@/lib/planningThemes";
+import { normalizeThemes } from "@/lib/planningThemes";
 import { usePlanningActions } from "@/lib/usePlanningActions";
 import { ActivityEditor } from "@/components/planning/ActivityEditor";
 import { PlanningBoard } from "@/components/planning/PlanningBoard";
@@ -79,7 +79,7 @@ export default function TeamPage() {
   const plan = plans.find((item) => item.formationId === selectedFormationId);
   const dayCount = formation?.type === "formation_generale" ? 9 : 7;
   const groupCount = Math.max(0, plan?.groupCount || 0);
-  const themes = plan?.themes?.length ? plan.themes : defaultThemes;
+  const themes = normalizeThemes(plan?.themes);
   const trainers = formation?.trainerIds?.map((id) => ({ id, name: plan?.trainerNames?.[id] || id })) || [];
   const rosterCount = registrations.filter((item) => item.validationStatus !== "cancelled").length;
 

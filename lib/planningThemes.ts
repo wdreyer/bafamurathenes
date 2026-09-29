@@ -1,39 +1,57 @@
 import type { PlanActivity, PlanTheme } from "@/lib/types";
 
 export const defaultThemes: PlanTheme[] = [
-  { id: "theme-sky", name: "Apports & repères", color: "sky" },
-  { id: "theme-mint", name: "Mises en pratique", color: "mint" },
-  { id: "theme-lilac", name: "Échanges & réflexion", color: "lilac" },
-  { id: "theme-lemon", name: "Projets & préparation", color: "lemon" },
-  { id: "theme-coral", name: "Animation & veillées", color: "coral" },
-  { id: "theme-neutral", name: "Vie quotidienne", color: "neutral" },
+  { id: "theme-theorie", name: "Apport théorique", color: "lilac" },
+  { id: "theme-quotidien", name: "Vie quotidienne", color: "sky" },
+  { id: "theme-pratique", name: "Mise en pratique", color: "coral" },
+  { id: "theme-preparation", name: "Préparation", color: "lemon" },
 ];
 
+// Plannings made before the 4-theme reorganisation reference the old six themes: map them onto the new ones.
+const legacyThemeIds: Record<string, string> = {
+  "theme-sky": "theme-theorie", "theme-lilac": "theme-theorie",
+  "theme-mint": "theme-pratique", "theme-coral": "theme-pratique",
+  "theme-lemon": "theme-preparation", "theme-neutral": "theme-quotidien",
+};
+const legacyColorThemes: Record<PlanTheme["color"], string> = {
+  sky: "theme-theorie", lilac: "theme-theorie", mint: "theme-pratique",
+  coral: "theme-pratique", lemon: "theme-preparation", neutral: "theme-quotidien",
+};
+
+/** Saved plan themes → the 4 default themes (keeping renames/recolours) plus any custom theme; the old six are dropped. */
+export function normalizeThemes(saved?: PlanTheme[] | null): PlanTheme[] {
+  const list = saved || [];
+  return [
+    ...defaultThemes.map((theme) => ({ ...theme, ...list.find((item) => item.id === theme.id) })),
+    ...list.filter((item) => !legacyThemeIds[item.id] && !defaultThemes.some((theme) => theme.id === item.id)),
+  ];
+}
+
 export const themeColors: { id: PlanTheme["color"]; name: string; swatch: string; surface: string; fill: string }[] = [
-  { id: "sky", name: "Bleu", swatch: "bg-[#3aaed8]", surface: "border-[#3aaed8] bg-[#d8f1fa] text-[#12384a]", fill: "bg-[#89d2ec] text-[#102f3d]" },
-  { id: "mint", name: "Vert", swatch: "bg-[#299b78]", surface: "border-[#299b78] bg-[#d7f2e8] text-[#153d32]", fill: "bg-[#7ed3b8] text-[#15362d]" },
-  { id: "lilac", name: "Mauve", swatch: "bg-[#792bb9]", surface: "border-[#792bb9] bg-[#eee1f8] text-[#381153]", fill: "bg-[#bd8be0] text-[#281039]" },
-  { id: "lemon", name: "Jaune", swatch: "bg-[#d6c900]", surface: "border-[#d6c900] bg-[#fffbd0] text-[#443f00]", fill: "bg-[#f5ef72] text-[#332f00]" },
-  { id: "coral", name: "Corail", swatch: "bg-[#e85d68]", surface: "border-[#e85d68] bg-[#ffe1e3] text-[#56191f]", fill: "bg-[#f49aa1] text-[#46151a]" },
-  { id: "neutral", name: "Gris", swatch: "bg-[#625d70]", surface: "border-[#837d91] bg-[#eceaf0] text-[#292532]", fill: "bg-[#bbb6c5] text-[#292532]" },
+  { id: "lilac", name: "Violet", swatch: "bg-[#8a2be2]", surface: "border-[#8a2be2] bg-[#f1e4ff] text-[#2e0b52]", fill: "bg-[#9d4edd] text-white" },
+  { id: "sky", name: "Turquoise", swatch: "bg-[#00b4d8]", surface: "border-[#00b4d8] bg-[#dcf6fc] text-[#063845]", fill: "bg-[#48cae4] text-[#062b36]" },
+  { id: "coral", name: "Corail", swatch: "bg-[#ff4d6d]", surface: "border-[#ff4d6d] bg-[#ffe3e8] text-[#5a0d1c]", fill: "bg-[#ff758f] text-[#3d0612]" },
+  { id: "lemon", name: "Jaune", swatch: "bg-[#ffd000]", surface: "border-[#ffd000] bg-[#fff7cc] text-[#473a00]", fill: "bg-[#ffe03d] text-[#2e2600]" },
+  { id: "mint", name: "Vert", swatch: "bg-[#06d6a0]", surface: "border-[#06d6a0] bg-[#d9fbf1] text-[#053d2e]", fill: "bg-[#3ee6b8] text-[#04382a]" },
+  { id: "neutral", name: "Gris", swatch: "bg-[#6c6485]", surface: "border-[#6c6485] bg-[#ecebf2] text-[#26222f]", fill: "bg-[#a7a1bb] text-[#1f1b29]" },
 ];
 
 export function themeForActivity(activity: PlanActivity, themes: PlanTheme[]): PlanTheme {
+  const legacyId = (activity.themeId && legacyThemeIds[activity.themeId]) || legacyColorThemes[activity.color];
   return themes.find((theme) => theme.id === activity.themeId)
-    || themes.find((theme) => theme.id === `theme-${activity.color}`)
-    || themes.find((theme) => theme.color === activity.color)
-    || defaultThemes.find((theme) => theme.color === activity.color)
+    || themes.find((theme) => theme.id === legacyId)
+    || defaultThemes.find((theme) => theme.id === legacyId)
     || defaultThemes[0];
 }
 
 export function themeSurface(color: PlanTheme["color"]) {
-  return themeColors.find((item) => item.id === color)?.surface || themeColors[5].surface;
+  return themeColors.find((item) => item.id === color)?.surface || themeColors.find((item) => item.id === "neutral")!.surface;
 }
 
 export function themeFill(color: PlanTheme["color"]) {
-  return themeColors.find((item) => item.id === color)?.fill || themeColors[5].fill;
+  return themeColors.find((item) => item.id === color)?.fill || themeColors.find((item) => item.id === "neutral")!.fill;
 }
 
 export function themeSwatch(color: PlanTheme["color"]) {
-  return themeColors.find((item) => item.id === color)?.swatch || themeColors[5].swatch;
+  return themeColors.find((item) => item.id === color)?.swatch || themeColors.find((item) => item.id === "neutral")!.swatch;
 }

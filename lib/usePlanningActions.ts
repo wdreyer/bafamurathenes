@@ -26,6 +26,19 @@ export function mergeRun(activity: PlanActivity, activities: PlanActivity[]) {
   return run.length > 1 ? run : [];
 }
 
+/** The consecutive merged days an activity is displayed with (just the activity itself when it isn't merged). */
+export function mergedBlock(activity: PlanActivity, activities: PlanActivity[]) {
+  if (!activity.merged) return [activity];
+  const run = mergeRun(activity, activities);
+  const index = run.findIndex((item) => item.id === activity.id);
+  if (index < 0) return [activity];
+  let first = index;
+  let last = index;
+  while (first > 0 && run[first - 1].merged) first -= 1;
+  while (last < run.length - 1 && run[last + 1].merged) last += 1;
+  return run.slice(first, last + 1);
+}
+
 export function usePlanningActions(activities: PlanActivity[], save: (next: PlanActivity[]) => Promise<boolean>) {
   const [clipboard, setClipboard] = useState<PlanActivity | null>(null);
   const [notice, setNotice] = useState<PlanningNotice | null>(null);
@@ -71,9 +84,28 @@ export function usePlanningActions(activities: PlanActivity[], save: (next: Plan
   };
 
   const setMerged = (activity: PlanActivity, merged: boolean) => {
-    const ids = mergeRun(activity, activities).map((item) => item.id);
+    const ids = (merged ? mergeRun(activity, activities) : mergedBlock(activity, activities)).map((item) => item.id);
     if (!ids.length) return;
     void apply(activities.map((item) => ids.includes(item.id) ? { ...item, merged } : item), merged ? "Jours fusionnés" : "Jours séparés");
+  };
+
+  const blockOf = (activity: PlanActivity) => mergedBlock(activity, activities);
+
+  /**
+   * Merge with the neighbouring day: the right-hand time wins (title, content, theme, times…) and is copied over the
+   * left-hand side, replacing whatever overlapped there, then the whole block is flagged as merged.
+   */
+  const mergeWithNeighbour = (activity: PlanActivity, direction: -1 | 1) => {
+    const block = blockOf(activity);
+    const neighbourDay = direction < 0 ? block[0].day - 1 : block[block.length - 1].day + 1;
+    const overlapping = activities.filter((item) => item.day === neighbourDay && item.start < activity.end && item.end > activity.start)
+      .sort((a, b) => a.start.localeCompare(b.start));
+    const source = direction > 0 && overlapping[0] ? overlapping[0] : activity;
+    const days = [...block.map((item) => item.day), neighbourDay];
+    const removed = new Set(activities.filter((item) => days.includes(item.day) && item.start < source.end && item.end > source.start).map((item) => item.id));
+    const copies = days.map((day) => day === source.day ? { ...source, merged: true } : { ...withNewId(source, { day }), merged: true });
+    const next = [...activities.filter((item) => !removed.has(item.id)), ...copies];
+    void apply(next, `Fusionné avec J${neighbourDay} · texte de droite gardé`);
   };
 
   const remove = (activity: PlanActivity) =>
@@ -86,7 +118,7 @@ export function usePlanningActions(activities: PlanActivity[], save: (next: Plan
     if (await save(previous)) notify({ text: "Modification annulée" });
   };
 
-  return { clipboard, notice, copy, paste, duplicateTo, copyDay, setMerged, remove, undo, dismiss: () => notify(null) };
+  return { clipboard, notice, copy, paste, duplicateTo, copyDay, setMerged, mergeWithNeighbour, blockOf, remove, undo, dismiss: () => notify(null) };
 }
 
 export type PlanningActions = ReturnType<typeof usePlanningActions>;

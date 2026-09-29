@@ -79,14 +79,12 @@ function ActivityCell({ activity, themes, trainerNames, prefs, disabled, onEdit,
   const names = namesFor(activity, trainerNames);
   const icon = prefs.icons ? iconForActivity(activity) : "";
   const fullLabel = `${activity.title} · ${activity.start}–${activity.end}${names.length ? ` · ${names.join(", ")}` : ""}`;
-  const label = <div ref={contentRef} className="h-full min-h-0 w-full overflow-hidden">
-    {merged
-      ? <span data-overflow-check className="line-clamp-2 text-center text-[12px] font-bold leading-snug">{icon && <span className="mr-1 text-[15px]">{icon}</span>}{activity.title}</span>
-      : <span data-overflow-check className="line-clamp-3 whitespace-normal break-words text-[11px] font-bold leading-snug">{icon && <span className="mr-0.5 text-[12px]">{icon}</span>}{activity.title}</span>}
-    {prefs.hours && !merged && <span className="absolute right-1.5 top-1 text-[8px] font-semibold opacity-70">{shortHour(activity.start)}–{shortHour(activity.end)}</span>}
-    {prefs.names && names.length > 0 && <span data-overflow-check className="mt-0.5 line-clamp-1 text-[8.5px] font-semibold leading-tight opacity-75">{names.join(" · ")}</span>}
+  const label = <div ref={contentRef} className="flex h-full min-h-0 w-full flex-col items-center justify-center overflow-hidden text-center">
+    <span data-overflow-check className={`whitespace-normal break-words font-bold leading-snug ${merged ? "line-clamp-2 text-[12px]" : "line-clamp-3 text-[11px]"}`}>{icon && <span className={`mr-1 ${merged ? "text-[15px]" : "text-[12px]"}`}>{icon}</span>}{activity.title}</span>
+    {prefs.hours && <span className="mt-0.5 text-[8px] font-semibold leading-none opacity-70">{shortHour(activity.start)}–{shortHour(activity.end)}</span>}
+    {prefs.names && names.length > 0 && <span data-overflow-check className="mt-0.5 line-clamp-1 text-[8.5px] font-semibold leading-tight opacity-80">{names.join(" · ")}</span>}
   </div>;
-  const className = `relative flex h-full min-w-0 flex-col overflow-hidden rounded-md px-1.5 py-1 shadow-[inset_0_-2px_0_rgba(26,21,48,0.08)] transition ${prefs.hours && !merged ? "pr-11" : ""} ${themeFill(theme.color)} ${merged ? "items-center justify-center text-center" : "items-start justify-start text-left"} ${dimmed ? "opacity-20 grayscale" : ""}`;
+  const className = `relative flex h-full min-w-0 flex-col items-center justify-center overflow-hidden rounded-md px-1.5 py-1 text-center shadow-[inset_0_-2px_0_rgba(26,21,48,0.1)] transition ${themeFill(theme.color)} ${dimmed ? "opacity-20 grayscale" : ""}`;
   const isClipped = () => {
     const element = contentRef.current;
     if (!element) return false;
@@ -148,10 +146,16 @@ function OverviewGrid({ days, dayCount, startDate, activities, themes, trainerNa
         if (!next || next.title.trim() !== activity.title.trim()) break;
         j += 1;
       }
-      const members = Array.from({ length: j - i + 1 }, (_, offset) => dayMap.get(days[i + offset])!);
-      if (j > i && members.every((member) => member.merged)) {
-        runs.push({ start, end, activity, dayIndexStart: i, dayCount: j - i + 1 });
-        for (let d = i; d <= j; d += 1) consumed.add(`${days[d]}|${start}|${end}`);
+      // Inside a run of identical days, only consecutive days flagged `merged` are drawn as one cell.
+      for (let k = i; k <= j; k += 1) {
+        if (!dayMap.get(days[k])!.merged) continue;
+        let last = k;
+        while (last + 1 <= j && dayMap.get(days[last + 1])!.merged) last += 1;
+        if (last > k) {
+          runs.push({ start, end, activity: dayMap.get(days[k])!, dayIndexStart: k, dayCount: last - k + 1 });
+          for (let d = k; d <= last; d += 1) consumed.add(`${days[d]}|${start}|${end}`);
+        }
+        k = last;
       }
       i = j + 1;
     }

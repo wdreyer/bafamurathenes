@@ -19,7 +19,7 @@ export const planningIconGroups: { label: string; icons: { emoji: string; label:
     { emoji: "🎲", label: "Jeu" }, { emoji: "🧩", label: "Jeu coopératif" }, { emoji: "🔥", label: "Grand jeu" },
     { emoji: "⚽", label: "Sport" }, { emoji: "🎨", label: "Activité manuelle" }, { emoji: "🎭", label: "Expression" },
     { emoji: "🎵", label: "Chant / musique" }, { emoji: "🌙", label: "Veillée" }, { emoji: "🌳", label: "Nature" },
-    { emoji: "🏕️", label: "Camp" }, { emoji: "📖", label: "Conte" },
+    { emoji: "🏕️", label: "Camp" }, { emoji: "📖", label: "Conte" }, { emoji: "📰", label: "Journal" },
   ] },
   { label: "Groupe", icons: [
     { emoji: "🤝", label: "Coopération" }, { emoji: "👥", label: "Groupe" }, { emoji: "🌍", label: "Interculturel" },
@@ -29,6 +29,7 @@ export const planningIconGroups: { label: string; icons: { emoji: string; label:
 
 // First match wins, so the more specific words come first.
 const keywordIcons: [RegExp, string][] = [
+  [/journal/i, "📰"],
   [/petit[- ]?d[ée]j/i, "🥐"],
   [/d[ée]jeuner|d[îi]ner|repas|souper/i, "🍽️"],
   [/go[ûu]ter/i, "🍪"],

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
-import { ClipboardPaste, Copy, CopyPlus, Link2, Pencil, Plus, Trash2, Undo2, Unlink, X } from "lucide-react";
+import { ArrowLeftToLine, ArrowRightToLine, ClipboardPaste, Copy, CopyPlus, Link2, Pencil, Plus, Trash2, Undo2, Unlink, X } from "lucide-react";
 import { mergeRun, type PlanningActions } from "@/lib/usePlanningActions";
 import type { PlanActivity } from "@/lib/types";
 
@@ -29,14 +29,19 @@ export function ActivityQuickActions({ activity, activities, dayCount, actions, 
 }) {
   const [picking, setPicking] = useState(false);
   const run = mergeRun(activity, activities);
-  const merged = run.length > 0 && run.every((entry) => entry.merged);
+  const block = actions.blockOf(activity);
+  const merged = block.length > 1;
+  const firstDay = block[0].day;
+  const lastDay = block[block.length - 1].day;
   const buttons = <>
     {onEdit && <button type="button" onClick={() => { onEdit(); onDone(); }} className={item}><Pencil size={14} />Modifier</button>}
     <button type="button" onClick={() => { actions.copy(activity); onDone(); }} className={item}><Copy size={14} />Copier</button>
     <button type="button" disabled={busy} onClick={() => setPicking((value) => !value)} aria-expanded={picking} className={item}><CopyPlus size={14} />Dupliquer vers…</button>
-    {run.length > 0 && <button type="button" disabled={busy} onClick={() => { actions.setMerged(activity, !merged); onDone(); }} className={item}>
-      {merged ? <><Unlink size={14} />Séparer les {run.length} jours</> : <><Link2 size={14} />Fusionner les {run.length} jours identiques</>}
-    </button>}
+    {firstDay > 1 && <button type="button" disabled={busy} onClick={() => { actions.mergeWithNeighbour(activity, -1); onDone(); }} title="Le texte de la case de droite est gardé" className={item}><ArrowLeftToLine size={14} />Fusionner avec J{firstDay - 1} (à gauche)</button>}
+    {lastDay < dayCount && <button type="button" disabled={busy} onClick={() => { actions.mergeWithNeighbour(activity, 1); onDone(); }} title="Le texte de la case de droite est gardé" className={item}><ArrowRightToLine size={14} />Fusionner avec J{lastDay + 1} (à droite)</button>}
+    {merged
+      ? <button type="button" disabled={busy} onClick={() => { actions.setMerged(activity, false); onDone(); }} className={item}><Unlink size={14} />Séparer les {block.length} jours</button>
+      : run.length > 0 && <button type="button" disabled={busy} onClick={() => { actions.setMerged(activity, true); onDone(); }} className={item}><Link2 size={14} />Fusionner les {run.length} jours identiques</button>}
     <button type="button" disabled={busy} onClick={() => { void actions.remove(activity); onDone(); }} className={`${item} text-rose-700 hover:bg-rose-50 hover:text-rose-800`}><Trash2 size={14} />Supprimer</button>
   </>;
   return <div>
