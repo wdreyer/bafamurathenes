@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { onAuthStateChanged, sendPasswordResetEmail, signInWithEmailAndPassword, signOut, type User } from "firebase/auth";
+import { onAuthStateChanged, signInWithEmailAndPassword, signOut, type User } from "firebase/auth";
 import { doc, onSnapshot } from "firebase/firestore";
 import {
   GraduationCap,
@@ -80,7 +80,12 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       return;
     }
     try {
-      await sendPasswordResetEmail(auth, email.trim());
+      const response = await fetch("/api/admin/password-reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+      if (!response.ok) throw new Error("reset_failed");
       setNotice("Email de réinitialisation envoyé par le projet Firebase du site.");
     } catch {
       setError("Impossible d’envoyer l’email de réinitialisation pour cette adresse.");
