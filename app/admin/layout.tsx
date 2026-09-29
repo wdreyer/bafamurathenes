@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { auth, db } from "@/lib/firebase";
 import { isAdminEmail, isAdminUid } from "@/lib/adminAccess";
+import { PendingResourcesBadge } from "@/components/admin/PendingResourcesBadge";
 
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
@@ -200,6 +201,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               >
                 <Icon className="h-4 w-4" />
                 {item.label}
+                {item.href === "/admin/ressources" && <PendingResourcesBadge />}
               </Link>
             );
           })}

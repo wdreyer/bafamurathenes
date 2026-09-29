@@ -3,10 +3,14 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { deleteDoc, doc } from "firebase/firestore";
 import {
-  BookOpen, CalendarRange, CheckCircle2, Coffee, FileText, Globe2, Image as ImageIcon,
-  Search, Sparkles, Users,
+  BookOpen, CalendarRange, CheckCircle2, Clock3, Coffee, FilePlus2, FileText, Globe2, Image as ImageIcon,
+  Search, Sparkles, Trash2, Users,
 } from "lucide-react";
+import { db } from "@/lib/firebase";
+import { useTeamAuth } from "@/components/team/TeamAccess";
+import { ResourceProposalDialog } from "@/components/guide/ResourceProposalDialog";
 import { allCatalogTimes, catalogCategories, resourceForActivity, type CatalogCategory } from "@/lib/trainingCatalog";
 import { guideColorClasses } from "@/lib/guideLibrary";
 import { useGuideLibrary } from "@/lib/useGuideLibrary";
@@ -28,7 +32,10 @@ const scopeLabels: Record<TrainingTimeScope, string> = {
 const clean = (value: string) => value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
 export default function GuideFormateursPage() {
-  const { categories, resources, loading, error: libraryError } = useGuideLibrary();
+  const { categories, resources, customResources, loading, error: libraryError } = useGuideLibrary();
+  const { user, isAdmin, trainer } = useTeamAuth();
+  const [proposing, setProposing] = useState(false);
+  const myProposals = customResources.filter((item) => item.proposedBy === user.uid && (item.status === "pending" || item.status === "rejected"));
   const { times: customTimes, error: timesError } = useTrainingTimes();
   const [view, setView] = useState<GuideView>("resources");
   const [scope, setScope] = useState<ScopeFilter>("all");
@@ -55,7 +62,21 @@ export default function GuideFormateursPage() {
           <button type="button" onClick={() => { setView("resources"); setCategory("all"); }} className={`inline-flex h-9 items-center gap-2 rounded px-3 text-sm font-semibold ${view === "resources" ? "bg-emerald-800 text-white" : "text-slate-600"}`}><BookOpen size={15} />Ressources</button>
           <button type="button" onClick={() => { setView("times"); setCategory("all"); }} className={`inline-flex h-9 items-center gap-2 rounded px-3 text-sm font-semibold ${view === "times" ? "bg-emerald-800 text-white" : "text-slate-600"}`}><Sparkles size={15} />Temps de formation</button>
         </div>
+        <button type="button" onClick={() => setProposing(true)} className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-full bg-[#792bb9] px-4 text-sm font-semibold text-white hover:bg-[#66239d]"><FilePlus2 size={16} />{isAdmin ? "Ajouter une ressource" : "Proposer une ressource"}</button>
       </div>
+
+      {myProposals.length > 0 && <section className="mt-5 rounded-md border border-[#d8c9e6] bg-[#f8f3fb] p-4">
+        <h3 className="text-sm font-semibold text-[#552080]">Mes propositions</h3>
+        <ul className="mt-2 divide-y divide-[#e6d9f0]">
+          {myProposals.map((item) => <li key={item.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2 text-sm">
+            <span className="min-w-0 flex-1 font-medium text-slate-900">{item.title}</span>
+            {item.status === "pending"
+              ? <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-700"><Clock3 size={13} />En attente de validation</span>
+              : <span className="text-xs font-semibold text-rose-700">Non retenue{item.reviewNote ? ` · ${item.reviewNote}` : ""}</span>}
+            <button type="button" onClick={() => { if (window.confirm(`Retirer « ${item.title} » ?`)) void deleteDoc(doc(db, "guideResources", item.id)); }} title="Retirer ma proposition" aria-label={`Retirer ${item.title}`} className="grid h-7 w-7 cursor-pointer place-items-center rounded text-slate-400 hover:bg-white hover:text-rose-700"><Trash2 size={14} /></button>
+          </li>)}
+        </ul>
+      </section>}
 
       <Link href="/equipe/guide/plannings" className="mt-5 flex items-center justify-between gap-4 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-950 no-underline"><span><strong className="block text-sm">Plannings types FG et approfondissement</strong><span className="mt-0.5 block text-xs text-emerald-800">Consulter les modèles utilisés à la création des formations.</span></span><CalendarRange size={21} className="shrink-0" /></Link>
 
@@ -104,5 +125,6 @@ export default function GuideFormateursPage() {
         </section>}
       </div>
     </div>
+    {proposing && <ResourceProposalDialog authorName={`${trainer.firstName} ${trainer.lastName}`.trim() || user.email || "Formateur·ice"} publishDirectly={isAdmin} onClose={() => setProposing(false)} />}
   </main>;
 }

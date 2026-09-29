@@ -4,13 +4,13 @@
 import { useMemo, useState } from "react";
 import { deleteDoc, doc, serverTimestamp, setDoc } from "firebase/firestore";
 import {
-  ArrowDown, ArrowUp, BookOpen, ExternalLink, FileText, ImagePlus, Pencil,
+  ArrowDown, ArrowUp, BookOpen, Check, Clock3, ExternalLink, FileText, ImagePlus, Pencil,
   Plus, Save, Settings2, Trash2, X,
 } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { uploadGuideFile } from "@/lib/uploadGuideFile";
 import {
-  defaultGuideCategories, defaultGuideResources, guideColorClasses, guidePalette,
+  defaultGuideCategories, defaultGuideResources, GUIDE_FILE_ACCEPT, GUIDE_FILE_MAX_SIZE, guideColorClasses, guideFileType, guidePalette,
   sanitizeGuideHtml, type GuideCategoryRecord, type GuideResourceRecord,
 } from "@/lib/guideLibrary";
 import { useGuideLibrary } from "@/lib/useGuideLibrary";
@@ -44,6 +44,7 @@ export default function AdminResourcesPage() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
+  const pending = customResources.filter((item) => item.status === "pending");
   const filtered = useMemo(() => {
     const term = search.trim().toLocaleLowerCase("fr");
     return resources.filter((item) => !term || `${item.title} ${item.summary}`.toLocaleLowerCase("fr").includes(term));
@@ -51,11 +52,11 @@ export default function AdminResourcesPage() {
 
   const resourceId = () => draft?.id || crypto.randomUUID();
 
-  const upload = async (file: File, kind: "image" | "pdf") => {
-    const maxSize = kind === "image" ? 6 * 1024 * 1024 : 20 * 1024 * 1024;
-    const valid = kind === "image" ? file.type.startsWith("image/") : file.type === "application/pdf";
-    if (!valid) throw new Error(kind === "image" ? "Choisis une image JPG, PNG, WebP ou GIF." : "Choisis un document PDF.");
-    if (file.size > maxSize) throw new Error(kind === "image" ? "L’image ne doit pas dépasser 6 Mo." : "Le PDF ne doit pas dépasser 20 Mo.");
+  const upload = async (file: File, kind: "image" | "document") => {
+    const maxSize = kind === "image" ? 6 * 1024 * 1024 : GUIDE_FILE_MAX_SIZE;
+    const valid = kind === "image" ? file.type.startsWith("image/") : Boolean(guideFileType(file.name));
+    if (!valid) throw new Error(kind === "image" ? "Choisis une image JPG, PNG, WebP ou GIF." : "Formats acceptés : PDF, Word, PowerPoint, Excel, LibreOffice ou image.");
+    if (file.size > maxSize) throw new Error(kind === "image" ? "L’image ne doit pas dépasser 6 Mo." : "Le document ne doit pas dépasser 20 Mo.");
     const id = resourceId();
     if (draft && !draft.id) setDraft({ ...draft, id });
     return uploadGuideFile(id, file);
@@ -76,10 +77,10 @@ export default function AdminResourcesPage() {
     if (!file || !draft) return;
     setBusy(true); setError("");
     try {
-      const fileUrl = await upload(file, "pdf");
-      setDraft((current) => current ? { ...current, fileUrl, fileName: file.name, fileType: "pdf" } : current);
+      const fileUrl = await upload(file, "document");
+      setDraft((current) => current ? { ...current, fileUrl, fileName: file.name, fileType: guideFileType(file.name) || "other" } : current);
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "Le PDF n’a pas pu être envoyé.");
+      setError(cause instanceof Error ? cause.message : "Le document n’a pas pu être envoyé.");
     } finally { setBusy(false); }
   };
 
@@ -93,8 +94,8 @@ export default function AdminResourcesPage() {
     }
   };
 
-  const saveResource = async (event: React.FormEvent) => {
-    event.preventDefault();
+  const saveResource = async (event?: React.FormEvent, status?: GuideResourceRecord["status"]) => {
+    event?.preventDefault();
     if (!draft || !draft.title.trim() || !draft.categoryId) return;
     setBusy(true); setError(""); setNotice("");
     try {
@@ -108,14 +109,27 @@ export default function AdminResourcesPage() {
         useWhen: draft.useWhen.trim(),
         bodyHtml: sanitizeGuideHtml(draft.bodyHtml),
         hidden: false,
+        ...(status ? { status } : {}),
         updatedAt: serverTimestamp(),
         ...(!customResources.some((item) => item.id === id) ? { createdAt: serverTimestamp() } : {}),
       }, { merge: true });
       setDraft(null);
-      setNotice("Ressource enregistrée.");
+      setNotice(status === "published" ? "Ressource validée : elle est maintenant dans le guide." : "Ressource enregistrée.");
     } catch {
       setError("La ressource n’a pas pu être enregistrée. Vérifie les droits Firebase.");
     } finally { setBusy(false); }
+  };
+
+  const rejectResource = async (resource: GuideResourceRecord) => {
+    const reviewNote = window.prompt(`Pourquoi « ${resource.title} » n’est pas retenue ? (visible par la personne qui l’a proposée)`, "");
+    if (reviewNote === null) return;
+    setBusy(true); setError("");
+    try {
+      await setDoc(doc(db, "guideResources", resource.id), { status: "rejected", reviewNote: reviewNote.trim(), updatedAt: serverTimestamp() }, { merge: true });
+      setDraft(null);
+      setNotice("Proposition refusée.");
+    } catch { setError("La proposition n’a pas pu être refusée."); }
+    finally { setBusy(false); }
   };
 
   const removeResource = async (resource: GuideResourceRecord) => {
@@ -197,6 +211,13 @@ export default function AdminResourcesPage() {
 
     {view === "resources" ? <div className="grid gap-6 xl:grid-cols-[minmax(320px,0.75fr)_minmax(580px,1.4fr)]">
       <section className="min-w-0">
+        {pending.length > 0 && <div className="mb-4 rounded-md border border-amber-300 bg-amber-50">
+          <p className="flex items-center gap-2 border-b border-amber-200 px-3 py-2 text-sm font-semibold text-amber-950"><Clock3 size={15} />À valider ({pending.length})</p>
+          {pending.map((resource) => <button key={resource.id} type="button" onClick={() => setDraft({ ...resource })} className={`flex w-full cursor-pointer items-center justify-between gap-3 px-3 py-2 text-left text-sm hover:bg-amber-100 ${draft?.id === resource.id ? "bg-amber-100" : ""}`}>
+            <span className="min-w-0"><span className="block truncate font-medium text-slate-900">{resource.title}</span><span className="block text-xs text-slate-600">Proposée par {resource.proposedByName || "un·e formateur·ice"}{resource.fileName ? ` · ${resource.fileName}` : ""}</span></span>
+            <Pencil size={14} className="shrink-0 text-amber-800" />
+          </button>)}
+        </div>}
         <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Rechercher une ressource" className="mb-3 h-10 w-full rounded border border-slate-300 bg-white px-3 text-sm" />
         <div className="divide-y divide-slate-200 border-y border-slate-200 bg-white">
           {loading ? <p className="p-5 text-sm text-slate-500">Chargement...</p> : filtered.map((resource) => {
@@ -211,7 +232,14 @@ export default function AdminResourcesPage() {
       </section>
 
       {draft ? <form onSubmit={saveResource} className="min-w-0 space-y-4 self-start rounded-md border border-slate-200 bg-white p-4 sm:p-5">
-        <div className="flex items-center justify-between gap-3"><h2 className="font-semibold">{draft.id ? "Modifier la ressource" : "Nouvelle ressource"}</h2><button type="button" onClick={() => setDraft(null)} title="Fermer" aria-label="Fermer" className="grid h-8 w-8 place-items-center rounded hover:bg-slate-100"><X size={18} /></button></div>
+        {draft.status === "pending" && <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-amber-300 bg-amber-50 px-3 py-2.5 text-sm text-amber-950">
+          <span>Proposée par <strong>{draft.proposedByName || "un·e formateur·ice"}</strong>. Relis, ajuste si besoin, puis valide.</span>
+          <span className="flex gap-2">
+            <button type="button" disabled={busy} onClick={() => void rejectResource(draft)} className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md border border-amber-400 bg-white px-3 text-xs font-semibold text-amber-900 disabled:opacity-40"><X size={14} />Refuser</button>
+            <button type="button" disabled={busy} onClick={() => void saveResource(undefined, "published")} className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md bg-[#792bb9] px-3 text-xs font-semibold text-white disabled:opacity-40"><Check size={14} />Valider et publier</button>
+          </span>
+        </div>}
+        <div className="flex items-center justify-between gap-3"><h2 className="font-semibold">{draft.status === "pending" ? "Proposition" : draft.id ? "Modifier la ressource" : "Nouvelle ressource"}</h2><button type="button" onClick={() => setDraft(null)} title="Fermer" aria-label="Fermer" className="grid h-8 w-8 place-items-center rounded hover:bg-slate-100"><X size={18} /></button></div>
         <label className="block text-xs font-semibold text-slate-600">Titre<input required value={draft.title} onChange={(event) => setDraft({ ...draft, title: event.target.value })} className="mt-1 h-10 w-full rounded border border-slate-300 px-3 text-sm font-normal" /></label>
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="text-xs font-semibold text-slate-600">Catégorie<select required value={draft.categoryId} onChange={(event) => setDraft({ ...draft, categoryId: event.target.value })} className="mt-1 h-10 w-full rounded border border-slate-300 bg-white px-3 text-sm font-normal">{categories.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}</select></label>
@@ -221,7 +249,7 @@ export default function AdminResourcesPage() {
         <label className="block text-xs font-semibold text-slate-600">Quand l&apos;utiliser ?<textarea value={draft.useWhen} onChange={(event) => setDraft({ ...draft, useWhen: event.target.value })} rows={2} className="mt-1 w-full rounded border border-slate-300 p-3 text-sm font-normal" /></label>
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="flex min-h-24 cursor-pointer items-center gap-3 rounded border border-dashed border-slate-300 p-3 text-sm text-slate-600 hover:border-emerald-600"><ImagePlus size={20} /><span>{draft.coverImageUrl ? "Remplacer l’image principale" : "Ajouter une image principale"}</span><input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={(event) => void uploadCover(event.target.files?.[0])} /></label>
-          <div className="relative"><label className="flex min-h-24 cursor-pointer items-center gap-3 rounded border border-dashed border-slate-300 p-3 pr-10 text-sm text-slate-600 hover:border-emerald-600"><FileText size={20} /><span>{draft.fileName || "Ajouter un document PDF"}</span><input type="file" accept="application/pdf" className="hidden" onChange={(event) => void uploadPdf(event.target.files?.[0])} /></label>{draft.fileUrl && <button type="button" onClick={() => setDraft({ ...draft, fileUrl: "", fileName: "", fileType: undefined })} title="Retirer le PDF" aria-label="Retirer le PDF" className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded bg-white text-slate-600 shadow"><X size={15} /></button>}</div>
+          <div className="relative"><label className="flex min-h-24 cursor-pointer items-center gap-3 rounded border border-dashed border-slate-300 p-3 pr-10 text-sm text-slate-600 hover:border-emerald-600"><FileText size={20} /><span>{draft.fileName || "Ajouter un document (PDF, Word, PowerPoint…)"}</span><input type="file" accept={GUIDE_FILE_ACCEPT} className="hidden" onChange={(event) => void uploadPdf(event.target.files?.[0])} /></label>{draft.fileUrl && <button type="button" onClick={() => setDraft({ ...draft, fileUrl: "", fileName: "", fileType: undefined })} title="Retirer le document" aria-label="Retirer le document" className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded bg-white text-slate-600 shadow"><X size={15} /></button>}</div>
         </div>
         {draft.coverImageUrl && <div className="relative"><img src={draft.coverImageUrl} alt="" className="max-h-52 w-full rounded object-cover" /><button type="button" onClick={() => setDraft({ ...draft, coverImageUrl: "" })} title="Retirer l’image" aria-label="Retirer l’image" className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded bg-white shadow"><X size={15} /></button></div>}
         <div><p className="mb-1 text-xs font-semibold text-slate-600">Contenu</p><RichTextEditor value={draft.bodyHtml} onChange={(bodyHtml) => setDraft((current) => current ? { ...current, bodyHtml } : current)} onUploadImage={uploadInlineImage} disabled={busy} /></div>

@@ -75,9 +75,21 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Trainers may propose resources: they stay "pending" and belong to their author until an admin publishes them.
     match /guideResources/{documentId} {
       allow read: if isAdmin() || isApprovedTrainer();
       allow write: if isAdmin();
+      allow create: if isApprovedTrainer()
+        && request.resource.data.status == 'pending'
+        && request.resource.data.proposedBy == request.auth.uid;
+      allow update: if isApprovedTrainer()
+        && resource.data.status == 'pending'
+        && resource.data.proposedBy == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.proposedBy == request.auth.uid;
+      allow delete: if isApprovedTrainer()
+        && resource.data.status in ['pending', 'rejected']
+        && resource.data.proposedBy == request.auth.uid;
     }
 
     match /trainingTimes/{documentId} {
@@ -85,13 +97,16 @@ service cloud.firestore {
       allow write: if isAdmin() || isApprovedTrainer();
     }
 
+    // Fallback file store when Storage is unavailable. Trainers can only add new files, never overwrite one.
     match /guideFiles/{fileId} {
       allow read: if true;
       allow write: if isAdmin();
+      allow create: if isApprovedTrainer() && request.resource.data.size <= 20 * 1024 * 1024;
 
       match /chunks/{chunkId} {
         allow read: if true;
         allow write: if isAdmin();
+        allow create: if isApprovedTrainer();
       }
     }
 

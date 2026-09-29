@@ -4,6 +4,27 @@ import { guideCategories, trainerResources } from "@/lib/trainerGuide";
 export const guidePalette = ["emerald", "sky", "rose", "amber", "violet", "slate"] as const;
 export type GuidePaletteColor = typeof guidePalette[number];
 
+export type GuideFileType = "pdf" | "docx" | "pptx" | "xlsx" | "image" | "other";
+
+export const GUIDE_FILE_ACCEPT = ".pdf,.doc,.docx,.odt,.ppt,.pptx,.odp,.xls,.xlsx,.ods,image/jpeg,image/png,image/webp,image/gif";
+export const GUIDE_FILE_MAX_SIZE = 20 * 1024 * 1024;
+
+export function guideFileType(fileName: string): GuideFileType | null {
+  const extension = fileName.split(".").pop()?.toLowerCase() || "";
+  if (extension === "pdf") return "pdf";
+  if (["doc", "docx", "odt"].includes(extension)) return "docx";
+  if (["ppt", "pptx", "odp"].includes(extension)) return "pptx";
+  if (["xls", "xlsx", "ods"].includes(extension)) return "xlsx";
+  if (["jpg", "jpeg", "png", "webp", "gif"].includes(extension)) return "image";
+  return null;
+}
+
+export const guideFileLabel: Record<GuideFileType, string> = {
+  pdf: "PDF", docx: "Document texte", pptx: "Présentation", xlsx: "Tableur", image: "Image", other: "Document",
+};
+
+export const isPublishedResource = (resource: Pick<GuideResourceRecord, "status">) => !resource.status || resource.status === "published";
+
 export type GuideCategoryRecord = {
   id: string;
   title: string;
@@ -24,8 +45,13 @@ export type GuideResourceRecord = {
   coverImageUrl?: string;
   fileUrl?: string;
   fileName?: string;
-  fileType?: "pdf" | "docx";
+  fileType?: GuideFileType;
   hidden?: boolean;
+  /** Proposals from trainers stay out of the guide until an admin publishes them. Missing means published. */
+  status?: "pending" | "published" | "rejected";
+  proposedBy?: string;
+  proposedByName?: string;
+  reviewNote?: string;
   createdAt?: unknown;
   updatedAt?: unknown;
 };
@@ -66,7 +92,7 @@ export function mergeGuideCategories(custom: GuideCategoryRecord[]) {
 
 export function mergeGuideResources(custom: GuideResourceRecord[]) {
   const merged = new Map(defaultGuideResources.map((item) => [item.id, item]));
-  custom.forEach((item) => merged.set(item.id, { ...merged.get(item.id), ...item }));
+  custom.filter(isPublishedResource).forEach((item) => merged.set(item.id, { ...merged.get(item.id), ...item }));
   return Array.from(merged.values()).filter((item) => !item.hidden)
     .sort((a, b) => a.title.localeCompare(b.title, "fr"));
 }

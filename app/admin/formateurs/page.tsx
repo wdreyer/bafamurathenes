@@ -8,10 +8,11 @@ import { db, storage } from "@/lib/firebase";
 import { buildPlanningTemplate } from "@/lib/planningTemplates";
 import { savePlanningTime } from "@/lib/savePlanningTime";
 import { defaultThemes } from "@/lib/planningThemes";
-import { resizePlanningActivityByQuarterHour } from "@/lib/planningMove";
+import { usePlanningActions } from "@/lib/usePlanningActions";
 import { trainerProfileProgress } from "@/lib/trainerProfile";
 import { ActivityEditor } from "@/components/planning/ActivityEditor";
 import { PlanningBoard } from "@/components/planning/PlanningBoard";
+import { ActivityQuickActions } from "@/components/planning/PlanningActionsMenu";
 import type { Formation, PlanActivity, PlanTheme, Trainer } from "@/lib/types";
 
 const emptyActivity = (day: number, start = "09:00", end = "10:00"): PlanActivity => ({
@@ -26,6 +27,7 @@ export default function FormateursPage() {
   const [formationId, setFormationId] = useState("");
   const [activities, setActivities] = useState<PlanActivity[]>([]);
   const [themes, setThemes] = useState<PlanTheme[]>(defaultThemes);
+  const [bounds, setBounds] = useState<{ arrivalTime?: string; departureTime?: string }>({});
   const [planExists, setPlanExists] = useState(false);
   const [tab, setTab] = useState<"planning" | "team">("team");
   const [editing, setEditing] = useState<PlanActivity | null>(null);
@@ -74,6 +76,7 @@ export default function FormateursPage() {
       setPlanExists(snapshot.exists());
       setActivities(snapshot.exists() ? (snapshot.data().activities || []) as PlanActivity[] : []);
       setThemes(snapshot.exists() && snapshot.data().themes?.length ? snapshot.data().themes as PlanTheme[] : defaultThemes);
+      setBounds(snapshot.exists() ? { arrivalTime: snapshot.data().arrivalTime || undefined, departureTime: snapshot.data().departureTime || undefined } : {});
     }, () => setError("Impossible de charger le planning."));
   }, [formationId]);
 
@@ -124,20 +127,20 @@ export default function FormateursPage() {
     finally { setBusy(false); }
   };
 
-  const toggleMerge = (activityIds: string[], merged: boolean) => {
-    void saveActivities(activities.map((item) => activityIds.includes(item.id) ? { ...item, merged } : item));
+  const saveBounds = async (patch: { arrivalTime?: string; departureTime?: string }) => {
+    if (!formation) return;
+    setBusy(true); setError("");
+    try {
+      await setDoc(doc(db, "formationPlans", formation.id), {
+        arrivalTime: "arrivalTime" in patch ? patch.arrivalTime ?? null : bounds.arrivalTime ?? null,
+        departureTime: "departureTime" in patch ? patch.departureTime ?? null : bounds.departureTime ?? null,
+        updatedAt: serverTimestamp(),
+      }, { merge: true });
+    } catch { setError("Impossible d'enregistrer les horaires d'arrivée/départ."); }
+    finally { setBusy(false); }
   };
 
-  const resizeActivity = (activityId: string, edge: "start" | "end", direction: "expand" | "shrink") => {
-    const next = resizePlanningActivityByQuarterHour(activityId, edge, direction, activities);
-    if (!next) {
-      setError(direction === "expand"
-        ? "Impossible d’agrandir ce temps : le créneau voisin ne peut pas être réduit davantage."
-        : "Un temps doit durer au moins 15 minutes.");
-      return;
-    }
-    void saveActivities(next);
-  };
+  const planningActions = usePlanningActions(activities, saveActivities);
 
   const saveTrainer = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -240,7 +243,7 @@ export default function FormateursPage() {
               <td className="px-4 py-3 text-slate-600"><p>{trainer.email || "—"}</p><p className="text-xs">{trainer.phone || "—"}</p></td>
               <td className="px-4 py-3">{profile.complete
                 ? <span className="font-medium text-emerald-700">Complet</span>
-                : <span className="inline-flex items-center gap-1.5 font-medium text-amber-700"><AlertCircle size={14} />À compléter <span className="text-xs font-normal text-slate-500">({profile.informationCount}/7 infos · {profile.documentCount}/3 docs)</span></span>}</td>
+                : <span className="inline-flex items-center gap-1.5 font-medium text-amber-700"><AlertCircle size={14} />À compléter <span className="text-xs font-normal text-slate-500">({profile.informationCount}/{profile.informationTotal} infos · {profile.documentCount}/{profile.documentTotal} docs)</span></span>}</td>
               <td className="px-3 py-3 text-slate-400"><ChevronRight size={18} /></td>
             </tr>;
           })}</tbody>
@@ -251,7 +254,7 @@ export default function FormateursPage() {
       {formation && <>
         <div className="border-y border-[#d8c9e6] py-3"><div className="mb-2 flex items-center justify-between"><h2 className="text-sm font-semibold">Formateur·ices de la session</h2><button type="button" onClick={() => setTab("team")} className="text-xs text-[#792bb9]">Gérer l&apos;équipe</button></div><div className="flex flex-wrap gap-2">{assignableTrainers.map((trainer) => <button key={trainer.id} type="button" disabled={busy} onClick={() => void toggleTrainer(trainer.id)} aria-pressed={formation.trainerIds?.includes(trainer.id) || false} className={`rounded-full border px-3 py-1.5 text-sm ${formation.trainerIds?.includes(trainer.id) ? "border-[#792bb9] bg-[#f0e8f8] text-[#552080]" : "border-slate-200 bg-white text-slate-600"}`}>{formation.trainerIds?.includes(trainer.id) && <Check size={13} className="mr-1 inline" />}{trainerName(trainer)}</button>)}{!assignableTrainers.length && <p className="text-sm text-slate-500">Valide d&apos;abord un compte formateur·ice dans l&apos;onglet Équipe.</p>}</div></div>
         {!planExists ? <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-dashed border-slate-300 bg-white p-6"><div><h2 className="font-semibold">Planning à préparer</h2><p className="text-sm text-slate-500">Modèle {formation.type === "formation_generale" ? "formation générale · 9 jours" : "approfondissement · 7 jours"}, inspiré des plannings fournis.</p></div><button type="button" disabled={busy} onClick={() => void saveActivities(buildPlanningTemplate(formation))} className="flex items-center gap-2 rounded bg-slate-900 px-4 py-2 text-sm text-white"><Plus size={16} />Créer le planning</button></div> : <>
-          <PlanningBoard key={formation.id} activities={activities} dayCount={dayCount} startDate={formation.startDate} themes={themes} trainerNames={Object.fromEntries(trainers.map((trainer) => [trainer.id, trainerName(trainer)]))} busy={busy} onEdit={(item) => { setError(""); setEditing({ ...item, trainerIds: item.trainerIds || [] }); }} onAdd={(day, start, end) => { setError(""); setEditing(emptyActivity(day, start, end)); }} onSaveThemes={saveThemes} onToggleMerge={toggleMerge} onResize={resizeActivity} />
+          <PlanningBoard key={formation.id} activities={activities} dayCount={dayCount} startDate={formation.startDate} formationTitle={formation.title} themes={themes} trainerNames={Object.fromEntries(trainers.map((trainer) => [trainer.id, trainerName(trainer)]))} busy={busy} arrivalTime={bounds.arrivalTime} departureTime={bounds.departureTime} actions={planningActions} onEdit={(item) => { setError(""); setEditing({ ...item, trainerIds: item.trainerIds || [] }); }} onAdd={(day, start, end) => { setError(""); setEditing(emptyActivity(day, start, end)); }} onSaveThemes={saveThemes} onSetBounds={(patch) => void saveBounds(patch)} />
         </>}
       </>}
     </div>}
@@ -292,6 +295,7 @@ export default function FormateursPage() {
       </form>
     </div>}
 
-    {editing && formation && <ActivityEditor activity={editing} existing={activities.some((item) => item.id === editing.id)} dayCount={dayCount} formationType={formation.type} trainers={assigned.map((trainer) => ({ id: trainer.id, name: trainerName(trainer) }))} themes={themes} busy={busy} error={error} onChange={setEditing} onSave={() => void persistActivity()} onClose={() => setEditing(null)} onDelete={() => { if (window.confirm("Supprimer ce temps ?")) void saveActivities(activities.filter((item) => item.id !== editing.id)).then((saved) => { if (saved) setEditing(null); }); }} />}
+    {editing && formation && <ActivityEditor author={{ name: "Équipe admin", isAdmin: true }} activity={editing} existing={activities.some((item) => item.id === editing.id)} dayCount={dayCount} formationType={formation.type} trainers={assigned.map((trainer) => ({ id: trainer.id, name: trainerName(trainer) }))} themes={themes} busy={busy} error={error} onChange={setEditing} onSave={() => void persistActivity()} onClose={() => setEditing(null)}
+      quickActions={(() => { const saved = activities.find((item) => item.id === editing.id); return saved && <ActivityQuickActions activity={saved} activities={activities} dayCount={dayCount} actions={planningActions} busy={busy} onDone={() => setEditing(null)} />; })()} />}
   </div>;
 }

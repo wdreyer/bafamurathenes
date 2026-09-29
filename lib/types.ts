@@ -64,6 +64,8 @@ export type PlanActivity = {
   themeId?: string;
   color: "mint" | "coral" | "sky" | "lemon" | "lilac" | "neutral";
   merged?: boolean;
+  /** Emoji shown in the cell; undefined picks one from the title, "none" shows nothing. */
+  icon?: string;
 };
 
 export type PlanTheme = {

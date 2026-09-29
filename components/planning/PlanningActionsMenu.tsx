@@ -1,0 +1,102 @@
+"use client";
+
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { ClipboardPaste, Copy, CopyPlus, Link2, Pencil, Plus, Trash2, Undo2, Unlink, X } from "lucide-react";
+import { mergeRun, type PlanningActions } from "@/lib/usePlanningActions";
+import type { PlanActivity } from "@/lib/types";
+
+export type MenuTarget =
+  | { kind: "activity"; activity: PlanActivity; x: number; y: number }
+  | { kind: "cell"; day: number; start: string; end: string; x: number; y: number }
+  | { kind: "day"; day: number; x: number; y: number };
+
+const item = "flex w-full cursor-pointer items-center gap-2 rounded px-2.5 py-1.5 text-left text-[13px] text-slate-700 hover:bg-[#f0e8f8] hover:text-[#552080] disabled:cursor-not-allowed disabled:opacity-40";
+
+function DayPicker({ label, dayCount, exclude, onPick }: { label: string; dayCount: number; exclude: number; onPick: (day: number) => void }) {
+  return <div className="px-2.5 py-1.5">
+    <p className="mb-1.5 text-[11px] font-semibold uppercase text-slate-400">{label}</p>
+    <div className="flex flex-wrap gap-1">
+      {Array.from({ length: dayCount }, (_, index) => index + 1).filter((day) => day !== exclude).map((day) =>
+        <button key={day} type="button" onClick={() => onPick(day)} className="h-7 min-w-9 cursor-pointer rounded border border-slate-200 bg-white px-1.5 text-xs font-semibold text-slate-600 hover:border-[#792bb9] hover:bg-[#792bb9] hover:text-white">J{day}</button>)}
+    </div>
+  </div>;
+}
+
+/** Actions on an existing time — shown both in the right-click menu and in the edit window. */
+export function ActivityQuickActions({ activity, activities, dayCount, actions, busy, onEdit, onDone, compact = false }: {
+  activity: PlanActivity; activities: PlanActivity[]; dayCount: number; actions: PlanningActions; busy: boolean;
+  onEdit?: () => void; onDone: () => void; compact?: boolean;
+}) {
+  const [picking, setPicking] = useState(false);
+  const run = mergeRun(activity, activities);
+  const merged = run.length > 0 && run.every((entry) => entry.merged);
+  const buttons = <>
+    {onEdit && <button type="button" onClick={() => { onEdit(); onDone(); }} className={item}><Pencil size={14} />Modifier</button>}
+    <button type="button" onClick={() => { actions.copy(activity); onDone(); }} className={item}><Copy size={14} />Copier</button>
+    <button type="button" disabled={busy} onClick={() => setPicking((value) => !value)} aria-expanded={picking} className={item}><CopyPlus size={14} />Dupliquer vers…</button>
+    {run.length > 0 && <button type="button" disabled={busy} onClick={() => { actions.setMerged(activity, !merged); onDone(); }} className={item}>
+      {merged ? <><Unlink size={14} />Séparer les {run.length} jours</> : <><Link2 size={14} />Fusionner les {run.length} jours identiques</>}
+    </button>}
+    <button type="button" disabled={busy} onClick={() => { void actions.remove(activity); onDone(); }} className={`${item} text-rose-700 hover:bg-rose-50 hover:text-rose-800`}><Trash2 size={14} />Supprimer</button>
+  </>;
+  return <div>
+    <div className={compact ? "" : "flex flex-wrap gap-1"}>{buttons}</div>
+    {picking && <DayPicker label="Même horaire, le…" dayCount={dayCount} exclude={activity.day} onPick={(day) => actions.duplicateTo(activity, [day])} />}
+  </div>;
+}
+
+export function PlanningContextMenu({ target, activities, dayCount, actions, busy, onEdit, onAdd, onClose }: {
+  target: MenuTarget; activities: PlanActivity[]; dayCount: number; actions: PlanningActions; busy: boolean;
+  onEdit?: (activity: PlanActivity) => void; onAdd?: (day: number, start?: string, end?: string) => void; onClose: () => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const close = (event: Event) => { if (!ref.current?.contains(event.target as Node)) onClose(); };
+    const escape = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); };
+    document.addEventListener("mousedown", close);
+    document.addEventListener("scroll", close, true);
+    document.addEventListener("keydown", escape);
+    return () => { document.removeEventListener("mousedown", close); document.removeEventListener("scroll", close, true); document.removeEventListener("keydown", escape); };
+  }, [onClose]);
+
+  // Keep the menu inside the viewport (measured after render, applied straight to the element).
+  useLayoutEffect(() => {
+    const element = ref.current;
+    if (!element) return;
+    const rect = element.getBoundingClientRect();
+    element.style.left = `${Math.max(8, Math.min(target.x, window.innerWidth - rect.width - 8))}px`;
+    element.style.top = `${Math.max(8, Math.min(target.y, window.innerHeight - rect.height - 8))}px`;
+  });
+
+  let content: ReactNode = null;
+  if (target.kind === "activity") {
+    content = <>
+      <p className="truncate px-2.5 pb-1 pt-0.5 text-xs font-semibold text-slate-900">{target.activity.title}</p>
+      <ActivityQuickActions activity={target.activity} activities={activities} dayCount={dayCount} actions={actions} busy={busy} compact onEdit={onEdit ? () => onEdit(target.activity) : undefined} onDone={onClose} />
+    </>;
+  } else if (target.kind === "cell") {
+    content = <>
+      {onAdd && <button type="button" onClick={() => { onAdd(target.day, target.start, target.end); onClose(); }} className={item}><Plus size={14} />Ajouter un temps</button>}
+      <button type="button" disabled={!actions.clipboard || busy} onClick={() => { actions.paste(target.day, target.start); onClose(); }} className={item}>
+        <ClipboardPaste size={14} /><span className="truncate">{actions.clipboard ? `Coller « ${actions.clipboard.title} »` : "Coller (rien de copié)"}</span>
+      </button>
+    </>;
+  } else {
+    content = <>
+      {onAdd && <button type="button" onClick={() => { onAdd(target.day); onClose(); }} className={item}><Plus size={14} />Ajouter un temps au J{target.day}</button>}
+      <DayPicker label={`Copier le J${target.day} sur… (remplace)`} dayCount={dayCount} exclude={target.day} onPick={(day) => { actions.copyDay(target.day, day); onClose(); }} />
+    </>;
+  }
+
+  return <div ref={ref} role="menu" onContextMenu={(event) => event.preventDefault()} className="planning-controls fixed z-[150] w-64 rounded-md border border-slate-200 bg-white p-1 shadow-xl" style={{ left: target.x, top: target.y }}>{content}</div>;
+}
+
+export function PlanningNoticeBar({ actions, busy }: { actions: PlanningActions; busy: boolean }) {
+  if (!actions.notice) return null;
+  return <div role="status" className="planning-controls fixed bottom-5 left-1/2 z-[160] flex max-w-[calc(100vw-32px)] -translate-x-1/2 items-center gap-3 rounded-full bg-[#1a1530] py-2 pl-4 pr-2 text-sm text-white shadow-xl print:hidden">
+    <span className="min-w-0 truncate">{actions.notice.text}</span>
+    {actions.notice.undo && <button type="button" disabled={busy} onClick={() => void actions.undo()} className="inline-flex shrink-0 cursor-pointer items-center gap-1 rounded-full px-2.5 py-1 font-semibold text-[#d9b8f2] hover:bg-white/10 disabled:opacity-50"><Undo2 size={14} />Annuler</button>}
+    <button type="button" onClick={actions.dismiss} aria-label="Fermer" className="grid h-7 w-7 shrink-0 cursor-pointer place-items-center rounded-full text-white/60 hover:bg-white/10 hover:text-white"><X size={14} /></button>
+  </div>;
+}

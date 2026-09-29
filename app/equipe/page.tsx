@@ -6,9 +6,10 @@ import { Printer, Users } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { savePlanningTime } from "@/lib/savePlanningTime";
 import { defaultThemes } from "@/lib/planningThemes";
-import { resizePlanningActivityByQuarterHour } from "@/lib/planningMove";
+import { usePlanningActions } from "@/lib/usePlanningActions";
 import { ActivityEditor } from "@/components/planning/ActivityEditor";
 import { PlanningBoard } from "@/components/planning/PlanningBoard";
+import { ActivityQuickActions } from "@/components/planning/PlanningActionsMenu";
 import { TraineeRoster } from "@/components/planning/TraineeRoster";
 import { useTeamAuth } from "@/components/team/TeamAccess";
 import type { Formation, Inscription, PlanActivity, PlanTheme } from "@/lib/types";
@@ -28,7 +29,7 @@ const emptyActivity = (day: number, start = "09:00", end = "10:00"): PlanActivit
 });
 
 export default function TeamPage() {
-  const { user, isAdmin } = useTeamAuth();
+  const { user, isAdmin, trainer } = useTeamAuth();
   const [formations, setFormations] = useState<Formation[]>([]);
   const [plans, setPlans] = useState<FormationPlan[]>([]);
   const [formationId, setFormationId] = useState("");
@@ -129,22 +130,7 @@ export default function TeamPage() {
     finally { setBusy(false); }
   };
 
-  const toggleMerge = (activityIds: string[], merged: boolean) => {
-    if (!plan) return;
-    void saveActivities(plan.activities.map((item) => activityIds.includes(item.id) ? { ...item, merged } : item));
-  };
-
-  const resizeActivity = (activityId: string, edge: "start" | "end", direction: "expand" | "shrink") => {
-    if (!plan) return;
-    const next = resizePlanningActivityByQuarterHour(activityId, edge, direction, plan.activities);
-    if (!next) {
-      setError(direction === "expand"
-        ? "Impossible d’agrandir ce temps : le créneau voisin ne peut pas être réduit davantage."
-        : "Un temps doit durer au moins 15 minutes.");
-      return;
-    }
-    void saveActivities(next);
-  };
+  const planningActions = usePlanningActions(plan?.activities || [], saveActivities);
 
   const saveEditing = async () => {
     if (!editing || !plan || !formation) return;
@@ -208,11 +194,12 @@ export default function TeamPage() {
         </div>
 
         <div className={section === "planning" ? "pt-4" : "hidden print:block"}>
-          <PlanningBoard key={formation.id} activities={plan.activities} dayCount={dayCount} startDate={formation.startDate} formationTitle={formation.title} themes={themes} trainerNames={plan.trainerNames} busy={busy} arrivalTime={plan.arrivalTime} departureTime={plan.departureTime} onEdit={(item) => { setError(""); setEditing({ ...item, trainerIds: item.trainerIds || [] }); }} onAdd={(day, start, end) => { setError(""); setEditing(emptyActivity(day, start, end)); }} onSaveThemes={saveThemes} onSetBounds={(patch) => void saveBounds(patch)} onToggleMerge={toggleMerge} onResize={resizeActivity} />
+          <PlanningBoard key={formation.id} activities={plan.activities} dayCount={dayCount} startDate={formation.startDate} formationTitle={formation.title} themes={themes} trainerNames={plan.trainerNames} busy={busy} arrivalTime={plan.arrivalTime} departureTime={plan.departureTime} actions={planningActions} onEdit={(item) => { setError(""); setEditing({ ...item, trainerIds: item.trainerIds || [] }); }} onAdd={(day, start, end) => { setError(""); setEditing(emptyActivity(day, start, end)); }} onSaveThemes={saveThemes} onSetBounds={(patch) => void saveBounds(patch)} />
         </div>
         {section === "trainees" && <div className="print:hidden"><TraineeRoster key={selectedFormationId} inscriptions={registrations} loading={registrationsLoading} groupCount={groupCount} busy={busy} onChangeGroupCount={changeGroupCount} onSaveField={saveTraineeField} /></div>}
       </>}
     </div>
-    {editing && formation && plan && <ActivityEditor activity={editing} existing={plan.activities.some((item) => item.id === editing.id)} dayCount={dayCount} formationType={formation.type} trainers={trainers} themes={themes} busy={busy} error={error} onChange={setEditing} onSave={() => void saveEditing()} onClose={() => setEditing(null)} onDelete={() => { if (window.confirm("Supprimer ce temps ?")) void saveActivities(plan.activities.filter((item) => item.id !== editing.id)).then((saved) => { if (saved) setEditing(null); }); }} />}
+    {editing && formation && plan && <ActivityEditor author={{ name: `${trainer.firstName} ${trainer.lastName}`.trim() || user.email || "Formateur·ice", isAdmin }} activity={editing} existing={plan.activities.some((item) => item.id === editing.id)} dayCount={dayCount} formationType={formation.type} trainers={trainers} themes={themes} busy={busy} error={error} onChange={setEditing} onSave={() => void saveEditing()} onClose={() => setEditing(null)}
+      quickActions={(() => { const saved = plan.activities.find((item) => item.id === editing.id); return saved && <ActivityQuickActions activity={saved} activities={plan.activities} dayCount={dayCount} actions={planningActions} busy={busy} onDone={() => setEditing(null)} />; })()} />}
   </main>;
 }

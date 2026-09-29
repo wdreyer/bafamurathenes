@@ -39,5 +39,15 @@ service firebase.storage {
       allow read: if isAdmin() || isApprovedTrainer();
       allow write: if isAdmin();
     }
+
+    // Files attached to trainer proposals: new files only (random names), documents or images up to 20 Mo.
+    match /guide-resources/{resourceId}/{fileName} {
+      allow create: if isApprovedTrainer()
+        && request.resource.size <= 20 * 1024 * 1024
+        && (
+          request.resource.contentType.matches('image/.*')
+          || request.resource.contentType.matches('application/(pdf|msword|vnd[.]openxmlformats-officedocument[.].*|vnd[.]ms-(powerpoint|excel)|vnd[.]oasis[.]opendocument[.].*)')
+        );
+    }
   }
 }
