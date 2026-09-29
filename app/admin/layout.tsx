@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { onAuthStateChanged, signInWithEmailAndPassword, signOut, type User } from "firebase/auth";
+import { onAuthStateChanged, sendPasswordResetEmail, signInWithEmailAndPassword, signOut, type User } from "firebase/auth";
 import { doc, onSnapshot } from "firebase/firestore";
 import {
   GraduationCap,
@@ -35,6 +35,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => onAuthStateChanged(auth, (nextUser) => {
     setUser(nextUser);
@@ -57,13 +58,32 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   const onSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError(null);
+    setNotice(null);
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email.trim(), password);
       setPassword("");
-    } catch {
+    } catch (caught) {
       setLoading(false);
-      setError("Email ou mot de passe incorrect.");
+      const code = typeof caught === "object" && caught && "code" in caught ? String(caught.code) : "";
+      setError(code.includes("too-many-requests")
+        ? "Trop de tentatives. Attendez quelques minutes ou réinitialisez le mot de passe."
+        : "Email ou mot de passe incorrect pour ce projet Firebase.");
+    }
+  };
+
+  const resetPassword = async () => {
+    setError(null);
+    setNotice(null);
+    if (!email.trim()) {
+      setError("Renseignez d’abord l’adresse email du compte admin.");
+      return;
+    }
+    try {
+      await sendPasswordResetEmail(auth, email.trim());
+      setNotice("Email de réinitialisation envoyé par le projet Firebase du site.");
+    } catch {
+      setError("Impossible d’envoyer l’email de réinitialisation pour cette adresse.");
     }
   };
 
@@ -105,12 +125,14 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             />
             {user && !isAllowed && !error && <p className="text-sm font-medium text-rose-600">Ce compte n’a pas les droits administrateur.</p>}
             {error && <p className="text-sm font-medium text-rose-600">{error}</p>}
+            {notice && <p className="rounded-md bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800">{notice}</p>}
             <button
               type="submit"
               className="h-11 w-full cursor-pointer rounded-lg bg-slate-950 text-sm font-semibold text-white hover:bg-slate-800"
             >
               Se connecter
             </button>
+            <button type="button" onClick={() => void resetPassword()} className="w-full cursor-pointer text-sm font-medium text-slate-600 underline underline-offset-2">Mot de passe oublié ?</button>
           </form>
           {user && <button type="button" onClick={logout} className="mt-3 w-full text-sm font-medium text-slate-500 underline">Utiliser un autre compte</button>}
         </main>
