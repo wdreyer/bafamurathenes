@@ -10,6 +10,7 @@ import {
 import { cleanFormationTitle } from "@/lib/formationTitles";
 import FormationDetailPageClient from "@/components/public/formations/FormationDetailPageClient";
 import { getSiteUrl } from "@/lib/siteUrl";
+import { getFirebaseApiKey } from "@/lib/firebaseApiKey";
 
 type FirestoreValue = {
   stringValue?: string;
@@ -77,7 +78,7 @@ function mapFirestoreDocument(document: FirestoreDocument): Formation {
 }
 
 async function fetchFirestoreDocument(id: string): Promise<Formation | null> {
-  const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+  const apiKey = getFirebaseApiKey();
   if (!apiKey) return null;
 
   const response = await fetch(`${FIRESTORE_BASE_URL}/${encodeURIComponent(id)}?key=${apiKey}`, {
@@ -90,7 +91,7 @@ async function fetchFirestoreDocument(id: string): Promise<Formation | null> {
 }
 
 async function fetchAllFormations(): Promise<Formation[]> {
-  const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+  const apiKey = getFirebaseApiKey();
   if (!apiKey) return [];
 
   const response = await fetch(`${FIRESTORE_BASE_URL}?key=${apiKey}`, {

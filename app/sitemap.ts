@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { getSiteUrl } from "@/lib/siteUrl";
 import type { Formation } from "@/lib/types";
 import { getFormationSlug } from "@/lib/formationSlugs";
+import { getFirebaseApiKey } from "@/lib/firebaseApiKey";
 
 type FirestoreValue = {
   stringValue?: string;
@@ -62,7 +63,7 @@ function mapFirestoreDocument(document: FirestoreDocument): Formation {
 }
 
 async function fetchAllFormations(): Promise<Formation[]> {
-  const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+  const apiKey = getFirebaseApiKey();
   if (!apiKey || !process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID) return [];
 
   const response = await fetch(`${FIRESTORE_BASE_URL}?key=${apiKey}`, {

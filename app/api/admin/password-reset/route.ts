@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getFirebaseApiKey } from "@/lib/firebaseApiKey";
 
 const ADMIN_EMAIL = "bafa@murathenes.org";
 
@@ -10,8 +11,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unknown admin account" }, { status: 400 });
     }
 
-    const configuredApiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY?.trim();
-    const apiKey = configuredApiKey?.startsWith("XAIza") ? configuredApiKey.slice(1) : configuredApiKey;
+    const apiKey = getFirebaseApiKey();
     if (!apiKey) return NextResponse.json({ error: "Firebase configuration missing" }, { status: 500 });
 
     const response = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${apiKey}`, {
