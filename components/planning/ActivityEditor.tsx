@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { BookOpen, ExternalLink, FileText, Search, Save, Star, Trash2, X } from "lucide-react";
+import { useMemo, useState } from "react";
+import { BookOpen, ExternalLink, FileText, Search, Save, Trash2, X } from "lucide-react";
 import { catalogCategories, catalogForFormationWithCustom, resourceForActivity, type CatalogCategory, type TrainingCatalogItem } from "@/lib/trainingCatalog";
 import { themeForActivity, themeSwatch } from "@/lib/planningThemes";
 import { useTrainingTimes } from "@/lib/useTrainingTimes";
@@ -28,27 +28,16 @@ export function ActivityEditor({ activity, existing, dayCount, formationType, tr
   const [catalogOpen, setCatalogOpen] = useState(false);
   const [category, setCategory] = useState<"all" | CatalogCategory>("all");
   const [search, setSearch] = useState("");
-  const [favorites, setFavorites] = useState<string[]>([]);
-  const [recent, setRecent] = useState<string[]>([]);
   const { times: customTimes, error: catalogError } = useTrainingTimes();
   const { resources: guideResources } = useGuideLibrary();
   const catalog = useMemo(() => catalogForFormationWithCustom(formationType, customTimes), [formationType, customTimes]);
   const matches = catalog.filter((item) => (category === "all" || item.category === category) &&
     `${item.title} ${item.content}`.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
-      .includes(search.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim()))
-    .sort((a, b) => Number(favorites.includes(b.id)) - Number(favorites.includes(a.id)) ||
-      (recent.includes(a.id) ? recent.indexOf(a.id) : Number.MAX_SAFE_INTEGER) - (recent.includes(b.id) ? recent.indexOf(b.id) : Number.MAX_SAFE_INTEGER));
+      .includes(search.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim()));
   const scope = formationType === "formation_generale" ? "general" : "appro";
   const resources = guideResources.filter((item) => item.fileType === "pdf" && item.fileUrl && (item.scope === "both" || item.scope === scope));
   const resource = resourceForActivity(activity, guideResources);
   const selectedTheme = themeForActivity(activity, themes);
-
-  useEffect(() => {
-    try {
-      setFavorites(JSON.parse(window.localStorage.getItem("mura-planning-favorites") || "[]"));
-      setRecent(JSON.parse(window.localStorage.getItem("mura-planning-recent") || "[]"));
-    } catch { /* Ignore malformed local preferences. */ }
-  }, []);
 
   const chooseCatalogItem = (item: TrainingCatalogItem) => {
     const { resourceId: _resourceId, ...base } = activity;
@@ -56,16 +45,7 @@ export function ActivityEditor({ activity, existing, dayCount, formationType, tr
     onChange({ ...base, title: item.title, content: item.content, color: item.color, themeId: `theme-${item.color}`,
       catalogId: item.id, catalogCategory: item.category, catalogScope: item.scope,
       ...(item.resourceId ? { resourceId: item.resourceId } : {}) });
-    const nextRecent = [item.id, ...recent.filter((id) => id !== item.id)].slice(0, 8);
-    setRecent(nextRecent);
-    window.localStorage.setItem("mura-planning-recent", JSON.stringify(nextRecent));
     setCatalogOpen(false);
-  };
-
-  const toggleFavorite = (id: string) => {
-    const next = favorites.includes(id) ? favorites.filter((item) => item !== id) : [...favorites, id];
-    setFavorites(next);
-    window.localStorage.setItem("mura-planning-favorites", JSON.stringify(next));
   };
 
   const changeResource = (resourceId: string) => {
@@ -81,9 +61,9 @@ export function ActivityEditor({ activity, existing, dayCount, formationType, tr
     onChange({ ...base, title });
   };
 
-  return <div className="planning-controls fixed inset-0 z-[100] flex justify-end bg-slate-950/45" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-    <div role="dialog" aria-modal="true" aria-label="Modifier un temps" className="h-full w-full max-w-2xl overflow-y-auto bg-white p-4 shadow-2xl sm:p-6">
-      <div className="mb-4 flex items-center justify-between gap-3"><div><p className="text-xs font-semibold uppercase text-[#792bb9]">Planning pédagogique</p><h2 className="mt-0.5 text-lg font-semibold">{existing ? "Modifier le temps" : "Ajouter un temps"}</h2></div><button type="button" onClick={onClose} title="Fermer" aria-label="Fermer" className="grid h-8 w-8 place-items-center rounded hover:bg-slate-100"><X size={19} /></button></div>
+  return <div className="planning-controls fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-3" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+    <div role="dialog" aria-modal="true" aria-label="Modifier un temps" className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-md bg-white p-4 shadow-xl sm:p-6">
+      <div className="mb-4 flex items-center justify-between gap-3"><div><p className="text-xs font-semibold uppercase text-emerald-700">Planning pédagogique</p><h2 className="mt-0.5 text-lg font-semibold">{existing ? "Modifier le temps" : "Ajouter un temps"}</h2></div><button type="button" onClick={onClose} title="Fermer" aria-label="Fermer" className="grid h-8 w-8 place-items-center rounded hover:bg-slate-100"><X size={19} /></button></div>
       {error && <p role="alert" className="mb-4 rounded border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">{error}</p>}
       {catalogError && <p role="alert" className="mb-4 rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">{catalogError}</p>}
 
@@ -91,15 +71,15 @@ export function ActivityEditor({ activity, existing, dayCount, formationType, tr
         <label className="block text-xs font-semibold text-slate-600">Titre<input required value={activity.title} onChange={(event) => changeTitle(event.target.value)} className="mt-1 h-10 w-full rounded border border-slate-300 px-3 text-sm font-normal text-slate-900" /></label>
 
         <div className="text-xs">
-          <button type="button" onClick={() => setCatalogOpen((value) => !value)} aria-expanded={catalogOpen} className="inline-flex items-center gap-1 font-medium text-[#792bb9] hover:underline"><BookOpen size={13} />Choisir depuis le guide ({catalog.length})</button>
+          <button type="button" onClick={() => setCatalogOpen((value) => !value)} aria-expanded={catalogOpen} className="inline-flex items-center gap-1 font-medium text-emerald-700 hover:underline"><BookOpen size={13} />Choisir depuis le guide ({catalog.length})</button>
           {catalogOpen && <div className="mt-2 space-y-2 rounded border border-slate-200 bg-slate-50 p-3">
             <div className="flex flex-wrap items-center justify-between gap-2"><span className="text-[11px] font-semibold uppercase text-slate-500">Temps de formation</span><a href="/formateurs/ressources/temps-formation-indicatifs.docx" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-slate-600 underline">Liste indicative <ExternalLink size={11} /></a></div>
             <div className="grid gap-2 sm:grid-cols-[180px_1fr]">
               <label className="text-xs font-medium text-slate-600">Rubrique<select value={category} onChange={(event) => setCategory(event.target.value as "all" | CatalogCategory)} className="mt-1 h-9 w-full rounded border border-slate-300 bg-white px-2 text-sm"><option value="all">Toutes les rubriques</option>{catalogCategories.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
               <label className="relative text-xs font-medium text-slate-600">Rechercher<Search size={15} className="pointer-events-none absolute bottom-2.5 left-2.5 text-slate-400" /><input value={search} onChange={(event) => setSearch(event.target.value)} className="mt-1 h-9 w-full rounded border border-slate-300 bg-white pl-8 pr-2 text-sm" /></label>
             </div>
-            <div className="max-h-52 divide-y divide-slate-100 overflow-y-auto rounded border border-slate-200 bg-white">
-              {matches.map((item) => <div key={item.id} className="flex items-stretch hover:bg-[#f8f3fb]"><button type="button" onClick={() => chooseCatalogItem(item)} className="flex min-w-0 flex-1 items-start justify-between gap-2 px-3 py-2 text-left"><span className="min-w-0"><span className="block text-sm font-medium text-slate-900">{item.title}</span><span className="block text-xs text-slate-500">{catalogCategories.find((entry) => entry.id === item.category)?.label}{recent.includes(item.id) ? " · Récent" : ""}</span></span>{item.resourceId && <FileText size={15} className="mt-0.5 shrink-0 text-[#792bb9]" />}</button><button type="button" onClick={() => toggleFavorite(item.id)} title={favorites.includes(item.id) ? "Retirer des favoris" : "Ajouter aux favoris"} aria-label={favorites.includes(item.id) ? `Retirer ${item.title} des favoris` : `Ajouter ${item.title} aux favoris`} className={`grid w-10 shrink-0 place-items-center ${favorites.includes(item.id) ? "text-[#792bb9]" : "text-slate-300 hover:text-[#792bb9]"}`}><Star size={15} fill={favorites.includes(item.id) ? "currentColor" : "none"} /></button></div>)}
+            <div className="max-h-48 divide-y divide-slate-100 overflow-y-auto rounded border border-slate-200 bg-white">
+              {matches.map((item) => <button key={item.id} type="button" onClick={() => chooseCatalogItem(item)} className="flex w-full items-start justify-between gap-2 px-3 py-2 text-left hover:bg-emerald-50"><span className="min-w-0"><span className="block text-sm font-medium text-slate-900">{item.title}</span><span className="block text-xs text-slate-500">{catalogCategories.find((entry) => entry.id === item.category)?.label}</span></span>{item.resourceId && <FileText size={15} className="mt-0.5 shrink-0 text-emerald-700" />}</button>)}
               {!matches.length && <p className="px-3 py-5 text-sm text-slate-500">Aucun temps dans cette rubrique.</p>}
             </div>
           </div>}
@@ -120,8 +100,8 @@ export function ActivityEditor({ activity, existing, dayCount, formationType, tr
         <div className="grid gap-4 sm:grid-cols-2">
           <label className="text-xs font-semibold text-slate-600">Document PDF<select value={activity.resourceId || ""} onChange={(event) => changeResource(event.target.value)} className="mt-1 h-10 w-full rounded border border-slate-300 bg-white px-2 text-sm font-normal"><option value="">Aucun document</option>{resources.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}</select>{resource && <a href={resource.href} target="_blank" rel="noopener noreferrer" className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-emerald-800 underline">Voir le PDF <ExternalLink size={12} /></a>}</label>
         </div>
-        <div><p className="mb-2 text-xs font-semibold text-slate-600">Animation</p><div className="flex flex-wrap gap-2">{trainers.map((trainer) => <button key={trainer.id} type="button" onClick={() => onChange({ ...activity, trainerIds: (activity.trainerIds || []).includes(trainer.id) ? activity.trainerIds.filter((id) => id !== trainer.id) : [...(activity.trainerIds || []), trainer.id] })} aria-pressed={(activity.trainerIds || []).includes(trainer.id)} className={`rounded-full border px-3 py-1.5 text-xs font-medium ${(activity.trainerIds || []).includes(trainer.id) ? "border-emerald-700 bg-emerald-50 text-emerald-900" : "border-slate-300 bg-white text-slate-700"}`}>{trainer.name.trim().split(/\s+/)[0] || trainer.name}</button>)}{!trainers.length && <p className="text-xs text-slate-500">Aucun·e formateur·ice affecté·e à cette session.</p>}</div></div>
-        <div className="flex items-center justify-between border-t border-slate-200 pt-4">{existing && onDelete ? <button type="button" disabled={busy} onClick={onDelete} className="inline-flex items-center gap-1 text-sm font-medium text-rose-700 disabled:opacity-50"><Trash2 size={15} />Supprimer</button> : <span />}<button type="submit" disabled={busy} className="inline-flex h-10 items-center gap-2 rounded-full bg-[#792bb9] px-4 text-sm font-semibold text-white disabled:opacity-50"><Save size={16} />Enregistrer</button></div>
+        <div><p className="mb-2 text-xs font-semibold text-slate-600">Animation</p><div className="flex flex-wrap gap-2">{trainers.map((trainer) => <button key={trainer.id} type="button" onClick={() => onChange({ ...activity, trainerIds: (activity.trainerIds || []).includes(trainer.id) ? activity.trainerIds.filter((id) => id !== trainer.id) : [...(activity.trainerIds || []), trainer.id] })} aria-pressed={(activity.trainerIds || []).includes(trainer.id)} className={`rounded-full border px-3 py-1.5 text-xs font-medium ${(activity.trainerIds || []).includes(trainer.id) ? "border-emerald-700 bg-emerald-50 text-emerald-900" : "border-slate-300 bg-white text-slate-700"}`}>{trainer.name}</button>)}{!trainers.length && <p className="text-xs text-slate-500">Aucun·e formateur·ice affecté·e à cette session.</p>}</div></div>
+        <div className="flex items-center justify-between border-t border-slate-200 pt-4">{existing && onDelete ? <button type="button" disabled={busy} onClick={onDelete} className="inline-flex items-center gap-1 text-sm font-medium text-rose-700 disabled:opacity-50"><Trash2 size={15} />Supprimer</button> : <span />}<button type="submit" disabled={busy} className="inline-flex h-10 items-center gap-2 rounded-full bg-emerald-800 px-4 text-sm font-semibold text-white disabled:opacity-50"><Save size={16} />Enregistrer</button></div>
       </form>
     </div>
   </div>;
