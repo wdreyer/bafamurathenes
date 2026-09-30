@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
-  ArrowDownToLine, ArrowLeftToLine, ArrowRightToLine, ArrowUpToLine, Bold, Heading2, Heading3, ImagePlus, Italic, Link2, List, ListOrdered,
-  Quote, Redo2, Table2, Trash2, Underline, Undo2,
+  ArrowDownToLine, ArrowLeftToLine, ArrowRightToLine, ArrowUpToLine, Bold, ImagePlus, Italic, Link2, List, ListOrdered,
+  Maximize2, Minimize2, Quote, Redo2, Table2, Trash2, Underline, Undo2,
 } from "lucide-react";
 
 type Props = {
@@ -26,8 +26,6 @@ type Tool = {
 const tools: Tool[] = [
   { label: "Annuler", command: "undo", icon: Undo2 },
   { label: "Rétablir", command: "redo", icon: Redo2 },
-  { label: "Titre 2", command: "formatBlock", value: "h2", icon: Heading2 },
-  { label: "Titre 3", command: "formatBlock", value: "h3", icon: Heading3 },
   { label: "Gras", command: "bold", icon: Bold },
   { label: "Italique", command: "italic", icon: Italic },
   { label: "Souligné", command: "underline", icon: Underline },
@@ -36,19 +34,43 @@ const tools: Tool[] = [
   { label: "Citation", command: "formatBlock", value: "blockquote", icon: Quote },
 ];
 
+/** Paragraph styles offered in the toolbar menu. */
+const blockStyles = [
+  { tag: "p", label: "Texte normal" },
+  { tag: "h2", label: "Titre" },
+  { tag: "h3", label: "Sous-titre" },
+] as const;
+
 export function RichTextEditor({ value, onChange, onUploadImage, disabled = false, contentClassName = "", placeholder = "Rédige le contenu de la ressource..." }: Props) {
   const editorRef = useRef<HTMLDivElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   // Table cell holding the caret, to show the table tools.
   const [cell, setCell] = useState<HTMLTableCellElement | null>(null);
+  // Paragraph style at the caret, shown in the style menu.
+  const [block, setBlock] = useState<string>("p");
+  const [fullscreen, setFullscreen] = useState(false);
+  // Last selection inside the text: menus and the colour picker take the focus, so it is restored before each command.
+  const savedRange = useRef<Range | null>(null);
+
+  useEffect(() => {
+    if (!fullscreen) return;
+    const exit = (event: KeyboardEvent) => { if (event.key === "Escape") setFullscreen(false); };
+    document.addEventListener("keydown", exit);
+    return () => document.removeEventListener("keydown", exit);
+  }, [fullscreen]);
 
   useEffect(() => {
     const track = () => {
       const node = document.getSelection()?.anchorNode;
       const element = node instanceof Element ? node : node?.parentElement;
-      const current = element?.closest("td, th") as HTMLTableCellElement | null;
-      setCell(current && editorRef.current?.contains(current) ? current : null);
+      if (!element || !editorRef.current?.contains(element)) { setCell(null); return; }
+      const selection = document.getSelection();
+      if (selection?.rangeCount) savedRange.current = selection.getRangeAt(0).cloneRange();
+      const current = element.closest("td, th") as HTMLTableCellElement | null;
+      setCell(current && editorRef.current.contains(current) ? current : null);
+      const heading = element.closest("h1, h2, h3");
+      setBlock(heading && editorRef.current.contains(heading) ? heading.tagName.toLowerCase().replace("h1", "h2") : "p");
     };
     document.addEventListener("selectionchange", track);
     return () => document.removeEventListener("selectionchange", track);
@@ -61,6 +83,11 @@ export function RichTextEditor({ value, onChange, onUploadImage, disabled = fals
 
   const run = (command: string, commandValue?: string) => {
     editorRef.current?.focus();
+    if (savedRange.current && editorRef.current?.contains(savedRange.current.startContainer)) {
+      const selection = document.getSelection();
+      selection?.removeAllRanges();
+      selection?.addRange(savedRange.current);
+    }
     document.execCommand(command, false, commandValue);
     onChange(editorRef.current?.innerHTML || "");
   };
@@ -168,21 +195,34 @@ export function RichTextEditor({ value, onChange, onUploadImage, disabled = fals
     { label: "Supprimer la colonne", action: "deleteCol", icon: Trash2, danger: true },
   ];
 
-  return <div className="overflow-hidden rounded-xl border border-slate-300 bg-white focus-within:border-[#792bb9] focus-within:ring-1 focus-within:ring-[#792bb9]">
-    <div className="flex flex-wrap items-center gap-1 border-b border-slate-200 bg-slate-50 p-1.5">
+  const button = "grid h-8 w-8 cursor-pointer place-items-center rounded text-slate-600 hover:bg-white hover:text-[#792bb9] disabled:cursor-not-allowed disabled:opacity-40";
+
+  return <div className={fullscreen
+    ? "fixed inset-0 z-[300] flex flex-col bg-white"
+    : "rounded-xl border border-slate-300 bg-white focus-within:border-[#792bb9] focus-within:ring-1 focus-within:ring-[#792bb9]"}>
+    {/* Toolbars stay visible while scrolling through a long text. */}
+    <div className={fullscreen ? "shrink-0 border-b border-slate-200 shadow-sm" : "sticky top-0 z-10 rounded-t-xl"}>
+    <div className={`flex flex-wrap items-center gap-1 border-b border-slate-200 bg-slate-50 p-1.5 ${fullscreen ? "justify-center" : "rounded-t-xl"}`}>
+      <select value={block} disabled={disabled} onChange={(event) => { run("formatBlock", event.target.value); setBlock(event.target.value); }} aria-label="Style du paragraphe" title="Style du paragraphe"
+        className="h-8 cursor-pointer rounded-md border border-slate-200 bg-white px-2 text-xs font-semibold text-slate-700 disabled:opacity-40">
+        {blockStyles.map((style) => <option key={style.tag} value={style.tag}>{style.label}</option>)}
+      </select>
+      <span className="mx-1 h-5 w-px bg-slate-300" />
       {tools.map((tool) => {
         const Icon = tool.icon;
-        return <button key={tool.label} type="button" disabled={disabled} onMouseDown={(event) => event.preventDefault()} onClick={() => run(tool.command, tool.value)} title={tool.label} aria-label={tool.label} className="grid h-8 w-8 cursor-pointer place-items-center rounded text-slate-600 hover:bg-white hover:text-emerald-800 disabled:cursor-not-allowed disabled:opacity-40"><Icon size={16} /></button>;
+        return <button key={tool.label} type="button" disabled={disabled} onMouseDown={(event) => event.preventDefault()} onClick={() => run(tool.command, tool.value)} title={tool.label} aria-label={tool.label} className={button}><Icon size={16} /></button>;
       })}
       <span className="mx-1 h-5 w-px bg-slate-300" />
       <label title="Couleur du texte" className="grid h-8 w-8 cursor-pointer place-items-center rounded hover:bg-white">
         <span className="h-4 w-4 rounded-full border border-slate-300 bg-[#792bb9]" />
         <input type="color" disabled={disabled} className="sr-only" onChange={(event) => run("foreColor", event.target.value)} />
       </label>
-      <button type="button" disabled={disabled} onMouseDown={(event) => event.preventDefault()} onClick={addLink} title="Ajouter un lien" aria-label="Ajouter un lien" className="grid h-8 w-8 cursor-pointer place-items-center rounded text-slate-600 hover:bg-white hover:text-emerald-800 disabled:opacity-40"><Link2 size={16} /></button>
-      <button type="button" disabled={disabled} onMouseDown={(event) => event.preventDefault()} onClick={addTable} title="Ajouter un tableau" aria-label="Ajouter un tableau" className="grid h-8 w-8 cursor-pointer place-items-center rounded text-slate-600 hover:bg-white hover:text-emerald-800 disabled:opacity-40"><Table2 size={16} /></button>
-      <button type="button" disabled={disabled || uploading} onMouseDown={(event) => event.preventDefault()} onClick={() => imageInputRef.current?.click()} title="Ajouter une image" aria-label="Ajouter une image" className="grid h-8 w-8 cursor-pointer place-items-center rounded text-slate-600 hover:bg-white hover:text-emerald-800 disabled:opacity-40"><ImagePlus size={16} /></button>
+      <button type="button" disabled={disabled} onMouseDown={(event) => event.preventDefault()} onClick={addLink} title="Ajouter un lien" aria-label="Ajouter un lien" className={button}><Link2 size={16} /></button>
+      <button type="button" disabled={disabled} onMouseDown={(event) => event.preventDefault()} onClick={addTable} title="Ajouter un tableau" aria-label="Ajouter un tableau" className={button}><Table2 size={16} /></button>
+      <button type="button" disabled={disabled || uploading} onMouseDown={(event) => event.preventDefault()} onClick={() => imageInputRef.current?.click()} title="Ajouter une image" aria-label="Ajouter une image" className={button}><ImagePlus size={16} /></button>
       <input ref={imageInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={(event) => void uploadImage(event.target.files?.[0])} />
+      <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => { setFullscreen((value) => !value); editorRef.current?.focus(); }} title={fullscreen ? "Quitter le plein écran (Échap)" : "Plein écran"} aria-label={fullscreen ? "Quitter le plein écran" : "Plein écran"} aria-pressed={fullscreen}
+        className={`ml-auto inline-flex h-8 cursor-pointer items-center gap-1.5 rounded px-2 text-xs font-semibold ${fullscreen ? "bg-[#792bb9] text-white" : "text-slate-600 hover:bg-white hover:text-[#792bb9]"}`}>{fullscreen ? <><Minimize2 size={15} />Réduire</> : <><Maximize2 size={15} />Plein écran</>}</button>
     </div>
     {cell && !disabled && <div className="flex flex-wrap items-center gap-1 border-b border-[#e6d9f0] bg-[#f8f3fb] px-2 py-1.5 text-xs">
       <span className="mr-1 inline-flex items-center gap-1 font-semibold text-[#552080]"><Table2 size={14} />Tableau</span>
@@ -193,6 +233,8 @@ export function RichTextEditor({ value, onChange, onUploadImage, disabled = fals
       })}
       <button type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => editTable("deleteTable")} className="ml-auto inline-flex h-7 cursor-pointer items-center gap-1 rounded-md px-2 font-semibold text-rose-700 hover:bg-white"><Trash2 size={13} />Supprimer le tableau</button>
     </div>}
+    </div>
+    <div className={fullscreen ? "flex-1 overflow-y-auto bg-slate-50 py-8" : ""}>
     <div
       ref={editorRef}
       contentEditable={!disabled}
@@ -200,7 +242,8 @@ export function RichTextEditor({ value, onChange, onUploadImage, disabled = fals
       onInput={(event) => onChange(event.currentTarget.innerHTML)}
       onKeyDown={onKeyDown}
       data-placeholder={placeholder}
-      className={`guide-rich-content min-h-80 px-5 py-4 text-sm leading-7 text-slate-800 outline-none ${contentClassName}`}
+      className={`guide-rich-content px-5 py-4 text-sm leading-7 text-slate-800 outline-none ${fullscreen ? "mx-auto min-h-full max-w-4xl rounded-xl bg-white px-10 py-8 shadow-sm" : "min-h-80"} ${contentClassName}`}
     />
+    </div>
   </div>;
 }

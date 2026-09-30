@@ -406,30 +406,42 @@ export function PlanningBoard({ activities, dayCount, startDate, themes = defaul
   const isLit = (activity: PlanActivity) =>
     (!highlightTrainer || (activity.trainerIds || []).includes(highlightTrainer)) &&
     (!highlightTheme || themeForActivity(activity, themes).id === highlightTheme);
-  const chip = (active: boolean) => `inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-full border pl-1 pr-3 text-xs font-semibold transition ${active ? "border-[#792bb9] bg-[#792bb9] text-white shadow-sm" : "border-[#e6d9f0] bg-white text-slate-700 hover:border-[#792bb9]"}`;
   const onMenu = actions ? setMenu : undefined;
 
   return <>
     <div className="planning-controls space-y-3 print:hidden">
-      <div className="flex flex-wrap items-center gap-3">
-        <div className="inline-flex rounded-full border border-[#e6d9f0] bg-white p-1 shadow-sm" role="group" aria-label="Affichage du planning">
-          <button type="button" onClick={() => setView("all")} aria-pressed={view === "all"} className={`h-8 cursor-pointer rounded-full px-4 text-xs font-semibold transition ${view === "all" ? "bg-[#792bb9] text-white" : "text-slate-600 hover:text-[#792bb9]"}`}>🗓️ Formation complète</button>
-          <button type="button" onClick={() => setView("day")} aria-pressed={view === "day"} className={`h-8 cursor-pointer rounded-full px-4 text-xs font-semibold transition ${view === "day" ? "bg-[#792bb9] text-white" : "text-slate-600 hover:text-[#792bb9]"}`}>☀️ Jour par jour</button>
+      {/* One compact line of controls, so the planning itself comes first. */}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <div className="inline-flex shrink-0 rounded-full border border-[#e6d9f0] bg-white p-0.5 shadow-sm" role="group" aria-label="Affichage du planning">
+          <button type="button" onClick={() => setView("all")} aria-pressed={view === "all"} className={`h-7 cursor-pointer rounded-full px-3 text-xs font-semibold transition ${view === "all" ? "bg-[#792bb9] text-white" : "text-slate-600 hover:text-[#792bb9]"}`}>🗓️ Formation</button>
+          <button type="button" onClick={() => setView("day")} aria-pressed={view === "day"} className={`h-7 cursor-pointer rounded-full px-3 text-xs font-semibold transition ${view === "day" ? "bg-[#792bb9] text-white" : "text-slate-600 hover:text-[#792bb9]"}`}>☀️ Jour</button>
         </div>
-        <button type="button" onClick={() => setSettingsOpen(true)} title="Réglages du planning" aria-label="Réglages du planning" className="ml-auto grid h-9 w-9 cursor-pointer place-items-center rounded-full text-slate-400 hover:bg-[#f0e8f8] hover:text-[#792bb9]"><Settings2 size={18} /></button>
+
+        {trainers.length > 0 && <div className="flex flex-wrap items-center gap-1" role="group" aria-label="Voir les temps d'une personne">
+          <span className="mr-0.5 text-[11px] font-semibold text-slate-400" title="Clique sur un prénom pour voir ses temps et atténuer les autres">Qui ?</span>
+          {trainers.map((trainer, index) => <button key={trainer.id} type="button" onClick={() => setHighlightTrainer((id) => id === trainer.id ? null : trainer.id)} aria-pressed={highlightTrainer === trainer.id}
+            title={highlightTrainer === trainer.id ? "Tout réafficher" : `Voir uniquement les temps de ${trainer.name}`}
+            className={`inline-flex h-7 cursor-pointer items-center gap-1 rounded-full border pl-0.5 pr-2.5 text-[11px] font-semibold transition ${highlightTrainer === trainer.id ? "border-[#792bb9] bg-[#792bb9] text-white shadow-sm" : "border-[#e6d9f0] bg-white text-slate-700 hover:border-[#792bb9]"}`}>
+            <span className="grid h-5 w-5 place-items-center rounded-full text-[10px] font-bold text-white" style={{ backgroundColor: TRAINER_COLORS[index % TRAINER_COLORS.length] }}>{trainer.name.slice(0, 1).toUpperCase()}</span>{trainer.name}
+          </button>)}
+        </div>}
+
+        <span className="hidden h-5 w-px bg-slate-200 sm:block" />
+
+        <div className="flex flex-wrap items-center gap-1" role="group" aria-label="Voir un thème">
+          {themes.map((theme) => <button key={theme.id} type="button" onClick={() => setHighlightTheme((id) => id === theme.id ? null : theme.id)} aria-pressed={highlightTheme === theme.id}
+            title={highlightTheme === theme.id ? "Tout réafficher" : `Voir uniquement : ${theme.name}`}
+            className={`inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-full border px-2.5 text-[11px] font-semibold transition ${highlightTheme === theme.id ? "border-[#792bb9] bg-[#792bb9] text-white shadow-sm" : "border-[#e6d9f0] bg-white text-slate-700 hover:border-[#792bb9]"}`}>
+            <span className={`h-2 w-2 rounded-full ${themeSwatch(theme.color)}`} />{theme.name}
+          </button>)}
+        </div>
+
+        {(highlightTrainer || highlightTheme) && <button type="button" onClick={() => { setHighlightTrainer(null); setHighlightTheme(null); }} className="inline-flex h-7 cursor-pointer items-center gap-1 rounded-full px-2 text-[11px] font-semibold text-[#792bb9] hover:bg-[#f0e8f8]"><X size={12} />Tout afficher</button>}
+
+        <button type="button" onClick={() => setSettingsOpen(true)} title="Réglages du planning" aria-label="Réglages du planning" className="ml-auto grid h-8 w-8 shrink-0 cursor-pointer place-items-center rounded-full text-slate-400 hover:bg-[#f0e8f8] hover:text-[#792bb9]"><Settings2 size={17} /></button>
       </div>
 
-      {trainers.length > 0 && <div className="flex flex-wrap items-center gap-2">
-        {trainers.map((trainer, index) => <button key={trainer.id} type="button" onClick={() => setHighlightTrainer((id) => id === trainer.id ? null : trainer.id)} aria-pressed={highlightTrainer === trainer.id} className={chip(highlightTrainer === trainer.id)}>
-          <span className="grid h-6 w-6 place-items-center rounded-full text-[11px] font-bold text-white ring-2 ring-white" style={{ backgroundColor: TRAINER_COLORS[index % TRAINER_COLORS.length] }}>{trainer.name.slice(0, 1).toUpperCase()}</span>{trainer.name}
-        </button>)}
-      </div>}
-
-      <div className="flex flex-wrap items-center gap-2">
-        {themes.map((theme) => <button key={theme.id} type="button" onClick={() => setHighlightTheme((id) => id === theme.id ? null : theme.id)} aria-pressed={highlightTheme === theme.id} className={`${chip(highlightTheme === theme.id)} pl-3`}><span className={`h-2.5 w-2.5 rounded-full ring-2 ring-white ${themeSwatch(theme.color)}`} />{theme.name}</button>)}
-      </div>
-
-      <div className="min-w-0 max-w-full pt-1">{view === "all"
+      <div className="min-w-0 max-w-full">{view === "all"
         ? <OverviewGrid days={days} dayCount={dayCount} startDate={startDate} activities={activities} themes={themes} trainerNames={trainerNames} prefs={prefs} busy={busy} isLit={isLit} onAdd={onAdd} onEdit={onEdit} onMenu={onMenu} onMove={actions?.move} />
         : <DayAgenda day={selectedDay} dayCount={dayCount} startDate={startDate} activities={activities} themes={themes} trainerNames={trainerNames} prefs={prefs} busy={busy} isLit={isLit}
           onChangeDay={(day) => setSelectedDay(Math.min(dayCount, Math.max(1, day)))} onEdit={onEdit} onAdd={onAdd} onMenu={onMenu} sheetFor={sheetFor} onOpenSheet={setSheet} />}</div>
