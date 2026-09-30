@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { deleteDoc, doc, serverTimestamp, setDoc } from "firebase/firestore";
 import {
   ArrowDown, ArrowUp, BookOpen, Check, Clock3, ExternalLink, FileText, ImagePlus, Pencil,
-  Plus, Save, Settings2, Trash2, X,
+  Plus, Save, Settings2, Sparkles, Trash2, X,
 } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { uploadGuideFile } from "@/lib/uploadGuideFile";
@@ -15,6 +15,7 @@ import {
 } from "@/lib/guideLibrary";
 import { useGuideLibrary } from "@/lib/useGuideLibrary";
 import { RichTextEditor } from "@/components/guide/RichTextEditor";
+import { TrainingTimesAdmin } from "@/components/admin/TrainingTimesAdmin";
 
 const emptyResource = (): GuideResourceRecord => ({
   id: "",
@@ -38,7 +39,7 @@ export default function AdminResourcesPage() {
   const { categories, resources, customResources, loading, error: loadError } = useGuideLibrary();
   const [draft, setDraft] = useState<GuideResourceRecord | null>(null);
   const [categoryDraft, setCategoryDraft] = useState<GuideCategoryRecord | null>(null);
-  const [view, setView] = useState<"resources" | "categories">("resources");
+  const [view, setView] = useState<"resources" | "times" | "categories">("resources");
   const [search, setSearch] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -202,14 +203,15 @@ export default function AdminResourcesPage() {
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div className="flex rounded-md border border-slate-200 bg-white p-1">
         <button type="button" onClick={() => setView("resources")} className={`inline-flex h-9 items-center gap-2 rounded px-3 text-sm font-medium ${view === "resources" ? "bg-slate-900 text-white" : "text-slate-600"}`}><BookOpen size={15} />Ressources</button>
+        <button type="button" onClick={() => setView("times")} className={`inline-flex h-9 items-center gap-2 rounded px-3 text-sm font-medium ${view === "times" ? "bg-slate-900 text-white" : "text-slate-600"}`}><Sparkles size={15} />Temps de formation</button>
         <button type="button" onClick={() => setView("categories")} className={`inline-flex h-9 items-center gap-2 rounded px-3 text-sm font-medium ${view === "categories" ? "bg-slate-900 text-white" : "text-slate-600"}`}><Settings2 size={15} />Catégories</button>
       </div>
-      {view === "resources"
+      {view === "times" ? null : view === "resources"
         ? <button type="button" onClick={() => { const next = emptyResource(); next.categoryId = categories[0]?.id || ""; setDraft(next); }} className="inline-flex h-10 items-center gap-2 rounded bg-emerald-800 px-4 text-sm font-semibold text-white"><Plus size={16} />Nouvelle ressource</button>
         : <button type="button" onClick={() => setCategoryDraft(emptyCategory(categories.length))} className="inline-flex h-10 items-center gap-2 rounded bg-emerald-800 px-4 text-sm font-semibold text-white"><Plus size={16} />Nouvelle catégorie</button>}
     </div>
 
-    {view === "resources" ? <div className="grid gap-6 xl:grid-cols-[minmax(320px,0.75fr)_minmax(580px,1.4fr)]">
+    {view === "times" ? <TrainingTimesAdmin /> : view === "resources" ? <div className="grid gap-6 xl:grid-cols-[minmax(320px,0.75fr)_minmax(580px,1.4fr)]">
       <section className="min-w-0">
         {pending.length > 0 && <div className="mb-4 rounded-md border border-amber-300 bg-amber-50">
           <p className="flex items-center gap-2 border-b border-amber-200 px-3 py-2 text-sm font-semibold text-amber-950"><Clock3 size={15} />À valider ({pending.length})</p>

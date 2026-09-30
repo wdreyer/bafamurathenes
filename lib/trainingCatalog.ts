@@ -11,7 +11,17 @@ export type TrainingCatalogItem = {
   content: string;
   color: PlanActivity["color"];
   resourceId?: string;
+  /** "Temps théorique" or "Mise en situation pratique", as in the indicative times document. */
+  kind?: TrainingTimeKind;
+  /** Admin removed it from the guide (built-in times can't be deleted, only hidden). */
+  hidden?: boolean;
 };
+
+export type TrainingTimeKind = "theorie" | "pratique";
+export const trainingTimeKinds: { id: TrainingTimeKind; label: string }[] = [
+  { id: "theorie", label: "Temps théorique" },
+  { id: "pratique", label: "Mise en situation pratique" },
+];
 
 export const catalogCategories: { id: CatalogCategory; label: string }[] = [
   { id: "cadre", label: "Cadre & BAFA" },
@@ -22,7 +32,7 @@ export const catalogCategories: { id: CatalogCategory; label: string }[] = [
   { id: "bilan", label: "Bilans & évaluations" },
 ];
 
-export const trainingCatalog: TrainingCatalogItem[] = [
+const builtInCatalog: TrainingCatalogItem[] = [
   { id: "regles-vie", title: "Règles de vie", category: "cadre", scope: "both", content: "Construire le cadre de vie et les règles du groupe.", color: "mint" },
   { id: "presentation-formation", title: "Présentation de la formation", category: "cadre", scope: "both", content: "Présenter le déroulé, les objectifs et les attentes de la session.", color: "sky" },
   { id: "criteres-evaluation", title: "Critères d'évaluation", category: "cadre", scope: "both", content: "Partager les critères et modalités d'évaluation du stage.", color: "sky" },
@@ -35,29 +45,29 @@ export const trainingCatalog: TrainingCatalogItem[] = [
   { id: "laicite", title: "Laïcité et valeurs de la République", category: "cadre", scope: "both", content: "Échanger sur les valeurs et leur traduction en animation.", color: "lilac" },
   { id: "cee", title: "CEE et contrats", category: "cadre", scope: "both", content: "Comprendre le contrat d'engagement éducatif.", color: "sky" },
   { id: "droits-enfants", title: "Droits des enfants", category: "cadre", scope: "both", content: "Droits de l'enfant et responsabilité éducative.", color: "lilac" },
-  { id: "connaissance-publics", title: "Connaissance des publics", category: "pedagogie", scope: "both", content: "Tranches d'âge, rythmes et besoins des enfants et des jeunes.", color: "sky" },
-  { id: "vie-quotidienne", title: "Vie quotidienne", category: "pedagogie", scope: "both", content: "Organiser les différents temps d'une journée type.", color: "mint" },
-  { id: "projets", title: "Projets éducatif, pédagogique et d'animation", category: "pedagogie", scope: "both", content: "Distinguer les différents niveaux de projet.", color: "lilac" },
+  { id: "connaissance-publics", title: "Connaissance des publics", category: "pedagogie", scope: "both", content: "Les différentes tranches d'âge et leurs besoins.", color: "sky" },
+  { id: "vie-quotidienne", title: "Vie quotidienne", category: "pedagogie", scope: "both", content: "Journée type et organisation des différents temps de la vie quotidienne.", color: "mint" },
+  { id: "projets", title: "Projets éducatif, pédagogique et d'animation", category: "pedagogie", scope: "both", content: "Projets éducatif, pédagogique, d'animation et d'activité.", color: "lilac" },
   { id: "education-populaire", title: "Éducation populaire", category: "pedagogie", scope: "both", content: "Repères et pratiques de l'éducation populaire.", color: "lilac" },
   { id: "objectifs-pedagogiques", title: "Intentions et objectifs pédagogiques", category: "pedagogie", scope: "both", content: "Formuler des intentions et objectifs pour une activité.", color: "sky" },
   { id: "gestion-conflits", title: "Gestion des conflits / CNV", category: "pedagogie", scope: "both", content: "Écoute active, reformulation et besoins dans les tensions du groupe.", color: "lilac", resourceId: "communication-non-violente" },
   { id: "autorite-sanction", title: "Autorité, sanction ou punition ?", category: "pedagogie", scope: "both", content: "Choisir une réponse éducative proportionnée et réparatrice.", color: "coral", resourceId: "reparation-educative" },
   { id: "violence-maltraitance", title: "Violence et maltraitance", category: "pedagogie", scope: "both", content: "Prévention, écoute et alerte dans le cadre de protection de l'enfance.", color: "coral", resourceId: "temps-maltraitance" },
-  { id: "consentement", title: "Consentement en ACM", category: "pedagogie", scope: "both", content: "Aborder le consentement de façon transversale et sur un temps dédié.", color: "coral" },
+  { id: "consentement", title: "Consentement en ACM", category: "pedagogie", scope: "both", content: "Consentement en ACM : en transversal et sur un temps formel.", color: "coral" },
   { id: "discriminations", title: "Discriminations et harcèlement", category: "pedagogie", scope: "both", content: "Identifier et prévenir les discriminations et le harcèlement.", color: "coral" },
   { id: "handicaps", title: "Différences et handicaps", category: "pedagogie", scope: "both", content: "Adapter les activités aux besoins et capacités de chacun.", color: "sky" },
   { id: "travail-equipe", title: "Travail en équipe", category: "pedagogie", scope: "both", content: "Coopération, communication et répartition des rôles.", color: "mint" },
-  { id: "starter", title: "Starter", category: "animation", scope: "both", content: "Animer un petit jeu d'attente simple, rapide et avec peu de matériel.", color: "mint" },
-  { id: "chant", title: "Chant", category: "animation", scope: "both", content: "Faire apprendre un chant et donner vie aux paroles.", color: "mint" },
-  { id: "activite-intermediaire", title: "Temps d'animation intermédiaire", category: "animation", scope: "general", content: "Créer et animer une activité d'environ 30 minutes en petit groupe.", color: "sky" },
-  { id: "grand-jeu", title: "Grand jeu / veillée", category: "animation", scope: "both", content: "Concevoir et animer un grand jeu ou une veillée en équipe.", color: "coral" },
-  { id: "journal-stage", title: "Journal du stage", category: "animation", scope: "both", content: "Présenter la journée de manière ludique : scénette, journal TV ou autre forme.", color: "lemon" },
-  { id: "activites-manuelles", title: "Activités manuelles", category: "animation", scope: "general", content: "Préparer et animer une activité manuelle seul·e ou en équipe.", color: "mint" },
-  { id: "fil-rouge", title: "Fil rouge / projet", category: "animation", scope: "both", content: "Construire un projet fédérateur sur toute la durée du stage.", color: "lemon" },
+  { id: "starter", title: "Starter", category: "animation", scope: "both", content: "Savoir animer un petit jeu d'attente : mise en place rapide, pas ou peu de matériel, règles simples.", color: "mint" },
+  { id: "chant", title: "Chant", category: "animation", scope: "both", content: "Savoir animer un chant, le faire apprendre, répéter et donner vie aux paroles.", color: "mint" },
+  { id: "activite-intermediaire", title: "Temps d'animation intermédiaire", category: "animation", scope: "general", content: "Savoir animer seul·e ou en petite équipe une activité de 30 min environ : créer un imaginaire, respecter le PSAADRAFRA SIOU.", color: "sky" },
+  { id: "grand-jeu", title: "Grand jeu / veillée", category: "animation", scope: "both", content: "Savoir animer un grand jeu et une veillée en grande équipe (4 ou 5 stagiaires) en respectant le PSAADRAFRA SIOU.", color: "coral" },
+  { id: "journal-stage", title: "Journal du stage", category: "animation", scope: "both", content: "Savoir animer une présentation ludique de la journée d'activité (journal, saynète, journal TV…).", color: "lemon" },
+  { id: "activites-manuelles", title: "Activités manuelles", category: "animation", scope: "general", content: "Savoir animer seul·e ou en équipe une activité manuelle.", color: "mint" },
+  { id: "fil-rouge", title: "Fil rouge / projet", category: "animation", scope: "both", content: "Savoir animer seul·e ou en équipe un projet fédérateur sur toute la durée du stage (création artistique collective, spectacle, jeu par étapes…).", color: "lemon" },
   { id: "choregraphie", title: "La choré coopérative", category: "animation", scope: "general", content: "Projet collectif mêlant mouvement, transmission et décision partagée.", color: "coral", resourceId: "choregraphie-cooperative" },
   { id: "imaginaire", title: "Imaginaire et expression", category: "animation", scope: "both", content: "Atelier d'imaginaire et d'expression à partir d'objets et de mises en scène.", color: "coral", resourceId: "inventer-jouer-oser" },
-  { id: "analyser", title: "Analyser une activité", category: "animation", scope: "both", content: "Analyser un grand jeu ou un temps de vie collective en équipe.", color: "sky" },
-  { id: "repas", title: "Gestion des repas", category: "vie", scope: "both", content: "Préparer en groupe un repas collectif et respecter les règles d'hygiène.", color: "lemon" },
+  { id: "analyser", title: "Analyser une activité", category: "animation", scope: "both", content: "Savoir analyser seul·e et en équipe un grand jeu ou un temps de vie collective.", color: "sky" },
+  { id: "repas", title: "Gestion des repas", category: "vie", scope: "both", content: "Savoir préparer en groupe un repas collectif en respectant les normes d'hygiène en vigueur.", color: "lemon" },
   { id: "budget-repas", title: "Repas et budget", category: "vie", scope: "appro", content: "Menus, courses, rôles et suivi du budget collectif.", color: "lemon", resourceId: "repas-budget" },
   { id: "transports", title: "Gestion des transports", category: "vie", scope: "appro", content: "Déplacements collectifs, imprévus et sécurité du groupe.", color: "sky", resourceId: "gestion-transports" },
   { id: "interculturalite", title: "Interculturalité et multiculturalisme", category: "interculturel", scope: "appro", content: "Freins et leviers de la rencontre interculturelle.", color: "lilac" },
@@ -71,15 +81,31 @@ export const trainingCatalog: TrainingCatalogItem[] = [
   { id: "auto-evaluation", title: "Auto-évaluation mi-stage et fin de stage", category: "bilan", scope: "both", content: "Faire le point sur sa progression et ses besoins.", color: "mint" },
   { id: "entretiens", title: "Entretiens individuels", category: "bilan", scope: "both", content: "Préparer les entretiens de début, milieu ou fin de stage.", color: "sky" },
   { id: "evaluation-finale", title: "Évaluation de fin de stage", category: "bilan", scope: "both", content: "Clore la session et formaliser les évaluations.", color: "mint" },
+  { id: "sexualite", title: "Sexualité en ACM", category: "pedagogie", scope: "general", content: "Aborder la vie affective et sexuelle des jeunes accueilli·es et la posture de l'équipe.", color: "coral" },
+  { id: "alcool-drogues-tabac", title: "Alcool, drogues et tabac", category: "pedagogie", scope: "both", content: "Prévention et réduction des risques, cadre légal et posture en ACM.", color: "coral" },
+  { id: "types-grands-jeux", title: "Les types de grands jeux", category: "animation", scope: "general", content: "Panorama des grands jeux et de leurs intentions éducatives.", color: "coral" },
+  { id: "organiser-activite", title: "Organiser une activité : PSAADRAFRA SIOU", category: "animation", scope: "both", content: "Préparation, sensibilisation, aménagement, accueil, déroulement, rythme, animation, fin, rangement, analyse, sécurité, imaginaire, objectif pédagogique, urgence.", color: "sky" },
+  { id: "trouver-stage", title: "Trouver un stage pratique", category: "cadre", scope: "general", content: "Où chercher, CV et lettres de motivation.", color: "sky" },
+  { id: "presentation-appro", title: "Présentation de l'appro échanges de jeunes", category: "interculturel", scope: "appro", content: "Présenter l'approfondissement « Échanges de jeunes et séjours à l'étranger » et la rencontre interculturelle.", color: "sky" },
+  { id: "animation-appro", title: "Temps d'animation appro", category: "animation", scope: "appro", content: "Mener un projet d'animation et d'activité favorisant l'interculturalité.", color: "mint" },
 ];
+
+// Mises en situation pratiques from the indicative times document; everything else is theory.
+const practicalIds = new Set(["starter", "chant", "activite-intermediaire", "grand-jeu", "journal-stage", "activites-manuelles",
+  "fil-rouge", "choregraphie", "analyser", "repas", "budget-repas", "activite-interculturelle", "activites-multilingues", "animation-appro"]);
+
+export const trainingCatalog: TrainingCatalogItem[] = builtInCatalog.map((item) => ({ ...item, kind: practicalIds.has(item.id) ? "pratique" : "theorie" }));
 
 export function catalogForFormation(type: FormationType) {
   const scope = type === "formation_generale" ? "general" : "appro";
   return trainingCatalog.filter((item) => item.scope === "both" || item.scope === scope);
 }
 
+/** Built-in times with admin edits applied (same id), plus times added from plannings or by admins; hidden ones removed. */
 export function allCatalogTimes(customTimes: TrainingCatalogItem[]) {
-  return [...trainingCatalog, ...customTimes].sort((a, b) =>
+  const merged = new Map(trainingCatalog.map((item) => [item.id, item]));
+  customTimes.forEach((item) => merged.set(item.id, { ...merged.get(item.id), ...item }));
+  return Array.from(merged.values()).filter((item) => !item.hidden).sort((a, b) =>
     catalogCategories.findIndex((item) => item.id === a.category) - catalogCategories.findIndex((item) => item.id === b.category)
     || a.title.localeCompare(b.title, "fr"));
 }
