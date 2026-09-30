@@ -87,10 +87,12 @@ function ActivityCell({ info, activity, themes, trainerNames, prefs, disabled, o
   // and the full content shows on hover and on click.
   // Short (≤ 15 min) and merged cells have room in width, not height: hours and names go on the title's right.
   const inline = merged || minuteOfDay(activity.end) - minuteOfDay(activity.start) <= 15;
+  // "À l'échelle": a 15-minute time is only 18px high, so its line gets smaller type and no extra leading.
+  const tiny = prefs.density === "scale" && minuteOfDay(activity.end) - minuteOfDay(activity.start) <= 15;
   const meta = [prefs.hours ? `${shortHour(activity.start)}–${shortHour(activity.end)}` : "", prefs.names ? names.join(" · ") : ""].filter(Boolean).join(" · ");
-  const title = <span data-overflow-check className={`whitespace-normal break-words [overflow-wrap:anywhere] font-bold leading-snug ${inline ? "" : "w-full"} ${merged ? "text-[12px]" : "text-[11px]"}`}>{icon && <span className={`mr-1 ${merged ? "text-[15px]" : "text-[12px]"}`}>{icon}</span>}{activity.title}</span>;
+  const title = <span data-overflow-check className={`whitespace-normal break-words [overflow-wrap:anywhere] font-bold ${tiny ? "leading-none" : "leading-snug"} ${inline ? "" : "w-full"} ${merged ? "text-[12px]" : tiny ? "text-[10px]" : "text-[11px]"}`}>{icon && <span className={`mr-1 ${merged ? "text-[15px]" : "text-[12px]"}`}>{icon}</span>}{activity.title}</span>;
   const label = inline
-    ? <div ref={contentRef} className="absolute inset-x-1.5 inset-y-0.5 flex flex-wrap items-center justify-center gap-x-1.5 overflow-hidden text-center">
+    ? <div ref={contentRef} className={`absolute inset-x-1.5 ${tiny ? "inset-y-0" : "inset-y-0.5"} flex flex-wrap items-center justify-center gap-x-1.5 overflow-hidden text-center`}>
       {title}
       {meta && <span className="whitespace-nowrap text-[8.5px] font-semibold leading-none opacity-75">{meta}</span>}
     </div>
@@ -125,9 +127,9 @@ function ActivityCell({ info, activity, themes, trainerNames, prefs, disabled, o
   if (!onEdit) return <button type="button" aria-label={fullLabel} {...handlers}
     onClick={(event) => onHover(`${fullLabel}${activity.content ? `
 ${activity.content}` : ""}`, event.clientX, event.clientY)}
-    className={`${className} w-full cursor-pointer`}>{label}{info && <span title={info} aria-label={info} className="pointer-events-auto absolute bottom-0.5 left-0.5 z-[1] grid h-4 w-4 place-items-center rounded-full bg-white/75 text-[#552080] shadow-sm"><NotebookText size={10} /></span>}</button>;
+    className={`${className} w-full cursor-pointer`}>{label}{info && !tiny && <span title={info} aria-label={info} className="pointer-events-auto absolute bottom-0.5 left-0.5 z-[1] grid h-4 w-4 place-items-center rounded-full bg-white/75 text-[#552080] shadow-sm"><NotebookText size={10} /></span>}</button>;
   return <button type="button" disabled={disabled} onClick={() => onEdit(activity)} aria-label={fullLabel} {...handlers}
-    className={`${className} w-full ${canDrag ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"} hover:brightness-[1.04] hover:shadow-md disabled:cursor-wait`}>{label}{info && <span title={info} aria-label={info} className="pointer-events-auto absolute bottom-0.5 left-0.5 z-[1] grid h-4 w-4 place-items-center rounded-full bg-white/75 text-[#552080] shadow-sm"><NotebookText size={10} /></span>}</button>;
+    className={`${className} w-full ${canDrag ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"} hover:brightness-[1.04] hover:shadow-md disabled:cursor-wait`}>{label}{info && !tiny && <span title={info} aria-label={info} className="pointer-events-auto absolute bottom-0.5 left-0.5 z-[1] grid h-4 w-4 place-items-center rounded-full bg-white/75 text-[#552080] shadow-sm"><NotebookText size={10} /></span>}</button>;
 }
 
 function OverviewGrid({ days, dayCount, startDate, activities, themes, trainerNames, prefs, busy, isLit, onAdd, onEdit, onMenu, onMove, infoFor }: {
@@ -145,6 +147,16 @@ function OverviewGrid({ days, dayCount, startDate, activities, themes, trainerNa
   const endDrag = () => { setDragged(null); setDragLayerOff(false); setDrop(null); };
   const boundaries = Array.from(new Set(activities.flatMap((item) => [item.start, item.end]))).sort();
   const intervals = boundaries.slice(0, -1).map((start, index) => ({ start, end: boundaries[index + 1] }));
+  // "À l'échelle": one grid row per 5 minutes (15 min = 18px) from the first to the last full hour of the plan,
+  // so a time's height follows its duration; background slots are quarter hours.
+  const scaled = prefs.density === "scale";
+  const gridStart = boundaries.length ? Math.floor(minuteOfDay(boundaries[0]) / 60) * 60 : 0;
+  const gridEnd = boundaries.length ? Math.ceil(minuteOfDay(boundaries.at(-1)!) / 60) * 60 : 0;
+  const rowOf = (time: string) => scaled ? Math.round((minuteOfDay(time) - gridStart) / 5) + 2 : boundaries.indexOf(time) + 2;
+  const slots = scaled
+    ? Array.from({ length: (gridEnd - gridStart) / 15 }, (_, index) => ({ start: asTime(gridStart + index * 15), end: asTime(gridStart + (index + 1) * 15) }))
+    : intervals;
+  const hours = Array.from({ length: (gridEnd - gridStart) / 60 }, (_, index) => asTime(gridStart + index * 60));
 
   if (!intervals.length) {
     return <div className="rounded-xl border border-dashed border-[#d8c9e6] bg-white p-10 text-center text-sm text-slate-500">Aucun temps prévu pour l&rsquo;instant ✨</div>;
@@ -203,19 +215,16 @@ function OverviewGrid({ days, dayCount, startDate, activities, themes, trainerNa
     (day === 1 && Boolean(firstStart) && interval.end <= firstStart!) ||
     (day === dayCount && Boolean(lastEnd) && interval.start >= lastEnd!);
 
-  const occupied = new Set<string>();
-  activities.forEach((item) => {
-    const startIndex = boundaries.indexOf(item.start);
-    const endIndex = boundaries.indexOf(item.end);
-    for (let index = startIndex; index < endIndex; index += 1) occupied.add(`${item.day}|${index}`);
-  });
+  const isOccupied = (day: number, slot: { start: string; end: string }) =>
+    activities.some((item) => item.day === day && item.start < slot.end && item.end > slot.start);
 
   const onHover = (text: string | null, x?: number, y?: number) => setHover(text && x !== undefined && y !== undefined ? { text, x, y } : null);
-  const compact = prefs.density === "compact";
+  const compact = prefs.density !== "comfort";
+  const rowTemplate = scaled ? `repeat(${(gridEnd - gridStart) / 5}, 6px)` : `repeat(${intervals.length}, ${compact ? 40 : 56}px)`;
 
   return <div className="relative">
     <div className="planning-grid-scroll w-full overflow-x-auto rounded-xl border border-[#e6d9f0] bg-white shadow-sm">
-      <div className="grid min-w-full" style={{ gridTemplateColumns: `68px repeat(${days.length}, minmax(${compact ? 100 : 130}px, 1fr))`, gridTemplateRows: `40px repeat(${intervals.length}, ${compact ? 40 : 56}px)` }}>
+      <div className="grid min-w-full" style={{ gridTemplateColumns: `68px repeat(${days.length}, minmax(${compact ? 100 : 130}px, 1fr))`, gridTemplateRows: `40px ${rowTemplate}` }}>
         <div className="sticky left-0 top-0 z-30 grid place-items-center bg-[#1a1530] text-[9px] font-bold uppercase tracking-wide text-[#f5ef72]">Heure</div>
 
         {days.map((day, index) => <div key={day} className="sticky top-0 z-20 flex min-w-0 items-center justify-between gap-1 border-r border-white/15 bg-[#792bb9] px-1.5 text-white"
@@ -225,13 +234,18 @@ function OverviewGrid({ days, dayCount, startDate, activities, themes, trainerNa
           {onAdd && <button type="button" disabled={busy} onClick={() => onAdd(day)} title={`Ajouter un temps au jour ${day}`} aria-label={`Ajouter un temps au jour ${day}`} className="grid h-5 w-5 shrink-0 place-items-center rounded-full bg-white/15 text-white hover:bg-white hover:text-[#792bb9] disabled:cursor-not-allowed disabled:opacity-40"><Plus size={11} /></button>}
         </div>)}
 
-        {intervals.map((interval, index) => <div key={interval.start} className="sticky left-0 z-10 flex items-center justify-end whitespace-nowrap border-b border-r border-[#efe6f6] bg-[#fff8ec] px-1.5 text-[9px] font-semibold leading-none text-[#6d35a1]" style={{ gridColumn: 1, gridRow: index + 2 }}>
-          {shortHour(interval.start)}–{shortHour(interval.end)}
-        </div>)}
+        {scaled
+          ? hours.map((hour) => <div key={hour} className="sticky left-0 z-10 flex items-start justify-end border-b border-r border-[#e6d9f0] bg-[#fff8ec] px-1.5 pt-1 text-[10px] font-bold leading-none text-[#6d35a1]" style={{ gridColumn: 1, gridRow: `${rowOf(hour)} / ${rowOf(asTime(minuteOfDay(hour) + 60))}` }}>
+            {shortHour(hour)}
+          </div>)
+          : intervals.map((interval, index) => <div key={interval.start} className="sticky left-0 z-10 flex items-center justify-end whitespace-nowrap border-b border-r border-[#efe6f6] bg-[#fff8ec] px-1.5 text-[9px] font-semibold leading-none text-[#6d35a1]" style={{ gridColumn: 1, gridRow: index + 2 }}>
+            {shortHour(interval.start)}–{shortHour(interval.end)}
+          </div>)}
 
-        {days.flatMap((day, dayIndex) => intervals.map((interval, index) => {
+        {days.flatMap((day, dayIndex) => slots.map((interval) => {
           const outOfBounds = isOutOfBounds(day, interval);
-          const free = !occupied.has(`${day}|${index}`);
+          const free = !isOccupied(day, interval);
+          const hourLine = scaled && interval.end.endsWith(":00");
           const dropHere = drop && drop.day === day && interval.start >= drop.start && interval.start < drop.end;
           const dropTarget = dragged && onMove ? {
             onDragOver: (event: DragEvent) => {
@@ -242,7 +256,7 @@ function OverviewGrid({ days, dayCount, startDate, activities, themes, trainerNa
             },
             onDrop: (event: DragEvent) => { event.preventDefault(); onMove(dragged, day, interval.start); endDrag(); },
           } : {};
-          return <div key={`${day}-${interval.start}`} data-slot={`${day}|${interval.start}`} {...dropTarget} className={`group/empty relative border-b border-r border-[#f3edf8] ${dropHere ? "bg-[#f0e8f8] outline-2 -outline-offset-2 outline-dashed outline-[#792bb9]" : outOfBounds ? "bg-[repeating-linear-gradient(135deg,#f4eef9_0_6px,#ffffff_6px_12px)]" : "bg-white"}`} style={{ gridColumn: dayIndex + 2, gridRow: index + 2 }}
+          return <div key={`${day}-${interval.start}`} data-slot={`${day}|${interval.start}`} {...dropTarget} className={`group/empty relative border-b border-r ${scaled && !hourLine ? "border-b-[#faf6fd] border-r-[#f3edf8]" : "border-[#f3edf8]"} ${dropHere ? "bg-[#f0e8f8] outline-2 -outline-offset-2 outline-dashed outline-[#792bb9]" : outOfBounds ? "bg-[repeating-linear-gradient(135deg,#f4eef9_0_6px,#ffffff_6px_12px)]" : "bg-white"}`} style={{ gridColumn: dayIndex + 2, gridRow: `${rowOf(interval.start)} / ${rowOf(interval.end)}` }}
             onContextMenu={free ? menuHandler(onMenu, (event) => ({ kind: "cell", day, start: interval.start, end: interval.end, x: event.clientX, y: event.clientY })) : undefined}>
             {free && onAdd && <button type="button" disabled={busy} onClick={() => onAdd(day, interval.start, interval.end)} title={`Ajouter un temps de ${interval.start} à ${interval.end}`} aria-label={`Ajouter un temps de ${interval.start} à ${interval.end}`}
               className="absolute inset-0.5 grid place-items-center rounded-md text-[#b08ad0] opacity-0 transition-opacity hover:bg-[#f8f3fb] hover:opacity-100 focus:opacity-100 disabled:cursor-not-allowed"><Plus size={13} /></button>}
@@ -257,7 +271,7 @@ function OverviewGrid({ days, dayCount, startDate, activities, themes, trainerNa
           });
           return Array.from(groups.entries()).map(([key, group]) => {
             const [start, end] = key.split("|");
-            return <div key={`${day}-${key}`} className={`z-[5] flex flex-col gap-[2px] p-[2px] ${dragLayerOff ? "pointer-events-none" : ""}`} style={{ gridColumn: dayIndex + 2, gridRow: `${boundaries.indexOf(start) + 2} / ${boundaries.indexOf(end) + 2}` }}>
+            return <div key={`${day}-${key}`} className={`z-[5] flex flex-col gap-[2px] ${scaled ? "p-px" : "p-[2px]"} ${dragLayerOff ? "pointer-events-none" : ""}`} style={{ gridColumn: dayIndex + 2, gridRow: `${rowOf(start)} / ${rowOf(end)}` }}>
               {group.map((activity) => <div key={activity.id} className="min-h-0 flex-1">
                 <ActivityCell info={infoFor(activity)} activity={activity} themes={themes} trainerNames={trainerNames} prefs={prefs} disabled={busy} onEdit={onEdit} onHover={onHover} onMenu={onMenu}
                   onDragStart={onMove ? startDrag : undefined} onDragEnd={endDrag} dragging={dragged?.id === activity.id} dimmed={!isLit(activity)} />
@@ -267,7 +281,7 @@ function OverviewGrid({ days, dayCount, startDate, activities, themes, trainerNa
         })}
 
         {runs.map((run) => <div key={`merge-${run.start}-${run.end}-${run.dayIndexStart}`} className={`relative z-[6] p-[2px] ${dragLayerOff ? "pointer-events-none" : ""}`}
-          style={{ gridColumn: `${run.dayIndexStart + 2} / ${run.dayIndexStart + 2 + run.dayCount}`, gridRow: `${boundaries.indexOf(run.start) + 2} / ${boundaries.indexOf(run.end) + 2}` }}>
+          style={{ gridColumn: `${run.dayIndexStart + 2} / ${run.dayIndexStart + 2 + run.dayCount}`, gridRow: `${rowOf(run.start)} / ${rowOf(run.end)}` }}>
           <ActivityCell info={infoFor(run.activity)} activity={run.activity} themes={themes} trainerNames={trainerNames} prefs={prefs} disabled={busy} onEdit={onEdit} onHover={onHover} onMenu={onMenu} merged dimmed={!isLit(run.activity)} />
         </div>)}
       </div>

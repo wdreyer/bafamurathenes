@@ -9,7 +9,7 @@ export type PlanningPrefs = {
   names: boolean;
   hours: boolean;
   icons: boolean;
-  density: "compact" | "comfort";
+  density: "compact" | "comfort" | "scale";
   defaultView: "all" | "day";
 };
 
@@ -116,7 +116,7 @@ export function PlanningSettings({ prefs, onChangePrefs, themes, activities, onS
         <Toggle label="Prénoms dans les cases" checked={prefs.names} onChange={(value) => set("names", value)} />
         <Toggle label="Horaires dans les cases" checked={prefs.hours} onChange={(value) => set("hours", value)} />
         <Toggle label="Icônes (repas, pauses, jeux…)" checked={prefs.icons} onChange={(value) => set("icons", value)} />
-        <Segmented label="Taille des cases" value={prefs.density} onChange={(value) => set("density", value)} options={[{ id: "compact", label: "Compacte" }, { id: "comfort", label: "Confortable" }]} />
+        <Segmented label="Taille des cases" value={prefs.density} onChange={(value) => set("density", value)} options={[{ id: "compact", label: "Compacte" }, { id: "comfort", label: "Confortable" }, { id: "scale", label: "À l'échelle" }]} />
         <Segmented label="Vue à l'ouverture" value={prefs.defaultView} onChange={(value) => set("defaultView", value)} options={[{ id: "all", label: "Formation complète" }, { id: "day", label: "Jour par jour" }]} />
       </Section>
 
