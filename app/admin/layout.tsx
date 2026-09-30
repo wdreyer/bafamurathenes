@@ -15,6 +15,7 @@ import {
   LayoutDashboard,
   LogOut,
   ShieldCheck,
+  UserRoundCheck,
   UserRoundSearch,
   Users,
 } from "lucide-react";
@@ -207,7 +208,11 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           })}
         </nav>
 
-        <div className="border-t border-white/10 p-3">
+        <div className="space-y-1 border-t border-white/10 p-3">
+          <Link href="/equipe" className="flex h-10 items-center gap-3 rounded-lg bg-[#f5ef72] px-3 text-sm font-semibold text-[#1a1530] no-underline hover:bg-[#fff48a]">
+            <UserRoundCheck className="h-4 w-4" />
+            Espace formateur·ice
+          </Link>
           <button
             onClick={logout}
             className="flex h-10 w-full cursor-pointer items-center gap-3 rounded-lg px-3 text-sm font-medium text-slate-300 hover:bg-white/10 hover:text-white"
@@ -222,7 +227,10 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         <header className="sticky top-0 z-30 border-b border-[#792bb9]/20 bg-white px-4 py-3 lg:hidden">
           <div className="flex items-center justify-between">
             <Link href="/admin" className="font-semibold text-slate-950 no-underline">BAFA Admin</Link>
-            <button onClick={logout} className="text-sm font-medium text-slate-600">Déconnexion</button>
+            <div className="flex items-center gap-3">
+              <Link href="/equipe" className="rounded-md bg-[#f5ef72] px-2.5 py-1.5 text-xs font-semibold text-[#1a1530] no-underline">Espace formateur·ice</Link>
+              <button onClick={logout} className="text-sm font-medium text-slate-600">Déconnexion</button>
+            </div>
           </div>
           <nav className="mt-3 flex gap-2 overflow-x-auto">
             {navItems.map((item) => (

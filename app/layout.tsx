@@ -1,40 +1,42 @@
 // app/layout.tsx
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import { Fraunces, Caveat, JetBrains_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import Script from "next/script";
 import "./globals.css";
 import SiteChrome from "@/components/SiteChrome";
 import { getSiteUrl } from "@/lib/siteUrl";
 
-const geistSans = Geist({
+// Fonts are self-hosted (latin, variable files in app/fonts) so builds never depend on Google Fonts:
+// Google sometimes serves "l/font?kit=…&skey=…" URLs that Turbopack can't resolve, which broke deployments.
+const geistSans = localFont({
+  src: [{ path: "./fonts/geist.woff2", weight: "100 900", style: "normal" }],
   variable: "--font-geist-sans",
-  subsets: ["latin"],
+  display: "swap",
 });
 
-const geistMono = Geist_Mono({
+const geistMono = localFont({
+  src: [{ path: "./fonts/geist-mono.woff2", weight: "100 900", style: "normal" }],
   variable: "--font-geist-mono",
-  subsets: ["latin"],
+  display: "swap",
 });
 
-const fraunces = Fraunces({
-  subsets: ["latin"],
-  weight: ["400", "600", "800"],
-  style: ["normal", "italic"],
+const fraunces = localFont({
+  src: [
+    { path: "./fonts/fraunces.woff2", weight: "100 900", style: "normal" },
+    { path: "./fonts/fraunces-italic.woff2", weight: "100 900", style: "italic" },
+  ],
   variable: "--font-fraunces",
   display: "swap",
 });
 
-const caveat = Caveat({
-  subsets: ["latin"],
-  weight: ["500", "700"],
+const caveat = localFont({
+  src: [{ path: "./fonts/caveat.woff2", weight: "400 700", style: "normal" }],
   variable: "--font-caveat",
   display: "swap",
 });
 
-const jetbrainsMono = JetBrains_Mono({
-  subsets: ["latin"],
-  weight: ["400", "500", "700"],
+const jetbrainsMono = localFont({
+  src: [{ path: "./fonts/jetbrains-mono.woff2", weight: "100 800", style: "normal" }],
   variable: "--font-jetbrains",
   display: "swap",
 });
