@@ -49,9 +49,9 @@ const templateText = plainText(TIME_SHEET_TEMPLATE);
 /** The sheet holds more than the untouched template. */
 export const hasWrittenSheet = (html?: string) => Boolean(html && plainText(html) !== templateText && plainText(html).length > 20);
 
-/** Less than a sentence written, no sheet and nothing attached: listed "à compléter" for admins, hidden from trainers. */
+/** A time is complete once its sheet is written; the others are "à compléter" for admins and hidden from trainers. */
 export function isTimeToComplete(item: TrainingCatalogItem) {
-  return (item.content || "").trim().length < 25 && !hasWrittenSheet(item.sheetHtml) && !item.attachments?.length;
+  return !hasWrittenSheet(item.sheetHtml);
 }
 
 export const isPublishedTime = (item: Pick<TrainingCatalogItem, "status">) => !item.status || item.status === "published";
@@ -207,9 +207,14 @@ export function allCatalogTimes(customTimes: TrainingCatalogItem[], viewerId?: s
     || a.title.localeCompare(b.title, "fr"));
 }
 
+/** What trainers see (guide, import, linked sheets): complete times, plus their own proposals whatever their state. */
+export function guideTimesFor(customTimes: TrainingCatalogItem[], viewerId?: string) {
+  return allCatalogTimes(customTimes, viewerId).filter((item) => (viewerId && item.proposedBy === viewerId) || !isTimeToComplete(item));
+}
+
 export function catalogForFormationWithCustom(type: FormationType, customTimes: TrainingCatalogItem[], viewerId?: string) {
   const scope = type === "formation_generale" ? "general" : "appro";
-  return allCatalogTimes(customTimes, viewerId).filter((item) => item.scope === "both" || item.scope === scope);
+  return guideTimesFor(customTimes, viewerId).filter((item) => item.scope === "both" || item.scope === scope);
 }
 
 export function resourceForActivity(activity: Pick<PlanActivity, "resourceId">, resources?: GuideResourceRecord[]) {

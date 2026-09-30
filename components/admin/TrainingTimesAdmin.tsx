@@ -68,7 +68,7 @@ export function TrainingTimesAdmin() {
       <button type="button" onClick={() => setKind("all")} className={chip(kind === "all")}>Tous types</button>
       {trainingTimeKinds.map((item) => <button key={item.id} type="button" onClick={() => setKind(item.id)} className={chip(kind === item.id)}>{item.id === "theorie" ? "Théoriques" : "Mises en pratique"}</button>)}
       <span className="mx-1 w-px self-stretch bg-slate-200" />
-      <button type="button" onClick={() => setToComplete((value) => !value)} title="Moins d'une phrase écrite, sans fiche ni ressource jointe : pas montrés aux formateur·ices" className={`${chip(toComplete)} inline-flex items-center gap-1`}><CircleDashed size={13} />À compléter ({toCompleteCount})</button>
+      <button type="button" onClick={() => setToComplete((value) => !value)} title="Sans fiche rédigée : pas montrés aux formateur·ices ni reliés dans les plannings" className={`${chip(toComplete)} inline-flex items-center gap-1`}><CircleDashed size={13} />À compléter ({toCompleteCount})</button>
       {hidden.length > 0 && <button type="button" onClick={() => setShowHidden((value) => !value)} className={`${chip(showHidden)} ml-auto inline-flex items-center gap-1`}><EyeOff size={13} />Retirés ({hidden.length})</button>}
     </div>
 

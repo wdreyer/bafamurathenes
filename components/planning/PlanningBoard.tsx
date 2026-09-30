@@ -6,7 +6,7 @@ import { ChevronLeft, ChevronRight, NotebookText, Plus, Settings2, X } from "luc
 import { asTime, minuteOfDay } from "@/lib/planningMove";
 import { iconForActivity } from "@/lib/planningIcons";
 import { auth } from "@/lib/firebase";
-import { allCatalogTimes, linkedCatalogId, type TrainingCatalogItem } from "@/lib/trainingCatalog";
+import { guideTimesFor, linkedCatalogId, type TrainingCatalogItem } from "@/lib/trainingCatalog";
 import { useTrainingTimes } from "@/lib/useTrainingTimes";
 import { TimeSheetView } from "@/components/guide/TimeSheetView";
 import { defaultThemes, themeFill, themeForActivity, themeSurface, themeSwatch } from "@/lib/planningThemes";
@@ -390,7 +390,7 @@ export function PlanningBoard({ activities, dayCount, startDate, themes = defaul
   const [highlightTheme, setHighlightTheme] = useState<string | null>(null);
   const days = Array.from({ length: dayCount }, (_, index) => index + 1);
   const { times: customTimes } = useTrainingTimes();
-  const guideTimes = allCatalogTimes(customTimes, auth.currentUser?.uid);
+  const guideTimes = guideTimesFor(customTimes, auth.currentUser?.uid);
   const sheetFor = (activity: PlanActivity) => guideTimes.find((item) => item.id === linkedCatalogId(activity));
   const [sheet, setSheet] = useState<TrainingCatalogItem | null>(null);
 

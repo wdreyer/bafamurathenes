@@ -3,14 +3,13 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
-  BookOpen, CalendarPlus, CalendarRange, CheckCircle2, Clock3, Coffee, Globe2, NotebookText,
+  BookOpen, CalendarRange, CheckCircle2, Clock3, Coffee, Globe2, NotebookText,
   Paperclip, Pencil, Plus, Search, Sparkles, Users, X,
 } from "lucide-react";
 import { useTeamAuth } from "@/components/team/TeamAccess";
 import { TimeForm } from "@/components/guide/TimeForm";
 import { TimeSheetView } from "@/components/guide/TimeSheetView";
-import { AddTimeToPlanning } from "@/components/guide/AddTimeToPlanning";
-import { allCatalogTimes, catalogCategories, hasWrittenSheet, isTimeToComplete, trainingTimeKinds, type CatalogCategory, type TrainingCatalogItem, type TrainingTimeKind } from "@/lib/trainingCatalog";
+import { catalogCategories, guideTimesFor, hasWrittenSheet, trainingTimeKinds, type CatalogCategory, type TrainingCatalogItem, type TrainingTimeKind } from "@/lib/trainingCatalog";
 import { useTrainingTimes } from "@/lib/useTrainingTimes";
 import type { TrainingTimeScope } from "@/lib/types";
 
@@ -37,12 +36,10 @@ export default function GuideFormateursPage() {
   const [search, setSearch] = useState("");
   const [editingTime, setEditingTime] = useState<TrainingCatalogItem | "new" | null>(null);
   const [sheetTime, setSheetTime] = useState<TrainingCatalogItem | null>(null);
-  const [planningTime, setPlanningTime] = useState<TrainingCatalogItem | null>(null);
   const authorName = `${trainer.firstName} ${trainer.lastName}`.trim() || user.email || "Formateur·ice";
 
-  // Times with less than a sentence written (no sheet, nothing attached) stay hidden, except the viewer's own.
-  const allTimes = useMemo(() => allCatalogTimes(customTimes, user.uid)
-    .filter((item) => item.proposedBy === user.uid || !isTimeToComplete(item)), [customTimes, user.uid]);
+  // Only complete times (with a written sheet), plus the viewer's own.
+  const allTimes = useMemo(() => guideTimesFor(customTimes, user.uid), [customTimes, user.uid]);
   const myTimes = customTimes.filter((item) => item.proposedBy === user.uid && (item.status === "pending" || item.status === "rejected"));
   const term = clean(search.trim());
   const matching = allTimes.filter((item) =>
@@ -56,7 +53,7 @@ export default function GuideFormateursPage() {
   return <main className="min-h-screen text-slate-950">
     <div className="mx-auto max-w-7xl px-4 pb-20 pt-5 sm:px-6">
       <div className="flex flex-wrap items-end justify-between gap-4 border-b border-slate-200 pb-5">
-        <div><p className="text-xs font-semibold uppercase text-[#792bb9]">Bibliothèque pédagogique</p><h2 className="mt-1 text-xl font-semibold">Temps de formation</h2><p className="mt-1 text-sm text-slate-500">Chaque temps a sa fiche et ses ressources. Ajoute-les directement à ton planning.</p></div>
+        <div><p className="text-xs font-semibold uppercase text-[#792bb9]">Bibliothèque pédagogique</p><h2 className="mt-1 text-xl font-semibold">Temps de formation</h2><p className="mt-1 text-sm text-slate-500">Chaque temps a sa fiche et ses ressources. Pour en ajouter un à ton planning, importe-le depuis la fenêtre d&apos;un temps.</p></div>
         <button type="button" onClick={() => setEditingTime("new")} className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-full bg-[#792bb9] px-4 text-sm font-semibold text-white hover:bg-[#66239d]"><Plus size={16} />Créer un temps</button>
       </div>
 
@@ -111,9 +108,6 @@ export default function GuideFormateursPage() {
                     {item.status === "pending" && <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-amber-900"><Clock3 size={10} />Mon temps · en attente</span>}
                   </p>
                 </button>
-                <div className="mt-3 flex justify-end">
-                  <button type="button" onClick={() => setPlanningTime(item)} className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-full bg-[#792bb9] px-3 text-xs font-semibold text-white hover:bg-[#66239d]"><CalendarPlus size={14} />Ajouter à mon planning</button>
-                </div>
               </article>)}</div>
             </section>;
           })}
@@ -123,14 +117,12 @@ export default function GuideFormateursPage() {
     </div>
 
     {editingTime && <TimeForm key={editingTime === "new" ? "new" : editingTime.id} item={editingTime === "new" ? null : editingTime} mode={isAdmin ? "admin" : "trainer"} authorName={authorName} onClose={() => setEditingTime(null)} />}
-    {planningTime && <AddTimeToPlanning item={planningTime} uid={user.uid} isAdmin={isAdmin} onClose={() => setPlanningTime(null)} />}
     {sheetTime && <div className="fixed inset-0 z-[110] flex items-start justify-center overflow-y-auto bg-slate-950/50 p-3 sm:p-8" onMouseDown={(event) => { if (event.target === event.currentTarget) setSheetTime(null); }}>
       <div role="dialog" aria-modal="true" aria-label={`Fiche : ${sheetTime.title}`} className="relative w-full max-w-3xl">
         <button type="button" onClick={() => setSheetTime(null)} aria-label="Fermer" className="absolute right-3 top-3 z-10 grid h-9 w-9 cursor-pointer place-items-center rounded-full bg-white/20 text-white hover:bg-white/35"><X size={18} /></button>
         <TimeSheetView item={sheetTime} />
         <div className="mt-3 flex justify-end gap-2">
           {(isAdmin || sheetTime.proposedBy === user.uid) && <button type="button" onClick={() => { setEditingTime(sheetTime); setSheetTime(null); }} className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-full bg-white px-4 text-sm font-semibold text-[#552080]"><Pencil size={14} />Modifier</button>}
-          <button type="button" onClick={() => { setPlanningTime(sheetTime); setSheetTime(null); }} className="inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-full bg-[#792bb9] px-4 text-sm font-semibold text-white"><CalendarPlus size={14} />Ajouter à mon planning</button>
         </div>
       </div>
     </div>}
