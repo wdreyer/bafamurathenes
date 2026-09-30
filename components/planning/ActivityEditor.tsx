@@ -28,11 +28,13 @@ type Props = {
   onClose: () => void;
   /** Copy / duplicate / merge shortcuts for an already saved time. */
   quickActions?: ReactNode;
+  /** Days of the merged block this time belongs to (the change is applied to all of them). */
+  mergedDays?: number[];
   /** Who creates guide times from this window; admins publish directly, trainers' times wait for validation. */
   author?: { name: string; isAdmin: boolean };
 };
 
-export function ActivityEditor({ activity, existing, dayCount, formationType, trainers, themes, busy, error, onChange, onSave, onDelete, onClose, quickActions, author }: Props) {
+export function ActivityEditor({ activity, existing, dayCount, formationType, trainers, themes, busy, error, onChange, onSave, onDelete, onClose, quickActions, author, mergedDays }: Props) {
   const [catalogOpen, setCatalogOpen] = useState(false);
   const [category, setCategory] = useState("all");
   const categories = useTimeCategories();
@@ -93,6 +95,7 @@ export function ActivityEditor({ activity, existing, dayCount, formationType, tr
       {error && <p role="alert" className="mb-4 rounded border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">{error}</p>}
       {catalogError && <p role="alert" className="mb-4 rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">{catalogError}</p>}
 
+      {mergedDays && mergedDays.length > 1 && <p className="mb-4 rounded-lg border border-[#d8c9e6] bg-[#f8f3fb] px-3 py-2 text-sm text-[#552080]">Temps fusionné sur {mergedDays.length > 2 ? `J${mergedDays[0]} à J${mergedDays.at(-1)}` : `J${mergedDays[0]} et J${mergedDays[1]}`} : les modifications s&apos;appliquent à tous ces jours.</p>}
       <form onSubmit={(event) => { event.preventDefault(); onSave(); }} className="space-y-4">
         <label className="block text-xs font-semibold text-slate-600">Titre<input required value={activity.title} onChange={(event) => changeTitle(event.target.value)} className="mt-1 h-10 w-full rounded border border-slate-300 px-3 text-sm font-normal text-slate-900" /></label>
 

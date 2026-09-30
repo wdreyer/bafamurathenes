@@ -8,7 +8,7 @@ import { db, storage } from "@/lib/firebase";
 import { buildPlanningTemplate } from "@/lib/planningTemplates";
 import { savePlanningTime } from "@/lib/savePlanningTime";
 import { defaultThemes, normalizeThemes } from "@/lib/planningThemes";
-import { usePlanningActions } from "@/lib/usePlanningActions";
+import { mergedBlock, usePlanningActions } from "@/lib/usePlanningActions";
 import { timeRangeError } from "@/lib/planningMove";
 import { trainerProfileProgress } from "@/lib/trainerProfile";
 import { ADMIN_TRAINER_IDS } from "@/lib/adminAccess";
@@ -347,7 +347,7 @@ Cette action est irréversible.`;
       </form>
     </div>}
 
-    {editing && formation && <ActivityEditor author={{ name: "Équipe admin", isAdmin: true }} activity={editing} existing={activities.some((item) => item.id === editing.id)} dayCount={dayCount} formationType={formation.type} trainers={assigned.map((trainer) => ({ id: trainer.id, name: trainerName(trainer) }))} themes={themes} busy={busy} error={error} onChange={setEditing} onSave={() => void persistActivity()} onClose={() => setEditing(null)}
+    {editing && formation && <ActivityEditor mergedDays={(() => { const original = activities.find((item) => item.id === editing.id); return original?.merged ? mergedBlock(original, activities).map((item) => item.day) : undefined; })()} author={{ name: "Équipe admin", isAdmin: true }} activity={editing} existing={activities.some((item) => item.id === editing.id)} dayCount={dayCount} formationType={formation.type} trainers={assigned.map((trainer) => ({ id: trainer.id, name: trainerName(trainer) }))} themes={themes} busy={busy} error={error} onChange={setEditing} onSave={() => void persistActivity()} onClose={() => setEditing(null)}
       quickActions={(() => { const saved = activities.find((item) => item.id === editing.id); return saved && <ActivityQuickActions activity={saved} activities={activities} dayCount={dayCount} actions={planningActions} busy={busy} onDone={() => setEditing(null)} />; })()} />}
   </div>;
 }

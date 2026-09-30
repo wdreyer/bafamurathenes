@@ -73,12 +73,21 @@ type History = {
 const HISTORY_SIZE = 50;
 
 /**
+ * Content key of a plan's times, independent of field order: Firestore sends each save back twice (local copy, then
+ * the server copy with keys sorted), and both must count as the same state or every change fills two history steps.
+ */
+const canonical = (value: unknown) => JSON.stringify(value, (_key, entry) =>
+  entry && typeof entry === "object" && !Array.isArray(entry)
+    ? Object.fromEntries(Object.entries(entry).sort(([x], [y]) => x.localeCompare(y)))
+    : entry);
+
+/**
  * Planning actions plus an undo/redo history of every change to the plan's times (editor, drag and drop, menu…).
  * `scope` is the formation shown: switching formation starts a fresh history.
  */
 export function usePlanningActions(activities: PlanActivity[], save: (next: PlanActivity[]) => Promise<boolean>, scope = "") {
   const [clipboard, setClipboard] = useState<PlanActivity | null>(null);
-  const snapshot = JSON.stringify(activities);
+  const snapshot = canonical(activities);
   const [history, setHistory] = useState<History>(() => ({ scope, snapshot, current: activities, past: [], future: [], direction: null }));
   // History follows the plan during render (React's "adjust state on prop change" pattern), guarded by the snapshot.
   if (history.scope !== scope) {

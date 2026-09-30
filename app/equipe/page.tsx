@@ -6,7 +6,7 @@ import { Printer, Users } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { savePlanningTime } from "@/lib/savePlanningTime";
 import { normalizeThemes } from "@/lib/planningThemes";
-import { usePlanningActions } from "@/lib/usePlanningActions";
+import { mergedBlock, usePlanningActions } from "@/lib/usePlanningActions";
 import { timeRangeError } from "@/lib/planningMove";
 import { ActivityEditor } from "@/components/planning/ActivityEditor";
 import { PlanningBoard } from "@/components/planning/PlanningBoard";
@@ -180,7 +180,7 @@ export default function TeamPage() {
         {section === "trainees" && <div className="print:hidden"><TraineeRoster key={selectedFormationId} inscriptions={registrations} loading={registrationsLoading} groupCount={groupCount} busy={busy} onChangeGroupCount={changeGroupCount} onSaveField={saveTraineeField} /></div>}
       </>}
     </div>
-    {editing && formation && plan && <ActivityEditor author={{ name: `${trainer.firstName} ${trainer.lastName}`.trim() || user.email || "Formateur·ice", isAdmin }} activity={editing} existing={plan.activities.some((item) => item.id === editing.id)} dayCount={dayCount} formationType={formation.type} trainers={trainers} themes={themes} busy={busy} error={error} onChange={setEditing} onSave={() => void saveEditing()} onClose={() => setEditing(null)}
+    {editing && formation && plan && <ActivityEditor mergedDays={(() => { const original = plan.activities.find((item) => item.id === editing.id); return original?.merged ? mergedBlock(original, plan.activities).map((item) => item.day) : undefined; })()} author={{ name: `${trainer.firstName} ${trainer.lastName}`.trim() || user.email || "Formateur·ice", isAdmin }} activity={editing} existing={plan.activities.some((item) => item.id === editing.id)} dayCount={dayCount} formationType={formation.type} trainers={trainers} themes={themes} busy={busy} error={error} onChange={setEditing} onSave={() => void saveEditing()} onClose={() => setEditing(null)}
       quickActions={(() => { const saved = plan.activities.find((item) => item.id === editing.id); return saved && <ActivityQuickActions activity={saved} activities={plan.activities} dayCount={dayCount} actions={planningActions} busy={busy} onDone={() => setEditing(null)} />; })()} />}
   </main>;
 }
