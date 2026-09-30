@@ -37,6 +37,14 @@ export function TimeForm({ item, mode, authorName, onClose, onSaved }: {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const categories = useTimeCategories();
+  // Closing saves the changes (save() closes on success, or stays open on an error). A new time without a title is dropped.
+  const [initial] = useState(() => JSON.stringify({ draft, resources }));
+  const dirty = JSON.stringify({ draft, resources }) !== initial;
+  const close = () => {
+    if (busy || uploading) return;
+    if (dirty && draft.title.trim()) void save();
+    else onClose();
+  };
   const pending = draft.status === "pending";
   const complete = Boolean(draft.summary?.trim());
   const field = "mt-1 w-full rounded border border-slate-300 bg-white px-3 text-sm font-normal";
@@ -115,14 +123,14 @@ export function TimeForm({ item, mode, authorName, onClose, onSaved }: {
   const canRemove = item?.id && (mode === "admin" || draft.status !== "published");
   const addButton = "inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-full border border-dashed border-[#b08ad0] px-3 text-sm font-medium text-[#792bb9] hover:bg-[#f8f3fb]";
 
-  return <div className="planning-controls fixed inset-0 z-[110] flex justify-end bg-slate-950/40" onMouseDown={(event) => { if (event.target === event.currentTarget && !busy) onClose(); }}>
+  return <div className="planning-controls fixed inset-0 z-[110] flex justify-end bg-slate-950/40" onMouseDown={(event) => { if (event.target === event.currentTarget) close(); }}>
     <form onSubmit={(event) => { event.preventDefault(); void save(); }} role="dialog" aria-modal="true" aria-label={item?.id ? "Modifier le temps" : "Créer un temps"} className="flex h-full w-full max-w-3xl flex-col bg-white shadow-2xl">
       <header className="flex items-center justify-between gap-3 border-b border-slate-200 px-5 py-3">
         <div><h2 className="font-semibold">{item?.id ? "Modifier le temps" : "Créer un temps"}</h2>
           {mode === "trainer" && <p className="text-xs text-slate-500">Tu pourras l&apos;utiliser tout de suite dans ton planning. Il rejoindra le guide une fois validé.</p>}</div>
         <div className="flex items-center gap-1">
           <button type="button" onClick={() => setPreview((value) => !value)} aria-pressed={preview} className={`inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-md px-3 text-sm font-medium ${preview ? "bg-[#f0e8f8] text-[#552080]" : "text-slate-600 hover:bg-slate-100"}`}>{preview ? <><Pencil size={15} />Modifier</> : <><Eye size={15} />Aperçu</>}</button>
-          <button type="button" onClick={onClose} title="Fermer" aria-label="Fermer" className="grid h-9 w-9 cursor-pointer place-items-center rounded hover:bg-slate-100"><X size={18} /></button>
+          <button type="button" onClick={close} title={dirty ? "Fermer et enregistrer" : "Fermer"} aria-label={dirty ? "Fermer et enregistrer" : "Fermer"} className="grid h-9 w-9 cursor-pointer place-items-center rounded hover:bg-slate-100"><X size={18} /></button>
         </div>
       </header>
 
@@ -186,7 +194,8 @@ export function TimeForm({ item, mode, authorName, onClose, onSaved }: {
 
       <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-5 py-3">
         {canRemove ? <button type="button" disabled={busy} onClick={() => void remove()} className="inline-flex cursor-pointer items-center gap-2 text-sm font-medium text-rose-700 disabled:opacity-40"><Trash2 size={15} />{mode === "admin" ? "Retirer" : "Supprimer"}</button> : <span />}
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {dirty && <button type="button" disabled={busy} onClick={onClose} className="cursor-pointer px-1 text-sm font-medium text-slate-500 hover:text-slate-800 hover:underline disabled:opacity-50">Fermer sans enregistrer</button>}
           {mode === "admin" && pending && <>
             <button type="button" disabled={busy} onClick={() => void reject()} className="inline-flex h-10 cursor-pointer items-center gap-1.5 rounded border border-amber-400 px-3 text-sm font-semibold text-amber-900 disabled:opacity-40"><X size={15} />Refuser</button>
             <button type="button" disabled={busy} onClick={() => void save("published")} className="inline-flex h-10 cursor-pointer items-center gap-1.5 rounded bg-[#792bb9] px-4 text-sm font-semibold text-white disabled:opacity-40"><Check size={15} />Valider et publier</button>

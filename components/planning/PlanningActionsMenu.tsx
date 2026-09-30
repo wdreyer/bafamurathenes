@@ -65,14 +65,22 @@ export function PlanningContextMenu({ target, activities, dayCount, actions, bus
     return () => { document.removeEventListener("mousedown", close); document.removeEventListener("scroll", close, true); document.removeEventListener("keydown", escape); };
   }, [onClose]);
 
-  // Keep the menu inside the viewport (measured after render, applied straight to the element).
+  // Keep the menu inside the viewport, also when it grows (e.g. "Dupliquer vers…" unfolds the days):
+  // near the bottom of the screen it opens upwards from the click instead of spilling below.
   useLayoutEffect(() => {
     const element = ref.current;
     if (!element) return;
-    const rect = element.getBoundingClientRect();
-    element.style.left = `${Math.max(8, Math.min(target.x, window.innerWidth - rect.width - 8))}px`;
-    element.style.top = `${Math.max(8, Math.min(target.y, window.innerHeight - rect.height - 8))}px`;
-  });
+    const place = () => {
+      const { width, height } = element.getBoundingClientRect();
+      const top = target.y + height + 8 > window.innerHeight ? target.y - height : target.y;
+      element.style.left = `${Math.max(8, Math.min(target.x, window.innerWidth - width - 8))}px`;
+      element.style.top = `${Math.max(8, Math.min(top, window.innerHeight - height - 8))}px`;
+    };
+    place();
+    const observer = new ResizeObserver(place);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [target.x, target.y]);
 
   let content: ReactNode = null;
   if (target.kind === "activity") {
@@ -94,7 +102,7 @@ export function PlanningContextMenu({ target, activities, dayCount, actions, bus
     </>;
   }
 
-  return <div ref={ref} role="menu" onContextMenu={(event) => event.preventDefault()} className="planning-controls fixed z-[150] w-64 rounded-md border border-slate-200 bg-white p-1 shadow-xl" style={{ left: target.x, top: target.y }}>{content}</div>;
+  return <div ref={ref} role="menu" onContextMenu={(event) => event.preventDefault()} className="planning-controls fixed z-[150] max-h-[calc(100vh-16px)] w-64 overflow-y-auto rounded-md border border-slate-200 bg-white p-1 shadow-xl" style={{ left: target.x, top: target.y }}>{content}</div>;
 }
 
 export function PlanningNoticeBar({ actions, busy }: { actions: PlanningActions; busy: boolean }) {

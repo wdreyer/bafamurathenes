@@ -39,6 +39,15 @@ export function ActivityEditor({ activity, existing, dayCount, formationType, tr
   const [search, setSearch] = useState("");
   const { times: customTimes, error: catalogError } = useTrainingTimes();
   const [creatingTime, setCreatingTime] = useState(false);
+  // Closing saves the changes (the save closes the window, or keeps it open to show a validation error).
+  // A new time still without a title is simply dropped.
+  const [initial] = useState(() => JSON.stringify(activity));
+  const dirty = JSON.stringify(activity) !== initial;
+  const close = () => {
+    if (busy) return;
+    if (dirty && activity.title.trim()) onSave();
+    else onClose();
+  };
   const [sheetOpen, setSheetOpen] = useState(false);
   const viewerId = auth.currentUser?.uid;
   const [iconsOpen, setIconsOpen] = useState(false);
@@ -78,9 +87,9 @@ export function ActivityEditor({ activity, existing, dayCount, formationType, tr
     onChange({ ...base, title });
   };
 
-  return <div className="planning-controls fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-3" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}>
+  return <div className="planning-controls fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-3" onMouseDown={(event) => { if (event.target === event.currentTarget) close(); }}>
     <div role="dialog" aria-modal="true" aria-label="Modifier un temps" className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-md bg-white p-4 shadow-xl sm:p-6">
-      <div className="mb-4 flex items-center justify-between gap-3"><div><p className="text-xs font-semibold uppercase text-[#792bb9]">Planning pédagogique</p><h2 className="mt-0.5 text-lg font-semibold">{existing ? "Modifier le temps" : "Ajouter un temps"}</h2></div><button type="button" onClick={onClose} title="Fermer" aria-label="Fermer" className="grid h-8 w-8 place-items-center rounded hover:bg-slate-100"><X size={19} /></button></div>
+      <div className="mb-4 flex items-center justify-between gap-3"><div><p className="text-xs font-semibold uppercase text-[#792bb9]">Planning pédagogique</p><h2 className="mt-0.5 text-lg font-semibold">{existing ? "Modifier le temps" : "Ajouter un temps"}</h2></div><button type="button" onClick={close} title={dirty ? "Fermer et enregistrer" : "Fermer"} aria-label={dirty ? "Fermer et enregistrer" : "Fermer"} className="grid h-8 w-8 place-items-center rounded hover:bg-slate-100"><X size={19} /></button></div>
       {error && <p role="alert" className="mb-4 rounded border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">{error}</p>}
       {catalogError && <p role="alert" className="mb-4 rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">{catalogError}</p>}
 
@@ -146,7 +155,7 @@ export function ActivityEditor({ activity, existing, dayCount, formationType, tr
         </div>
         <div><p className="mb-2 text-xs font-semibold text-slate-600">Animation</p><div className="flex flex-wrap gap-2">{trainers.map((trainer) => <button key={trainer.id} type="button" onClick={() => onChange({ ...activity, trainerIds: (activity.trainerIds || []).includes(trainer.id) ? activity.trainerIds.filter((id) => id !== trainer.id) : [...(activity.trainerIds || []), trainer.id] })} aria-pressed={(activity.trainerIds || []).includes(trainer.id)} className={`rounded-full border px-3 py-1.5 text-xs font-medium ${(activity.trainerIds || []).includes(trainer.id) ? "border-[#792bb9] bg-[#f0e8f8] text-[#552080]" : "border-slate-300 bg-white text-slate-700"}`}>{trainer.name}</button>)}{!trainers.length && <p className="text-xs text-slate-500">Aucun·e formateur·ice affecté·e à cette session.</p>}</div></div>
         {quickActions && <div className="border-t border-slate-200 pt-3"><p className="mb-1 text-xs font-semibold text-slate-600">Actions rapides</p>{quickActions}</div>}
-        <div className="flex items-center justify-between border-t border-slate-200 pt-4">{existing && onDelete && !quickActions ? <button type="button" disabled={busy} onClick={onDelete} className="inline-flex items-center gap-1 text-sm font-medium text-rose-700 disabled:opacity-50"><Trash2 size={15} />Supprimer</button> : <span />}<button type="submit" disabled={busy} className="inline-flex h-10 items-center gap-2 rounded-full bg-[#792bb9] px-4 text-sm font-semibold text-white disabled:opacity-50"><Save size={16} />Enregistrer</button></div>
+        <div className="flex items-center justify-between border-t border-slate-200 pt-4">{existing && onDelete && !quickActions ? <button type="button" disabled={busy} onClick={onDelete} className="inline-flex items-center gap-1 text-sm font-medium text-rose-700 disabled:opacity-50"><Trash2 size={15} />Supprimer</button> : <span />}<span className="flex items-center gap-3">{dirty && <button type="button" disabled={busy} onClick={onClose} className="cursor-pointer text-sm font-medium text-slate-500 hover:text-slate-800 hover:underline disabled:opacity-50">Fermer sans enregistrer</button>}<button type="submit" disabled={busy} className="inline-flex h-10 items-center gap-2 rounded-full bg-[#792bb9] px-4 text-sm font-semibold text-white disabled:opacity-50"><Save size={16} />Enregistrer</button></span></div>
       </form>
     </div>
     {creatingTime && author && <TimeForm item={{ id: "", title: activity.title, content: activity.content, category: activity.catalogCategory || "animation", scope: activity.catalogScope || scope, color: activity.color }}
