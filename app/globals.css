@@ -803,14 +803,29 @@ select:focus {
   font-weight: 700;
 }
 
-.team-shell button:not(:disabled):not([title^="Déplacer"]),
-.team-shell a[href],
-.team-shell select,
-.team-shell summary,
-.planning-controls button:not(:disabled):not([title^="Déplacer"]),
-.planning-controls a[href],
-.planning-controls select {
-  cursor: pointer;
+/* Everything clickable shows the pointer, site-wide. Kept in the base layer so utilities still win
+   (cursor-grab on draggable times, cursor-wait / cursor-not-allowed on disabled buttons…). */
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  a[href],
+  summary,
+  select:not(:disabled),
+  label:has(> input[type="file"]),
+  label:has(> input[type="checkbox"]),
+  label:has(> input[type="radio"]),
+  input[type="checkbox"]:not(:disabled),
+  input[type="radio"]:not(:disabled),
+  input[type="color"]:not(:disabled),
+  input[type="file"]:not(:disabled),
+  input[type="range"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  select:disabled {
+    cursor: not-allowed;
+  }
 }
 
 @page planning-landscape {
