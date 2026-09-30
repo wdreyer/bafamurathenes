@@ -92,6 +92,12 @@ service cloud.firestore {
         && resource.data.proposedBy == request.auth.uid;
     }
 
+    // Rubriques of the training times: renamed, reordered and added by admins.
+    match /trainingCategories/{categoryId} {
+      allow read: if isAdmin() || isApprovedTrainer();
+      allow write: if isAdmin();
+    }
+
     // Trainers' times are usable in their own plannings right away but join the guide only once an admin publishes them.
     match /trainingTimes/{documentId} {
       allow read: if isAdmin() || isApprovedTrainer();

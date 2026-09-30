@@ -74,7 +74,8 @@ export type PlanTheme = {
   color: PlanActivity["color"];
 };
 
-export type TrainingTimeCategory = "cadre" | "pedagogie" | "animation" | "vie" | "interculturel" | "bilan";
+/** Rubrique id: one of the built-in ones (cadre, pedagogie, animation, vie, interculturel, bilan) or one created by an admin. */
+export type TrainingTimeCategory = string;
 export type TrainingTimeScope = "general" | "appro" | "both";
 
 export type Inscription = {

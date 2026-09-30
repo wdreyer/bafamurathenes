@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ChevronDown, ExternalLink, FileText, Link2, NotebookText } from "lucide-react";
 import { sanitizeGuideHtml } from "@/lib/guideLibrary";
-import { timeResources, trainingTimeKinds, type TimeResource, type TrainingCatalogItem } from "@/lib/trainingCatalog";
+import { timeResources, type TimeResource, type TrainingCatalogItem } from "@/lib/trainingCatalog";
 
 const resourceIcon = (kind: TimeResource["kind"]) => kind === "sheet" ? NotebookText : kind === "file" ? FileText : Link2;
 
@@ -11,11 +11,10 @@ const resourceIcon = (kind: TimeResource["kind"]) => kind === "sheet" ? Notebook
 export function TimeSheetView({ item }: { item: TrainingCatalogItem }) {
   const resources = timeResources(item);
   const [open, setOpen] = useState<string | null>(() => resources.find((resource) => resource.kind === "sheet")?.id ?? null);
-  const kind = trainingTimeKinds.find((entry) => entry.id === (item.kind || "theorie"))?.label;
 
   return <article className="overflow-hidden rounded-2xl border border-[#e6d9f0] bg-white shadow-sm">
     <header className="bg-gradient-to-br from-[#792bb9] to-[#552080] px-6 py-6 text-white sm:px-8">
-      <span className="inline-block rounded-full bg-[#f5ef72] px-3 py-0.5 text-[11px] font-bold uppercase tracking-wide text-[#1a1530]">{kind}</span>
+      <span className="inline-block rounded-full bg-[#f5ef72] px-3 py-0.5 text-[11px] font-bold uppercase tracking-wide text-[#1a1530]">Temps de formation</span>
       <h1 className="mt-3 text-2xl font-bold leading-tight sm:text-3xl">{item.title}</h1>
       {item.content && <p className="mt-2 max-w-2xl text-sm text-white/85">{item.content}</p>}
     </header>

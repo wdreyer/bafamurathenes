@@ -10,14 +10,15 @@ import { useTeamAuth } from "@/components/team/TeamAccess";
 import { TimeForm } from "@/components/guide/TimeForm";
 import { TimeSheetView } from "@/components/guide/TimeSheetView";
 import { ResourceBadges } from "@/components/guide/ResourceBadges";
-import { catalogCategories, guideTimesFor, trainingTimeKinds, type CatalogCategory, type TrainingCatalogItem, type TrainingTimeKind } from "@/lib/trainingCatalog";
+import { guideTimesFor, type TrainingCatalogItem } from "@/lib/trainingCatalog";
+import { groupByCategory, useTimeCategories } from "@/lib/useTimeCategories";
 import { useTrainingTimes } from "@/lib/useTrainingTimes";
 import type { TrainingTimeScope } from "@/lib/types";
 
 type ScopeFilter = "all" | TrainingTimeScope;
 
-const categoryIcons = { cadre: BookOpen, pedagogie: Users, animation: Sparkles, vie: Coffee, interculturel: Globe2, bilan: CheckCircle2 };
-const categoryColors = {
+const categoryIcons: Record<string, typeof BookOpen> = { cadre: BookOpen, pedagogie: Users, animation: Sparkles, vie: Coffee, interculturel: Globe2, bilan: CheckCircle2 };
+const categoryColors: Record<string, string> = {
   cadre: "bg-[#f1e4ff] text-[#4b1680]", pedagogie: "bg-[#dcf6fc] text-[#063845]",
   animation: "bg-[#ffe3e8] text-[#8a1c33]", vie: "bg-[#fff7cc] text-[#5c4b00]",
   interculturel: "bg-[#d9fbf1] text-[#053d2e]", bilan: "bg-[#ecebf2] text-[#26222f]",
@@ -31,8 +32,8 @@ const clean = (value: string) => value.normalize("NFD").replace(/[̀-ͯ]/g, "").
 export default function GuideFormateursPage() {
   const { user, isAdmin, trainer } = useTeamAuth();
   const { times: customTimes, error: timesError } = useTrainingTimes();
+  const categories = useTimeCategories();
   const [scope, setScope] = useState<ScopeFilter>("all");
-  const [kind, setKind] = useState<"all" | TrainingTimeKind>("all");
   const [category, setCategory] = useState("all");
   const [search, setSearch] = useState("");
   const [editingTime, setEditingTime] = useState<TrainingCatalogItem | "new" | null>(null);
@@ -45,7 +46,6 @@ export default function GuideFormateursPage() {
   const term = clean(search.trim());
   const matching = allTimes.filter((item) =>
     (scope === "all" || item.scope === "both" || item.scope === scope)
-    && (kind === "all" || (item.kind || "theorie") === kind)
     && (category === "all" || item.category === category)
     && clean(`${item.title} ${item.content}`).includes(term));
 
@@ -76,7 +76,6 @@ export default function GuideFormateursPage() {
       <div className="flex flex-wrap items-end gap-3 border-b border-slate-200 py-5">
         <label className="relative block min-w-[240px] flex-1 text-xs font-semibold text-slate-600">Rechercher<Search size={17} className="pointer-events-none absolute bottom-2.5 left-3 text-slate-400" /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Titre ou résumé…" className="mt-1 h-10 w-full rounded-md border border-slate-300 bg-white pl-9 pr-3 text-sm font-normal" /></label>
         <div><span className="mb-1 block text-xs font-semibold text-slate-600">Formation</span><div className="flex rounded-full border border-slate-200 bg-white p-1">{([["all", "Toutes"], ["general", "Générale"], ["appro", "Appro"]] as const).map(([value, label]) => <button key={value} type="button" onClick={() => setScope(value)} className={chip(scope === value)}>{label}</button>)}</div></div>
-        <div><span className="mb-1 block text-xs font-semibold text-slate-600">Type</span><div className="flex rounded-full border border-slate-200 bg-white p-1"><button type="button" onClick={() => setKind("all")} className={chip(kind === "all")}>Tous</button>{trainingTimeKinds.map((item) => <button key={item.id} type="button" onClick={() => setKind(item.id)} className={chip(kind === item.id)}>{item.id === "theorie" ? "Théoriques" : "Pratiques"}</button>)}</div></div>
       </div>
 
       {timesError && <p role="alert" className="mt-4 border-l-2 border-amber-500 bg-amber-50 px-4 py-3 text-sm text-amber-950">{timesError}</p>}
@@ -85,25 +84,23 @@ export default function GuideFormateursPage() {
           <p className="mb-2 text-xs font-bold uppercase text-slate-500">Rubriques</p>
           <div className="flex gap-1.5 overflow-x-auto pb-2 lg:flex-col">
             <button type="button" onClick={() => setCategory("all")} className={`flex shrink-0 cursor-pointer items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-sm ${category === "all" ? "bg-[#792bb9] font-semibold text-white" : "text-slate-700 hover:bg-white"}`}><span>Tout voir</span><span className="text-xs opacity-70">{allTimes.length}</span></button>
-            {catalogCategories.map((item) => <button key={item.id} type="button" onClick={() => setCategory(item.id)} className={`flex shrink-0 cursor-pointer items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-sm ${category === item.id ? "bg-[#792bb9] font-semibold text-white" : "text-slate-700 hover:bg-white"}`}><span>{item.label}</span><span className="text-xs opacity-70">{allTimes.filter((entry) => entry.category === item.id).length}</span></button>)}
+            {categories.map((item) => <button key={item.id} type="button" onClick={() => setCategory(item.id)} className={`flex shrink-0 cursor-pointer items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-sm ${category === item.id ? "bg-[#792bb9] font-semibold text-white" : "text-slate-700 hover:bg-white"}`}><span>{item.label}</span><span className="text-xs opacity-70">{allTimes.filter((entry) => entry.category === item.id).length}</span></button>)}
           </div>
         </nav>
 
         <section className="min-w-0">
           <p className="mb-4 text-sm text-slate-600"><strong className="text-slate-950">{matching.length}</strong> temps de formation</p>
-          <div className="space-y-8">{catalogCategories.map((section) => {
-            const items = matching.filter((item) => item.category === section.id);
-            if (!items.length) return null;
-            const Icon = categoryIcons[section.id as CatalogCategory];
+          <div className="space-y-8">{groupByCategory(matching, categories).map(({ items, ...section }) => {
+            // Rubriques created by admins get the neutral icon and colour.
+            const Icon = categoryIcons[section.id] || BookOpen;
             return <section key={section.id}>
-              <div className="mb-3 flex items-center gap-3"><span className={`grid h-9 w-9 place-items-center rounded-xl ${categoryColors[section.id as CatalogCategory]}`}><Icon size={18} /></span><h3 className="font-semibold">{section.label}</h3></div>
+              <div className="mb-3 flex items-center gap-3"><span className={`grid h-9 w-9 place-items-center rounded-xl ${categoryColors[section.id] || "bg-[#f0e8f8] text-[#552080]"}`}><Icon size={18} /></span><h3 className="font-semibold">{section.label}</h3></div>
               <div className="grid gap-3 md:grid-cols-2">{items.map((item) => <article key={item.id} className="flex flex-col rounded-xl border border-slate-200 bg-white p-4 transition hover:border-[#b08ad0] hover:shadow-sm">
                 <button type="button" onClick={() => setSheetTime(item)} className="flex-1 cursor-pointer text-left">
                   <h4 className="text-sm font-semibold text-[#1a1530]">{item.title}</h4>
                   {(item.summary || item.content) && <p className="mt-1 line-clamp-3 text-sm text-slate-600">{item.summary || item.content}</p>}
                   <p className="mt-2 flex flex-wrap gap-1 text-[10px] font-semibold">
                     <span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-600">{scopeLabels[item.scope]}</span>
-                    <span className={`rounded-full px-2 py-0.5 ${(item.kind || "theorie") === "pratique" ? "bg-[#ffe3e8] text-[#8a1c33]" : "bg-[#f1e4ff] text-[#4b1680]"}`}>{(item.kind || "theorie") === "pratique" ? "Mise en pratique" : "Théorique"}</span>
                     <ResourceBadges item={item} />
                     {item.status === "pending" && <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-amber-900"><Clock3 size={10} />Mon temps · en attente</span>}
                   </p>

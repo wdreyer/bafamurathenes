@@ -7,10 +7,11 @@ import { auth, db } from "@/lib/firebase";
 import { GUIDE_FILE_ACCEPT, GUIDE_FILE_MAX_SIZE, guideFileType, sanitizeGuideHtml } from "@/lib/guideLibrary";
 import { uploadGuideFile } from "@/lib/uploadGuideFile";
 import {
-  TIME_SHEET_TEMPLATE, catalogCategories, hasWrittenSheet, timeResourceKinds, timeResources, trainingCatalog, trainingTimeKinds,
-  type CatalogCategory, type TimeResource, type TrainingCatalogItem, type TrainingTimeKind,
+  TIME_SHEET_TEMPLATE, hasWrittenSheet, timeResourceKinds, timeResources, trainingCatalog,
+  type TimeResource, type TrainingCatalogItem,
 } from "@/lib/trainingCatalog";
 import { RichTextEditor } from "@/components/guide/RichTextEditor";
+import { useTimeCategories } from "@/lib/useTimeCategories";
 import { TimeSheetView } from "@/components/guide/TimeSheetView";
 import type { TrainingTimeScope } from "@/lib/types";
 
@@ -35,6 +36,7 @@ export function TimeForm({ item, mode, authorName, onClose, onSaved }: {
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
+  const categories = useTimeCategories();
   const pending = draft.status === "pending";
   const complete = Boolean(draft.summary?.trim());
   const field = "mt-1 w-full rounded border border-slate-300 bg-white px-3 text-sm font-normal";
@@ -132,10 +134,9 @@ export function TimeForm({ item, mode, authorName, onClose, onSaved }: {
 
         {preview ? <TimeSheetView item={{ ...draft, resources }} /> : <>
           <label className="block text-xs font-semibold text-slate-600">Titre<input required value={draft.title} onChange={(event) => setDraft({ ...draft, title: event.target.value })} className={`${field} h-10`} /></label>
-          <div className="grid gap-3 sm:grid-cols-3">
-            <label className="text-xs font-semibold text-slate-600">Rubrique<select value={draft.category} onChange={(event) => setDraft({ ...draft, category: event.target.value as CatalogCategory })} className={`${field} h-10`}>{catalogCategories.map((entry) => <option key={entry.id} value={entry.id}>{entry.label}</option>)}</select></label>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="text-xs font-semibold text-slate-600">Rubrique<select value={draft.category} onChange={(event) => setDraft({ ...draft, category: event.target.value })} className={`${field} h-10`}>{categories.map((entry) => <option key={entry.id} value={entry.id}>{entry.label}</option>)}{!categories.some((entry) => entry.id === draft.category) && <option value={draft.category}>Autres</option>}</select></label>
             <label className="text-xs font-semibold text-slate-600">Formation<select value={draft.scope} onChange={(event) => setDraft({ ...draft, scope: event.target.value as TrainingTimeScope })} className={`${field} h-10`}><option value="both">FG et appro</option><option value="general">Formation générale</option><option value="appro">Approfondissement</option></select></label>
-            <label className="text-xs font-semibold text-slate-600">Type<select value={draft.kind || "theorie"} onChange={(event) => setDraft({ ...draft, kind: event.target.value as TrainingTimeKind })} className={`${field} h-10`}>{trainingTimeKinds.map((entry) => <option key={entry.id} value={entry.id}>{entry.label}</option>)}</select></label>
           </div>
           <label className="block text-xs font-semibold text-slate-600">Phrase courte <span className="font-normal text-slate-400">(affichée dans le planning et la liste du guide)</span><input value={draft.content} onChange={(event) => setDraft({ ...draft, content: event.target.value })} className={`${field} h-10`} /></label>
 

@@ -2,7 +2,8 @@
 
 import { useMemo, useState, type ReactNode } from "react";
 import { BookOpen, Clock3, ExternalLink, NotebookText, Plus, Search, Save, Trash2, Unlink, X } from "lucide-react";
-import { catalogCategories, catalogForFormationWithCustom, linkedCatalogId, type CatalogCategory, type TrainingCatalogItem } from "@/lib/trainingCatalog";
+import { catalogForFormationWithCustom, linkedCatalogId, type TrainingCatalogItem } from "@/lib/trainingCatalog";
+import { useTimeCategories } from "@/lib/useTimeCategories";
 import { TimeForm } from "@/components/guide/TimeForm";
 import { TimeSheetView } from "@/components/guide/TimeSheetView";
 import { auth } from "@/lib/firebase";
@@ -33,7 +34,8 @@ type Props = {
 
 export function ActivityEditor({ activity, existing, dayCount, formationType, trainers, themes, busy, error, onChange, onSave, onDelete, onClose, quickActions, author }: Props) {
   const [catalogOpen, setCatalogOpen] = useState(false);
-  const [category, setCategory] = useState<"all" | CatalogCategory>("all");
+  const [category, setCategory] = useState("all");
+  const categories = useTimeCategories();
   const [search, setSearch] = useState("");
   const { times: customTimes, error: catalogError } = useTrainingTimes();
   const [creatingTime, setCreatingTime] = useState(false);
@@ -101,12 +103,12 @@ export function ActivityEditor({ activity, existing, dayCount, formationType, tr
           </div>
           {catalogOpen && <div className="mt-3 space-y-2 border-t border-[#e6d9f0] pt-3 text-xs">
             <div className="grid gap-2 sm:grid-cols-[180px_1fr]">
-              <label className="text-xs font-medium text-slate-600">Rubrique<select value={category} onChange={(event) => setCategory(event.target.value as "all" | CatalogCategory)} className="mt-1 h-9 w-full rounded border border-slate-300 bg-white px-2 text-sm"><option value="all">Toutes les rubriques</option>{catalogCategories.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+              <label className="text-xs font-medium text-slate-600">Rubrique<select value={category} onChange={(event) => setCategory(event.target.value )} className="mt-1 h-9 w-full rounded border border-slate-300 bg-white px-2 text-sm"><option value="all">Toutes les rubriques</option>{categories.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
               <label className="relative text-xs font-medium text-slate-600">Rechercher<Search size={15} className="pointer-events-none absolute bottom-2.5 left-2.5 text-slate-400" /><input autoFocus value={search} onChange={(event) => setSearch(event.target.value)} className="mt-1 h-9 w-full rounded border border-slate-300 bg-white pl-8 pr-2 text-sm" /></label>
             </div>
             <div className="max-h-56 divide-y divide-slate-100 overflow-y-auto rounded-lg border border-slate-200 bg-white">
               {sortedMatches.map((item) => <button key={item.id} type="button" onClick={() => chooseCatalogItem(item)} className="flex w-full cursor-pointer items-start justify-between gap-2 px-3 py-2 text-left hover:bg-[#f8f3fb]">
-                <span className="min-w-0"><span className="block text-sm font-medium text-slate-900">{item.title}</span><span className="block text-xs text-slate-500">{item.proposedBy && item.proposedBy === viewerId ? "Mon temps · " : ""}{catalogCategories.find((entry) => entry.id === item.category)?.label}{item.content ? ` · ${item.content}` : ""}</span></span>
+                <span className="min-w-0"><span className="block text-sm font-medium text-slate-900">{item.title}</span><span className="block text-xs text-slate-500">{item.proposedBy && item.proposedBy === viewerId ? "Mon temps · " : ""}{categories.find((entry) => entry.id === item.category)?.label}{item.content ? ` · ${item.content}` : ""}</span></span>
                 {item.status === "pending" && <Clock3 size={14} className="mt-0.5 shrink-0 text-amber-600" />}
               </button>)}
               {!sortedMatches.length && <p className="px-3 py-5 text-sm text-slate-500">Aucun temps ne correspond.</p>}
@@ -116,7 +118,7 @@ export function ActivityEditor({ activity, existing, dayCount, formationType, tr
         </div>
 
         {!existing && !linked && activity.catalogId !== "none" && <div className="grid gap-2 border-l-2 border-[#792bb9] bg-[#f8f3fb] p-3 sm:grid-cols-2">
-          <label className="text-xs font-semibold text-slate-700">Rubrique du guide<select value={activity.catalogCategory || "animation"} onChange={(event) => onChange({ ...activity, catalogCategory: event.target.value as CatalogCategory })} className="mt-1 h-9 w-full rounded border border-slate-300 bg-white px-2 text-sm font-normal">{catalogCategories.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
+          <label className="text-xs font-semibold text-slate-700">Rubrique du guide<select value={activity.catalogCategory || "animation"} onChange={(event) => onChange({ ...activity, catalogCategory: event.target.value })} className="mt-1 h-9 w-full rounded border border-slate-300 bg-white px-2 text-sm font-normal">{categories.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
           <label className="text-xs font-semibold text-slate-700">Réutilisable pour<select value={activity.catalogScope || "both"} onChange={(event) => onChange({ ...activity, catalogScope: event.target.value as TrainingCatalogItem["scope"] })} className="mt-1 h-9 w-full rounded border border-slate-300 bg-white px-2 text-sm font-normal"><option value="both">Toutes les formations</option><option value="general">Formation générale</option><option value="appro">Approfondissement</option></select></label>
           <p className="text-xs text-[#552080] sm:col-span-2">{author?.isAdmin === false ? "Ce nouveau temps sera proposé au guide (validation par l'équipe admin)." : "Ce nouveau temps sera ajouté au guide et proposé dans les prochains plannings."}</p>
         </div>}
