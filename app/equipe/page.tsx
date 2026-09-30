@@ -116,7 +116,7 @@ export default function TeamPage() {
     finally { setBusy(false); }
   };
 
-  const planningActions = usePlanningActions(plan?.activities || [], saveActivities);
+  const planningActions = usePlanningActions(plan?.activities || [], saveActivities, selectedFormationId);
 
   const saveEditing = async () => {
     if (!editing || !plan || !formation) return;

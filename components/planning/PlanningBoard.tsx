@@ -1,8 +1,8 @@
 "use client";
 
-import { useRef, useState, type DragEvent, type FocusEvent, type MouseEvent } from "react";
+import { useEffect, useRef, useState, type DragEvent, type FocusEvent, type MouseEvent } from "react";
 import { createPortal } from "react-dom";
-import { ChevronLeft, ChevronRight, NotebookText, Plus, Settings2, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, NotebookText, Plus, Redo2, Settings2, Undo2, X } from "lucide-react";
 import { asTime, minuteOfDay } from "@/lib/planningMove";
 import { iconForActivity } from "@/lib/planningIcons";
 import { auth } from "@/lib/firebase";
@@ -394,6 +394,21 @@ export function PlanningBoard({ activities, dayCount, startDate, themes = defaul
   const sheetFor = (activity: PlanActivity) => guideTimes.find((item) => item.id === linkedCatalogId(activity));
   const [sheet, setSheet] = useState<TrainingCatalogItem | null>(null);
 
+  // Ctrl+Z / Ctrl+Y (or Ctrl+Shift+Z) undo and redo planning changes, except while typing in a field.
+  useEffect(() => {
+    if (!actions) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (!(event.ctrlKey || event.metaKey) || event.altKey) return;
+      const target = event.target as HTMLElement | null;
+      if (target?.closest("input, textarea, select, [contenteditable='true']")) return;
+      const key = event.key.toLowerCase();
+      if (key === "z" && !event.shiftKey) { event.preventDefault(); void actions.undo(); }
+      else if (key === "y" || (key === "z" && event.shiftKey)) { event.preventDefault(); void actions.redo(); }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [actions]);
+
   const changePrefs = (next: PlanningPrefs) => {
     setPrefs(next);
     try { window.localStorage.setItem(PREFS_KEY, JSON.stringify(next)); } catch { /* Preferences are optional. */ }
@@ -438,7 +453,13 @@ export function PlanningBoard({ activities, dayCount, startDate, themes = defaul
 
         {(highlightTrainer || highlightTheme) && <button type="button" onClick={() => { setHighlightTrainer(null); setHighlightTheme(null); }} className="inline-flex h-7 cursor-pointer items-center gap-1 rounded-full px-2 text-[11px] font-semibold text-[#792bb9] hover:bg-[#f0e8f8]"><X size={12} />Tout afficher</button>}
 
-        <button type="button" onClick={() => setSettingsOpen(true)} title="Réglages du planning" aria-label="Réglages du planning" className="ml-auto grid h-8 w-8 shrink-0 cursor-pointer place-items-center rounded-full text-slate-400 hover:bg-[#f0e8f8] hover:text-[#792bb9]"><Settings2 size={17} /></button>
+        {actions && <div className="ml-auto flex items-center gap-0.5" role="group" aria-label="Historique des modifications">
+          <button type="button" disabled={busy || !actions.canUndo} onClick={() => void actions.undo()} title="Annuler la dernière modification (Ctrl+Z)" aria-label="Annuler la dernière modification"
+            className="grid h-8 w-8 place-items-center rounded-full text-slate-500 hover:bg-[#f0e8f8] hover:text-[#792bb9] disabled:opacity-30 disabled:hover:bg-transparent"><Undo2 size={17} /></button>
+          <button type="button" disabled={busy || !actions.canRedo} onClick={() => void actions.redo()} title="Rétablir (Ctrl+Y)" aria-label="Rétablir la modification annulée"
+            className="grid h-8 w-8 place-items-center rounded-full text-slate-500 hover:bg-[#f0e8f8] hover:text-[#792bb9] disabled:opacity-30 disabled:hover:bg-transparent"><Redo2 size={17} /></button>
+        </div>}
+        <button type="button" onClick={() => setSettingsOpen(true)} title="Réglages du planning" aria-label="Réglages du planning" className={`${actions ? "" : "ml-auto "}grid h-8 w-8 shrink-0 cursor-pointer place-items-center rounded-full text-slate-400 hover:bg-[#f0e8f8] hover:text-[#792bb9]`}><Settings2 size={17} /></button>
       </div>
 
       <div className="min-w-0 max-w-full">{view === "all"

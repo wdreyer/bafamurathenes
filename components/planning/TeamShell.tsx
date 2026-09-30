@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { AlertCircle, BookOpen, CalendarDays, CalendarRange, LogOut, ShieldCheck, UserRound } from "lucide-react";
+import { AlertCircle, BookOpen, CalendarDays, LogOut, ShieldCheck, UserRound } from "lucide-react";
 import { useTeamAuth } from "@/components/team/TeamAccess";
 import { trainerProfileProgress } from "@/lib/trainerProfile";
 
@@ -21,7 +21,6 @@ export function TeamShell({ children }: { children: React.ReactNode }) {
         <nav className="flex flex-wrap gap-1 rounded-md border border-[#d8c9e6] bg-[#f8f3fb] p-1" aria-label="Espace formateur·ice">
           <Link href="/equipe" aria-current={pathname === "/equipe" ? "page" : undefined} className={`inline-flex h-9 items-center gap-2 rounded px-3 text-sm font-semibold no-underline ${pathname === "/equipe" ? "bg-[#792bb9] text-white" : "text-slate-700 hover:bg-white"}`}><CalendarDays size={16} />Planning</Link>
           <Link href="/equipe/guide" aria-current={pathname === "/equipe/guide" ? "page" : undefined} className={`inline-flex h-9 items-center gap-2 rounded px-3 text-sm font-semibold no-underline ${pathname === "/equipe/guide" ? "bg-[#792bb9] text-white" : "text-slate-700 hover:bg-white"}`}><BookOpen size={16} />Guide</Link>
-          <Link href="/equipe/guide/plannings" aria-current={pathname === "/equipe/guide/plannings" ? "page" : undefined} className={`inline-flex h-9 items-center gap-2 rounded px-3 text-sm font-semibold no-underline ${pathname === "/equipe/guide/plannings" ? "bg-[#792bb9] text-white" : "text-slate-700 hover:bg-white"}`}><CalendarRange size={16} /><span className="hidden md:inline">Modèles</span></Link>
           <Link href="/equipe/profil" aria-current={pathname === "/equipe/profil" ? "page" : undefined} title="Mon profil" className={`inline-flex h-9 items-center gap-2 rounded px-3 text-sm font-semibold no-underline ${pathname === "/equipe/profil" ? "bg-[#792bb9] text-white" : "text-slate-700 hover:bg-white"}`}><UserRound size={16} /><span className="hidden sm:inline">{trainer.firstName || "Profil"}</span></Link>
           {isAdmin && <Link href="/admin" title="Espace admin" className="inline-flex h-9 items-center gap-2 rounded bg-[#1a1530] px-3 text-sm font-semibold text-[#f5ef72] no-underline hover:bg-[#2c2447]"><ShieldCheck size={16} /><span className="hidden sm:inline">Admin</span></Link>}
           <button type="button" onClick={() => void logout()} title="Se déconnecter" aria-label="Se déconnecter" className="grid h-9 w-9 place-items-center rounded text-slate-600 hover:bg-white"><LogOut size={16} /></button>

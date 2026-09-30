@@ -60,8 +60,41 @@ export function mergedBlock(activity: PlanActivity, activities: PlanActivity[]) 
   return run.slice(first, last + 1);
 }
 
-export function usePlanningActions(activities: PlanActivity[], save: (next: PlanActivity[]) => Promise<boolean>) {
+type History = {
+  scope: string;
+  snapshot: string;
+  current: PlanActivity[];
+  past: PlanActivity[][];
+  future: PlanActivity[][];
+  /** Set while an undo/redo is being saved, so the resulting change feeds the other stack. */
+  direction: "undo" | "redo" | null;
+};
+
+const HISTORY_SIZE = 50;
+
+/**
+ * Planning actions plus an undo/redo history of every change to the plan's times (editor, drag and drop, menu…).
+ * `scope` is the formation shown: switching formation starts a fresh history.
+ */
+export function usePlanningActions(activities: PlanActivity[], save: (next: PlanActivity[]) => Promise<boolean>, scope = "") {
   const [clipboard, setClipboard] = useState<PlanActivity | null>(null);
+  const snapshot = JSON.stringify(activities);
+  const [history, setHistory] = useState<History>(() => ({ scope, snapshot, current: activities, past: [], future: [], direction: null }));
+  // History follows the plan during render (React's "adjust state on prop change" pattern), guarded by the snapshot.
+  if (history.scope !== scope) {
+    // Times of the previous formation may still be shown until the new ones load: start from an empty "current"
+    // so that load isn't recorded as a change.
+    setHistory({ scope, snapshot, current: [], past: [], future: [], direction: null });
+  } else if (history.snapshot !== snapshot) {
+    const previous = history.current;
+    let { past, future } = history;
+    if (previous.length) {
+      if (history.direction === "undo") future = [...future, previous];
+      else if (history.direction === "redo") past = [...past, previous];
+      else { past = [...past, previous].slice(-HISTORY_SIZE); future = []; }
+    }
+    setHistory({ scope, snapshot, current: activities, past, future, direction: null });
+  }
   const [notice, setNotice] = useState<PlanningNotice | null>(null);
   const [pendingMove, setPendingMove] = useState<PendingMove | null>(null);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -159,14 +192,20 @@ export function usePlanningActions(activities: PlanActivity[], save: (next: Plan
   const remove = (activity: PlanActivity) =>
     apply(activities.filter((item) => item.id !== activity.id), `« ${activity.title} » supprimé`);
 
-  const undo = async () => {
-    if (!notice?.undo) return;
-    const previous = notice.undo;
+  const travel = async (direction: "undo" | "redo") => {
+    const stack = direction === "undo" ? history.past : history.future;
+    const target = stack.at(-1);
+    if (!target) return;
     notify(null);
-    if (await save(previous)) notify({ text: "Modification annulée" });
+    setHistory((current) => ({ ...current, direction, ...(direction === "undo" ? { past: current.past.slice(0, -1) } : { future: current.future.slice(0, -1) }) }));
+    if (await save(target)) notify({ text: direction === "undo" ? "Modification annulée" : "Modification rétablie" });
+    // Saving failed: put the step back where it was.
+    else setHistory((current) => ({ ...current, direction: null, ...(direction === "undo" ? { past: [...current.past, target] } : { future: [...current.future, target] }) }));
   };
+  const undo = () => travel("undo");
+  const redo = () => travel("redo");
 
-  return { clipboard, notice, copy, paste, duplicateTo, copyDay, setMerged, mergeWithNeighbour, blockOf, move, pendingMove, resolveMove, remove, undo, dismiss: () => notify(null) };
+  return { clipboard, notice, undo, redo, canUndo: history.past.length > 0, canRedo: history.future.length > 0, copy, paste, duplicateTo, copyDay, setMerged, mergeWithNeighbour, blockOf, move, pendingMove, resolveMove, remove, dismiss: () => notify(null) };
 }
 
 export type PlanningActions = ReturnType<typeof usePlanningActions>;

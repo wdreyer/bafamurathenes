@@ -128,7 +128,7 @@ export default function FormateursPage() {
     finally { setBusy(false); }
   };
 
-  const planningActions = usePlanningActions(activities, saveActivities);
+  const planningActions = usePlanningActions(activities, saveActivities, formationId);
 
   const saveTrainer = async (event: React.FormEvent) => {
     event.preventDefault();

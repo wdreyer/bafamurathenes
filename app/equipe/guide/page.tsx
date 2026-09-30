@@ -1,9 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import {
-  BookOpen, CalendarRange, CheckCircle2, Clock3, Coffee, Globe2,
+  BookOpen, CheckCircle2, Clock3, Coffee, Globe2,
   Pencil, Plus, Search, Sparkles, Users, X,
 } from "lucide-react";
 import { useTeamAuth } from "@/components/team/TeamAccess";
@@ -71,7 +70,6 @@ export default function GuideFormateursPage() {
         </ul>
       </section>}
 
-      <Link href="/equipe/guide/plannings" className="mt-5 flex items-center justify-between gap-4 rounded-xl border border-[#e6d9f0] bg-white px-4 py-3 text-[#1a1530] no-underline hover:border-[#792bb9]"><span><strong className="block text-sm">Plannings types FG et approfondissement</strong><span className="mt-0.5 block text-xs text-slate-500">Consulter les modèles utilisés à la création des formations.</span></span><CalendarRange size={21} className="shrink-0 text-[#792bb9]" /></Link>
 
       <div className="flex flex-wrap items-end gap-3 border-b border-slate-200 py-5">
         <label className="relative block min-w-[240px] flex-1 text-xs font-semibold text-slate-600">Rechercher<Search size={17} className="pointer-events-none absolute bottom-2.5 left-3 text-slate-400" /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Titre ou résumé…" className="mt-1 h-10 w-full rounded-md border border-slate-300 bg-white pl-9 pr-3 text-sm font-normal" /></label>
