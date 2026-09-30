@@ -1,6 +1,6 @@
 import type { FormationType, PlanActivity, TrainingTimeCategory, TrainingTimeScope } from "@/lib/types";
 import { trainerResources } from "@/lib/trainerGuide";
-import { builtInTimeSheets } from "@/lib/timeSheets";
+import { builtInTimeAnnexes, builtInTimePdfs, builtInTimeSheets, builtInTimeSummaries } from "@/lib/timeSheets";
 import type { GuideResourceRecord } from "@/lib/guideLibrary";
 
 export type CatalogCategory = TrainingTimeCategory;
@@ -16,9 +16,13 @@ export type TrainingCatalogItem = {
   kind?: TrainingTimeKind;
   /** Admin removed it from the guide (built-in times can't be deleted, only hidden). */
   hidden?: boolean;
-  /** Free-form sheet (HTML), started from the same template as the former PDF resources. */
+  /** Résumé of the time (a few lines). Filled in = the time is complete and shown to trainers. */
+  summary?: string;
+  /** Resources of the time, in order: sheets written on the site, documents (PDF…), links. */
+  resources?: TimeResource[];
+  /** @deprecated Single sheet of the first version — read through `timeResources()`. */
   sheetHtml?: string;
-  /** Files or links attached to the time (external resources: documents, videos, sites…). */
+  /** @deprecated Attachments of the first version — read through `timeResources()`. */
   attachments?: TimeAttachment[];
   /** Times created by trainers wait for an admin before joining the guide. Missing means published. */
   status?: "pending" | "published" | "rejected";
@@ -28,6 +32,20 @@ export type TrainingCatalogItem = {
 };
 
 export type TimeAttachment = { name: string; url: string; kind: "file" | "link" };
+
+/** One resource of a training time: a sheet written on the site (HTML), an uploaded document, or a link. */
+export type TimeResource = { id: string; kind: "sheet" | "file" | "link"; title: string; html?: string; url?: string };
+
+export const timeResourceKinds: Record<TimeResource["kind"], string> = { sheet: "Fiche", file: "Document", link: "Lien" };
+
+/** Resources of a time, also reading the first version's single sheet and attachments. */
+export function timeResources(item: Pick<TrainingCatalogItem, "resources" | "sheetHtml" | "attachments">): TimeResource[] {
+  if (item.resources) return item.resources;
+  return [
+    ...(hasWrittenSheet(item.sheetHtml) ? [{ id: "sheet", kind: "sheet" as const, title: "Fiche du temps", html: item.sheetHtml }] : []),
+    ...(item.attachments || []).map((attachment, index) => ({ id: `attachment-${index}`, kind: attachment.kind, title: attachment.name, url: attachment.url })),
+  ];
+}
 
 /** Starting point of every sheet, mirroring the PDF resources; everything stays freely editable. */
 export const TIME_SHEET_TEMPLATE = `<h2>Fiche synthétique</h2>
@@ -49,9 +67,9 @@ const templateText = plainText(TIME_SHEET_TEMPLATE);
 /** The sheet holds more than the untouched template. */
 export const hasWrittenSheet = (html?: string) => Boolean(html && plainText(html) !== templateText && plainText(html).length > 20);
 
-/** A time is complete once its sheet is written; the others are "à compléter" for admins and hidden from trainers. */
+/** A time is complete once its résumé is written; the others are "à compléter" for admins and hidden from trainers. */
 export function isTimeToComplete(item: TrainingCatalogItem) {
-  return !hasWrittenSheet(item.sheetHtml);
+  return !item.summary?.trim();
 }
 
 export const isPublishedTime = (item: Pick<TrainingCatalogItem, "status">) => !item.status || item.status === "published";
@@ -135,8 +153,23 @@ const practicalIds = new Set(["starter", "chant", "activite-intermediaire", "gra
 
 export const trainingCatalog: TrainingCatalogItem[] = builtInCatalog.map((item) => ({
   ...item, kind: practicalIds.has(item.id) ? "pratique" : "theorie",
-  ...(builtInTimeSheets[item.id] ? { sheetHtml: builtInTimeSheets[item.id] } : {}),
+  ...(builtInTimeSummaries[item.id] ? { summary: builtInTimeSummaries[item.id] } : {}),
+  ...(builtInTimeSheets[item.id] ? { resources: builtInResources(item.id) } : {}),
 }));
+
+// The transcribed PDF of a built-in time becomes its written sheet, its annex (fiche réflexe, cartes…) a second sheet,
+// and the original PDF stays downloadable.
+function builtInResources(id: string): TimeResource[] {
+  const html = builtInTimeSheets[id];
+  const annex = builtInTimeAnnexes[id];
+  const split = annex ? html.indexOf(annex[0]) : -1;
+  const pdf = builtInTimePdfs[id];
+  return [
+    { id: `${id}-sheet`, kind: "sheet", title: "Déroulé du temps", html: split > 0 ? html.slice(0, split) : html },
+    ...(split > 0 ? [{ id: `${id}-annex`, kind: "sheet" as const, title: annex[1], html: html.slice(split) }] : []),
+    ...(pdf ? [{ id: `${id}-pdf`, kind: "file" as const, title: pdf.title, url: `/formateurs/ressources/${pdf.file}` }] : []),
+  ];
+}
 
 // Planning times (templates and existing plannings) linked to guide times by title; first match wins.
 const titleLinks: [RegExp, string][] = [

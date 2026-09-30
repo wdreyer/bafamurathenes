@@ -2,14 +2,15 @@
 
 import { useMemo, useState } from "react";
 import { doc, serverTimestamp, setDoc } from "firebase/firestore";
-import { CircleDashed, Clock3, ExternalLink, EyeOff, Paperclip, Pencil, Plus, RotateCcw } from "lucide-react";
+import { CircleDashed, Clock3, ExternalLink, EyeOff, Pencil, Plus, RotateCcw } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { useTrainingTimes } from "@/lib/useTrainingTimes";
 import {
-  allCatalogTimes, catalogCategories, hasWrittenSheet, isTimeToComplete, trainingCatalog, trainingTimeKinds,
+  allCatalogTimes, catalogCategories, isTimeToComplete, trainingCatalog, trainingTimeKinds,
   type TrainingCatalogItem, type TrainingTimeKind,
 } from "@/lib/trainingCatalog";
 import { TimeForm } from "@/components/guide/TimeForm";
+import { ResourceBadges } from "@/components/guide/ResourceBadges";
 import type { TrainingTimeScope } from "@/lib/types";
 
 const scopeLabels: Record<TrainingTimeScope, string> = { both: "FG et appro", general: "Formation générale", appro: "Approfondissement" };
@@ -68,7 +69,7 @@ export function TrainingTimesAdmin() {
       <button type="button" onClick={() => setKind("all")} className={chip(kind === "all")}>Tous types</button>
       {trainingTimeKinds.map((item) => <button key={item.id} type="button" onClick={() => setKind(item.id)} className={chip(kind === item.id)}>{item.id === "theorie" ? "Théoriques" : "Mises en pratique"}</button>)}
       <span className="mx-1 w-px self-stretch bg-slate-200" />
-      <button type="button" onClick={() => setToComplete((value) => !value)} title="Sans fiche rédigée : pas montrés aux formateur·ices ni reliés dans les plannings" className={`${chip(toComplete)} inline-flex items-center gap-1`}><CircleDashed size={13} />À compléter ({toCompleteCount})</button>
+      <button type="button" onClick={() => setToComplete((value) => !value)} title="Sans résumé : pas montrés aux formateur·ices ni reliés dans les plannings" className={`${chip(toComplete)} inline-flex items-center gap-1`}><CircleDashed size={13} />À compléter ({toCompleteCount})</button>
       {hidden.length > 0 && <button type="button" onClick={() => setShowHidden((value) => !value)} className={`${chip(showHidden)} ml-auto inline-flex items-center gap-1`}><EyeOff size={13} />Retirés ({hidden.length})</button>}
     </div>
 
@@ -88,8 +89,7 @@ export function TrainingTimesAdmin() {
                     <span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-600">{scopeLabels[item.scope]}</span>
                     <span className={`rounded-full px-2 py-0.5 ${(item.kind || "theorie") === "pratique" ? "bg-[#ffe3e8] text-[#8a1c33]" : "bg-[#f1e4ff] text-[#4b1680]"}`}>{(item.kind || "theorie") === "pratique" ? "Mise en pratique" : "Théorique"}</span>
                     {isTimeToComplete(item) && <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-amber-900"><CircleDashed size={10} />À compléter</span>}
-                    {hasWrittenSheet(item.sheetHtml) && <span className="rounded-full bg-[#fff7cc] px-2 py-0.5 text-[#5c4b00]">Fiche</span>}
-                    {item.attachments?.length ? <span className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-0.5 text-[#66239d] ring-1 ring-[#e6d9f0]"><Paperclip size={10} />{item.attachments.length}</span> : null}
+                    <ResourceBadges item={item} />
                     {!isBuiltIn(item.id) && <span className="rounded-full bg-[#dcf6fc] px-2 py-0.5 text-[#063845]">{item.proposedByName ? `Créé par ${item.proposedByName}` : "Ajouté"}</span>}
                   </p>
                 </div>

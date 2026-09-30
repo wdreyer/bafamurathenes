@@ -90,7 +90,7 @@ export function ActivityEditor({ activity, existing, dayCount, formationType, tr
             <BookOpen size={16} className="shrink-0 text-[#792bb9]" />
             {linked ? <>
               <span className="min-w-0 flex-1 text-sm"><span className="block text-[11px] font-semibold uppercase text-[#792bb9]">Temps du guide lié</span><span className="font-semibold text-[#1a1530]">{linked.title}</span>{linked.status === "pending" && <span className="ml-2 inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700"><Clock3 size={11} />en attente</span>}</span>
-              <button type="button" onClick={() => setSheetOpen(true)} className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-full bg-[#792bb9] px-3 text-xs font-semibold text-white"><NotebookText size={13} />Voir la fiche</button>
+              <button type="button" onClick={() => setSheetOpen(true)} className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-full bg-[#792bb9] px-3 text-xs font-semibold text-white"><NotebookText size={13} />Voir le temps</button>
               <button type="button" onClick={() => setCatalogOpen((value) => !value)} className="h-8 cursor-pointer rounded-full border border-[#d8c9e6] bg-white px-3 text-xs font-semibold text-[#552080]">Changer</button>
               <button type="button" onClick={() => onChange({ ...activity, catalogId: "none" })} title="Délier du guide" aria-label="Délier du guide" className="grid h-8 w-8 cursor-pointer place-items-center rounded-full text-slate-400 hover:bg-white hover:text-rose-700"><Unlink size={14} /></button>
             </> : <>

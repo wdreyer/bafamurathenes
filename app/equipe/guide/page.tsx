@@ -3,13 +3,14 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
-  BookOpen, CalendarRange, CheckCircle2, Clock3, Coffee, Globe2, NotebookText,
-  Paperclip, Pencil, Plus, Search, Sparkles, Users, X,
+  BookOpen, CalendarRange, CheckCircle2, Clock3, Coffee, Globe2,
+  Pencil, Plus, Search, Sparkles, Users, X,
 } from "lucide-react";
 import { useTeamAuth } from "@/components/team/TeamAccess";
 import { TimeForm } from "@/components/guide/TimeForm";
 import { TimeSheetView } from "@/components/guide/TimeSheetView";
-import { catalogCategories, guideTimesFor, hasWrittenSheet, trainingTimeKinds, type CatalogCategory, type TrainingCatalogItem, type TrainingTimeKind } from "@/lib/trainingCatalog";
+import { ResourceBadges } from "@/components/guide/ResourceBadges";
+import { catalogCategories, guideTimesFor, trainingTimeKinds, type CatalogCategory, type TrainingCatalogItem, type TrainingTimeKind } from "@/lib/trainingCatalog";
 import { useTrainingTimes } from "@/lib/useTrainingTimes";
 import type { TrainingTimeScope } from "@/lib/types";
 
@@ -53,7 +54,7 @@ export default function GuideFormateursPage() {
   return <main className="min-h-screen text-slate-950">
     <div className="mx-auto max-w-7xl px-4 pb-20 pt-5 sm:px-6">
       <div className="flex flex-wrap items-end justify-between gap-4 border-b border-slate-200 pb-5">
-        <div><p className="text-xs font-semibold uppercase text-[#792bb9]">Bibliothèque pédagogique</p><h2 className="mt-1 text-xl font-semibold">Temps de formation</h2><p className="mt-1 text-sm text-slate-500">Chaque temps a sa fiche et ses ressources. Pour en ajouter un à ton planning, importe-le depuis la fenêtre d&apos;un temps.</p></div>
+        <div><p className="text-xs font-semibold uppercase text-[#792bb9]">Bibliothèque pédagogique</p><h2 className="mt-1 text-xl font-semibold">Temps de formation</h2><p className="mt-1 text-sm text-slate-500">Chaque temps a son résumé et ses ressources (fiches, documents, liens). Pour en ajouter un à ton planning, importe-le depuis la fenêtre d&apos;un temps.</p></div>
         <button type="button" onClick={() => setEditingTime("new")} className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-full bg-[#792bb9] px-4 text-sm font-semibold text-white hover:bg-[#66239d]"><Plus size={16} />Créer un temps</button>
       </div>
 
@@ -99,12 +100,11 @@ export default function GuideFormateursPage() {
               <div className="grid gap-3 md:grid-cols-2">{items.map((item) => <article key={item.id} className="flex flex-col rounded-xl border border-slate-200 bg-white p-4 transition hover:border-[#b08ad0] hover:shadow-sm">
                 <button type="button" onClick={() => setSheetTime(item)} className="flex-1 cursor-pointer text-left">
                   <h4 className="text-sm font-semibold text-[#1a1530]">{item.title}</h4>
-                  {item.content && <p className="mt-1 line-clamp-2 text-sm text-slate-600">{item.content}</p>}
+                  {(item.summary || item.content) && <p className="mt-1 line-clamp-3 text-sm text-slate-600">{item.summary || item.content}</p>}
                   <p className="mt-2 flex flex-wrap gap-1 text-[10px] font-semibold">
                     <span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-600">{scopeLabels[item.scope]}</span>
                     <span className={`rounded-full px-2 py-0.5 ${(item.kind || "theorie") === "pratique" ? "bg-[#ffe3e8] text-[#8a1c33]" : "bg-[#f1e4ff] text-[#4b1680]"}`}>{(item.kind || "theorie") === "pratique" ? "Mise en pratique" : "Théorique"}</span>
-                    {hasWrittenSheet(item.sheetHtml) && <span className="inline-flex items-center gap-1 rounded-full bg-[#fff7cc] px-2 py-0.5 text-[#5c4b00]"><NotebookText size={10} />Fiche</span>}
-                    {item.attachments?.length ? <span className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-0.5 text-[#66239d] ring-1 ring-[#e6d9f0]"><Paperclip size={10} />{item.attachments.length} ressource{item.attachments.length > 1 ? "s" : ""}</span> : null}
+                    <ResourceBadges item={item} />
                     {item.status === "pending" && <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-amber-900"><Clock3 size={10} />Mon temps · en attente</span>}
                   </p>
                 </button>

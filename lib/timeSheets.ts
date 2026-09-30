@@ -256,3 +256,37 @@ ${list(["Ajouter des contraintes (budget réduit, allergies, imprévus).", "Cré
 <tr><td>Animation prévue</td><td>…</td></tr>
 </tbody></table>`,
 };
+
+/** Résumés of the built-in times that have a sheet (taken from the objectives of the former PDFs). */
+export const builtInTimeSummaries: Record<string, string> = {
+  "violence-maltraitance": "Écoute collective d'un podcast puis échanges pour sensibiliser à la maltraitance des enfants : reconnaître les différentes formes de violence, adopter une posture de vigilance et d'écoute, et savoir alerter (119, direction).",
+  "gestion-conflits": "Découvrir et pratiquer la Communication Non Violente (méthode OSBD) et le « petit pont de la communication » : exercices en binômes puis mises en situation pour exprimer ses besoins sans agressivité et apaiser les conflits.",
+  "autorite-sanction": "Faire la différence entre punition et sanction et construire des réparations éducatives avec l'outil CAPTER (ciblée, adaptée, proportionnelle, temporaire, éducative, en rapport), à travers exemples, jeu de cartes et mises en situation.",
+  choregraphie: "Projet fil rouge de la semaine : une chorégraphie construite collectivement, séquence par séquence, chaque groupe enseignant la sienne, jusqu'au tournage d'un clip. Expression corporelle, transmission et décision collective.",
+  imaginaire: "Une séance ludique pour stimuler l'imaginaire et oser jouer devant les autres : rituel d'entrée, brise-glace, tableaux figés, objets détournés, interviews absurdes et impros guidées.",
+  "activite-interculturelle": "Mise en situation de collaboration entre équipes d'animation de structures différentes (échanges de jeunes) : préparer puis transmettre une animation selon « faire faire » ou « faire avec », et analyser les deux méthodes.",
+  "activites-multilingues": "Concevoir et animer par petits groupes une activité compréhensible sans langue commune (gestes, visuels, démonstrations), puis analyser ce qui a permis de se comprendre.",
+  transports: "Préparer et sécuriser les déplacements collectifs (bus, train, avion, minibus) : spécificités de chaque transport, construction d'une checklist et jeux de rôle sur les imprévus.",
+  "budget-repas": "Jeu fil rouge de la semaine : chaque groupe gère réellement un repas (menu équilibré, liste de courses, budget, service et animation), avec un bilan collectif en fin de stage.",
+};
+
+/** Former PDF files, kept as a downloadable resource of their time. */
+export const builtInTimePdfs: Record<string, { file: string; title: string }> = {
+  "violence-maltraitance": { file: "temps-maltraitance.pdf", title: "Temps maltraitance (PDF)" },
+  "gestion-conflits": { file: "communication-non-violente.pdf", title: "Communication non violente (PDF)" },
+  "autorite-sanction": { file: "reparation-educative.pdf", title: "Réparation éducative (PDF)" },
+  choregraphie: { file: "choregraphie-cooperative.pdf", title: "La choré coopérative (PDF)" },
+  imaginaire: { file: "inventer-jouer-oser.pdf", title: "Inventer, jouer, oser (PDF)" },
+  "activite-interculturelle": { file: "activite-inter-equipe.pdf", title: "Activité inter-équipe (PDF)" },
+  "activites-multilingues": { file: "activites-multilingues.pdf", title: "Activités multilingues (PDF)" },
+  transports: { file: "gestion-transports.pdf", title: "Gestion des transports (PDF)" },
+  "budget-repas": { file: "repas-budget.pdf", title: "Repas et budget (PDF)" },
+};
+
+/** Annex sections of a transcribed sheet that become their own written resource: [first annex heading, title]. */
+export const builtInTimeAnnexes: Record<string, [string, string]> = {
+  "violence-maltraitance": ["<h2>Fiche réflexe – Maltraitance</h2>", "Fiche réflexe – Maltraitance"],
+  "autorite-sanction": ["<h2>Fiche – Punition vs réparation éducative</h2>", "Fiche réparation éducative"],
+  imaginaire: ["<h2>Cartes experts</h2>", "Cartes experts et cartes actions"],
+  "budget-repas": ["<h2>Fiche – Organisation d'un repas</h2>", "Fiche – Organisation d'un repas"],
+};
