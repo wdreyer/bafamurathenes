@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { deleteDoc, doc, serverTimestamp, setDoc } from "firebase/firestore";
 import {
   ArrowDown, ArrowUp, BookOpen, Check, Clock3, ExternalLink, FileText, ImagePlus, Pencil,
-  Plus, Save, Settings2, Sparkles, Trash2, X,
+  Plus, Save, Settings2, Sparkles, Trash2, Wand2, X,
 } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { uploadGuideFile } from "@/lib/uploadGuideFile";
@@ -39,7 +39,7 @@ export default function AdminResourcesPage() {
   const { categories, resources, customResources, loading, error: loadError } = useGuideLibrary();
   const [draft, setDraft] = useState<GuideResourceRecord | null>(null);
   const [categoryDraft, setCategoryDraft] = useState<GuideCategoryRecord | null>(null);
-  const [view, setView] = useState<"resources" | "times" | "categories">("resources");
+  const [view, setView] = useState<"resources" | "times" | "categories">("times");
   const [search, setSearch] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -48,7 +48,9 @@ export default function AdminResourcesPage() {
   const pending = customResources.filter((item) => item.status === "pending");
   const filtered = useMemo(() => {
     const term = search.trim().toLocaleLowerCase("fr");
-    return resources.filter((item) => !term || `${item.title} ${item.summary}`.toLocaleLowerCase("fr").includes(term));
+    // The built-in PDF resources now live inside the training times' sheets.
+    return resources.filter((item) => !defaultGuideResources.some((builtIn) => builtIn.id === item.id))
+      .filter((item) => !term || `${item.title} ${item.summary}`.toLocaleLowerCase("fr").includes(term));
   }, [resources, search]);
 
   const resourceId = () => draft?.id || crypto.randomUUID();
@@ -133,6 +135,27 @@ export default function AdminResourcesPage() {
     finally { setBusy(false); }
   };
 
+  // Resources are being merged into training times: the content becomes the sheet, the file an attached resource.
+  const convertToTime = async (resource: GuideResourceRecord) => {
+    if (!window.confirm(`Convertir « ${resource.title} » en temps de formation ? La ressource sera retirée de cette liste.`)) return;
+    setBusy(true); setError(""); setNotice("");
+    try {
+      const id = crypto.randomUUID();
+      const sheetHtml = [resource.useWhen ? `<h2>Quand l'utiliser ?</h2><p>${resource.useWhen}</p>` : "", sanitizeGuideHtml(resource.bodyHtml || "")].join("");
+      await setDoc(doc(db, "trainingTimes", id), {
+        title: resource.title, content: resource.summary || "", category: "pedagogie", scope: resource.scope || "both",
+        kind: "theorie", color: "sky", hidden: false, status: "published",
+        ...(sheetHtml.trim() ? { sheetHtml } : {}),
+        ...(resource.fileUrl ? { attachments: [{ name: resource.fileName || resource.title, url: resource.fileUrl, kind: "file" }] } : {}),
+        createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
+      });
+      await setDoc(doc(db, "guideResources", resource.id), { id: resource.id, hidden: true, updatedAt: serverTimestamp() }, { merge: true });
+      setDraft(null);
+      setNotice(`« ${resource.title} » est maintenant un temps de formation (rubrique Pédagogie, à ajuster si besoin).`);
+    } catch { setError("La conversion n'a pas pu aboutir."); }
+    finally { setBusy(false); }
+  };
+
   const removeResource = async (resource: GuideResourceRecord) => {
     if (!window.confirm(`Retirer « ${resource.title} » du guide ?`)) return;
     setBusy(true); setError("");
@@ -194,7 +217,7 @@ export default function AdminResourcesPage() {
 
   return <div className="mx-auto max-w-[1500px] space-y-5 pb-12">
     <div className="flex flex-wrap items-end justify-between gap-4 border-b border-slate-200 pb-5">
-      <div><p className="text-xs font-semibold uppercase text-emerald-700">Espace formateur·ices</p><h1 className="mt-1 text-2xl font-semibold">Guide de ressources</h1></div>
+      <div><p className="text-xs font-semibold uppercase text-emerald-700">Espace formateur·ices</p><h1 className="mt-1 text-2xl font-semibold">Guide des temps de formation</h1></div>
       <a href="/equipe/guide" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm font-medium text-emerald-800 underline"><ExternalLink size={15} />Voir le guide</a>
     </div>
     {(error || loadError) && <p role="alert" className="rounded border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">{error || loadError}</p>}
@@ -202,8 +225,8 @@ export default function AdminResourcesPage() {
 
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div className="flex rounded-md border border-slate-200 bg-white p-1">
-        <button type="button" onClick={() => setView("resources")} className={`inline-flex h-9 items-center gap-2 rounded px-3 text-sm font-medium ${view === "resources" ? "bg-slate-900 text-white" : "text-slate-600"}`}><BookOpen size={15} />Ressources</button>
         <button type="button" onClick={() => setView("times")} className={`inline-flex h-9 items-center gap-2 rounded px-3 text-sm font-medium ${view === "times" ? "bg-slate-900 text-white" : "text-slate-600"}`}><Sparkles size={15} />Temps de formation</button>
+        <button type="button" onClick={() => setView("resources")} className={`inline-flex h-9 items-center gap-2 rounded px-3 text-sm font-medium ${view === "resources" ? "bg-slate-900 text-white" : "text-slate-600"}`}><BookOpen size={15} />Anciennes ressources</button>
         <button type="button" onClick={() => setView("categories")} className={`inline-flex h-9 items-center gap-2 rounded px-3 text-sm font-medium ${view === "categories" ? "bg-slate-900 text-white" : "text-slate-600"}`}><Settings2 size={15} />Catégories</button>
       </div>
       {view === "times" ? null : view === "resources"
@@ -256,7 +279,7 @@ export default function AdminResourcesPage() {
         {draft.coverImageUrl && <div className="relative"><img src={draft.coverImageUrl} alt="" className="max-h-52 w-full rounded object-cover" /><button type="button" onClick={() => setDraft({ ...draft, coverImageUrl: "" })} title="Retirer l’image" aria-label="Retirer l’image" className="absolute right-2 top-2 grid h-8 w-8 place-items-center rounded bg-white shadow"><X size={15} /></button></div>}
         <div><p className="mb-1 text-xs font-semibold text-slate-600">Contenu</p><RichTextEditor value={draft.bodyHtml} onChange={(bodyHtml) => setDraft((current) => current ? { ...current, bodyHtml } : current)} onUploadImage={uploadInlineImage} disabled={busy} /></div>
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-4">
-          {draft.id ? <button type="button" disabled={busy} onClick={() => void removeResource(draft)} className="inline-flex items-center gap-2 text-sm font-medium text-rose-700 disabled:opacity-40"><Trash2 size={15} />Retirer</button> : <span />}
+          {draft.id ? <span className="flex flex-wrap gap-4"><button type="button" disabled={busy} onClick={() => void removeResource(draft)} className="inline-flex items-center gap-2 text-sm font-medium text-rose-700 disabled:opacity-40"><Trash2 size={15} />Retirer</button><button type="button" disabled={busy} onClick={() => void convertToTime(draft)} className="inline-flex cursor-pointer items-center gap-2 text-sm font-semibold text-[#792bb9] disabled:opacity-40"><Wand2 size={15} />Convertir en temps</button></span> : <span />}
           <button type="submit" disabled={busy} className="inline-flex h-10 items-center gap-2 rounded bg-slate-900 px-4 text-sm font-semibold text-white disabled:opacity-40"><Save size={16} />Enregistrer</button>
         </div>
       </form> : <div className="grid min-h-80 place-items-center rounded-md border border-dashed border-slate-300 bg-white p-8 text-center text-sm text-slate-500">Sélectionne une ressource ou crée-en une nouvelle.</div>}

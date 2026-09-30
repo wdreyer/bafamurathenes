@@ -1,5 +1,6 @@
 import { doc, serverTimestamp, writeBatch } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { catalogIdFromTitle } from "@/lib/trainingCatalog";
 import type { FormationType, PlanActivity } from "@/lib/types";
 
 type SavePlanningTimeInput = {
@@ -14,7 +15,8 @@ type SavePlanningTimeInput = {
 
 export async function savePlanningTime({ formationId, activities, activity, formationType, trainerNames, proposer }: SavePlanningTimeInput) {
   const isNew = !activities.some((item) => item.id === activity.id);
-  const shouldPublish = isNew && !activity.catalogId;
+  // Only genuinely new times join the guide: not imported, not unlinked on purpose ("none"), not recognised from their title.
+  const shouldPublish = isNew && !activity.catalogId && !catalogIdFromTitle(activity.title);
   const catalogId = shouldPublish ? crypto.randomUUID() : activity.catalogId;
   const saved = { ...activity, title: activity.title.trim(), ...(catalogId ? { catalogId } : {}) };
   const next = isNew ? [...activities, saved] : activities.map((item) => item.id === saved.id ? saved : item);

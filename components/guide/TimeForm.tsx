@@ -2,14 +2,13 @@
 
 import { useState } from "react";
 import { deleteDoc, deleteField, doc, serverTimestamp, setDoc } from "firebase/firestore";
-import { Check, Eye, Pencil, Save, Send, Trash2, X } from "lucide-react";
+import { Check, Eye, FileText, FileUp, Link2, Pencil, Plus, Save, Send, Trash2, X } from "lucide-react";
 import { auth, db } from "@/lib/firebase";
-import { sanitizeGuideHtml } from "@/lib/guideLibrary";
-import { useGuideLibrary } from "@/lib/useGuideLibrary";
+import { GUIDE_FILE_ACCEPT, GUIDE_FILE_MAX_SIZE, guideFileType, sanitizeGuideHtml } from "@/lib/guideLibrary";
 import { uploadGuideFile } from "@/lib/uploadGuideFile";
 import {
   TIME_SHEET_TEMPLATE, catalogCategories, hasWrittenSheet, trainingCatalog, trainingTimeKinds,
-  type CatalogCategory, type TrainingCatalogItem, type TrainingTimeKind,
+  type CatalogCategory, type TimeAttachment, type TrainingCatalogItem, type TrainingTimeKind,
 } from "@/lib/trainingCatalog";
 import { RichTextEditor } from "@/components/guide/RichTextEditor";
 import { TimeSheetView } from "@/components/guide/TimeSheetView";
@@ -25,7 +24,6 @@ export function TimeForm({ item, mode, authorName, onClose, onSaved }: {
   item: TrainingCatalogItem | null; mode: "admin" | "trainer"; authorName: string;
   onClose: () => void; onSaved?: (id: string) => void;
 }) {
-  const { resources } = useGuideLibrary();
   const [draft, setDraft] = useState<TrainingCatalogItem>(() => item
     ? { kind: "theorie", ...item, sheetHtml: item.sheetHtml || TIME_SHEET_TEMPLATE }
     : { id: "", title: "", category: "animation", scope: "both", content: "", color: "sky", kind: "theorie", sheetHtml: TIME_SHEET_TEMPLATE });
@@ -33,6 +31,27 @@ export function TimeForm({ item, mode, authorName, onClose, onSaved }: {
   const [preview, setPreview] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [link, setLink] = useState({ name: "", url: "" });
+  const [uploading, setUploading] = useState(false);
+  const attachments = draft.attachments || [];
+  const setAttachments = (next: TimeAttachment[]) => setDraft((current) => ({ ...current, attachments: next }));
+
+  const attachFile = async (file?: File) => {
+    if (!file) return;
+    if (!guideFileType(file.name)) { setError("Formats acceptés : PDF, Word, PowerPoint, Excel, LibreOffice ou image."); return; }
+    if (file.size > GUIDE_FILE_MAX_SIZE) { setError("Le fichier ne doit pas dépasser 20 Mo."); return; }
+    setUploading(true); setError("");
+    try { setAttachments([...attachments, { name: file.name, url: await uploadGuideFile(id, file), kind: "file" }]); }
+    catch { setError("Le fichier n'a pas pu être envoyé."); }
+    finally { setUploading(false); }
+  };
+
+  const addLink = () => {
+    const url = link.url.trim();
+    if (!/^https?:\/\//i.test(url)) { setError("Le lien doit commencer par http:// ou https://"); return; }
+    setAttachments([...attachments, { name: link.name.trim() || url.replace(/^https?:\/\//i, ""), url, kind: "link" }]);
+    setLink({ name: "", url: "" }); setError("");
+  };
   const pending = draft.status === "pending";
   const field = "mt-1 w-full rounded border border-slate-300 bg-white px-3 text-sm font-normal";
 
@@ -45,7 +64,7 @@ export function TimeForm({ item, mode, authorName, onClose, onSaved }: {
       await setDoc(doc(db, "trainingTimes", id), {
         title: draft.title.trim(), content: draft.content.trim(), category: draft.category, scope: draft.scope,
         kind: draft.kind || "theorie", color: draft.color || "sky", hidden: false,
-        resourceId: draft.resourceId || deleteField(),
+        attachments: attachments.length ? attachments : deleteField(),
         sheetHtml: hasWrittenSheet(draft.sheetHtml) ? sanitizeGuideHtml(draft.sheetHtml!) : deleteField(),
         ...(mode === "trainer" ? { status: "pending", proposedBy: draft.proposedBy || uid, proposedByName: draft.proposedByName || authorName } : status ? { status } : {}),
         ...extra,
@@ -101,10 +120,29 @@ export function TimeForm({ item, mode, authorName, onClose, onSaved }: {
             <label className="text-xs font-semibold text-slate-600">Type<select value={draft.kind || "theorie"} onChange={(event) => setDraft({ ...draft, kind: event.target.value as TrainingTimeKind })} className={`${field} h-10`}>{trainingTimeKinds.map((entry) => <option key={entry.id} value={entry.id}>{entry.label}</option>)}</select></label>
           </div>
           <label className="block text-xs font-semibold text-slate-600">Résumé en une phrase <span className="font-normal text-slate-400">(affiché dans le planning et la liste du guide)</span><textarea value={draft.content} onChange={(event) => setDraft({ ...draft, content: event.target.value })} rows={2} className={`${field} py-2`} /></label>
-          <label className="block text-xs font-semibold text-slate-600">PDF / ressource liée<select value={draft.resourceId || ""} onChange={(event) => setDraft({ ...draft, resourceId: event.target.value || undefined })} className={`${field} h-10`}><option value="">Aucune ressource</option>{resources.map((entry) => <option key={entry.id} value={entry.id}>{entry.title}</option>)}</select></label>
           <div>
-            <p className="mb-1 text-xs font-semibold text-slate-600">Fiche du temps <span className="font-normal text-slate-400">— modèle des fiches PDF, tout est modifiable librement</span></p>
+            <p className="mb-1 text-xs font-semibold text-slate-600">Fiche du temps <span className="font-normal text-slate-400">— structure type (fiche synthétique, déroulement, variantes), tout est modifiable librement</span></p>
             <RichTextEditor value={draft.sheetHtml || ""} onChange={(sheetHtml) => setDraft((current) => ({ ...current, sheetHtml }))} onUploadImage={(file) => uploadGuideFile(id, file)} disabled={busy} contentClassName="time-sheet" placeholder="Décris le déroulement du temps…" />
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-slate-600">Ressources jointes <span className="font-normal text-slate-400">— documents, vidéos, sites utiles pour ce temps</span></p>
+            {attachments.length > 0 && <ul className="mt-2 divide-y divide-slate-100 rounded-lg border border-slate-200">
+              {attachments.map((attachment, index) => <li key={`${attachment.url}-${index}`} className="flex items-center gap-2 px-3 py-2 text-sm">
+                {attachment.kind === "file" ? <FileText size={15} className="shrink-0 text-[#792bb9]" /> : <Link2 size={15} className="shrink-0 text-[#792bb9]" />}
+                <input value={attachment.name} onChange={(event) => setAttachments(attachments.map((entry, position) => position === index ? { ...entry, name: event.target.value } : entry))} aria-label="Nom de la ressource" className="h-8 min-w-0 flex-1 rounded border border-transparent px-2 hover:border-slate-200" />
+                <a href={attachment.url} target="_blank" rel="noopener noreferrer" className="shrink-0 text-xs font-medium text-[#66239d] underline">Ouvrir</a>
+                <button type="button" onClick={() => setAttachments(attachments.filter((_, position) => position !== index))} aria-label={`Retirer ${attachment.name}`} className="grid h-7 w-7 shrink-0 cursor-pointer place-items-center rounded text-slate-400 hover:bg-rose-50 hover:text-rose-700"><X size={14} /></button>
+              </li>)}
+            </ul>}
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <label className={`inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-full border border-dashed border-[#b08ad0] px-3 text-sm font-medium text-[#792bb9] hover:bg-[#f8f3fb] ${uploading ? "pointer-events-none opacity-50" : ""}`}>
+                <FileUp size={15} />{uploading ? "Envoi…" : "Joindre un fichier"}
+                <input type="file" accept={GUIDE_FILE_ACCEPT} className="hidden" onChange={(event) => { void attachFile(event.target.files?.[0]); event.target.value = ""; }} />
+              </label>
+              <input value={link.name} onChange={(event) => setLink({ ...link, name: event.target.value })} placeholder="Nom du lien" className="h-9 w-36 rounded-md border border-slate-300 px-2 text-sm" />
+              <input value={link.url} onChange={(event) => setLink({ ...link, url: event.target.value })} placeholder="https://…" className="h-9 min-w-0 flex-1 rounded-md border border-slate-300 px-2 text-sm" />
+              <button type="button" disabled={!link.url.trim()} onClick={addLink} className="inline-flex h-9 cursor-pointer items-center gap-1 rounded-full bg-slate-900 px-3 text-sm font-medium text-white disabled:opacity-30"><Plus size={14} />Lien</button>
+            </div>
           </div>
         </>}
       </div>

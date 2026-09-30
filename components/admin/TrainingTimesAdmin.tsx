@@ -2,12 +2,11 @@
 
 import { useMemo, useState } from "react";
 import { doc, serverTimestamp, setDoc } from "firebase/firestore";
-import { CircleDashed, Clock3, ExternalLink, EyeOff, FileText, Pencil, Plus, RotateCcw } from "lucide-react";
+import { CircleDashed, Clock3, ExternalLink, EyeOff, Paperclip, Pencil, Plus, RotateCcw } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { useTrainingTimes } from "@/lib/useTrainingTimes";
-import { useGuideLibrary } from "@/lib/useGuideLibrary";
 import {
-  allCatalogTimes, catalogCategories, hasWrittenSheet, isTimeToComplete, resourceForActivity, trainingCatalog, trainingTimeKinds,
+  allCatalogTimes, catalogCategories, hasWrittenSheet, isTimeToComplete, trainingCatalog, trainingTimeKinds,
   type TrainingCatalogItem, type TrainingTimeKind,
 } from "@/lib/trainingCatalog";
 import { TimeForm } from "@/components/guide/TimeForm";
@@ -20,7 +19,6 @@ const isBuiltIn = (id: string) => trainingCatalog.some((item) => item.id === id)
 /** Admin view of every training time: indicative ones, those added from plannings, and trainers' proposals to review. */
 export function TrainingTimesAdmin() {
   const { times: customTimes, error: loadError } = useTrainingTimes();
-  const { resources } = useGuideLibrary();
   const [editing, setEditing] = useState<TrainingCatalogItem | "new" | null>(null);
   const [search, setSearch] = useState("");
   const [scope, setScope] = useState<"all" | "general" | "appro">("all");
@@ -32,12 +30,12 @@ export function TrainingTimesAdmin() {
   const visible = useMemo(() => allCatalogTimes(customTimes), [customTimes]);
   const pending = customTimes.filter((item) => item.status === "pending");
   const hidden = useMemo(() => customTimes.filter((item) => item.hidden).map((item) => ({ ...trainingCatalog.find((base) => base.id === item.id), ...item }) as TrainingCatalogItem), [customTimes]);
-  const toCompleteCount = visible.filter((item) => isTimeToComplete(item, resources)).length;
+  const toCompleteCount = visible.filter((item) => isTimeToComplete(item)).length;
   const term = clean(search.trim());
   const matches = (showHidden ? hidden : visible).filter((item) =>
     (scope === "all" || item.scope === "both" || item.scope === scope)
     && (kind === "all" || (item.kind || "theorie") === kind)
-    && (!toComplete || isTimeToComplete(item, resources))
+    && (!toComplete || isTimeToComplete(item))
     && (!term || clean(`${item.title} ${item.content}`).includes(term)));
 
   const restore = async (item: TrainingCatalogItem) => {
@@ -70,7 +68,7 @@ export function TrainingTimesAdmin() {
       <button type="button" onClick={() => setKind("all")} className={chip(kind === "all")}>Tous types</button>
       {trainingTimeKinds.map((item) => <button key={item.id} type="button" onClick={() => setKind(item.id)} className={chip(kind === item.id)}>{item.id === "theorie" ? "Théoriques" : "Mises en pratique"}</button>)}
       <span className="mx-1 w-px self-stretch bg-slate-200" />
-      <button type="button" onClick={() => setToComplete((value) => !value)} title="Moins d'une phrase écrite, sans fiche ni PDF : pas montrés aux formateur·ices" className={`${chip(toComplete)} inline-flex items-center gap-1`}><CircleDashed size={13} />À compléter ({toCompleteCount})</button>
+      <button type="button" onClick={() => setToComplete((value) => !value)} title="Moins d'une phrase écrite, sans fiche ni ressource jointe : pas montrés aux formateur·ices" className={`${chip(toComplete)} inline-flex items-center gap-1`}><CircleDashed size={13} />À compléter ({toCompleteCount})</button>
       {hidden.length > 0 && <button type="button" onClick={() => setShowHidden((value) => !value)} className={`${chip(showHidden)} ml-auto inline-flex items-center gap-1`}><EyeOff size={13} />Retirés ({hidden.length})</button>}
     </div>
 
@@ -82,7 +80,6 @@ export function TrainingTimesAdmin() {
           <h3 className="mb-1 border-b border-slate-300 pb-1.5 text-sm font-semibold text-slate-900">{category.label} <span className="font-normal text-slate-400">{items.length}</span></h3>
           <ul className="divide-y divide-slate-100 bg-white">
             {items.map((item) => {
-              const pdf = resourceForActivity(item, resources)?.href;
               return <li key={item.id} className="flex items-start gap-2 px-2 py-2.5">
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-slate-900">{item.title}</p>
@@ -90,12 +87,12 @@ export function TrainingTimesAdmin() {
                   <p className="mt-1 flex flex-wrap gap-1 text-[10px] font-semibold">
                     <span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-600">{scopeLabels[item.scope]}</span>
                     <span className={`rounded-full px-2 py-0.5 ${(item.kind || "theorie") === "pratique" ? "bg-[#ffe3e8] text-[#8a1c33]" : "bg-[#f1e4ff] text-[#4b1680]"}`}>{(item.kind || "theorie") === "pratique" ? "Mise en pratique" : "Théorique"}</span>
-                    {isTimeToComplete(item, resources) && <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-amber-900"><CircleDashed size={10} />À compléter</span>}
-                    {hasWrittenSheet(item.sheetHtml) && <span className="rounded-full bg-[#f6efdc] px-2 py-0.5 text-[#0f1b3d]">Fiche</span>}
+                    {isTimeToComplete(item) && <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-amber-900"><CircleDashed size={10} />À compléter</span>}
+                    {hasWrittenSheet(item.sheetHtml) && <span className="rounded-full bg-[#fff7cc] px-2 py-0.5 text-[#5c4b00]">Fiche</span>}
+                    {item.attachments?.length ? <span className="inline-flex items-center gap-1 rounded-full bg-white px-2 py-0.5 text-[#66239d] ring-1 ring-[#e6d9f0]"><Paperclip size={10} />{item.attachments.length}</span> : null}
                     {!isBuiltIn(item.id) && <span className="rounded-full bg-[#dcf6fc] px-2 py-0.5 text-[#063845]">{item.proposedByName ? `Créé par ${item.proposedByName}` : "Ajouté"}</span>}
                   </p>
                 </div>
-                {pdf && <a href={pdf} target="_blank" rel="noopener noreferrer" title="Ouvrir le PDF" aria-label={`Ouvrir le PDF de ${item.title}`} className="grid h-8 w-8 shrink-0 place-items-center rounded border border-slate-200 text-[#66239d] hover:border-[#792bb9]"><FileText size={14} /></a>}
                 {showHidden
                   ? <button type="button" onClick={() => void restore(item)} title="Remettre dans le guide" aria-label={`Remettre ${item.title}`} className="grid h-8 w-8 shrink-0 cursor-pointer place-items-center rounded border border-slate-200 text-slate-600 hover:border-[#792bb9]"><RotateCcw size={14} /></button>
                   : <button type="button" onClick={() => setEditing(item)} title="Modifier" aria-label={`Modifier ${item.title}`} className="grid h-8 w-8 shrink-0 cursor-pointer place-items-center rounded border border-slate-200 text-slate-600 hover:border-[#792bb9]"><Pencil size={14} /></button>}

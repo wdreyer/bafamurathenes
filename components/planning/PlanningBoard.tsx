@@ -2,9 +2,13 @@
 
 import { useRef, useState, type DragEvent, type FocusEvent, type MouseEvent } from "react";
 import { createPortal } from "react-dom";
-import { ChevronLeft, ChevronRight, FileText, Plus, Settings2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, NotebookText, Plus, Settings2, X } from "lucide-react";
 import { asTime, minuteOfDay } from "@/lib/planningMove";
 import { iconForActivity } from "@/lib/planningIcons";
+import { auth } from "@/lib/firebase";
+import { allCatalogTimes, linkedCatalogId, type TrainingCatalogItem } from "@/lib/trainingCatalog";
+import { useTrainingTimes } from "@/lib/useTrainingTimes";
+import { TimeSheetView } from "@/components/guide/TimeSheetView";
 import { defaultThemes, themeFill, themeForActivity, themeSurface, themeSwatch } from "@/lib/planningThemes";
 import { type PlanningActions } from "@/lib/usePlanningActions";
 import { MoveConflictDialog, PlanningContextMenu, PlanningNoticeBar, type MenuTarget } from "@/components/planning/PlanningActionsMenu";
@@ -270,9 +274,10 @@ function OverviewGrid({ days, dayCount, startDate, activities, themes, trainerNa
   </div>;
 }
 
-function DayAgenda({ day, dayCount, startDate, activities, themes, trainerNames, prefs, busy, isLit, onChangeDay, onEdit, onAdd, onMenu }: {
+function DayAgenda({ day, dayCount, startDate, activities, themes, trainerNames, prefs, busy, isLit, onChangeDay, onEdit, onAdd, onMenu, sheetFor, onOpenSheet }: {
   day: number; dayCount: number; startDate: string; activities: PlanActivity[]; themes: PlanTheme[]; trainerNames?: Record<string, string>; prefs: PlanningPrefs; busy: boolean;
   isLit: (activity: PlanActivity) => boolean; onChangeDay: (day: number) => void; onEdit?: Props["onEdit"]; onAdd?: Props["onAdd"]; onMenu?: OpenMenu;
+  sheetFor: (activity: PlanActivity) => TrainingCatalogItem | undefined; onOpenSheet: (item: TrainingCatalogItem) => void;
 }) {
   const sorted = activities.filter((item) => item.day === day).sort((a, b) => a.start.localeCompare(b.start) || a.end.localeCompare(b.end));
   const arrow = "grid h-10 w-10 cursor-pointer place-items-center rounded-full bg-white/15 text-white transition hover:bg-white hover:text-[#792bb9] disabled:cursor-default disabled:opacity-30 disabled:hover:bg-white/15 disabled:hover:text-white";
@@ -311,7 +316,6 @@ function DayAgenda({ day, dayCount, startDate, activities, themes, trainerNames,
             <span className="mt-2 flex flex-wrap items-center gap-1.5 text-[11px] font-semibold">
               <span className="inline-flex items-center gap-1 rounded-full bg-white/70 px-2 py-0.5 text-slate-700"><span className={`h-2 w-2 rounded-full ${themeSwatch(theme.color)}`} />{theme.name}</span>
               {names.map((name) => <span key={name} className="rounded-full bg-[#1a1530]/80 px-2 py-0.5 text-white">{name}</span>)}
-              {activity.resourceId && <span className="inline-flex items-center gap-1 rounded-full bg-white/70 px-2 py-0.5 text-[#66239d]"><FileText size={11} />Ressource</span>}
             </span>
           </span>
         </>;
@@ -326,6 +330,7 @@ function DayAgenda({ day, dayCount, startDate, activities, themes, trainerNames,
               <strong className="text-base leading-none text-[#1a1530]">{shortHour(activity.start)}</strong>
               <span className="mt-1 text-[11px] text-slate-500">{shortHour(activity.end)}</span>
               <span className="mt-1.5 rounded-full bg-[#f0e8f8] px-1.5 py-0.5 text-[9px] font-bold text-[#6d35a1]">{durationLabel(minuteOfDay(activity.end) - minuteOfDay(activity.start))}</span>
+              {sheetFor(activity) && <button type="button" onClick={() => onOpenSheet(sheetFor(activity)!)} title="Voir la fiche du temps" className="mt-2 inline-flex cursor-pointer items-center gap-1 rounded-full bg-[#792bb9] px-2 py-0.5 text-[10px] font-semibold text-white hover:bg-[#66239d]"><NotebookText size={11} />Fiche</button>}
             </div>
             {onEdit
               ? <button type="button" disabled={busy} onClick={() => onEdit(activity)} onContextMenu={menuHandler(onMenu, (event) => ({ kind: "activity", activity, x: event.clientX, y: event.clientY }))}
@@ -384,6 +389,10 @@ export function PlanningBoard({ activities, dayCount, startDate, themes = defaul
   const [highlightTrainer, setHighlightTrainer] = useState<string | null>(null);
   const [highlightTheme, setHighlightTheme] = useState<string | null>(null);
   const days = Array.from({ length: dayCount }, (_, index) => index + 1);
+  const { times: customTimes } = useTrainingTimes();
+  const guideTimes = allCatalogTimes(customTimes, auth.currentUser?.uid);
+  const sheetFor = (activity: PlanActivity) => guideTimes.find((item) => item.id === linkedCatalogId(activity));
+  const [sheet, setSheet] = useState<TrainingCatalogItem | null>(null);
 
   const changePrefs = (next: PlanningPrefs) => {
     setPrefs(next);
@@ -423,13 +432,19 @@ export function PlanningBoard({ activities, dayCount, startDate, themes = defaul
       <div className="min-w-0 max-w-full pt-1">{view === "all"
         ? <OverviewGrid days={days} dayCount={dayCount} startDate={startDate} activities={activities} themes={themes} trainerNames={trainerNames} prefs={prefs} busy={busy} isLit={isLit} onAdd={onAdd} onEdit={onEdit} onMenu={onMenu} onMove={actions?.move} />
         : <DayAgenda day={selectedDay} dayCount={dayCount} startDate={startDate} activities={activities} themes={themes} trainerNames={trainerNames} prefs={prefs} busy={busy} isLit={isLit}
-          onChangeDay={(day) => setSelectedDay(Math.min(dayCount, Math.max(1, day)))} onEdit={onEdit} onAdd={onAdd} onMenu={onMenu} />}</div>
+          onChangeDay={(day) => setSelectedDay(Math.min(dayCount, Math.max(1, day)))} onEdit={onEdit} onAdd={onAdd} onMenu={onMenu} sheetFor={sheetFor} onOpenSheet={setSheet} />}</div>
       {actions && <p className="text-center text-[11px] text-slate-400">💡 Glisse un temps pour le déplacer · clic droit pour copier, coller, dupliquer ou fusionner.</p>}
     </div>
     <PrintPlanning activities={activities} dayCount={dayCount} startDate={startDate} formationTitle={formationTitle} themes={themes} trainerNames={trainerNames} />
     {menu && actions && <PlanningContextMenu target={menu} activities={activities} dayCount={dayCount} actions={actions} busy={busy} onEdit={onEdit} onAdd={onAdd} onClose={() => setMenu(null)} />}
     {actions && <PlanningNoticeBar actions={actions} busy={busy} />}
     {actions && <MoveConflictDialog actions={actions} busy={busy} />}
+    {sheet && <div className="planning-controls fixed inset-0 z-[120] flex items-start justify-center overflow-y-auto bg-slate-950/50 p-3 sm:p-8" onMouseDown={(event) => { if (event.target === event.currentTarget) setSheet(null); }}>
+      <div role="dialog" aria-modal="true" aria-label={`Fiche : ${sheet.title}`} className="relative w-full max-w-3xl">
+        <button type="button" onClick={() => setSheet(null)} aria-label="Fermer" className="absolute right-3 top-3 z-10 grid h-9 w-9 cursor-pointer place-items-center rounded-full bg-white/20 text-white hover:bg-white/35"><X size={18} /></button>
+        <TimeSheetView item={sheet} />
+      </div>
+    </div>}
     {settingsOpen && <PlanningSettings prefs={prefs} onChangePrefs={changePrefs} themes={themes} activities={activities}
       onSaveThemes={onSaveThemes} onClose={() => setSettingsOpen(false)} />}
   </>;

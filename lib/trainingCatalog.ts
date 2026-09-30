@@ -1,5 +1,6 @@
 import type { FormationType, PlanActivity, TrainingTimeCategory, TrainingTimeScope } from "@/lib/types";
 import { trainerResources } from "@/lib/trainerGuide";
+import { builtInTimeSheets } from "@/lib/timeSheets";
 import type { GuideResourceRecord } from "@/lib/guideLibrary";
 
 export type CatalogCategory = TrainingTimeCategory;
@@ -15,14 +16,18 @@ export type TrainingCatalogItem = {
   kind?: TrainingTimeKind;
   /** Admin removed it from the guide (built-in times can't be deleted, only hidden). */
   hidden?: boolean;
-  /** Free-form sheet (HTML), started from the same template as the PDF resources. */
+  /** Free-form sheet (HTML), started from the same template as the former PDF resources. */
   sheetHtml?: string;
+  /** Files or links attached to the time (external resources: documents, videos, sites…). */
+  attachments?: TimeAttachment[];
   /** Times created by trainers wait for an admin before joining the guide. Missing means published. */
   status?: "pending" | "published" | "rejected";
   proposedBy?: string;
   proposedByName?: string;
   reviewNote?: string;
 };
+
+export type TimeAttachment = { name: string; url: string; kind: "file" | "link" };
 
 /** Starting point of every sheet, mirroring the PDF resources; everything stays freely editable. */
 export const TIME_SHEET_TEMPLATE = `<h2>Fiche synthétique</h2>
@@ -44,9 +49,9 @@ const templateText = plainText(TIME_SHEET_TEMPLATE);
 /** The sheet holds more than the untouched template. */
 export const hasWrittenSheet = (html?: string) => Boolean(html && plainText(html) !== templateText && plainText(html).length > 20);
 
-/** Less than a sentence written, no sheet and no document: listed "à compléter" for admins, hidden from trainers. */
-export function isTimeToComplete(item: TrainingCatalogItem, resources?: GuideResourceRecord[]) {
-  return (item.content || "").trim().length < 25 && !hasWrittenSheet(item.sheetHtml) && !resourceForActivity(item, resources)?.href;
+/** Less than a sentence written, no sheet and nothing attached: listed "à compléter" for admins, hidden from trainers. */
+export function isTimeToComplete(item: TrainingCatalogItem) {
+  return (item.content || "").trim().length < 25 && !hasWrittenSheet(item.sheetHtml) && !item.attachments?.length;
 }
 
 export const isPublishedTime = (item: Pick<TrainingCatalogItem, "status">) => !item.status || item.status === "published";
@@ -84,9 +89,9 @@ const builtInCatalog: TrainingCatalogItem[] = [
   { id: "projets", title: "Projets éducatif, pédagogique et d'animation", category: "pedagogie", scope: "both", content: "Projets éducatif, pédagogique, d'animation et d'activité.", color: "lilac" },
   { id: "education-populaire", title: "Éducation populaire", category: "pedagogie", scope: "both", content: "Repères et pratiques de l'éducation populaire.", color: "lilac" },
   { id: "objectifs-pedagogiques", title: "Intentions et objectifs pédagogiques", category: "pedagogie", scope: "both", content: "Formuler des intentions et objectifs pour une activité.", color: "sky" },
-  { id: "gestion-conflits", title: "Gestion des conflits / CNV", category: "pedagogie", scope: "both", content: "Écoute active, reformulation et besoins dans les tensions du groupe.", color: "lilac", resourceId: "communication-non-violente" },
-  { id: "autorite-sanction", title: "Autorité, sanction ou punition ?", category: "pedagogie", scope: "both", content: "Choisir une réponse éducative proportionnée et réparatrice.", color: "coral", resourceId: "reparation-educative" },
-  { id: "violence-maltraitance", title: "Violence et maltraitance", category: "pedagogie", scope: "both", content: "Prévention, écoute et alerte dans le cadre de protection de l'enfance.", color: "coral", resourceId: "temps-maltraitance" },
+  { id: "gestion-conflits", title: "Gestion des conflits / CNV", category: "pedagogie", scope: "both", content: "Écoute active, reformulation et besoins dans les tensions du groupe.", color: "lilac" },
+  { id: "autorite-sanction", title: "Autorité, sanction ou punition ?", category: "pedagogie", scope: "both", content: "Choisir une réponse éducative proportionnée et réparatrice.", color: "coral" },
+  { id: "violence-maltraitance", title: "Violence et maltraitance", category: "pedagogie", scope: "both", content: "Prévention, écoute et alerte dans le cadre de protection de l'enfance.", color: "coral" },
   { id: "consentement", title: "Consentement en ACM", category: "pedagogie", scope: "both", content: "Consentement en ACM : en transversal et sur un temps formel.", color: "coral" },
   { id: "discriminations", title: "Discriminations et harcèlement", category: "pedagogie", scope: "both", content: "Identifier et prévenir les discriminations et le harcèlement.", color: "coral" },
   { id: "handicaps", title: "Différences et handicaps", category: "pedagogie", scope: "both", content: "Adapter les activités aux besoins et capacités de chacun.", color: "sky" },
@@ -98,19 +103,19 @@ const builtInCatalog: TrainingCatalogItem[] = [
   { id: "journal-stage", title: "Journal du stage", category: "animation", scope: "both", content: "Savoir animer une présentation ludique de la journée d'activité (journal, saynète, journal TV…).", color: "lemon" },
   { id: "activites-manuelles", title: "Activités manuelles", category: "animation", scope: "general", content: "Savoir animer seul·e ou en équipe une activité manuelle.", color: "mint" },
   { id: "fil-rouge", title: "Fil rouge / projet", category: "animation", scope: "both", content: "Savoir animer seul·e ou en équipe un projet fédérateur sur toute la durée du stage (création artistique collective, spectacle, jeu par étapes…).", color: "lemon" },
-  { id: "choregraphie", title: "La choré coopérative", category: "animation", scope: "general", content: "Projet collectif mêlant mouvement, transmission et décision partagée.", color: "coral", resourceId: "choregraphie-cooperative" },
-  { id: "imaginaire", title: "Imaginaire et expression", category: "animation", scope: "both", content: "Atelier d'imaginaire et d'expression à partir d'objets et de mises en scène.", color: "coral", resourceId: "inventer-jouer-oser" },
+  { id: "choregraphie", title: "La choré coopérative", category: "animation", scope: "general", content: "Projet collectif mêlant mouvement, transmission et décision partagée.", color: "coral" },
+  { id: "imaginaire", title: "Imaginaire et expression", category: "animation", scope: "both", content: "Atelier d'imaginaire et d'expression à partir d'objets et de mises en scène.", color: "coral" },
   { id: "analyser", title: "Analyser une activité", category: "animation", scope: "both", content: "Savoir analyser seul·e et en équipe un grand jeu ou un temps de vie collective.", color: "sky" },
   { id: "repas", title: "Gestion des repas", category: "vie", scope: "both", content: "Savoir préparer en groupe un repas collectif en respectant les normes d'hygiène en vigueur.", color: "lemon" },
-  { id: "budget-repas", title: "Repas et budget", category: "vie", scope: "appro", content: "Menus, courses, rôles et suivi du budget collectif.", color: "lemon", resourceId: "repas-budget" },
-  { id: "transports", title: "Gestion des transports", category: "vie", scope: "appro", content: "Déplacements collectifs, imprévus et sécurité du groupe.", color: "sky", resourceId: "gestion-transports" },
+  { id: "budget-repas", title: "Repas et budget", category: "vie", scope: "appro", content: "Menus, courses, rôles et suivi du budget collectif.", color: "lemon" },
+  { id: "transports", title: "Gestion des transports", category: "vie", scope: "appro", content: "Déplacements collectifs, imprévus et sécurité du groupe.", color: "sky" },
   { id: "interculturalite", title: "Interculturalité et multiculturalisme", category: "interculturel", scope: "appro", content: "Freins et leviers de la rencontre interculturelle.", color: "lilac" },
   { id: "projet-jeunes", title: "Échanges de jeunes et projet collectif", category: "interculturel", scope: "appro", content: "Construire une création collective dans un échange de jeunes.", color: "lilac" },
-  { id: "activite-interculturelle", title: "Activité favorisant l'interculturalité", category: "interculturel", scope: "appro", content: "Imaginer une activité qui crée des interactions et mobilise les cultures du groupe.", color: "mint", resourceId: "activite-inter-equipe" },
+  { id: "activite-interculturelle", title: "Activité favorisant l'interculturalité", category: "interculturel", scope: "appro", content: "Imaginer une activité qui crée des interactions et mobilise les cultures du groupe.", color: "mint" },
   { id: "groupes-multiculturels", title: "Gestion de groupes multiculturels", category: "interculturel", scope: "appro", content: "Langue, respect et vie quotidienne dans un groupe multiculturel.", color: "lilac" },
-  { id: "activites-multilingues", title: "Activités multilingues", category: "interculturel", scope: "appro", content: "Concevoir une activité compréhensible sans langue commune.", color: "sky", resourceId: "activites-multilingues" },
+  { id: "activites-multilingues", title: "Activités multilingues", category: "interculturel", scope: "appro", content: "Concevoir une activité compréhensible sans langue commune.", color: "sky" },
   { id: "programmes-internationaux", title: "Programmes internationaux", category: "interculturel", scope: "appro", content: "Participer à des rencontres internationales ou en créer.", color: "sky" },
-  { id: "logistique-etranger", title: "Logistique d'un séjour à l'étranger", category: "interculturel", scope: "appro", content: "Transports, hébergement, visas, CEAM et urgences.", color: "lemon", resourceId: "gestion-transports" },
+  { id: "logistique-etranger", title: "Logistique d'un séjour à l'étranger", category: "interculturel", scope: "appro", content: "Transports, hébergement, visas, CEAM et urgences.", color: "lemon" },
   { id: "retour-stage-pratique", title: "Retour de stage pratique", category: "bilan", scope: "appro", content: "Partager les expériences vécues en stage pratique.", color: "sky" },
   { id: "auto-evaluation", title: "Auto-évaluation mi-stage et fin de stage", category: "bilan", scope: "both", content: "Faire le point sur sa progression et ses besoins.", color: "mint" },
   { id: "entretiens", title: "Entretiens individuels", category: "bilan", scope: "both", content: "Préparer les entretiens de début, milieu ou fin de stage.", color: "sky" },
@@ -128,7 +133,61 @@ const builtInCatalog: TrainingCatalogItem[] = [
 const practicalIds = new Set(["starter", "chant", "activite-intermediaire", "grand-jeu", "journal-stage", "activites-manuelles",
   "fil-rouge", "choregraphie", "analyser", "repas", "budget-repas", "activite-interculturelle", "activites-multilingues", "animation-appro"]);
 
-export const trainingCatalog: TrainingCatalogItem[] = builtInCatalog.map((item) => ({ ...item, kind: practicalIds.has(item.id) ? "pratique" : "theorie" }));
+export const trainingCatalog: TrainingCatalogItem[] = builtInCatalog.map((item) => ({
+  ...item, kind: practicalIds.has(item.id) ? "pratique" : "theorie",
+  ...(builtInTimeSheets[item.id] ? { sheetHtml: builtInTimeSheets[item.id] } : {}),
+}));
+
+// Planning times (templates and existing plannings) linked to guide times by title; first match wins.
+const titleLinks: [RegExp, string][] = [
+  [/^presentation bafa|^presentations \(/, "presentation-formation"],
+  [/^regles de vie/, "regles-vie"],
+  [/commissions/, "commissions"],
+  [/^cursus/, "cursus-bafa"],
+  [/^animateur.?rice bafa/, "role-animateur"],
+  [/^education populaire/, "education-populaire"],
+  [/^connaissance public|^besoins/, "connaissance-publics"],
+  [/^starter/, "starter"],
+  [/^chants?\s*\/\s*danses/, "chant"],
+  [/chore/, "choregraphie"],
+  [/journal/, "journal-stage"],
+  [/maltraitance/, "violence-maltraitance"],
+  [/^jeu sportif|^quiz|^assignation quiz|^prepa quizz/, "activite-intermediaire"],
+  [/^methode grand jeu/, "types-grands-jeux"],
+  [/imaginaire/, "imaginaire"],
+  [/grand ?jeu|veillee|^prepa gd/, "grand-jeu"],
+  [/^reglementation/, "reglementation"],
+  [/^rc\/rp/, "responsabilites"],
+  [/^travail en equipe/, "travail-equipe"],
+  [/handicap/, "handicaps"],
+  [/vie quotidienne|missions quotidienne/, "vie-quotidienne"],
+  [/^cnv/, "gestion-conflits"],
+  [/sanction|punition/, "autorite-sanction"],
+  [/alcool|drogue|tabac/, "alcool-drogues-tabac"],
+  [/amour, gloire/, "sexualite"],
+  [/^vss/, "consentement"],
+  [/^mixite/, "discriminations"],
+  [/projet collectif|representation collective/, "fil-rouge"],
+  [/activite manuelle/, "activites-manuelles"],
+  [/eval mi stage|entretiens mi-stage/, "auto-evaluation"],
+  [/^eval indiv|^evaluations individuelles|^bilan de fin|^clot[uo]re de session/, "evaluation-finale"],
+  [/^psa+dra/, "organiser-activite"],
+  [/multilingue/, "activites-multilingues"],
+  [/^prepa(ration)? (des )?repas|gestion de budget/, "budget-repas"],
+  [/haccp/, "repas"],
+  [/^gestion des transports/, "transports"],
+  [/dispositifs a l.etranger/, "programmes-internationaux"],
+  [/^projet jeune/, "projet-jeunes"],
+  [/^retour stages? pratiques?/, "retour-stage-pratique"],
+];
+
+export function catalogIdFromTitle(title: string) {
+  const clean = title.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+  return titleLinks.find(([pattern]) => pattern.test(clean))?.[1];
+}
+
+/** The guide time a planning time refers to: chosen by hand first, otherwise recognised from its title. */
+export const linkedCatalogId = (activity: Pick<PlanActivity, "catalogId" | "title">) => activity.catalogId || catalogIdFromTitle(activity.title);
 
 export function catalogForFormation(type: FormationType) {
   const scope = type === "formation_generale" ? "general" : "appro";
