@@ -15,7 +15,41 @@ export type TrainingCatalogItem = {
   kind?: TrainingTimeKind;
   /** Admin removed it from the guide (built-in times can't be deleted, only hidden). */
   hidden?: boolean;
+  /** Free-form sheet (HTML), started from the same template as the PDF resources. */
+  sheetHtml?: string;
+  /** Times created by trainers wait for an admin before joining the guide. Missing means published. */
+  status?: "pending" | "published" | "rejected";
+  proposedBy?: string;
+  proposedByName?: string;
+  reviewNote?: string;
 };
+
+/** Starting point of every sheet, mirroring the PDF resources; everything stays freely editable. */
+export const TIME_SHEET_TEMPLATE = `<h2>Fiche synthétique</h2>
+<table><thead><tr><th>Rubrique</th><th>Contenu</th></tr></thead><tbody>
+<tr><td>Objectifs</td><td>Ce que le temps doit permettre aux stagiaires de découvrir, comprendre, vivre…</td></tr>
+<tr><td>Compétences développées</td><td>Savoir-faire et postures travaillés.</td></tr>
+<tr><td>Durée</td><td>Ex. 1h30 à 2h selon la taille du groupe.</td></tr>
+<tr><td>Matériel / espace</td><td>Salle, disposition, supports, matériel à prévoir.</td></tr>
+</tbody></table>
+<h2>Déroulement détaillé</h2>
+<h3>Introduction (15 min)</h3><p>Ce que fait le ou la formateur·ice, les consignes…</p>
+<h3>Étape 2</h3><p>…</p>
+<h2>Variantes et améliorations</h2>
+<ul><li>…</li></ul>`;
+
+const plainText = (html: string) => html.replace(/<[^>]+>/g, " ").replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
+const templateText = plainText(TIME_SHEET_TEMPLATE);
+
+/** The sheet holds more than the untouched template. */
+export const hasWrittenSheet = (html?: string) => Boolean(html && plainText(html) !== templateText && plainText(html).length > 20);
+
+/** Less than a sentence written, no sheet and no document: listed "à compléter" for admins, hidden from trainers. */
+export function isTimeToComplete(item: TrainingCatalogItem, resources?: GuideResourceRecord[]) {
+  return (item.content || "").trim().length < 25 && !hasWrittenSheet(item.sheetHtml) && !resourceForActivity(item, resources)?.href;
+}
+
+export const isPublishedTime = (item: Pick<TrainingCatalogItem, "status">) => !item.status || item.status === "published";
 
 export type TrainingTimeKind = "theorie" | "pratique";
 export const trainingTimeKinds: { id: TrainingTimeKind; label: string }[] = [
@@ -101,18 +135,22 @@ export function catalogForFormation(type: FormationType) {
   return trainingCatalog.filter((item) => item.scope === "both" || item.scope === scope);
 }
 
-/** Built-in times with admin edits applied (same id), plus times added from plannings or by admins; hidden ones removed. */
-export function allCatalogTimes(customTimes: TrainingCatalogItem[]) {
+/**
+ * Built-in times with admin edits applied (same id), plus published times added from plannings or by trainers;
+ * hidden ones removed. `viewerId` also keeps that person's own proposals, still waiting for validation.
+ */
+export function allCatalogTimes(customTimes: TrainingCatalogItem[], viewerId?: string) {
   const merged = new Map(trainingCatalog.map((item) => [item.id, item]));
-  customTimes.forEach((item) => merged.set(item.id, { ...merged.get(item.id), ...item }));
+  customTimes.filter((item) => isPublishedTime(item) || (viewerId && item.proposedBy === viewerId && item.status === "pending"))
+    .forEach((item) => merged.set(item.id, { ...merged.get(item.id), ...item }));
   return Array.from(merged.values()).filter((item) => !item.hidden).sort((a, b) =>
     catalogCategories.findIndex((item) => item.id === a.category) - catalogCategories.findIndex((item) => item.id === b.category)
     || a.title.localeCompare(b.title, "fr"));
 }
 
-export function catalogForFormationWithCustom(type: FormationType, customTimes: TrainingCatalogItem[]) {
+export function catalogForFormationWithCustom(type: FormationType, customTimes: TrainingCatalogItem[], viewerId?: string) {
   const scope = type === "formation_generale" ? "general" : "appro";
-  return allCatalogTimes(customTimes).filter((item) => item.scope === "both" || item.scope === scope);
+  return allCatalogTimes(customTimes, viewerId).filter((item) => item.scope === "both" || item.scope === scope);
 }
 
 export function resourceForActivity(activity: Pick<PlanActivity, "resourceId">, resources?: GuideResourceRecord[]) {

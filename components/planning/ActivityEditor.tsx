@@ -4,6 +4,7 @@ import { useMemo, useState, type ReactNode } from "react";
 import { BookOpen, ExternalLink, FilePlus2, FileText, Search, Save, Trash2, X } from "lucide-react";
 import { catalogCategories, catalogForFormationWithCustom, type CatalogCategory, type TrainingCatalogItem } from "@/lib/trainingCatalog";
 import { ResourceProposalDialog } from "@/components/guide/ResourceProposalDialog";
+import { auth } from "@/lib/firebase";
 import { NO_ICON, iconForActivity, planningIconGroups } from "@/lib/planningIcons";
 import { themeForActivity, themeSwatch } from "@/lib/planningThemes";
 import { useTrainingTimes } from "@/lib/useTrainingTimes";
@@ -47,7 +48,7 @@ export function ActivityEditor({ activity, existing, dayCount, formationType, tr
     setIconsOpen(false);
   };
   const iconChoice = (active: boolean) => `h-8 cursor-pointer rounded-md border px-2.5 text-xs font-medium ${active ? "border-[#792bb9] bg-[#f0e8f8] text-[#552080]" : "border-slate-200 bg-white text-slate-600 hover:border-[#792bb9]"}`;
-  const catalog = useMemo(() => catalogForFormationWithCustom(formationType, customTimes), [formationType, customTimes]);
+  const catalog = useMemo(() => catalogForFormationWithCustom(formationType, customTimes, auth.currentUser?.uid), [formationType, customTimes]);
   const matches = catalog.filter((item) => (category === "all" || item.category === category) &&
     `${item.title} ${item.content}`.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
       .includes(search.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim()));

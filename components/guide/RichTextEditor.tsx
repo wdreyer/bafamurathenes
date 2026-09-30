@@ -11,6 +11,9 @@ type Props = {
   onChange: (html: string) => void;
   onUploadImage: (file: File) => Promise<string>;
   disabled?: boolean;
+  /** Extra classes for the editable area, e.g. "time-sheet" to edit with the sheet look. */
+  contentClassName?: string;
+  placeholder?: string;
 };
 
 type Tool = {
@@ -33,7 +36,7 @@ const tools: Tool[] = [
   { label: "Citation", command: "formatBlock", value: "blockquote", icon: Quote },
 ];
 
-export function RichTextEditor({ value, onChange, onUploadImage, disabled = false }: Props) {
+export function RichTextEditor({ value, onChange, onUploadImage, disabled = false, contentClassName = "", placeholder = "Rédige le contenu de la ressource..." }: Props) {
   const editorRef = useRef<HTMLDivElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -96,8 +99,8 @@ export function RichTextEditor({ value, onChange, onUploadImage, disabled = fals
       contentEditable={!disabled}
       suppressContentEditableWarning
       onInput={(event) => onChange(event.currentTarget.innerHTML)}
-      data-placeholder="Rédige le contenu de la ressource..."
-      className="guide-rich-content min-h-80 px-5 py-4 text-sm leading-7 text-slate-800 outline-none"
+      data-placeholder={placeholder}
+      className={`guide-rich-content min-h-80 px-5 py-4 text-sm leading-7 text-slate-800 outline-none ${contentClassName}`}
     />
   </div>;
 }

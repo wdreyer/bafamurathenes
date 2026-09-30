@@ -8,9 +8,11 @@ type SavePlanningTimeInput = {
   activity: PlanActivity;
   formationType: FormationType;
   trainerNames?: Record<string, string>;
+  /** Set for trainers: the new guide time is then a proposal waiting for an admin. Admins publish directly. */
+  proposer?: { uid: string; name: string };
 };
 
-export async function savePlanningTime({ formationId, activities, activity, formationType, trainerNames }: SavePlanningTimeInput) {
+export async function savePlanningTime({ formationId, activities, activity, formationType, trainerNames, proposer }: SavePlanningTimeInput) {
   const isNew = !activities.some((item) => item.id === activity.id);
   const shouldPublish = isNew && !activity.catalogId;
   const catalogId = shouldPublish ? crypto.randomUUID() : activity.catalogId;
@@ -30,6 +32,7 @@ export async function savePlanningTime({ formationId, activities, activity, form
       content: saved.content.trim(),
       color: saved.color,
       ...(saved.resourceId ? { resourceId: saved.resourceId } : {}),
+      ...(proposer ? { status: "pending", proposedBy: proposer.uid, proposedByName: proposer.name } : {}),
       createdAt: serverTimestamp(),
     });
   }

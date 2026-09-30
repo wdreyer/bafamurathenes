@@ -92,9 +92,21 @@ service cloud.firestore {
         && resource.data.proposedBy == request.auth.uid;
     }
 
+    // Trainers' times are usable in their own plannings right away but join the guide only once an admin publishes them.
     match /trainingTimes/{documentId} {
       allow read: if isAdmin() || isApprovedTrainer();
-      allow write: if isAdmin() || isApprovedTrainer();
+      allow write: if isAdmin();
+      allow create: if isApprovedTrainer()
+        && request.resource.data.status == 'pending'
+        && request.resource.data.proposedBy == request.auth.uid;
+      allow update: if isApprovedTrainer()
+        && resource.data.status in ['pending', 'rejected']
+        && resource.data.proposedBy == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.proposedBy == request.auth.uid;
+      allow delete: if isApprovedTrainer()
+        && resource.data.status in ['pending', 'rejected']
+        && resource.data.proposedBy == request.auth.uid;
     }
 
     // Fallback file store when Storage is unavailable. Trainers can only add new files, never overwrite one.

@@ -126,7 +126,8 @@ export default function TeamPage() {
     setBusy(true); setError("");
     try {
       await savePlanningTime({ formationId: formation.id, activities: plan.activities, activity: editing,
-        formationType: formation.type });
+        formationType: formation.type,
+        proposer: isAdmin ? undefined : { uid: user.uid, name: `${trainer.firstName} ${trainer.lastName}`.trim() || user.email || "Formateur·ice" } });
       setEditing(null);
     } catch { setError("Le temps et sa référence dans le guide n'ont pas pu être enregistrés."); }
     finally { setBusy(false); }

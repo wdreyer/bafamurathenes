@@ -5,13 +5,16 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { deleteDoc, doc } from "firebase/firestore";
 import {
-  BookOpen, CalendarRange, CheckCircle2, Clock3, Coffee, FilePlus2, FileText, Globe2, Image as ImageIcon,
-  Search, Sparkles, Trash2, Users,
+  BookOpen, CalendarPlus, CalendarRange, CheckCircle2, Clock3, Coffee, FilePlus2, FileText, Globe2, Image as ImageIcon,
+  NotebookText, Pencil, Plus, Search, Sparkles, Trash2, Users, X,
 } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { useTeamAuth } from "@/components/team/TeamAccess";
 import { ResourceProposalDialog } from "@/components/guide/ResourceProposalDialog";
-import { allCatalogTimes, catalogCategories, resourceForActivity, type CatalogCategory } from "@/lib/trainingCatalog";
+import { allCatalogTimes, catalogCategories, hasWrittenSheet, isTimeToComplete, resourceForActivity, type CatalogCategory, type TrainingCatalogItem } from "@/lib/trainingCatalog";
+import { TimeForm } from "@/components/guide/TimeForm";
+import { TimeSheetView } from "@/components/guide/TimeSheetView";
+import { AddTimeToPlanning } from "@/components/guide/AddTimeToPlanning";
 import { guideColorClasses } from "@/lib/guideLibrary";
 import { useGuideLibrary } from "@/lib/useGuideLibrary";
 import { useTrainingTimes } from "@/lib/useTrainingTimes";
@@ -41,7 +44,14 @@ export default function GuideFormateursPage() {
   const [scope, setScope] = useState<ScopeFilter>("all");
   const [category, setCategory] = useState("all");
   const [search, setSearch] = useState("");
-  const allTimes = useMemo(() => allCatalogTimes(customTimes), [customTimes]);
+  const [editingTime, setEditingTime] = useState<TrainingCatalogItem | "new" | null>(null);
+  const [sheetTime, setSheetTime] = useState<TrainingCatalogItem | null>(null);
+  const [planningTime, setPlanningTime] = useState<TrainingCatalogItem | null>(null);
+  const authorName = `${trainer.firstName} ${trainer.lastName}`.trim() || user.email || "Formateur·ice";
+  // Times with less than a sentence written (no sheet, no PDF) stay hidden, except the viewer's own.
+  const allTimes = useMemo(() => allCatalogTimes(customTimes, user.uid)
+    .filter((item) => item.proposedBy === user.uid || !isTimeToComplete(item, resources)), [customTimes, user.uid, resources]);
+  const myTimes = customTimes.filter((item) => item.proposedBy === user.uid && (item.status === "pending" || item.status === "rejected"));
   const term = clean(search.trim());
 
   const matchingResources = resources.filter((item) =>
@@ -62,10 +72,25 @@ export default function GuideFormateursPage() {
           <button type="button" onClick={() => { setView("resources"); setCategory("all"); }} className={`inline-flex h-9 items-center gap-2 rounded px-3 text-sm font-semibold ${view === "resources" ? "bg-emerald-800 text-white" : "text-slate-600"}`}><BookOpen size={15} />Ressources</button>
           <button type="button" onClick={() => { setView("times"); setCategory("all"); }} className={`inline-flex h-9 items-center gap-2 rounded px-3 text-sm font-semibold ${view === "times" ? "bg-emerald-800 text-white" : "text-slate-600"}`}><Sparkles size={15} />Temps de formation</button>
         </div>
-        <button type="button" onClick={() => setProposing(true)} className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-full bg-[#792bb9] px-4 text-sm font-semibold text-white hover:bg-[#66239d]"><FilePlus2 size={16} />{isAdmin ? "Ajouter une ressource" : "Proposer une ressource"}</button>
+        {view === "times"
+          ? <button type="button" onClick={() => setEditingTime("new")} className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-full bg-[#792bb9] px-4 text-sm font-semibold text-white hover:bg-[#66239d]"><Plus size={16} />Créer un temps</button>
+          : <button type="button" onClick={() => setProposing(true)} className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-full bg-[#792bb9] px-4 text-sm font-semibold text-white hover:bg-[#66239d]"><FilePlus2 size={16} />{isAdmin ? "Ajouter une ressource" : "Proposer une ressource"}</button>}
       </div>
 
-      {myProposals.length > 0 && <section className="mt-5 rounded-md border border-[#d8c9e6] bg-[#f8f3fb] p-4">
+      {view === "times" && myTimes.length > 0 && <section className="mt-5 rounded-md border border-[#d8c9e6] bg-[#f8f3fb] p-4">
+        <h3 className="text-sm font-semibold text-[#552080]">Mes temps créés</h3>
+        <ul className="mt-2 divide-y divide-[#e6d9f0]">
+          {myTimes.map((item) => <li key={item.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2 text-sm">
+            <span className="min-w-0 flex-1 font-medium text-slate-900">{item.title}</span>
+            {item.status === "pending"
+              ? <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-700"><Clock3 size={13} />Utilisable dans ton planning · en attente pour le guide</span>
+              : <span className="text-xs font-semibold text-rose-700">Non retenu pour le guide{item.reviewNote ? ` · ${item.reviewNote}` : ""}</span>}
+            <button type="button" onClick={() => setEditingTime(item)} title="Modifier" aria-label={`Modifier ${item.title}`} className="grid h-7 w-7 cursor-pointer place-items-center rounded text-slate-500 hover:bg-white hover:text-[#792bb9]"><Pencil size={14} /></button>
+          </li>)}
+        </ul>
+      </section>}
+
+      {view === "resources" && myProposals.length > 0 && <section className="mt-5 rounded-md border border-[#d8c9e6] bg-[#f8f3fb] p-4">
         <h3 className="text-sm font-semibold text-[#552080]">Mes propositions</h3>
         <ul className="mt-2 divide-y divide-[#e6d9f0]">
           {myProposals.map((item) => <li key={item.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2 text-sm">
@@ -117,14 +142,37 @@ export default function GuideFormateursPage() {
             if (!items.length) return null;
             const Icon = categoryIcons[section.id as CatalogCategory];
             return <section key={section.id}><div className="mb-2 flex items-center gap-3 border-b border-slate-300 pb-3"><span className={`grid h-9 w-9 place-items-center rounded-md ${categoryColors[section.id as CatalogCategory]}`}><Icon size={18} /></span><h3 className="font-semibold">{section.label}</h3></div><div className="divide-y divide-slate-200">{items.map((item) => {
-              const linked = resources.find((entry) => entry.id === item.resourceId);
-              const legacy = resourceForActivity(item);
-              return <article key={item.id} className="grid gap-2 py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:gap-5"><div><h4 className="text-sm font-semibold">{item.title}</h4><p className="mt-1 text-sm text-slate-600">{item.content}</p><p className="mt-1 text-xs text-slate-500">{scopeLabels[item.scope]}</p></div>{linked ? <Link href={`/equipe/guide/${linked.id}`} className="inline-flex h-9 items-center gap-2 self-center rounded border border-emerald-300 bg-emerald-50 px-3 text-xs font-semibold text-emerald-900 no-underline"><FileText size={14} />Ressource</Link> : legacy?.href ? <a href={legacy.href} target="_blank" rel="noopener noreferrer" className="inline-flex h-9 items-center gap-2 self-center rounded border px-3 text-xs font-semibold"><FileText size={14} />Document</a> : null}</article>;
+              const pdf = resourceForActivity(item, resources)?.href;
+              const action = "inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-full border px-3 text-xs font-semibold no-underline";
+              return <article key={item.id} className="grid gap-2 py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:gap-5">
+                <div>
+                  <h4 className="text-sm font-semibold">{item.title}</h4>
+                  {item.content && <p className="mt-1 text-sm text-slate-600">{item.content}</p>}
+                  <p className="mt-1.5 flex flex-wrap gap-1 text-[10px] font-semibold">
+                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-600">{scopeLabels[item.scope]}</span>
+                    <span className={`rounded-full px-2 py-0.5 ${(item.kind || "theorie") === "pratique" ? "bg-[#ffe3e8] text-[#8a1c33]" : "bg-[#f1e4ff] text-[#4b1680]"}`}>{(item.kind || "theorie") === "pratique" ? "Mise en pratique" : "Théorique"}</span>
+                    {item.status === "pending" && <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-amber-900"><Clock3 size={10} />Mon temps · en attente</span>}
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-1.5 self-center">
+                  {hasWrittenSheet(item.sheetHtml) && <button type="button" onClick={() => setSheetTime(item)} className={`${action} border-[#d9cfb4] bg-[#f6efdc] text-[#0f1b3d]`}><NotebookText size={14} />Fiche</button>}
+                  {pdf && <a href={pdf} target="_blank" rel="noopener noreferrer" className={`${action} border-[#d8c9e6] bg-white text-[#66239d]`}><FileText size={14} />PDF</a>}
+                  <button type="button" onClick={() => setPlanningTime(item)} title="Ajouter à mon planning" className={`${action} border-[#792bb9] bg-[#792bb9] text-white`}><CalendarPlus size={14} />Planning</button>
+                </div>
+              </article>;
             })}</div></section>;
           })}</div>
         </section>}
       </div>
     </div>
-    {proposing && <ResourceProposalDialog authorName={`${trainer.firstName} ${trainer.lastName}`.trim() || user.email || "Formateur·ice"} publishDirectly={isAdmin} onClose={() => setProposing(false)} />}
+    {proposing && <ResourceProposalDialog authorName={authorName} publishDirectly={isAdmin} onClose={() => setProposing(false)} />}
+    {editingTime && <TimeForm key={editingTime === "new" ? "new" : editingTime.id} item={editingTime === "new" ? null : editingTime} mode={isAdmin ? "admin" : "trainer"} authorName={authorName} onClose={() => setEditingTime(null)} />}
+    {planningTime && <AddTimeToPlanning item={planningTime} uid={user.uid} isAdmin={isAdmin} onClose={() => setPlanningTime(null)} />}
+    {sheetTime && <div className="fixed inset-0 z-[110] flex items-start justify-center overflow-y-auto bg-slate-950/50 p-3 sm:p-8" onMouseDown={(event) => { if (event.target === event.currentTarget) setSheetTime(null); }}>
+      <div role="dialog" aria-modal="true" aria-label={`Fiche : ${sheetTime.title}`} className="relative w-full max-w-3xl">
+        <button type="button" onClick={() => setSheetTime(null)} aria-label="Fermer" className="absolute right-3 top-3 z-10 grid h-9 w-9 cursor-pointer place-items-center rounded-full bg-white/80 text-[#0f1b3d] hover:bg-white"><X size={18} /></button>
+        <TimeSheetView item={sheetTime} />
+      </div>
+    </div>}
   </main>;
 }
