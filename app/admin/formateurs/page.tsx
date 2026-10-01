@@ -44,6 +44,8 @@ export default function FormateursPage() {
   const [documentsLoading, setDocumentsLoading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  /** Shown after deleting a trainer who had a sign-in account, which the site cannot delete itself. */
+  const [deletedAccount, setDeletedAccount] = useState<{ name: string; email: string } | null>(null);
 
   useEffect(() => {
     const requestedFormation = new URLSearchParams(window.location.search).get("formation");
@@ -201,7 +203,10 @@ Les formateur·ices des temps sont retiré·es. La flèche ↶ du planning perme
       + (upcoming.length ? `• Elle ou il sera retiré·e de ${upcoming.length} formation${upcoming.length > 1 ? "s" : ""} à venir et de ses temps dans ces plannings.
 ` : "")
       + `• Les formations passées ne sont pas modifiées.
-
+`
+      + (trainer.accountUid ? `• Son compte de connexion reste dans Firebase : pense à le supprimer aussi dans la console (un lien s’affichera).
+` : "")
+      + `
 Cette action est irréversible.`;
     if (!window.confirm(message)) return;
     setBusy(true); setError("");
@@ -226,6 +231,7 @@ Cette action est irréversible.`;
       batch.delete(doc(db, "trainerProfiles", trainer.id));
       await batch.commit();
       setSelectedTrainerId(null);
+      if (trainer.accountUid) setDeletedAccount({ name: trainerName(trainer), email: trainer.email || "" });
     } catch { setError("La suppression n’a pas pu aboutir. Vérifie ta connexion puis réessaie."); }
     finally { setBusy(false); }
   };
@@ -263,6 +269,11 @@ Cette action est irréversible.`;
     </div>
     <div className="flex flex-wrap gap-4"><a href="/equipe" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm font-medium text-[#66239d] underline underline-offset-2">Ouvrir la vue formateur·ices <ExternalLink size={15} /></a><a href="/equipe/guide" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-sm font-medium text-[#66239d] underline underline-offset-2">Ouvrir le guide <ExternalLink size={15} /></a></div>
     {error && <p role="alert" className="rounded border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">{error}</p>}
+    {deletedAccount && <div role="status" className="flex flex-wrap items-center gap-3 rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+      <p className="min-w-0 flex-1">La fiche de <b>{deletedAccount.name}</b> est supprimée. Son compte de connexion{deletedAccount.email ? ` (${deletedAccount.email})` : ""} existe encore : supprime-le dans la console Firebase, sinon une fiche « en attente » réapparaîtra à sa prochaine connexion.</p>
+      <a href="https://console.firebase.google.com/project/bafa-murathenes/authentication/users" target="_blank" rel="noopener noreferrer" className="inline-flex h-9 items-center gap-1.5 rounded bg-amber-900 px-3 font-semibold text-white no-underline">Ouvrir la console <ExternalLink size={14} /></a>
+      <button type="button" onClick={() => setDeletedAccount(null)} title="Fermer" aria-label="Fermer" className="grid h-9 w-9 cursor-pointer place-items-center rounded hover:bg-amber-100"><X size={16} /></button>
+    </div>}
 
     {tab === "team" ? <section className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">

@@ -7,6 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { confirmPasswordReset, signInWithEmailAndPassword, verifyPasswordResetCode } from "firebase/auth";
 import { CheckCircle2, Eye, EyeOff, KeyRound, LoaderCircle } from "lucide-react";
 import { auth } from "@/lib/firebase";
+import { isAdminEmail } from "@/lib/adminAccess";
 
 type PageState = "checking" | "ready" | "saving" | "success" | "invalid";
 
@@ -21,6 +22,8 @@ function PasswordResetForm() {
   const [confirmation, setConfirmation] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Admins go back to the administration, trainers to their space.
+  const home = isAdminEmail(email) ? { href: "/admin", label: "l’administration" } : { href: "/equipe", label: "l’espace formateur·ice" };
 
   useEffect(() => {
     if (!validRequest) return;
@@ -52,7 +55,7 @@ function PasswordResetForm() {
       setState("success");
       try {
         await signInWithEmailAndPassword(auth, email, password);
-        window.setTimeout(() => window.location.assign("/admin"), 900);
+        window.setTimeout(() => window.location.assign(home.href), 900);
       } catch {
         // The password is changed even if automatic sign-in is unavailable.
       }
@@ -74,7 +77,7 @@ function PasswordResetForm() {
           <Image src="/icons/icon-192.png" alt="Murathènes" width={48} height={48} className="rounded-lg" priority />
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Murathènes</p>
-            <p className="font-semibold text-slate-950">Administration BAFA</p>
+            <p className="font-semibold text-slate-950">Espace BAFA</p>
           </div>
         </div>
 
@@ -92,7 +95,7 @@ function PasswordResetForm() {
             <p className="mt-2 text-sm leading-6 text-slate-600">
               Les liens de réinitialisation ne sont utilisables qu’une fois. Demandez un nouvel email depuis la page de connexion.
             </p>
-            <Link href="/admin" className="mt-6 flex h-11 items-center justify-center rounded-lg bg-slate-950 px-4 text-sm font-semibold text-white no-underline hover:bg-slate-800">
+            <Link href="/equipe" className="mt-6 flex h-11 items-center justify-center rounded-lg bg-slate-950 px-4 text-sm font-semibold text-white no-underline hover:bg-slate-800">
               Retour à la connexion
             </Link>
           </div>
@@ -143,9 +146,9 @@ function PasswordResetForm() {
           <div>
             <CheckCircle2 className="mb-4 h-10 w-10 text-emerald-600" />
             <h1 className="text-2xl font-semibold">Mot de passe modifié</h1>
-            <p className="mt-2 text-sm leading-6 text-slate-600">Connexion en cours vers l’administration...</p>
-            <Link href="/admin" className="mt-6 flex h-11 items-center justify-center rounded-lg bg-slate-950 px-4 text-sm font-semibold text-white no-underline hover:bg-slate-800">
-              Ouvrir l’administration
+            <p className="mt-2 text-sm leading-6 text-slate-600">Connexion en cours vers {home.label}...</p>
+            <Link href={home.href} className="mt-6 flex h-11 items-center justify-center rounded-lg bg-slate-950 px-4 text-sm font-semibold text-white no-underline hover:bg-slate-800">
+              Ouvrir {home.label}
             </Link>
           </div>
         )}

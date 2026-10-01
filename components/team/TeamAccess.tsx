@@ -135,6 +135,22 @@ export function TeamAccess({ children }: { children: React.ReactNode }) {
     return onSnapshot(doc(db, "trainers", user.uid), (snapshot) => {
       setTrainer(snapshot.exists() ? { id: snapshot.id, ...snapshot.data() } as Trainer : null);
       setProfileReady(true);
+      // A sign-in account without a trainer file (file deleted in the admin, or never written) gets a pending file again,
+      // so it shows up in the admin to be validated. Brand-new accounts are skipped: the sign-up form writes their file.
+      const createdAt = Date.parse(user.metadata.creationTime || "");
+      if (!snapshot.exists() && !isAdminEmail(user.email) && Date.now() - createdAt > 60_000) {
+        void setDoc(doc(db, "trainers", user.uid), {
+          accountUid: user.uid,
+          email: (user.email || "").toLowerCase(),
+          firstName: "",
+          lastName: "",
+          phone: "",
+          approvalStatus: "pending",
+          profileComplete: false,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        }).catch(() => undefined);
+      }
     }, () => setProfileReady(true));
   }, [user]);
 
