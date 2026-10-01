@@ -13,6 +13,7 @@ import {
   BookOpen,
   CalendarDays,
   LayoutDashboard,
+  LayoutTemplate,
   LogOut,
   ShieldCheck,
   UserRoundCheck,
@@ -29,6 +30,7 @@ const navItems = [
   { href: "/admin/inscriptions", label: "Inscriptions", icon: Users },
   { href: "/admin/formations", label: "Formations", icon: GraduationCap },
   { href: "/admin/formateurs", label: "Formateur·ices", icon: CalendarDays },
+  { href: "/admin/plannings", label: "Plannings types", icon: LayoutTemplate },
   { href: "/admin/ressources", label: "Ressources", icon: BookOpen },
 ];
 

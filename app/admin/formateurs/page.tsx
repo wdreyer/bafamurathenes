@@ -6,6 +6,7 @@ import { deleteObject, getDownloadURL, listAll, ref } from "firebase/storage";
 import { AlertCircle, BadgeCheck, CalendarDays, Check, ChevronRight, ExternalLink, FileText, Pencil, Plus, Save, ShieldX, Trash2, UserPlus, Users, X } from "lucide-react";
 import { db, storage } from "@/lib/firebase";
 import { buildPlanningTemplate } from "@/lib/planningTemplates";
+import { activitiesFromTemplate, usePlanningTemplates } from "@/lib/planningTemplateStore";
 import { savePlanningTime } from "@/lib/savePlanningTime";
 import { defaultThemes, normalizeThemes } from "@/lib/planningThemes";
 import { mergedBlock, usePlanningActions } from "@/lib/usePlanningActions";
@@ -16,7 +17,7 @@ import { TrainerHistory } from "@/components/admin/TrainerHistory";
 import { ActivityEditor } from "@/components/planning/ActivityEditor";
 import { PlanningBoard } from "@/components/planning/PlanningBoard";
 import { ActivityQuickActions } from "@/components/planning/PlanningActionsMenu";
-import type { Formation, PlanActivity, PlanTheme, Trainer } from "@/lib/types";
+import type { Formation, PlanActivity, PlanningTemplate, PlanTheme, Trainer } from "@/lib/types";
 import { syncTrainerProfile, trainerLabel, useTrainerProfiles } from "@/lib/trainerName";
 import { TrainerDocuments } from "@/components/team/TrainerDocuments";
 
@@ -134,6 +135,17 @@ export default function FormateursPage() {
   };
 
   const planningActions = usePlanningActions(activities, saveActivities, formationId);
+
+  // Planning types of the same kind of formation, to start or restart this session's planning.
+  const planningTemplates = usePlanningTemplates();
+  const matchingTemplates = (planningTemplates || []).filter((item) => item.formationType === formation?.type);
+  const applyTemplate = async (template: PlanningTemplate) => {
+    if (!formation) return;
+    if (planExists && activities.length && !window.confirm(`Remplacer le planning de « ${formation.title} » par le planning type « ${template.title} » ?
+
+Les formateur·ices des temps sont retiré·es. La flèche ↶ du planning permet d’annuler.`)) return;
+    if (await saveActivities(activitiesFromTemplate(template)) && template.themes) await saveThemes(template.themes);
+  };
 
   const saveTrainer = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -277,10 +289,10 @@ Cette action est irréversible.`;
         </table>
       </div>
     </section> : <div className="space-y-5">
-      <div className="flex flex-wrap items-center gap-3"><label htmlFor="admin-plan-formation" className="text-xs font-semibold uppercase text-slate-500">Session</label><select id="admin-plan-formation" value={formationId} onChange={(event) => { setFormationId(event.target.value); setEditing(null); }} className="h-10 min-w-[260px] max-w-full rounded border border-[#d8c9e6] bg-white px-3 text-sm">{formations.map((item) => <option key={item.id} value={item.id}>{item.title} · {item.startDate.slice(0, 10)}</option>)}</select>{formation && <a href={`/admin/formations/${formation.id}`} className="inline-flex items-center gap-1 text-sm text-[#66239d] underline">Fiche formation <ExternalLink size={13} /></a>}</div>
+      <div className="flex flex-wrap items-center gap-3"><label htmlFor="admin-plan-formation" className="text-xs font-semibold uppercase text-slate-500">Session</label><select id="admin-plan-formation" value={formationId} onChange={(event) => { setFormationId(event.target.value); setEditing(null); }} className="h-10 min-w-[260px] max-w-full rounded border border-[#d8c9e6] bg-white px-3 text-sm">{formations.map((item) => <option key={item.id} value={item.id}>{item.title} · {item.startDate.slice(0, 10)}</option>)}</select>{formation && <a href={`/admin/formations/${formation.id}`} className="inline-flex items-center gap-1 text-sm text-[#66239d] underline">Fiche formation <ExternalLink size={13} /></a>}{formation && planExists && matchingTemplates.length > 0 && <select value="" disabled={busy} aria-label="Repartir d’un planning type" onChange={(event) => { const picked = matchingTemplates.find((item) => item.id === event.target.value); if (picked) void applyTemplate(picked); }} className="h-10 cursor-pointer rounded border border-[#d8c9e6] bg-white px-3 text-sm text-[#552080]"><option value="">Repartir d’un planning type…</option>{matchingTemplates.map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}</select>}</div>
       {formation && <>
         <div className="border-y border-[#d8c9e6] py-3"><div className="mb-2 flex items-center justify-between"><h2 className="text-sm font-semibold">Formateur·ices de la session</h2><button type="button" onClick={() => setTab("team")} className="text-xs text-[#792bb9]">Gérer l&apos;équipe</button></div><div className="flex flex-wrap gap-2">{assignableTrainers.map((trainer) => <button key={trainer.id} type="button" disabled={busy} onClick={() => void toggleTrainer(trainer.id)} aria-pressed={formation.trainerIds?.includes(trainer.id) || false} className={`rounded-full border px-3 py-1.5 text-sm ${formation.trainerIds?.includes(trainer.id) ? "border-[#792bb9] bg-[#f0e8f8] text-[#552080]" : "border-slate-200 bg-white text-slate-600"}`}>{formation.trainerIds?.includes(trainer.id) && <Check size={13} className="mr-1 inline" />}{trainerName(trainer)}</button>)}{!assignableTrainers.length && <p className="text-sm text-slate-500">Valide d&apos;abord un compte formateur·ice dans l&apos;onglet Équipe.</p>}</div></div>
-        {!planExists ? <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-dashed border-slate-300 bg-white p-6"><div><h2 className="font-semibold">Planning à préparer</h2><p className="text-sm text-slate-500">Modèle {formation.type === "formation_generale" ? "formation générale · 9 jours" : "approfondissement · 7 jours"}, inspiré des plannings fournis.</p></div><button type="button" disabled={busy} onClick={() => void saveActivities(buildPlanningTemplate(formation))} className="flex items-center gap-2 rounded bg-slate-900 px-4 py-2 text-sm text-white"><Plus size={16} />Créer le planning</button></div> : <>
+        {!planExists ? <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-dashed border-slate-300 bg-white p-6"><div><h2 className="font-semibold">Planning à préparer</h2><p className="text-sm text-slate-500">Modèle {formation.type === "formation_generale" ? "formation générale · 9 jours" : "approfondissement · 7 jours"}, inspiré des plannings fournis.</p></div><div className="flex flex-wrap gap-2">{matchingTemplates.map((item) => <button key={item.id} type="button" disabled={busy} onClick={() => void applyTemplate(item)} className="flex cursor-pointer items-center gap-2 rounded bg-[#792bb9] px-4 py-2 text-sm text-white"><Plus size={16} />{item.title}</button>)}<button type="button" disabled={busy} onClick={() => void saveActivities(buildPlanningTemplate(formation))} className={`flex cursor-pointer items-center gap-2 rounded px-4 py-2 text-sm ${matchingTemplates.length ? "border border-slate-300 bg-white text-slate-700" : "bg-slate-900 text-white"}`}><Plus size={16} />{matchingTemplates.length ? "Modèle de base" : "Créer le planning"}</button></div></div> : <>
           <PlanningBoard key={formation.id} activities={activities} dayCount={dayCount} startDate={formation.startDate} formationTitle={formation.title} themes={themes} trainerNames={Object.fromEntries(trainers.map((trainer) => [trainer.id, trainerLabel(trainer)]))} busy={busy} actions={planningActions} onEdit={(item) => { setError(""); setEditing({ ...item, trainerIds: item.trainerIds || [] }); }} onAdd={(day, start, end) => { setError(""); setEditing(emptyActivity(day, start, end)); }} onSaveThemes={saveThemes} />
         </>}
       </>}

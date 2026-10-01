@@ -64,7 +64,8 @@ export default function TeamProfilePage() {
         <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">Complète ton dossier progressivement. Les documents sont facultatifs pour accéder au guide et aux formations qui te sont assignées.</p>
       </div>
 
-      <form onSubmit={submit} className="mt-6 grid gap-6">
+      <div className="mt-6 grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
+      <form onSubmit={submit} className="grid gap-6">
         <section className="space-y-5 rounded-md border border-slate-200 bg-white p-5">
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Prénom" value={form.firstName} onChange={(value) => change("firstName", value)} autoComplete="given-name" />
@@ -85,11 +86,12 @@ export default function TeamProfilePage() {
         </div>
       </form>
 
-      <section className="mt-10 border-t border-slate-200 pt-6">
-        <h3 className="text-lg font-bold">Mes documents</h3>
-        <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600">Diplômes, carte d’identité, attestations… Ajoute autant de fichiers que tu veux et donne un nom à chacun. Facultatif pour accéder au guide et aux formations.</p>
-        <div className="mt-4 max-w-2xl"><TrainerDocuments trainer={trainer} /></div>
-      </section>
+      <aside className="rounded-md border border-slate-200 bg-white p-4 lg:sticky lg:top-4">
+        <h3 className="font-bold">Mes documents</h3>
+        <p className="mt-1 text-xs leading-5 text-slate-600">Diplômes, carte d’identité, attestations… Facultatif pour accéder au guide et aux formations.</p>
+        <div className="mt-3"><TrainerDocuments trainer={trainer} /></div>
+      </aside>
+      </div>
     </div>
   </main>;
 }

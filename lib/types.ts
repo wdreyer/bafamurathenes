@@ -81,6 +81,18 @@ export type PlanActivity = {
   icon?: string;
 };
 
+/** Reusable planning without dates (J1 to J7/J9), managed by admins only. */
+export type PlanningTemplate = {
+  id: string;
+  title: string;
+  formationType: FormationType;
+  activities: PlanActivity[];
+  themes?: PlanTheme[];
+  /** Formation it was copied from, if any. */
+  sourceFormationId?: string;
+  updatedAt?: { toMillis?: () => number };
+};
+
 export type PlanTheme = {
   id: string;
   name: string;

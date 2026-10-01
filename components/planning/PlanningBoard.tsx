@@ -36,7 +36,8 @@ const TRAINER_COLORS = ["#792bb9", "#3aaed8", "#299b78", "#e85d68", "#b8a900", "
 
 function dateForDay(startDate: string, day: number, format: "long" | "short" = "long") {
   const date = new Date(`${startDate.slice(0, 10)}T12:00:00`);
-  if (Number.isNaN(date.getTime())) return `Jour ${day}`;
+  // Planning types have no dates: the "J1" badge is enough in the short form.
+  if (Number.isNaN(date.getTime())) return format === "short" ? "" : `Jour ${day}`;
   date.setDate(date.getDate() + day - 1);
   return new Intl.DateTimeFormat("fr-FR", format === "long"
     ? { weekday: "long", day: "numeric", month: "long" }

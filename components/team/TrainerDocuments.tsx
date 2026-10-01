@@ -7,7 +7,6 @@ import type { Trainer, TrainerDocument } from "@/lib/types";
 
 const LABEL_SUGGESTIONS = ["Diplôme BAFA", "Diplôme BAFD", "PSC1", "Carte d’identité", "Permis de conduire", "CV"];
 
-type Draft = { key: string; file: File; label: string };
 type Viewing = { document: TrainerDocument; url: string };
 
 const isImage = (document: TrainerDocument) =>
@@ -15,29 +14,26 @@ const isImage = (document: TrainerDocument) =>
 const isPdf = (document: TrainerDocument) =>
   document.contentType === "application/pdf" || /\.pdf$/i.test(document.fileName);
 
-/** Named documents of a trainer (diplomas first of all): several files at once, each with its own name, viewable in place. */
+/** Named documents of a trainer (diplomas first of all): name the document, then pick its file(s); viewable in place. */
 export function TrainerDocuments({ trainer, editable = true }: { trainer: Trainer; editable?: boolean }) {
   const documents = trainerDocumentsOf(trainer);
-  const [drafts, setDrafts] = useState<Draft[]>([]);
+  const [label, setLabel] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [opening, setOpening] = useState("");
   const [viewing, setViewing] = useState<Viewing | null>(null);
 
-  const addFiles = (files: FileList | null) => {
+  // Several files picked at once share the name (recto and verso of an ID card, pages of a diploma...).
+  const upload = async (files: FileList | null) => {
     const picked = Array.from(files || []);
+    if (!picked.length) return;
+    if (!label.trim()) { setError("Donne d’abord un nom au document."); return; }
     const refused = picked.map(documentFileError).filter(Boolean);
-    setError(refused.join(" "));
-    setDrafts((current) => [...current, ...picked.filter((file) => !documentFileError(file))
-      .map((file, index) => ({ key: `${Date.now()}-${index}-${file.name}`, file, label: "" }))]);
-  };
-
-  const save = async () => {
-    if (drafts.some((draft) => !draft.label.trim())) { setError("Donne un nom à chaque document."); return; }
+    if (refused.length) { setError(refused.join(" ")); return; }
     setBusy(true); setError("");
     try {
-      await uploadTrainerDocuments(trainer.id, drafts);
-      setDrafts([]);
+      await uploadTrainerDocuments(trainer.id, picked.map((file) => ({ file, label })));
+      setLabel("");
     } catch (caught) {
       setError(caught instanceof Error && caught.message && !caught.message.includes("storage/") ? caught.message : "Les documents n’ont pas pu être envoyés. Réessaie.");
     } finally { setBusy(false); }
@@ -71,23 +67,17 @@ export function TrainerDocuments({ trainer, editable = true }: { trainer: Traine
       {!documents.length && <p className="px-3 py-4 text-sm text-slate-500">Aucun document pour le moment.</p>}
     </div>
 
-    {editable && <div className="mt-3 space-y-3">
-      {drafts.map((draft) => <div key={draft.key} className="rounded-md border border-[#d8c9e6] bg-[#faf6fd] p-3">
-        <div className="flex items-center gap-2"><FileText size={15} className="shrink-0 text-[#792bb9]" /><p className="min-w-0 flex-1 truncate text-xs text-slate-600">{draft.file.name}</p>
-          <button type="button" onClick={() => setDrafts((current) => current.filter((item) => item.key !== draft.key))} title="Retirer" aria-label="Retirer ce fichier" className="grid h-7 w-7 cursor-pointer place-items-center rounded text-slate-400 hover:bg-white"><X size={14} /></button></div>
-        <input value={draft.label} onChange={(event) => setDrafts((current) => current.map((item) => item.key === draft.key ? { ...item, label: event.target.value } : item))}
-          placeholder="Nom du document, ex. Diplôme BAFA" className="mt-2 h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-[#792bb9]" />
-        <div className="mt-2 flex flex-wrap gap-1.5">{LABEL_SUGGESTIONS.map((label) => <button key={label} type="button" onClick={() => setDrafts((current) => current.map((item) => item.key === draft.key ? { ...item, label } : item))}
-          className={`cursor-pointer rounded-full border px-2.5 py-1 text-xs ${draft.label === label ? "border-[#792bb9] bg-[#f0e8f8] text-[#552080]" : "border-slate-300 bg-white text-slate-600 hover:border-[#792bb9]"}`}>{label}</button>)}</div>
-      </div>)}
-
-      <label className="flex cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed border-slate-300 bg-white px-4 py-4 text-sm font-semibold text-slate-700 hover:border-[#792bb9] hover:text-[#552080]">
-        <Upload size={17} />Ajouter des fichiers<span className="font-normal text-slate-500">· PDF ou image, 10 Mo max</span>
-        <input type="file" multiple accept="application/pdf,image/*" onChange={(event) => { addFiles(event.target.files); event.target.value = ""; }} className="sr-only" />
+    {editable && <div className="mt-3 rounded-md border border-[#d8c9e6] bg-[#faf6fd] p-3">
+      <p className="text-xs font-semibold text-slate-600">Ajouter un document</p>
+      <input value={label} onChange={(event) => { setLabel(event.target.value); setError(""); }} placeholder="1. Nom du document, ex. Diplôme BAFA"
+        className="mt-2 h-10 w-full rounded-md border border-slate-300 bg-white px-3 text-sm outline-none focus:border-[#792bb9]" />
+      <div className="mt-2 flex flex-wrap gap-1.5">{LABEL_SUGGESTIONS.map((suggestion) => <button key={suggestion} type="button" onClick={() => { setLabel(suggestion); setError(""); }}
+        className={`cursor-pointer rounded-full border px-2.5 py-1 text-xs ${label === suggestion ? "border-[#792bb9] bg-[#f0e8f8] text-[#552080]" : "border-slate-300 bg-white text-slate-600 hover:border-[#792bb9]"}`}>{suggestion}</button>)}</div>
+      <label className={`mt-3 flex items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-semibold ${label.trim() && !busy ? "cursor-pointer bg-[#792bb9] text-white hover:bg-[#66239d]" : "cursor-not-allowed bg-slate-200 text-slate-500"}`}>
+        {busy ? <LoaderCircle size={16} className="animate-spin" /> : <Upload size={16} />}{busy ? "Envoi en cours..." : "2. Choisir le ou les fichiers"}
+        <input type="file" multiple accept="application/pdf,image/*" disabled={!label.trim() || busy} onChange={(event) => { void upload(event.target.files); event.target.value = ""; }} className="sr-only" />
       </label>
-      {drafts.length > 0 && <button type="button" onClick={() => void save()} disabled={busy} className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-md bg-[#792bb9] px-4 text-sm font-semibold text-white hover:bg-[#66239d] disabled:cursor-wait disabled:opacity-60">
-        {busy ? <LoaderCircle size={16} className="animate-spin" /> : <Upload size={16} />}Enregistrer {drafts.length > 1 ? `les ${drafts.length} documents` : "le document"}
-      </button>}
+      <p className="mt-1.5 text-center text-xs text-slate-500">PDF ou image, 10 Mo max · plusieurs fichiers possibles (recto, verso…)</p>
     </div>}
     {error && <p role="alert" className="mt-3 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">{error}</p>}
 

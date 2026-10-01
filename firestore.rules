@@ -65,6 +65,11 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Planning types (no dates, no trainers): admins only, trainers never see them.
+    match /planningTemplates/{templateId} {
+      allow read, write: if isAdmin();
+    }
+
     match /formationPlans/{formationId} {
       allow read, write: if isAdmin() || assignedTo(formationId);
     }

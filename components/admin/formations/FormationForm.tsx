@@ -19,7 +19,7 @@ import { Textarea } from "@/components/ui/Textarea";
 import { Label } from "@/components/ui/Label";
 import { Select } from "@/components/ui/Select";
 import { Button } from "@/components/ui/Button";
-import { buildPlanningTemplate } from "@/lib/planningTemplates";
+import { initialActivitiesFor } from "@/lib/planningTemplateStore";
 import { defaultThemes } from "@/lib/planningThemes";
 
 type Props = {
@@ -132,6 +132,7 @@ export function FormationForm({ initialData, formationId, onSaved }: Props) {
           inscriptionsCount: 0,
           trainerIds: [],
         };
+        const initial = await initialActivitiesFor(formationData);
         const batch = writeBatch(db);
         batch.set(created, {
           type, title, startDate, endDate, imageUrl, description, price,
@@ -140,8 +141,8 @@ export function FormationForm({ initialData, formationId, onSaved }: Props) {
         });
         batch.set(doc(db, "formationPlans", created.id), {
           formationId: created.id,
-          activities: buildPlanningTemplate(formationData),
-          themes: defaultThemes,
+          activities: initial.activities,
+          themes: initial.themes || defaultThemes,
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
         });
