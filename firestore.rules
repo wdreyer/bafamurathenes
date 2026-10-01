@@ -70,6 +70,11 @@ service cloud.firestore {
       allow read, write: if isAdmin();
     }
 
+    // Meals of a stay (covers, menus, recipes): admins only.
+    match /mealPlans/{planId} {
+      allow read, write: if isAdmin();
+    }
+
     match /formationPlans/{formationId} {
       allow read, write: if isAdmin() || assignedTo(formationId);
     }

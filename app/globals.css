@@ -1112,3 +1112,108 @@ select:focus {
   color: #792bb9;
   font-weight: 600;
 }
+
+/* Week menu of the logistics page: one A4 landscape page, days in columns and the 4 meals in rows (see MealPrint). */
+.meal-print {
+  display: none;
+}
+
+@media print {
+  body:has(> .meal-print) > :not(.meal-print) {
+    display: none !important;
+  }
+
+  body:has(> .meal-print) {
+    background: #fff !important;
+  }
+
+  .meal-print {
+    page: planning-landscape;
+    display: flex !important;
+    flex-direction: column;
+    height: 190mm;
+    color: #1a1530;
+    font-family: var(--font-geist-sans), sans-serif;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  .meal-print-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 3mm;
+    font-size: 13pt;
+  }
+
+  .meal-print-heading span {
+    font-size: 8pt;
+    color: #6d35a1;
+  }
+
+  .meal-print-grid {
+    flex: 1;
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+  }
+
+  .meal-print-grid th,
+  .meal-print-grid td {
+    border: 0.3mm solid #d8c9e6;
+    padding: 1.5mm;
+    vertical-align: top;
+    font-size: 8pt;
+    line-height: 1.25;
+  }
+
+  .meal-print-grid thead th {
+    background: #792bb9;
+    color: #fff;
+    text-transform: capitalize;
+    text-align: left;
+  }
+
+  .meal-print-grid thead th:first-child,
+  .meal-print-grid tbody th {
+    width: 24mm;
+    background: #1a1530;
+    color: #f5ef72;
+    text-align: left;
+  }
+
+  .meal-print-grid td p {
+    margin: 0 0 0.8mm;
+    font-weight: 600;
+  }
+
+  .meal-print-grid td em {
+    display: inline-block;
+    margin-bottom: 0.8mm;
+    padding: 0.3mm 1.5mm;
+    border-radius: 2mm;
+    background: #f59e0b;
+    color: #fff;
+    font-style: normal;
+    font-weight: 700;
+    font-size: 7pt;
+  }
+
+  .meal-print-grid td small {
+    display: block;
+    color: #6b6480;
+    font-size: 7pt;
+  }
+
+  .meal-print-grid tbody tr {
+    height: 25%;
+  }
+
+  .meal-print-grid td.meal-print-cook {
+    background: #fffbeb;
+  }
+
+  .meal-print-grid td.meal-print-off {
+    background: repeating-linear-gradient(135deg, #f8fafc 0 2mm, #eef2f7 2mm 4mm);
+  }
+}

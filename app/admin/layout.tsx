@@ -14,6 +14,7 @@ import {
   CalendarDays,
   LayoutDashboard,
   LayoutTemplate,
+  UtensilsCrossed,
   LogOut,
   ShieldCheck,
   UserRoundCheck,
@@ -31,6 +32,7 @@ const navItems = [
   { href: "/admin/formations", label: "Formations", icon: GraduationCap },
   { href: "/admin/formateurs", label: "Formateur·ices", icon: CalendarDays },
   { href: "/admin/plannings", label: "Plannings types", icon: LayoutTemplate },
+  { href: "/admin/logistique", label: "Logistique", icon: UtensilsCrossed },
   { href: "/admin/ressources", label: "Ressources", icon: BookOpen },
 ];
 
