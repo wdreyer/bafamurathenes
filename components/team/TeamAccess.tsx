@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
   type User,
@@ -47,11 +48,31 @@ function AccountForm() {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+
+  // Same wording whether the address has an account or not, so the form does not reveal who is registered.
+  const forgotPassword = async () => {
+    setError(""); setNotice("");
+    if (!email.trim()) { setError("Indique ton adresse email, puis clique sur « Mot de passe oublié ? »."); return; }
+    setBusy(true);
+    try {
+      await sendPasswordResetEmail(auth, email.trim(), { url: `${window.location.origin}/equipe` })
+        // A domain not listed in Firebase cannot be a return address: send the plain email instead.
+        .catch((caught) => String((caught as { code?: string })?.code || "").includes("continue-uri")
+          ? sendPasswordResetEmail(auth, email.trim()) : Promise.reject(caught));
+    } catch (caught) {
+      const code = typeof caught === "object" && caught && "code" in caught ? String(caught.code) : "";
+      if (code.includes("invalid-email") || code.includes("too-many-requests")) { setError(authErrorMessage(caught)); setBusy(false); return; }
+    }
+    setNotice(`Si un compte existe pour ${email.trim()}, un email pour choisir un nouveau mot de passe vient d’être envoyé. Pense à regarder dans les spams.`);
+    setBusy(false);
+  };
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     setBusy(true);
     setError("");
+    setNotice("");
     try {
       if (mode === "login") {
         await signInWithEmailAndPassword(auth, email.trim(), password);
@@ -85,8 +106,8 @@ function AccountForm() {
       </div>
       <div className="p-6">
         <div className="mb-5 grid grid-cols-2 rounded-md bg-slate-100 p-1">
-          <button type="button" onClick={() => { setMode("login"); setError(""); }} className={`h-10 rounded text-sm font-semibold ${mode === "login" ? "bg-white text-slate-950 shadow-sm" : "text-slate-600"}`}>Connexion</button>
-          <button type="button" onClick={() => { setMode("register"); setError(""); }} className={`h-10 rounded text-sm font-semibold ${mode === "register" ? "bg-white text-slate-950 shadow-sm" : "text-slate-600"}`}>Inscription</button>
+          <button type="button" onClick={() => { setMode("login"); setError(""); setNotice(""); }} className={`h-10 rounded text-sm font-semibold ${mode === "login" ? "bg-white text-slate-950 shadow-sm" : "text-slate-600"}`}>Connexion</button>
+          <button type="button" onClick={() => { setMode("register"); setError(""); setNotice(""); }} className={`h-10 rounded text-sm font-semibold ${mode === "register" ? "bg-white text-slate-950 shadow-sm" : "text-slate-600"}`}>Inscription</button>
         </div>
         <form onSubmit={submit} className="space-y-4">
           <div>
@@ -96,7 +117,9 @@ function AccountForm() {
           <label className="block text-sm font-medium text-slate-700">Adresse email<input required type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} className="mt-1.5 h-11 w-full rounded-md border border-slate-300 px-3 outline-none focus:border-[#792bb9]" /></label>
           <label className="block text-sm font-medium text-slate-700">Mot de passe<input required minLength={6} type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} value={password} onChange={(event) => setPassword(event.target.value)} className="mt-1.5 h-11 w-full rounded-md border border-slate-300 px-3 outline-none focus:border-[#792bb9]" /></label>
           {error && <p role="alert" className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-800">{error}</p>}
+          {notice && <p role="status" className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">{notice}</p>}
           <button disabled={busy} className="flex h-11 w-full items-center justify-center gap-2 rounded-md bg-[#792bb9] px-4 text-sm font-semibold text-white hover:bg-[#66239d] disabled:opacity-50">{mode === "login" ? <KeyRound size={17} /> : <UserPlus size={17} />}{busy ? "Patiente..." : mode === "login" ? "Se connecter" : "Créer mon compte"}</button>
+          {mode === "login" && <button type="button" disabled={busy} onClick={() => void forgotPassword()} className="w-full cursor-pointer text-sm font-medium text-slate-600 underline underline-offset-2 hover:text-[#792bb9] disabled:opacity-50">Mot de passe oublié ?</button>}
         </form>
       </div>
     </main>
