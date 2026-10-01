@@ -28,11 +28,7 @@ export default function TeamProfilePage() {
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
-    const socialSecurityNumber = form.socialSecurityNumber.replace(/\s/g, "").toUpperCase();
-    if (socialSecurityNumber && !/^[0-9AB]{15}$/.test(socialSecurityNumber)) {
-      setError("Le numéro de sécurité sociale doit contenir 15 caractères, clé comprise.");
-      return;
-    }
+    const socialSecurityNumber = form.socialSecurityNumber.trim();
     setBusy(true);
     setError("");
     setSaved(false);
@@ -82,7 +78,7 @@ export default function TeamProfilePage() {
             <Field label="Nom" value={form.lastName} onChange={(value) => change("lastName", value)} autoComplete="family-name" />
             <Field label="Date de naissance" type="date" value={form.birthDate} onChange={(value) => change("birthDate", value)} />
             <Field label="Lieu de naissance" value={form.birthPlace} onChange={(value) => change("birthPlace", value)} />
-            <div className="sm:col-span-2"><Field label="Numéro de sécurité sociale, clé comprise (facultatif)" required={false} value={form.socialSecurityNumber} onChange={(value) => change("socialSecurityNumber", value)} autoComplete="off" placeholder={trainer.hasSocialSecurityNumber ? "Déjà renseigné · saisir uniquement pour le remplacer" : "1 85 05 75 123 456 78"} /></div>
+            <div className="sm:col-span-2"><Field label="Numéro de sécurité sociale, clé comprise (facultatif)" required={false} value={form.socialSecurityNumber} onChange={(value) => change("socialSecurityNumber", value)} autoComplete="off" placeholder={trainer.hasSocialSecurityNumber ? "Déjà renseigné · saisir uniquement pour le remplacer" : ""} /></div>
             <div className="sm:col-span-2"><Field label="Adresse postale" value={form.address} onChange={(value) => change("address", value)} autoComplete="street-address" /></div>
             <div className="sm:col-span-2"><Field label="Téléphone" type="tel" value={form.phone} onChange={(value) => change("phone", value)} autoComplete="tel" /></div>
           </div>

@@ -14,11 +14,11 @@ import { ActivityQuickActions } from "@/components/planning/PlanningActionsMenu"
 import { TraineeRoster } from "@/components/planning/TraineeRoster";
 import { useTeamAuth } from "@/components/team/TeamAccess";
 import type { Formation, Inscription, PlanActivity, PlanTheme } from "@/lib/types";
+import { assignedNames, useTrainerProfiles } from "@/lib/trainerName";
 
 type FormationPlan = {
   formationId: string;
   activities: PlanActivity[];
-  trainerNames?: Record<string, string>;
   groupCount?: number;
   themes?: PlanTheme[];
 };
@@ -79,7 +79,9 @@ export default function TeamPage() {
   const dayCount = formation?.type === "formation_generale" ? 9 : 7;
   const groupCount = Math.max(0, plan?.groupCount || 0);
   const themes = normalizeThemes(plan?.themes);
-  const trainers = formation?.trainerIds?.map((id) => ({ id, name: plan?.trainerNames?.[id] || id })) || [];
+  const profiles = useTrainerProfiles();
+  const trainerNames = assignedNames(formation?.trainerIds, profiles);
+  const trainers = Object.entries(trainerNames).map(([id, name]) => ({ id, name }));
   const rosterCount = registrations.filter((item) => item.validationStatus !== "cancelled").length;
 
   useEffect(() => {
@@ -175,7 +177,7 @@ export default function TeamPage() {
         </div>
 
         <div className={section === "planning" ? "pt-4" : "hidden print:block"}>
-          <PlanningBoard key={formation.id} activities={plan.activities} dayCount={dayCount} startDate={formation.startDate} formationTitle={formation.title} themes={themes} trainerNames={plan.trainerNames} busy={busy} actions={planningActions} onEdit={(item) => { setError(""); setEditing({ ...item, trainerIds: item.trainerIds || [] }); }} onAdd={(day, start, end) => { setError(""); setEditing(emptyActivity(day, start, end)); }} onSaveThemes={saveThemes} />
+          <PlanningBoard key={formation.id} activities={plan.activities} dayCount={dayCount} startDate={formation.startDate} formationTitle={formation.title} themes={themes} trainerNames={trainerNames} busy={busy} actions={planningActions} onEdit={(item) => { setError(""); setEditing({ ...item, trainerIds: item.trainerIds || [] }); }} onAdd={(day, start, end) => { setError(""); setEditing(emptyActivity(day, start, end)); }} onSaveThemes={saveThemes} />
         </div>
         {section === "trainees" && <div className="print:hidden"><TraineeRoster key={selectedFormationId} inscriptions={registrations} loading={registrationsLoading} groupCount={groupCount} busy={busy} onChangeGroupCount={changeGroupCount} onSaveField={saveTraineeField} /></div>}
       </>}

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { collection, doc, getDoc, onSnapshot, serverTimestamp, writeBatch } from "firebase/firestore";
+import { collection, doc, onSnapshot, serverTimestamp, updateDoc } from "firebase/firestore";
 import { CalendarDays, Check, ExternalLink, Pencil, Users } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { getFormationPublicHref } from "@/lib/formationSlugs";
@@ -51,15 +51,7 @@ export default function FormationDetailPage() {
     setBusy(true);
     setError("");
     try {
-      const planRef = doc(db, "formationPlans", id);
-      const plan = await getDoc(planRef);
-      const batch = writeBatch(db);
-      batch.update(doc(db, "formations", id), { trainerIds: nextIds, updatedAt: serverTimestamp() });
-      if (plan.exists()) batch.update(planRef, {
-        trainerNames: Object.fromEntries(trainers.filter((trainer) => nextIds.includes(trainer.id))
-          .map((trainer) => [trainer.id, trainerName(trainer)])),
-      });
-      await batch.commit();
+      await updateDoc(doc(db, "formations", id), { trainerIds: nextIds, updatedAt: serverTimestamp() });
     } catch {
       setError("Impossible de modifier l'équipe de cette formation.");
     } finally {

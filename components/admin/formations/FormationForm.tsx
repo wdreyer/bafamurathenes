@@ -142,7 +142,6 @@ export function FormationForm({ initialData, formationId, onSaved }: Props) {
           formationId: created.id,
           activities: buildPlanningTemplate(formationData),
           themes: defaultThemes,
-          trainerNames: {},
           createdAt: serverTimestamp(),
           updatedAt: serverTimestamp(),
         });

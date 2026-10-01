@@ -17,6 +17,7 @@ import { ActivityEditor } from "@/components/planning/ActivityEditor";
 import { PlanningBoard } from "@/components/planning/PlanningBoard";
 import { ActivityQuickActions } from "@/components/planning/PlanningActionsMenu";
 import type { Formation, PlanActivity, PlanTheme, Trainer } from "@/lib/types";
+import { syncTrainerProfile, trainerLabel, useTrainerProfiles } from "@/lib/trainerName";
 
 const emptyActivity = (day: number, start = "09:00", end = "10:00"): PlanActivity => ({
   id: crypto.randomUUID(), day, start, end, title: "", content: "", trainerIds: [], color: "mint",
@@ -58,6 +59,13 @@ export default function FormateursPage() {
       () => setError("Impossible de charger les formations."));
     return () => { unsubTrainers(); unsubFormations(); };
   }, []);
+
+  // The team directory read by trainers follows the files (also for files created or edited here).
+  const profiles = useTrainerProfiles();
+  useEffect(() => {
+    if (!profiles) return;
+    trainers.forEach((trainer) => void syncTrainerProfile(trainer.id, trainer, profiles[trainer.id] ?? null).catch(() => undefined));
+  }, [trainers, profiles]);
 
   useEffect(() => {
     if (formations.length && (!formationId || !formations.some((item) => item.id === formationId))) setFormationId(formations[0].id);
@@ -109,9 +117,7 @@ export default function FormateursPage() {
     setBusy(true); setError("");
     try {
       await setDoc(doc(db, "formationPlans", formation.id), {
-        formationId: formation.id, activities: next,
-        trainerNames: Object.fromEntries(assigned.map((trainer) => [trainer.id, trainerName(trainer)])),
-        updatedAt: serverTimestamp(),
+        formationId: formation.id, activities: next, updatedAt: serverTimestamp(),
       }, { merge: true });
       return true;
     } catch { setError("Le planning n'a pas pu être enregistré."); return false; }
@@ -138,12 +144,6 @@ export default function FormateursPage() {
       const data = Object.fromEntries(Object.entries(trainerDraft).map(([key, value]) => [key, value.trim()]));
       if (editingTrainerId) {
         await updateDoc(doc(db, "trainers", editingTrainerId), data);
-        const name = `${data.firstName} ${data.lastName}`.trim();
-        await Promise.all(formations.map(async (item) => {
-          if (!item.trainerIds?.includes(editingTrainerId)) return;
-          const planRef = doc(db, "formationPlans", item.id);
-          if ((await getDoc(planRef)).exists()) await updateDoc(planRef, { [`trainerNames.${editingTrainerId}`]: name });
-        }));
       } else {
         const created = await addDoc(collection(db, "trainers"), { ...data, createdAt: serverTimestamp() });
         setSelectedTrainerId(created.id);
@@ -162,10 +162,6 @@ export default function FormateursPage() {
     setBusy(true); setError("");
     try {
       await updateDoc(doc(db, "formations", target.id), { trainerIds: next, updatedAt: serverTimestamp() });
-      const hasPlan = target.id === formation?.id ? planExists : (await getDoc(doc(db, "formationPlans", target.id))).exists();
-      if (hasPlan) await updateDoc(doc(db, "formationPlans", target.id), {
-        trainerNames: Object.fromEntries(trainers.filter((trainer) => next.includes(trainer.id)).map((trainer) => [trainer.id, trainerName(trainer)])),
-      });
     } catch { setError("L'affectation n'a pas pu être enregistrée."); }
     finally { setBusy(false); }
   };
@@ -216,6 +212,7 @@ Cette action est irréversible.`;
         }
       }
       batch.delete(doc(db, "trainers", trainer.id));
+      batch.delete(doc(db, "trainerProfiles", trainer.id));
       await batch.commit();
       setSelectedTrainerId(null);
     } catch { setError("La suppression n’a pas pu aboutir. Vérifie ta connexion puis réessaie."); }
@@ -242,7 +239,7 @@ Cette action est irréversible.`;
     setBusy(true); setError("");
     try {
       await savePlanningTime({ formationId: formation.id, activities, activity: editing,
-        formationType: formation.type, trainerNames: Object.fromEntries(assigned.map((trainer) => [trainer.id, trainerName(trainer)])) });
+        formationType: formation.type });
       setEditing(null);
     } catch { setError("Le temps et sa référence dans le guide n'ont pas pu être enregistrés."); }
     finally { setBusy(false); }
@@ -285,7 +282,7 @@ Cette action est irréversible.`;
       {formation && <>
         <div className="border-y border-[#d8c9e6] py-3"><div className="mb-2 flex items-center justify-between"><h2 className="text-sm font-semibold">Formateur·ices de la session</h2><button type="button" onClick={() => setTab("team")} className="text-xs text-[#792bb9]">Gérer l&apos;équipe</button></div><div className="flex flex-wrap gap-2">{assignableTrainers.map((trainer) => <button key={trainer.id} type="button" disabled={busy} onClick={() => void toggleTrainer(trainer.id)} aria-pressed={formation.trainerIds?.includes(trainer.id) || false} className={`rounded-full border px-3 py-1.5 text-sm ${formation.trainerIds?.includes(trainer.id) ? "border-[#792bb9] bg-[#f0e8f8] text-[#552080]" : "border-slate-200 bg-white text-slate-600"}`}>{formation.trainerIds?.includes(trainer.id) && <Check size={13} className="mr-1 inline" />}{trainerName(trainer)}</button>)}{!assignableTrainers.length && <p className="text-sm text-slate-500">Valide d&apos;abord un compte formateur·ice dans l&apos;onglet Équipe.</p>}</div></div>
         {!planExists ? <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-dashed border-slate-300 bg-white p-6"><div><h2 className="font-semibold">Planning à préparer</h2><p className="text-sm text-slate-500">Modèle {formation.type === "formation_generale" ? "formation générale · 9 jours" : "approfondissement · 7 jours"}, inspiré des plannings fournis.</p></div><button type="button" disabled={busy} onClick={() => void saveActivities(buildPlanningTemplate(formation))} className="flex items-center gap-2 rounded bg-slate-900 px-4 py-2 text-sm text-white"><Plus size={16} />Créer le planning</button></div> : <>
-          <PlanningBoard key={formation.id} activities={activities} dayCount={dayCount} startDate={formation.startDate} formationTitle={formation.title} themes={themes} trainerNames={Object.fromEntries(trainers.map((trainer) => [trainer.id, trainerName(trainer)]))} busy={busy} actions={planningActions} onEdit={(item) => { setError(""); setEditing({ ...item, trainerIds: item.trainerIds || [] }); }} onAdd={(day, start, end) => { setError(""); setEditing(emptyActivity(day, start, end)); }} onSaveThemes={saveThemes} />
+          <PlanningBoard key={formation.id} activities={activities} dayCount={dayCount} startDate={formation.startDate} formationTitle={formation.title} themes={themes} trainerNames={Object.fromEntries(trainers.map((trainer) => [trainer.id, trainerLabel(trainer)]))} busy={busy} actions={planningActions} onEdit={(item) => { setError(""); setEditing({ ...item, trainerIds: item.trainerIds || [] }); }} onAdd={(day, start, end) => { setError(""); setEditing(emptyActivity(day, start, end)); }} onSaveThemes={saveThemes} />
         </>}
       </>}
     </div>}
@@ -347,7 +344,7 @@ Cette action est irréversible.`;
       </form>
     </div>}
 
-    {editing && formation && <ActivityEditor mergedDays={(() => { const original = activities.find((item) => item.id === editing.id); return original?.merged ? mergedBlock(original, activities).map((item) => item.day) : undefined; })()} author={{ name: "Équipe admin", isAdmin: true }} activity={editing} existing={activities.some((item) => item.id === editing.id)} dayCount={dayCount} formationType={formation.type} trainers={assigned.map((trainer) => ({ id: trainer.id, name: trainerName(trainer) }))} themes={themes} busy={busy} error={error} onChange={setEditing} onSave={() => void persistActivity()} onClose={() => setEditing(null)}
+    {editing && formation && <ActivityEditor mergedDays={(() => { const original = activities.find((item) => item.id === editing.id); return original?.merged ? mergedBlock(original, activities).map((item) => item.day) : undefined; })()} author={{ name: "Équipe admin", isAdmin: true }} activity={editing} existing={activities.some((item) => item.id === editing.id)} dayCount={dayCount} formationType={formation.type} trainers={assigned.map((trainer) => ({ id: trainer.id, name: trainerLabel(trainer) }))} themes={themes} busy={busy} error={error} onChange={setEditing} onSave={() => void persistActivity()} onClose={() => setEditing(null)}
       quickActions={(() => { const saved = activities.find((item) => item.id === editing.id); return saved && <ActivityQuickActions activity={saved} activities={activities} dayCount={dayCount} actions={planningActions} busy={busy} onDone={() => setEditing(null)} />; })()} />}
   </div>;
 }

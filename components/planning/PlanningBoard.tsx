@@ -61,12 +61,8 @@ function readPrefs(): PlanningPrefs {
   } catch { return defaultPlanningPrefs; }
 }
 
-function firstNameOnly(name: string) {
-  return name.trim().split(/\s+/)[0] || name;
-}
-
 const namesFor = (activity: PlanActivity, trainerNames?: Record<string, string>) =>
-  (activity.trainerIds || []).map((id) => trainerNames?.[id] ? firstNameOnly(trainerNames[id]) : "").filter(Boolean);
+  (activity.trainerIds || []).map((id) => trainerNames?.[id] || "").filter(Boolean);
 
 const menuHandler = (onMenu: OpenMenu, target: (event: MouseEvent) => MenuTarget) =>
   onMenu ? (event: MouseEvent) => { event.preventDefault(); onMenu(target(event)); } : undefined;
@@ -437,7 +433,7 @@ export function PlanningBoard({ activities, dayCount, startDate, themes = defaul
 
   const trainers = Array.from(new Set(activities.flatMap((item) => item.trainerIds || [])))
     .filter((id) => trainerNames?.[id])
-    .map((id) => ({ id, name: firstNameOnly(trainerNames![id]) }))
+    .map((id) => ({ id, name: trainerNames![id] }))
     .sort((a, b) => a.name.localeCompare(b.name, "fr"));
   const isLit = (activity: PlanActivity) =>
     (!highlightTrainer || (activity.trainerIds || []).includes(highlightTrainer)) &&

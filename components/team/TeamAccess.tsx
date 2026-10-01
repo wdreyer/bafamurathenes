@@ -12,6 +12,7 @@ import { doc, onSnapshot, serverTimestamp, setDoc } from "firebase/firestore";
 import { Clock3, KeyRound, LogOut, ShieldCheck, UserPlus } from "lucide-react";
 import { auth, db } from "@/lib/firebase";
 import { ADMIN_TRAINERS, isAdminEmail } from "@/lib/adminAccess";
+import { syncTrainerProfile } from "@/lib/trainerName";
 import type { Trainer } from "@/lib/types";
 
 type TeamAuthValue = {
@@ -136,6 +137,10 @@ export function TeamAccess({ children }: { children: React.ReactNode }) {
       setProfileReady(true);
     }, () => setProfileReady(true));
   }, [user]);
+
+  useEffect(() => {
+    if (user && trainer) void syncTrainerProfile(user.uid, { ...trainer, email: trainer.email || user.email || "" }).catch(() => undefined);
+  }, [user, trainer]);
 
   if (!authReady || (user && !profileReady)) return <div className="grid min-h-screen place-items-center bg-[#f5f8f6] text-sm text-slate-600">Chargement de l’espace équipe...</div>;
   if (!user) return <AccountForm />;

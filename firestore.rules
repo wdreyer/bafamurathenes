@@ -49,6 +49,17 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // Team directory: names and email only, so trainers see who they work with without reading the full files.
+    match /trainerProfiles/{userId} {
+      allow read: if isAdmin() || isApprovedTrainer();
+      allow create, update: if isAdmin() || (
+        signedIn()
+        && request.auth.uid == userId
+        && request.resource.data.keys().hasOnly(['firstName', 'lastName', 'email', 'updatedAt'])
+      );
+      allow delete: if isAdmin();
+    }
+
     match /formations/{formationId} {
       allow read: if true;
       allow write: if isAdmin();

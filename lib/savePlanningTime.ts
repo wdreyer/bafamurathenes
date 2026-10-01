@@ -9,7 +9,6 @@ type SavePlanningTimeInput = {
   activities: PlanActivity[];
   activity: PlanActivity;
   formationType: FormationType;
-  trainerNames?: Record<string, string>;
   /** Set for trainers: the new guide time is then a proposal waiting for an admin. Admins publish directly. */
   proposer?: { uid: string; name: string };
 };
@@ -35,7 +34,7 @@ export function withMergedBlock(saved: PlanActivity, activities: PlanActivity[])
   });
 }
 
-export async function savePlanningTime({ formationId, activities, activity, formationType, trainerNames, proposer }: SavePlanningTimeInput) {
+export async function savePlanningTime({ formationId, activities, activity, formationType, proposer }: SavePlanningTimeInput) {
   const isNew = !activities.some((item) => item.id === activity.id);
   // Only genuinely new times join the guide: not imported, not unlinked on purpose ("none"), not recognised from their title.
   const shouldPublish = isNew && !activity.catalogId && !catalogIdFromTitle(activity.title);
@@ -45,7 +44,7 @@ export async function savePlanningTime({ formationId, activities, activity, form
   const batch = writeBatch(db);
 
   batch.set(doc(db, "formationPlans", formationId), {
-    formationId, activities: next, ...(trainerNames ? { trainerNames } : {}), updatedAt: serverTimestamp(),
+    formationId, activities: next, updatedAt: serverTimestamp(),
   }, { merge: true });
 
   if (shouldPublish && catalogId) {
