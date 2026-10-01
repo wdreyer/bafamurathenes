@@ -18,6 +18,7 @@ import { PlanningBoard } from "@/components/planning/PlanningBoard";
 import { ActivityQuickActions } from "@/components/planning/PlanningActionsMenu";
 import type { Formation, PlanActivity, PlanTheme, Trainer } from "@/lib/types";
 import { syncTrainerProfile, trainerLabel, useTrainerProfiles } from "@/lib/trainerName";
+import { TrainerDocuments } from "@/components/team/TrainerDocuments";
 
 const emptyActivity = (day: number, start = "09:00", end = "10:00"): PlanActivity => ({
   id: crypto.randomUUID(), day, start, end, title: "", content: "", trainerIds: [], color: "mint",
@@ -96,8 +97,6 @@ export default function FormateursPage() {
     }
     let cancelled = false;
     const documents = [
-      ["diploma", selectedTrainer.diplomaPath, selectedTrainer.diplomaUrl],
-      ["identity", selectedTrainer.identityDocumentPath, selectedTrainer.identityDocumentUrl],
       ["socialSecurity", selectedTrainer.socialSecurityNumberPath, undefined],
     ] as const;
     setDocumentsLoading(true);
@@ -328,8 +327,8 @@ Cette action est irréversible.`;
 
           <section><h3 className="text-sm font-semibold text-slate-900">Historique des formations</h3><TrainerHistory trainerId={selectedTrainer.id} formations={selectedTrainerFormations} /></section>
 
-          <section><h3 className="text-sm font-semibold text-slate-900">Documents</h3><div className="mt-3 divide-y divide-slate-200 border-y border-slate-200">
-            {([["diploma", "Diplôme", selectedTrainer.diplomaName], ["identity", "Carte d’identité", selectedTrainer.identityDocumentName], ["socialSecurity", "Numéro de sécurité sociale", selectedTrainer.hasSocialSecurityNumber ? "Fichier sécurisé" : ""]] as const).map(([key, label, fileName]) => <div key={key} className="flex min-h-12 items-center justify-between gap-3 py-2"><div className="flex min-w-0 items-center gap-2"><FileText size={17} className="shrink-0 text-slate-500" /><div className="min-w-0"><p className="text-sm font-medium">{label}</p><p className="truncate text-xs text-slate-500">{fileName || "Non ajouté"}</p></div></div>{documentLinks[key] ? <a href={documentLinks[key]} target="_blank" rel="noopener noreferrer" className="shrink-0 text-sm font-semibold text-emerald-800">Ouvrir</a> : documentsLoading ? <span className="text-xs text-slate-400">Chargement...</span> : null}</div>)}
+          <section><h3 className="text-sm font-semibold text-slate-900">Documents</h3><div className="mt-3"><TrainerDocuments trainer={selectedTrainer} /></div><div className="mt-3 divide-y divide-slate-200 border-y border-slate-200">
+            {([["socialSecurity", "Numéro de sécurité sociale", selectedTrainer.hasSocialSecurityNumber ? "Fichier sécurisé" : ""]] as const).map(([key, label, fileName]) => <div key={key} className="flex min-h-12 items-center justify-between gap-3 py-2"><div className="flex min-w-0 items-center gap-2"><FileText size={17} className="shrink-0 text-slate-500" /><div className="min-w-0"><p className="text-sm font-medium">{label}</p><p className="truncate text-xs text-slate-500">{fileName || "Non ajouté"}</p></div></div>{documentLinks[key] ? <a href={documentLinks[key]} target="_blank" rel="noopener noreferrer" className="shrink-0 text-sm font-semibold text-emerald-800">Ouvrir</a> : documentsLoading ? <span className="text-xs text-slate-400">Chargement...</span> : null}</div>)}
           </div></section>
         </div>
       </section>

@@ -45,8 +45,21 @@ export type Trainer = {
   identityDocumentUrl?: string;
   identityDocumentPath?: string;
   identityDocumentName?: string;
+  /** Diplomas and other files, each with the name given by the trainer. */
+  documents?: TrainerDocument[];
   profileComplete?: boolean;
   approvedAt?: Date;
+};
+
+export type TrainerDocument = {
+  id: string;
+  label: string;
+  fileName: string;
+  /** Storage path; empty for very old entries that only have a download link. */
+  path: string;
+  url?: string;
+  contentType?: string;
+  uploadedAt?: string;
 };
 
 export type PlanActivity = {

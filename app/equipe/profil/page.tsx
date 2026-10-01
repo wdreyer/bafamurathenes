@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { doc, serverTimestamp, updateDoc } from "firebase/firestore";
-import { BadgeCheck, FileCheck2, Upload } from "lucide-react";
+import { BadgeCheck, FileCheck2 } from "lucide-react";
 import { useTeamAuth } from "@/components/team/TeamAccess";
+import { TrainerDocuments } from "@/components/team/TrainerDocuments";
 import { db } from "@/lib/firebase";
-import { uploadSocialSecurityNumber, uploadTrainerDocument } from "@/lib/uploadTrainerDocument";
+import { uploadSocialSecurityNumber } from "@/lib/uploadTrainerDocument";
 
 export default function TeamProfilePage() {
   const { user, trainer } = useTeamAuth();
@@ -18,8 +19,6 @@ export default function TeamProfilePage() {
     address: trainer.address || "",
     phone: trainer.phone || "",
   });
-  const [diploma, setDiploma] = useState<File | null>(null);
-  const [identity, setIdentity] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
@@ -33,8 +32,6 @@ export default function TeamProfilePage() {
     setError("");
     setSaved(false);
     try {
-      const diplomaFile = diploma ? await uploadTrainerDocument(user.uid, "diploma", diploma) : null;
-      const identityFile = identity ? await uploadTrainerDocument(user.uid, "identity", identity) : null;
       const socialSecurityNumberPath = socialSecurityNumber
         ? await uploadSocialSecurityNumber(user.uid, socialSecurityNumber)
         : trainer.socialSecurityNumberPath;
@@ -47,13 +44,9 @@ export default function TeamProfilePage() {
         phone: form.phone.trim(),
         hasSocialSecurityNumber: Boolean(trainer.hasSocialSecurityNumber || socialSecurityNumber),
         ...(socialSecurityNumberPath ? { socialSecurityNumberPath } : {}),
-        ...(diplomaFile ? { diplomaPath: diplomaFile.path, diplomaName: diplomaFile.name } : {}),
-        ...(identityFile ? { identityDocumentPath: identityFile.path, identityDocumentName: identityFile.name } : {}),
         profileComplete: Boolean(form.firstName.trim() && form.lastName.trim() && form.birthDate.trim() && form.birthPlace.trim() && form.address.trim() && form.phone.trim()),
         updatedAt: serverTimestamp(),
       });
-      setDiploma(null);
-      setIdentity(null);
       setSaved(true);
     } catch (caught) {
       const message = caught instanceof Error ? caught.message : "";
@@ -71,7 +64,7 @@ export default function TeamProfilePage() {
         <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600">Complète ton dossier progressivement. Les documents sont facultatifs pour accéder au guide et aux formations qui te sont assignées.</p>
       </div>
 
-      <form onSubmit={submit} className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
+      <form onSubmit={submit} className="mt-6 grid gap-6">
         <section className="space-y-5 rounded-md border border-slate-200 bg-white p-5">
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="Prénom" value={form.firstName} onChange={(value) => change("firstName", value)} autoComplete="given-name" />
@@ -85,29 +78,22 @@ export default function TeamProfilePage() {
           <div className="rounded-md bg-slate-50 px-3 py-2 text-sm text-slate-600"><span className="font-medium text-slate-800">Email du compte :</span> {trainer.email || user.email}</div>
         </section>
 
-        <aside className="space-y-4">
-          <DocumentField label="Diplôme BAFA ou équivalent (facultatif)" currentName={trainer.diplomaName} file={diploma} onChange={setDiploma} />
-          <DocumentField label="Carte d’identité (facultatif)" currentName={trainer.identityDocumentName} file={identity} onChange={setIdentity} />
-        </aside>
-
-        <div className="lg:col-span-2">
+        <div>
           {error && <p role="alert" className="mb-3 rounded-md border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">{error}</p>}
           {saved && <p role="status" className="mb-3 flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900"><BadgeCheck size={17} />Dossier enregistré.</p>}
           <button disabled={busy} className="inline-flex h-11 items-center gap-2 rounded-md bg-emerald-800 px-5 text-sm font-semibold text-white hover:bg-emerald-900 disabled:opacity-50"><FileCheck2 size={17} />{busy ? "Enregistrement..." : "Enregistrer mon profil"}</button>
         </div>
       </form>
+
+      <section className="mt-10 border-t border-slate-200 pt-6">
+        <h3 className="text-lg font-bold">Mes documents</h3>
+        <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-600">Diplômes, carte d’identité, attestations… Ajoute autant de fichiers que tu veux et donne un nom à chacun. Facultatif pour accéder au guide et aux formations.</p>
+        <div className="mt-4 max-w-2xl"><TrainerDocuments trainer={trainer} /></div>
+      </section>
     </div>
   </main>;
 }
 
 function Field({ label, value, onChange, type = "text", autoComplete, placeholder, required = true }: { label: string; value: string; onChange: (value: string) => void; type?: string; autoComplete?: string; placeholder?: string; required?: boolean }) {
   return <label className="block text-sm font-medium text-slate-700">{label}<input required={required} type={type} autoComplete={autoComplete} placeholder={placeholder} value={value} onChange={(event) => onChange(event.target.value)} className="mt-1.5 h-11 w-full rounded-md border border-slate-300 px-3 outline-none focus:border-emerald-700" /></label>;
-}
-
-function DocumentField({ label, currentName, file, onChange }: { label: string; currentName?: string; file: File | null; onChange: (file: File | null) => void }) {
-  return <label className="block cursor-pointer rounded-md border border-dashed border-slate-300 bg-white p-4 hover:border-emerald-600">
-    <span className="flex items-center gap-2 text-sm font-semibold text-slate-800"><Upload size={17} />{label}</span>
-    <span className="mt-2 block break-words text-xs leading-5 text-slate-500">{file?.name || currentName || "PDF ou image · 10 Mo maximum"}</span>
-    <input type="file" accept="application/pdf,image/*" onChange={(event) => onChange(event.target.files?.[0] || null)} className="sr-only" />
-  </label>;
 }
