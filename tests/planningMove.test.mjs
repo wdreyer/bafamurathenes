@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { moveActivityToTarget, resizeActivityByQuarterHour, snapTimeToQuarterHour } from "../lib/planningMove.ts";
+import { fitIntoFreeSlot, moveActivityToTarget, resizeActivityByQuarterHour, snapTimeToQuarterHour } from "../lib/planningMove.ts";
 
 const activity = {
   id: "time-1", day: 1, start: "09:00", end: "10:30", title: "Atelier",
@@ -45,4 +45,22 @@ test("manual times snap to the nearest quarter hour", () => {
   assert.equal(snapTimeToQuarterHour("17:50"), "17:45");
   assert.equal(snapTimeToQuarterHour("18:20"), "18:15");
   assert.equal(snapTimeToQuarterHour("18:23"), "18:30");
+});
+
+test("fitting a moved time shortens it to the free room before the next time", () => {
+  const next = { ...activity, id: "time-2", day: 2, start: "10:00", end: "11:00" };
+  assert.deepEqual(fitIntoFreeSlot({ ...activity, day: 2, start: "09:15", end: "10:45" }, [activity, next]),
+    { ...activity, day: 2, start: "09:15", end: "10:00", merged: false });
+});
+
+test("fitting a time dropped on another one starts it right after", () => {
+  const taken = { ...activity, id: "time-2", day: 2, start: "09:00", end: "10:00" };
+  assert.deepEqual(fitIntoFreeSlot({ ...activity, day: 2, start: "09:30", end: "11:00" }, [taken]),
+    { ...activity, day: 2, start: "10:00", end: "11:00", merged: false });
+});
+
+test("fitting gives up when less than a quarter of an hour is free", () => {
+  const before = { ...activity, id: "time-2", day: 2, start: "09:00", end: "10:00" };
+  const after = { ...activity, id: "time-3", day: 2, start: "10:10", end: "11:00" };
+  assert.equal(fitIntoFreeSlot({ ...activity, day: 2, start: "09:30", end: "10:30" }, [before, after]), null);
 });

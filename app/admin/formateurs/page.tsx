@@ -7,6 +7,7 @@ import { AlertCircle, BadgeCheck, CalendarDays, Check, ChevronRight, ExternalLin
 import { db, storage } from "@/lib/firebase";
 import { buildPlanningTemplate } from "@/lib/planningTemplates";
 import { activitiesFromTemplate, usePlanningTemplates } from "@/lib/planningTemplateStore";
+import { savePlanActivities } from "@/lib/planHistory";
 import { savePlanningTime } from "@/lib/savePlanningTime";
 import { defaultThemes, normalizeThemes } from "@/lib/planningThemes";
 import { mergedBlock, usePlanningActions } from "@/lib/usePlanningActions";
@@ -118,9 +119,7 @@ export default function FormateursPage() {
     if (!formation) return false;
     setBusy(true); setError("");
     try {
-      await setDoc(doc(db, "formationPlans", formation.id), {
-        formationId: formation.id, activities: next, updatedAt: serverTimestamp(),
-      }, { merge: true });
+      await savePlanActivities(formation.id, next);
       return true;
     } catch { setError("Le planning n'a pas pu être enregistré."); return false; }
     finally { setBusy(false); }
@@ -304,7 +303,7 @@ Cette action est irréversible.`;
       {formation && <>
         <div className="border-y border-[#d8c9e6] py-3"><div className="mb-2 flex items-center justify-between"><h2 className="text-sm font-semibold">Formateur·ices de la session</h2><button type="button" onClick={() => setTab("team")} className="text-xs text-[#792bb9]">Gérer l&apos;équipe</button></div><div className="flex flex-wrap gap-2">{assignableTrainers.map((trainer) => <button key={trainer.id} type="button" disabled={busy} onClick={() => void toggleTrainer(trainer.id)} aria-pressed={formation.trainerIds?.includes(trainer.id) || false} className={`rounded-full border px-3 py-1.5 text-sm ${formation.trainerIds?.includes(trainer.id) ? "border-[#792bb9] bg-[#f0e8f8] text-[#552080]" : "border-slate-200 bg-white text-slate-600"}`}>{formation.trainerIds?.includes(trainer.id) && <Check size={13} className="mr-1 inline" />}{trainerName(trainer)}</button>)}{!assignableTrainers.length && <p className="text-sm text-slate-500">Valide d&apos;abord un compte formateur·ice dans l&apos;onglet Équipe.</p>}</div></div>
         {!planExists ? <div className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-dashed border-slate-300 bg-white p-6"><div><h2 className="font-semibold">Planning à préparer</h2><p className="text-sm text-slate-500">Modèle {formation.type === "formation_generale" ? "formation générale · 9 jours" : "approfondissement · 7 jours"}, inspiré des plannings fournis.</p></div><div className="flex flex-wrap gap-2">{matchingTemplates.map((item) => <button key={item.id} type="button" disabled={busy} onClick={() => void applyTemplate(item)} className="flex cursor-pointer items-center gap-2 rounded bg-[#792bb9] px-4 py-2 text-sm text-white"><Plus size={16} />{item.title}</button>)}<button type="button" disabled={busy} onClick={() => void saveActivities(buildPlanningTemplate(formation))} className={`flex cursor-pointer items-center gap-2 rounded px-4 py-2 text-sm ${matchingTemplates.length ? "border border-slate-300 bg-white text-slate-700" : "bg-slate-900 text-white"}`}><Plus size={16} />{matchingTemplates.length ? "Modèle de base" : "Créer le planning"}</button></div></div> : <>
-          <PlanningBoard key={formation.id} activities={activities} dayCount={dayCount} startDate={formation.startDate} formationTitle={formation.title} themes={themes} trainerNames={Object.fromEntries(trainers.map((trainer) => [trainer.id, trainerLabel(trainer)]))} busy={busy} actions={planningActions} onEdit={(item) => { setError(""); setEditing({ ...item, trainerIds: item.trainerIds || [] }); }} onAdd={(day, start, end) => { setError(""); setEditing(emptyActivity(day, start, end)); }} onSaveThemes={saveThemes} />
+          <PlanningBoard key={formation.id} historyId={formation.id} activities={activities} dayCount={dayCount} startDate={formation.startDate} formationTitle={formation.title} themes={themes} trainerNames={Object.fromEntries(trainers.map((trainer) => [trainer.id, trainerLabel(trainer)]))} busy={busy} actions={planningActions} onEdit={(item) => { setError(""); setEditing({ ...item, trainerIds: item.trainerIds || [] }); }} onAdd={(day, start, end) => { setError(""); setEditing(emptyActivity(day, start, end)); }} onSaveThemes={saveThemes} />
         </>}
       </>}
     </div>}

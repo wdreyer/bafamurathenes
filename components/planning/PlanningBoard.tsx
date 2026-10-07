@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type DragEvent, type FocusEvent, type MouseEvent } from "react";
 import { createPortal } from "react-dom";
-import { ChevronLeft, ChevronRight, NotebookText, Plus, Redo2, Settings2, Undo2, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, History, NotebookText, Plus, Redo2, Settings2, Undo2, X } from "lucide-react";
 import { asTime, minuteOfDay } from "@/lib/planningMove";
 import { iconForActivity } from "@/lib/planningIcons";
 import { auth } from "@/lib/firebase";
@@ -13,6 +13,7 @@ import { defaultThemes, themeFill, themeForActivity, themeSurface, themeSwatch }
 import { type PlanningActions } from "@/lib/usePlanningActions";
 import { MoveConflictDialog, PlanningContextMenu, PlanningNoticeBar, type MenuTarget } from "@/components/planning/PlanningActionsMenu";
 import { PlanningSettings, defaultPlanningPrefs, type PlanningPrefs } from "@/components/planning/PlanningSettings";
+import { PlanningHistory } from "@/components/planning/PlanningHistory";
 import type { PlanActivity, PlanTheme } from "@/lib/types";
 
 type Props = {
@@ -27,6 +28,8 @@ type Props = {
   onEdit?: (activity: PlanActivity) => void;
   onAdd?: (day: number, start?: string, end?: string) => void;
   onSaveThemes?: (themes: PlanTheme[]) => Promise<boolean>;
+  /** The formation whose saved versions the "Historique" button shows (none for planning types). */
+  historyId?: string;
 };
 
 type OpenMenu = ((target: MenuTarget) => void) | undefined;
@@ -393,12 +396,13 @@ function PrintPlanning({ activities, dayCount, startDate, formationTitle, themes
   </div>, document.body);
 }
 
-export function PlanningBoard({ activities, dayCount, startDate, themes = defaultThemes, trainerNames, formationTitle, busy = false, actions, onEdit, onAdd, onSaveThemes }: Props) {
+export function PlanningBoard({ activities, dayCount, startDate, themes = defaultThemes, trainerNames, formationTitle, busy = false, actions, onEdit, onAdd, onSaveThemes, historyId }: Props) {
   // The board only renders client-side, once Firebase data has loaded, so reading localStorage on init is safe.
   const [prefs, setPrefs] = useState<PlanningPrefs>(readPrefs);
   const [view, setView] = useState<"all" | "day">(() => prefs.defaultView);
   const [selectedDay, setSelectedDay] = useState(1);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [menu, setMenu] = useState<MenuTarget | null>(null);
   const [highlightTrainer, setHighlightTrainer] = useState<string | null>(null);
   const [highlightTheme, setHighlightTheme] = useState<string | null>(null);
@@ -476,6 +480,8 @@ export function PlanningBoard({ activities, dayCount, startDate, themes = defaul
             className="grid h-8 w-8 place-items-center rounded-full text-slate-500 hover:bg-[#f0e8f8] hover:text-[#792bb9] disabled:opacity-30 disabled:hover:bg-transparent"><Undo2 size={17} /></button>
           <button type="button" disabled={busy || !actions.canRedo} onClick={() => void actions.redo()} title="Rétablir (Ctrl+Y)" aria-label="Rétablir la modification annulée"
             className="grid h-8 w-8 place-items-center rounded-full text-slate-500 hover:bg-[#f0e8f8] hover:text-[#792bb9] disabled:opacity-30 disabled:hover:bg-transparent"><Redo2 size={17} /></button>
+          {historyId && <button type="button" onClick={() => setHistoryOpen(true)} title="Historique : retrouver ou restaurer une ancienne version"
+            className="inline-flex h-8 cursor-pointer items-center gap-1 rounded-full px-2.5 text-xs font-semibold text-slate-500 hover:bg-[#f0e8f8] hover:text-[#792bb9]"><History size={16} />Historique</button>}
         </div>}
         <button type="button" onClick={() => setSettingsOpen(true)} title="Réglages du planning" aria-label="Réglages du planning" className={`${actions ? "" : "ml-auto "}grid h-8 w-8 shrink-0 cursor-pointer place-items-center rounded-full text-slate-400 hover:bg-[#f0e8f8] hover:text-[#792bb9]`}><Settings2 size={17} /></button>
       </div>
@@ -496,6 +502,7 @@ export function PlanningBoard({ activities, dayCount, startDate, themes = defaul
         <TimeSheetView item={sheet} />
       </div>
     </div>}
+    {historyOpen && historyId && actions && <PlanningHistory formationId={historyId} activities={activities} actions={actions} trainerNames={trainerNames} busy={busy} onClose={() => setHistoryOpen(false)} />}
     {settingsOpen && <PlanningSettings prefs={prefs} onChangePrefs={changePrefs} themes={themes} activities={activities}
       onSaveThemes={onSaveThemes} onClose={() => setSettingsOpen(false)} />}
   </>;

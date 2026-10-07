@@ -1,31 +1,19 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { asTime, minuteOfDay, timeRangeError } from "@/lib/planningMove";
+import { asTime, fitIntoFreeSlot, minuteOfDay, timeRangeError } from "@/lib/planningMove";
 import type { PlanActivity } from "@/lib/types";
 
 export type PlanningNotice = { text: string; undo?: PlanActivity[] };
 
-/** A drag & drop waiting for a decision because the target slot is taken. */
+/** A drag & drop or a paste waiting for a decision because the target slot is taken. */
 export type PendingMove = {
+  kind: "move" | "paste";
   moved: PlanActivity;
   conflicts: PlanActivity[];
-  /** The conflicting times trimmed around the moved one, or null when trimming can't work (fully covered, or would need a split). */
-  shrunk: PlanActivity[] | null;
+  /** The moved time shortened to the free room, so nothing else changes; null when there's less than 15 min free. */
+  fitted: PlanActivity | null;
 };
-
-function shrinkAround(moved: PlanActivity, conflicts: PlanActivity[]) {
-  const result: PlanActivity[] = [];
-  for (const item of conflicts) {
-    const before = item.start < moved.start;
-    const after = item.end > moved.end;
-    if (before === after) return null;
-    const trimmed = before ? { ...item, end: moved.start } : { ...item, start: moved.end };
-    if (minuteOfDay(trimmed.end) - minuteOfDay(trimmed.start) < 15) return null;
-    result.push(trimmed);
-  }
-  return result;
-}
 
 const overlaps = (activities: PlanActivity[], day: number, start: string, end: string, ignoreId?: string) =>
   activities.some((item) => item.id !== ignoreId && item.day === day && item.start < end && item.end > start);
@@ -76,7 +64,7 @@ const HISTORY_SIZE = 50;
  * Content key of a plan's times, independent of field order: Firestore sends each save back twice (local copy, then
  * the server copy with keys sorted), and both must count as the same state or every change fills two history steps.
  */
-const canonical = (value: unknown) => JSON.stringify(value, (_key, entry) =>
+export const canonical = (value: unknown) => JSON.stringify(value, (_key, entry) =>
   entry && typeof entry === "object" && !Array.isArray(entry)
     ? Object.fromEntries(Object.entries(entry).sort(([x], [y]) => x.localeCompare(y)))
     : entry);
@@ -131,8 +119,10 @@ export function usePlanningActions(activities: PlanActivity[], save: (next: Plan
     const end = asTime(minuteOfDay(start) + minuteOfDay(clipboard.end) - minuteOfDay(clipboard.start));
     const rangeError = timeRangeError(start, end);
     if (rangeError) { notify({ text: rangeError }); return; }
-    if (overlaps(activities, day, start, end)) { notify({ text: "Pas assez de place ici pour coller ce temps." }); return; }
-    void apply([...activities, withNewId(clipboard, { day, start, end })], `Collé au J${day} à ${start}`);
+    const pasted = withNewId(clipboard, { day, start, end });
+    const conflicts = activities.filter((item) => item.day === day && item.start < end && item.end > start);
+    if (conflicts.length) setPendingMove({ kind: "paste", moved: pasted, conflicts, fitted: fitIntoFreeSlot(pasted, activities) });
+    else void apply([...activities, pasted], `Collé au J${day} à ${start}`);
   };
 
   const duplicateTo = (activity: PlanActivity, days: number[]) => {
@@ -174,7 +164,10 @@ export function usePlanningActions(activities: PlanActivity[], save: (next: Plan
     void apply(next, `Fusionné avec J${neighbourDay} · texte de droite gardé`);
   };
 
-  /** Drag & drop: the moved time always keeps its duration; a taken slot asks whether to replace or trim the others. */
+  /**
+   * Drag & drop: the moved time keeps its duration when the slot is free. On a taken slot it asks first: shorten the
+   * moved time to the free room (the times in place never change), or replace them on purpose.
+   */
   const move = (activity: PlanActivity, day: number, start: string) => {
     const duration = minuteOfDay(activity.end) - minuteOfDay(activity.start);
     const end = asTime(minuteOfDay(start) + duration);
@@ -183,23 +176,29 @@ export function usePlanningActions(activities: PlanActivity[], save: (next: Plan
     if (day === activity.day && start === activity.start) return;
     const moved = { ...activity, day, start, end, merged: false };
     const conflicts = activities.filter((item) => item.id !== activity.id && item.day === day && item.start < end && item.end > start);
-    const plan = { moved, conflicts, shrunk: shrinkAround(moved, conflicts) };
+    const plan: PendingMove = { kind: "move", moved, conflicts, fitted: fitIntoFreeSlot(moved, activities) };
     if (conflicts.length) setPendingMove(plan);
     else resolveMove("replace", plan);
   };
 
-  const resolveMove = (mode: "replace" | "shrink" | "cancel", plan = pendingMove) => {
+  const resolveMove = (mode: "replace" | "fit" | "cancel", plan = pendingMove) => {
     setPendingMove(null);
-    if (!plan || mode === "cancel" || (mode === "shrink" && !plan.shrunk)) return;
-    const conflictIds = new Set(plan.conflicts.map((item) => item.id));
-    const kept = activities.filter((item) => item.id !== plan.moved.id && !conflictIds.has(item.id));
-    const next = [...kept, plan.moved, ...(mode === "shrink" ? plan.shrunk! : [])];
-    const where = `J${plan.moved.day} à ${plan.moved.start}`;
-    void apply(next, !plan.conflicts.length ? `Déplacé au ${where}` : mode === "replace" ? `Déplacé au ${where} · ${plan.conflicts.length} temps remplacé${plan.conflicts.length > 1 ? "s" : ""}` : `Déplacé au ${where} · horaires voisins réduits`);
+    if (!plan || mode === "cancel" || (mode === "fit" && !plan.fitted)) return;
+    const placed = mode === "fit" ? plan.fitted! : plan.moved;
+    const removed = new Set([plan.moved.id, ...(mode === "replace" ? plan.conflicts.map((item) => item.id) : [])]);
+    const next = [...activities.filter((item) => !removed.has(item.id)), placed];
+    const action = plan.kind === "paste" ? "Collé" : "Déplacé";
+    const where = `J${placed.day} à ${placed.start}`;
+    void apply(next, !plan.conflicts.length ? `${action} au ${where}`
+      : mode === "replace" ? `${action} au ${where} · ${plan.conflicts.length} temps remplacé${plan.conflicts.length > 1 ? "s" : ""}`
+        : `${action} au ${where} · raccourci à ${placed.start}–${placed.end}`);
   };
 
   const remove = (activity: PlanActivity) =>
     apply(activities.filter((item) => item.id !== activity.id), `« ${activity.title} » supprimé`);
+
+  /** Brings back a whole saved version, or adds one time from it; both can be undone like any change. */
+  const restore = (next: PlanActivity[], text: string) => apply(next, text);
 
   const travel = async (direction: "undo" | "redo") => {
     const stack = direction === "undo" ? history.past : history.future;
@@ -214,7 +213,7 @@ export function usePlanningActions(activities: PlanActivity[], save: (next: Plan
   const undo = () => travel("undo");
   const redo = () => travel("redo");
 
-  return { clipboard, notice, undo, redo, canUndo: history.past.length > 0, canRedo: history.future.length > 0, copy, paste, duplicateTo, copyDay, setMerged, mergeWithNeighbour, blockOf, move, pendingMove, resolveMove, remove, dismiss: () => notify(null) };
+  return { clipboard, notice, undo, redo, canUndo: history.past.length > 0, canRedo: history.future.length > 0, copy, paste, duplicateTo, copyDay, setMerged, mergeWithNeighbour, blockOf, move, pendingMove, resolveMove, remove, restore, dismiss: () => notify(null) };
 }
 
 export type PlanningActions = ReturnType<typeof usePlanningActions>;

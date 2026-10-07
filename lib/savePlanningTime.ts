@@ -1,6 +1,7 @@
-import { doc, serverTimestamp, writeBatch } from "firebase/firestore";
+import { doc, runTransaction, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { catalogIdFromTitle } from "@/lib/trainingCatalog";
+import { keepVersion, withVersion } from "@/lib/planHistory";
 import { mergedBlock } from "@/lib/usePlanningActions";
 import type { FormationType, PlanActivity } from "@/lib/types";
 
@@ -40,25 +41,26 @@ export async function savePlanningTime({ formationId, activities, activity, form
   const shouldPublish = isNew && !activity.catalogId && !catalogIdFromTitle(activity.title);
   const catalogId = shouldPublish ? crypto.randomUUID() : activity.catalogId;
   const saved = { ...activity, title: activity.title.trim(), ...(catalogId ? { catalogId } : {}) };
-  const next = isNew ? [...activities, saved] : withMergedBlock(saved, activities);
-  const batch = writeBatch(db);
+  const planRef = doc(db, "formationPlans", formationId);
 
-  batch.set(doc(db, "formationPlans", formationId), {
-    formationId, activities: next, updatedAt: serverTimestamp(),
-  }, { merge: true });
+  await withVersion((keep) => runTransaction(db, async (transaction) => {
+    // The edit applies to the plan as saved now, so a change someone else made meanwhile isn't overwritten.
+    const current = ((await transaction.get(planRef)).data()?.activities || activities) as PlanActivity[];
+    const next = current.some((item) => item.id === saved.id) ? withMergedBlock(saved, current) : [...current, saved];
+    if (keep) keepVersion(transaction, formationId, current, next);
+    transaction.set(planRef, { formationId, activities: next, updatedAt: serverTimestamp() }, { merge: true });
 
-  if (shouldPublish && catalogId) {
-    batch.set(doc(db, "trainingTimes", catalogId), {
-      title: saved.title,
-      category: saved.catalogCategory || "animation",
-      scope: saved.catalogScope || (formationType === "formation_generale" ? "general" : "appro"),
-      content: saved.content.trim(),
-      color: saved.color,
-      ...(saved.resourceId ? { resourceId: saved.resourceId } : {}),
-      ...(proposer ? { status: "pending", proposedBy: proposer.uid, proposedByName: proposer.name } : {}),
-      createdAt: serverTimestamp(),
-    });
-  }
-
-  await batch.commit();
+    if (shouldPublish && catalogId) {
+      transaction.set(doc(db, "trainingTimes", catalogId), {
+        title: saved.title,
+        category: saved.catalogCategory || "animation",
+        scope: saved.catalogScope || (formationType === "formation_generale" ? "general" : "appro"),
+        content: saved.content.trim(),
+        color: saved.color,
+        ...(saved.resourceId ? { resourceId: saved.resourceId } : {}),
+        ...(proposer ? { status: "pending", proposedBy: proposer.uid, proposedByName: proposer.name } : {}),
+        createdAt: serverTimestamp(),
+      });
+    }
+  }));
 }

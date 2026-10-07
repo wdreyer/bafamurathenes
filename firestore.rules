@@ -77,6 +77,15 @@ service cloud.firestore {
 
     match /formationPlans/{formationId} {
       allow read, write: if isAdmin() || assignedTo(formationId);
+
+      // History of the plan: each version is the planning just before a change, written by whoever made that change.
+      // Versions are never edited, so a lost time can always be found again.
+      match /versions/{versionId} {
+        allow read: if isAdmin() || assignedTo(formationId);
+        allow create: if (isAdmin() || assignedTo(formationId))
+          && request.resource.data.by == request.auth.uid;
+        allow delete: if isAdmin();
+      }
     }
 
     match /inscriptions/{inscriptionId} {

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { collection, doc, onSnapshot, query, serverTimestamp, setDoc, updateDoc, where } from "firebase/firestore";
 import { Printer, Users } from "lucide-react";
 import { db } from "@/lib/firebase";
+import { savePlanActivities } from "@/lib/planHistory";
 import { savePlanningTime } from "@/lib/savePlanningTime";
 import { normalizeThemes } from "@/lib/planningThemes";
 import { mergedBlock, usePlanningActions } from "@/lib/usePlanningActions";
@@ -98,9 +99,7 @@ export default function TeamPage() {
     if (!formation || !plan) return false;
     setBusy(true); setError("");
     try {
-      await setDoc(doc(db, "formationPlans", formation.id), {
-        formationId: formation.id, activities: next, updatedAt: serverTimestamp(),
-      }, { merge: true });
+      await savePlanActivities(formation.id, next);
       return true;
     } catch {
       setError("Impossible d'enregistrer le planning.");
@@ -177,7 +176,7 @@ export default function TeamPage() {
         </div>
 
         <div className={section === "planning" ? "pt-4" : "hidden print:block"}>
-          <PlanningBoard key={formation.id} activities={plan.activities} dayCount={dayCount} startDate={formation.startDate} formationTitle={formation.title} themes={themes} trainerNames={trainerNames} busy={busy} actions={planningActions} onEdit={(item) => { setError(""); setEditing({ ...item, trainerIds: item.trainerIds || [] }); }} onAdd={(day, start, end) => { setError(""); setEditing(emptyActivity(day, start, end)); }} onSaveThemes={saveThemes} />
+          <PlanningBoard key={formation.id} historyId={formation.id} activities={plan.activities} dayCount={dayCount} startDate={formation.startDate} formationTitle={formation.title} themes={themes} trainerNames={trainerNames} busy={busy} actions={planningActions} onEdit={(item) => { setError(""); setEditing({ ...item, trainerIds: item.trainerIds || [] }); }} onAdd={(day, start, end) => { setError(""); setEditing(emptyActivity(day, start, end)); }} onSaveThemes={saveThemes} />
         </div>
         {section === "trainees" && <div className="print:hidden"><TraineeRoster key={selectedFormationId} inscriptions={registrations} loading={registrationsLoading} groupCount={groupCount} busy={busy} onChangeGroupCount={changeGroupCount} onSaveField={saveTraineeField} /></div>}
       </>}

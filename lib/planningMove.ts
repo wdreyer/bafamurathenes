@@ -104,3 +104,22 @@ export function moveActivityToTarget(activity: PlanActivity, target: PlanningDro
   if (!Number.isFinite(duration) || duration <= 0 || !Number.isFinite(start) || start + duration >= 24 * 60) return null;
   return { ...activity, day: target.day, start: target.start, end: asTime(start + duration) };
 }
+
+/**
+ * The moved (or pasted) time shortened to the free room at its target, so the times already in place are never touched:
+ * it starts at the first free minute from its start (after any time covering it) and stops at the next time or at its
+ * own end. Null when less than a quarter of an hour is free there.
+ */
+export function fitIntoFreeSlot(moved: PlanActivity, activities: PlanActivity[]): PlanActivity | null {
+  const others = activities.filter((item) => item.id !== moved.id && item.day === moved.day);
+  let start = minuteOfDay(moved.start);
+  const wantedEnd = Math.min(minuteOfDay(moved.end), minuteOfDay(DAY_END));
+  for (let covering = others.find((item) => minuteOfDay(item.start) <= start && minuteOfDay(item.end) > start); covering;
+    covering = others.find((item) => minuteOfDay(item.start) <= start && minuteOfDay(item.end) > start)) {
+    start = minuteOfDay(covering.end);
+  }
+  const next = others.map((item) => minuteOfDay(item.start)).filter((value) => value >= start);
+  const end = Math.min(wantedEnd, ...next);
+  if (end - start < 15) return null;
+  return { ...moved, start: asTime(start), end: asTime(end), merged: false };
+}
