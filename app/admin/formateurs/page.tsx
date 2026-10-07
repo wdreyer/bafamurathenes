@@ -8,7 +8,7 @@ import { db, storage } from "@/lib/firebase";
 import { buildPlanningTemplate } from "@/lib/planningTemplates";
 import { activitiesFromTemplate, usePlanningTemplates } from "@/lib/planningTemplateStore";
 import { savePlanActivities } from "@/lib/planHistory";
-import { savePlanningTime } from "@/lib/savePlanningTime";
+import { applyEdit, PlanningEditError, savePlanningTime } from "@/lib/savePlanningTime";
 import { defaultThemes, normalizeThemes } from "@/lib/planningThemes";
 import { mergedBlock, usePlanningActions } from "@/lib/usePlanningActions";
 import { timeRangeError } from "@/lib/planningMove";
@@ -252,12 +252,14 @@ Cette action est irréversible.`;
     if (!editing.title.trim()) { setError("Renseigne un titre."); return; }
     const rangeError = timeRangeError(editing.start, editing.end);
     if (rangeError) { setError(rangeError); return; }
+    const editError = applyEdit(editing, activities).error;
+    if (editError) { setError(editError); return; }
     setBusy(true); setError("");
     try {
       await savePlanningTime({ formationId: formation.id, activities, activity: editing,
         formationType: formation.type });
       setEditing(null);
-    } catch { setError("Le temps et sa référence dans le guide n'ont pas pu être enregistrés."); }
+    } catch (caught) { setError(caught instanceof PlanningEditError ? caught.message : "Le temps et sa référence dans le guide n'ont pas pu être enregistrés."); }
     finally { setBusy(false); }
   };
 

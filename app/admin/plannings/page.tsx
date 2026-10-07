@@ -6,7 +6,7 @@ import { Copy, LayoutTemplate, Plus, Trash2, X } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { buildPlanningTemplate } from "@/lib/planningTemplates";
 import { formationTypeLabel, templateDayCount, usePlanningTemplates, withoutTrainers } from "@/lib/planningTemplateStore";
-import { withMergedBlock } from "@/lib/savePlanningTime";
+import { applyEdit } from "@/lib/savePlanningTime";
 import { defaultThemes, normalizeThemes } from "@/lib/planningThemes";
 import { mergedBlock, usePlanningActions } from "@/lib/usePlanningActions";
 import { timeRangeError } from "@/lib/planningMove";
@@ -57,9 +57,9 @@ export default function PlanningTemplatesPage() {
     if (!editing.title.trim()) { setError("Renseigne un titre."); return; }
     const rangeError = timeRangeError(editing.start, editing.end);
     if (rangeError) { setError(rangeError); return; }
-    const saved = { ...editing, title: editing.title.trim(), trainerIds: [] };
-    const isNew = !activities.some((item) => item.id === saved.id);
-    if (await saveActivities(isNew ? [...activities, saved] : withMergedBlock(saved, activities))) setEditing(null);
+    const { next, error: editError } = applyEdit({ ...editing, title: editing.title.trim(), trainerIds: [] }, activities);
+    if (editError) { setError(editError); return; }
+    if (await saveActivities(next)) setEditing(null);
   };
 
   const create = async (title: string, formationType: FormationType, source: Source) => {

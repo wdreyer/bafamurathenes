@@ -72,6 +72,11 @@ export function ActivityEditor({ activity, existing, dayCount, formationType, tr
   // The viewer's own times first, then the rest of the guide.
   const sortedMatches = [...matches.filter((item) => item.proposedBy && item.proposedBy === viewerId), ...matches.filter((item) => !item.proposedBy || item.proposedBy !== viewerId)];
   const selectedTheme = themeForActivity(activity, themes);
+  // Days covered: a merged time spans its block; picking a later "jusqu'au" day spreads the time over several days.
+  const spanFrom = activity.span?.from ?? mergedDays?.[0] ?? activity.day;
+  const spanTo = activity.span?.to ?? mergedDays?.at(-1) ?? activity.day;
+  const changeSpan = (from: number, to: number) => onChange({ ...activity, day: from, span: { from, to } });
+  const daySelect = "mt-1 block h-10 cursor-pointer rounded-md border border-slate-300 bg-white px-2 text-sm font-semibold text-slate-900";
 
   // Importing a guide time fills the planning time and links it; the theme follows its title.
   const chooseCatalogItem = (item: TrainingCatalogItem) => {
@@ -95,7 +100,7 @@ export function ActivityEditor({ activity, existing, dayCount, formationType, tr
       {error && <p role="alert" className="mb-4 rounded border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">{error}</p>}
       {catalogError && <p role="alert" className="mb-4 rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">{catalogError}</p>}
 
-      {mergedDays && mergedDays.length > 1 && <p className="mb-4 rounded-lg border border-[#d8c9e6] bg-[#f8f3fb] px-3 py-2 text-sm text-[#552080]">Temps fusionné sur {mergedDays.length > 2 ? `J${mergedDays[0]} à J${mergedDays.at(-1)}` : `J${mergedDays[0]} et J${mergedDays[1]}`} : les modifications s&apos;appliquent à tous ces jours.</p>}
+      {mergedDays && mergedDays.length > 1 && <p className="mb-4 rounded-lg border border-[#d8c9e6] bg-[#f8f3fb] px-3 py-2 text-sm text-[#552080]">Temps fusionné sur {mergedDays.length > 2 ? `J${mergedDays[0]} à J${mergedDays.at(-1)}` : `J${mergedDays[0]} et J${mergedDays[1]}`} : titre, horaires, contenu et animation s&apos;appliquent à tous ces jours. Change « Du » ou « Jusqu&apos;au » pour allonger ou raccourcir le bloc.</p>}
       <form onSubmit={(event) => { event.preventDefault(); onSave(); }} className="space-y-4">
         <label className="block text-xs font-semibold text-slate-600">Titre<input required value={activity.title} onChange={(event) => changeTitle(event.target.value)} className="mt-1 h-10 w-full rounded border border-slate-300 px-3 text-sm font-normal text-slate-900" /></label>
 
@@ -135,7 +140,9 @@ export function ActivityEditor({ activity, existing, dayCount, formationType, tr
           <p className="text-xs text-[#552080] sm:col-span-2">{author?.isAdmin === false ? "Ce nouveau temps sera proposé au guide (validation par l'équipe admin)." : "Ce nouveau temps sera ajouté au guide et proposé dans les prochains plannings."}</p>
         </div>}
         <div className="flex flex-wrap items-start gap-4">
-          <label className="text-xs font-semibold text-slate-600">Jour<select value={activity.day} onChange={(event) => onChange({ ...activity, day: Number(event.target.value) })} className="mt-1 block h-10 cursor-pointer rounded-md border border-slate-300 bg-white px-2 text-sm font-semibold text-slate-900">{Array.from({ length: dayCount }, (_, index) => <option key={index} value={index + 1}>J{index + 1}</option>)}</select></label>
+          <label className="text-xs font-semibold text-slate-600">{spanTo > spanFrom ? "Du" : "Jour"}<select value={spanFrom} onChange={(event) => { const from = Number(event.target.value); changeSpan(from, Math.max(from, spanTo === spanFrom ? from : spanTo)); }} className={daySelect}>{Array.from({ length: dayCount }, (_, index) => <option key={index} value={index + 1}>J{index + 1}</option>)}</select></label>
+          <label className="text-xs font-semibold text-slate-600">Jusqu&apos;au<select value={spanTo} onChange={(event) => changeSpan(spanFrom, Number(event.target.value))} title="Choisis un jour plus loin pour mettre ce temps sur plusieurs jours (une seule case fusionnée)" className={daySelect}>
+            {Array.from({ length: dayCount - spanFrom + 1 }, (_, index) => spanFrom + index).map((day) => <option key={day} value={day}>{day === spanFrom ? "Ce jour seulement" : `J${day}`}</option>)}</select></label>
           <TimeRangeFields start={activity.start} end={activity.end} onChange={(range) => onChange({ ...activity, ...range })} />
         </div>
         <label className="block text-xs font-semibold text-slate-600">Contenu / consignes<textarea value={activity.content} onChange={(event) => onChange({ ...activity, content: event.target.value })} rows={3} className="mt-1 w-full rounded border border-slate-300 p-3 text-sm font-normal text-slate-900" /></label>

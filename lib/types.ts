@@ -79,6 +79,8 @@ export type PlanActivity = {
   merged?: boolean;
   /** Emoji shown in the cell; undefined picks one from the title, "none" shows nothing. */
   icon?: string;
+  /** Edit window only, never saved: the days the time should cover (several days make one merged cell). */
+  span?: { from: number; to: number };
 };
 
 /** Reusable planning without dates (J1 to J7/J9), managed by admins only. */

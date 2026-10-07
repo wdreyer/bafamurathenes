@@ -18,7 +18,11 @@ export type PendingMove = {
 const overlaps = (activities: PlanActivity[], day: number, start: string, end: string, ignoreId?: string) =>
   activities.some((item) => item.id !== ignoreId && item.day === day && item.start < end && item.end > start);
 
-const withNewId = (activity: PlanActivity, patch: Partial<PlanActivity> = {}): PlanActivity =>
+/** Asks before an action that deletes times, naming them. */
+const confirmLoss = (question: string, lost: PlanActivity[]) => window.confirm(`${question}\n\n${lost.length > 1 ? `Ces ${lost.length} temps seront supprimés` : "Ce temps sera supprimé"} :\n${lost
+  .sort((a, b) => a.day - b.day || a.start.localeCompare(b.start)).map((item) => `• J${item.day} ${item.start}–${item.end} ${item.title}`).join("\n")}`);
+
+const withNewId =(activity: PlanActivity, patch: Partial<PlanActivity> = {}): PlanActivity =>
   ({ ...activity, ...patch, id: crypto.randomUUID(), merged: false });
 
 /** Consecutive days holding the same time (same slot, same title, alone on its slot) — what the grid can show as one merged cell. */
@@ -135,6 +139,8 @@ export function usePlanningActions(activities: PlanActivity[], save: (next: Plan
 
   const copyDay = (fromDay: number, toDay: number) => {
     const source = activities.filter((item) => item.day === fromDay);
+    const replaced = activities.filter((item) => item.day === toDay);
+    if (replaced.length && !confirmLoss(`Copier le J${fromDay} sur le J${toDay} ?`, replaced)) return;
     void apply([...activities.filter((item) => item.day !== toDay), ...source.map((item) => withNewId(item, { day: toDay }))],
       `J${fromDay} copié sur J${toDay}`);
   };
@@ -159,6 +165,9 @@ export function usePlanningActions(activities: PlanActivity[], save: (next: Plan
     const source = direction > 0 && overlapping[0] ? overlapping[0] : activity;
     const days = [...block.map((item) => item.day), neighbourDay];
     const removed = new Set(activities.filter((item) => days.includes(item.day) && item.start < source.end && item.end > source.start).map((item) => item.id));
+    // The block itself and the time whose text is kept aren't lost; anything else under the merged cell is.
+    const lost = activities.filter((item) => removed.has(item.id) && item.id !== source.id && !block.some((member) => member.id === item.id));
+    if (lost.length && !confirmLoss(`Fusionner « ${activity.title} » avec le J${neighbourDay} ?`, lost)) return;
     const copies = days.map((day) => day === source.day ? { ...source, merged: true } : { ...withNewId(source, { day }), merged: true });
     const next = [...activities.filter((item) => !removed.has(item.id)), ...copies];
     void apply(next, `Fusionné avec J${neighbourDay} · texte de droite gardé`);
@@ -194,8 +203,14 @@ export function usePlanningActions(activities: PlanActivity[], save: (next: Plan
         : `${action} au ${where} · raccourci à ${placed.start}–${placed.end}`);
   };
 
-  const remove = (activity: PlanActivity) =>
-    apply(activities.filter((item) => item.id !== activity.id), `« ${activity.title} » supprimé`);
+  /** Deletes a time after confirmation; a merged time goes away on all its days. */
+  const remove = async (activity: PlanActivity) => {
+    const block = mergedBlock(activity, activities);
+    const days = block.length > 1 ? ` sur J${block[0].day} à J${block[block.length - 1].day}` : ` (J${activity.day})`;
+    if (!window.confirm(`Supprimer « ${activity.title} »${days} ?`)) return;
+    const ids = new Set(block.map((item) => item.id));
+    await apply(activities.filter((item) => !ids.has(item.id)), `« ${activity.title} » supprimé`);
+  };
 
   /** Brings back a whole saved version, or adds one time from it; both can be undone like any change. */
   const restore = (next: PlanActivity[], text: string) => apply(next, text);

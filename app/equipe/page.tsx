@@ -5,7 +5,7 @@ import { collection, doc, onSnapshot, query, serverTimestamp, setDoc, updateDoc,
 import { Printer, Users } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { savePlanActivities } from "@/lib/planHistory";
-import { savePlanningTime } from "@/lib/savePlanningTime";
+import { applyEdit, PlanningEditError, savePlanningTime } from "@/lib/savePlanningTime";
 import { normalizeThemes } from "@/lib/planningThemes";
 import { mergedBlock, usePlanningActions } from "@/lib/usePlanningActions";
 import { timeRangeError } from "@/lib/planningMove";
@@ -124,13 +124,15 @@ export default function TeamPage() {
     if (!editing.title.trim()) { setError("Renseigne un titre."); return; }
     const rangeError = timeRangeError(editing.start, editing.end);
     if (rangeError) { setError(rangeError); return; }
+    const editError = applyEdit(editing, plan.activities).error;
+    if (editError) { setError(editError); return; }
     setBusy(true); setError("");
     try {
       await savePlanningTime({ formationId: formation.id, activities: plan.activities, activity: editing,
         formationType: formation.type,
         proposer: isAdmin ? undefined : { uid: user.uid, name: `${trainer.firstName} ${trainer.lastName}`.trim() || user.email || "Formateur·ice" } });
       setEditing(null);
-    } catch { setError("Le temps et sa référence dans le guide n'ont pas pu être enregistrés."); }
+    } catch (caught) { setError(caught instanceof PlanningEditError ? caught.message : "Le temps et sa référence dans le guide n'ont pas pu être enregistrés."); }
     finally { setBusy(false); }
   };
 
