@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   addDoc,
   collection,
+  deleteDoc,
   doc,
   increment,
   onSnapshot,
@@ -24,6 +25,7 @@ import {
   HandCoins,
   Plus,
   Search,
+  Trash2,
 } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { cleanFormationTitle } from "@/lib/formationTitles";
@@ -390,6 +392,30 @@ export function InscriptionsTable({ formationId }: { formationId?: string } = {}
     }
   }
 
+  async function deleteInscription(inscription: Inscription) {
+    const name = contactName(inscription) || "cette inscription";
+    if (!window.confirm(`Supprimer définitivement l'inscription de ${name} ? Cette action est irréversible.`)) return;
+
+    setSavingId(inscription.id);
+    try {
+      await deleteDoc(doc(db, "inscriptions", inscription.id));
+
+      if (inscription.formationId) {
+        await updateDoc(doc(db, "formations", inscription.formationId), {
+          inscriptionsCount: increment(-1),
+          updatedAt: serverTimestamp(),
+        });
+      }
+
+      setSelectedInscriptionId(null);
+    } catch (error) {
+      console.error(error);
+      window.alert("La suppression a échoué. Réessayez.");
+    } finally {
+      setSavingId(null);
+    }
+  }
+
   async function addManualInscription(event: React.FormEvent) {
     event.preventDefault();
     const selectedFormation = availableFormations.find((item) => item.id === newInscription.formationId);
@@ -724,6 +750,7 @@ export function InscriptionsTable({ formationId }: { formationId?: string } = {}
           onClose={() => setSelectedInscriptionId(null)}
           onUpdate={(patch) => updateInscription(selectedInscription.id, patch)}
           onChangeFormation={(formationId) => updateInscriptionFormation(selectedInscription, formationId)}
+          onDelete={() => void deleteInscription(selectedInscription)}
         />
       )}
     </div>
@@ -737,6 +764,7 @@ function InscriptionDetailsModal({
   onClose,
   onUpdate,
   onChangeFormation,
+  onDelete,
 }: {
   inscription: Inscription;
   formations: Formation[];
@@ -744,6 +772,7 @@ function InscriptionDetailsModal({
   onClose: () => void;
   onUpdate: (patch: Partial<Inscription>) => void;
   onChangeFormation: (formationId: string) => void;
+  onDelete: () => void;
 }) {
   const values = financials(inscription);
   const currentPaymentStatus = inscription.paymentStatus || (inscription.paid ? "paid" : "pending");
@@ -783,7 +812,13 @@ function InscriptionDetailsModal({
             <p className="mt-0.5 text-xs text-slate-500">{formationName(inscription, formations) || "Formation non renseignée"} - {formatDate(inscription.createdAt)}</p>
             {inscription.registrationCode && <p className="mt-0.5 text-xs text-slate-500">Code identifiant : {inscription.registrationCode}</p>}
           </div>
-          <button type="button" onClick={onClose} className="h-8 cursor-pointer rounded-md border border-slate-200 px-3 text-xs font-medium text-slate-700 hover:bg-slate-50">Fermer</button>
+          <div className="flex items-center gap-2">
+            <button type="button" disabled={saving} onClick={onDelete} className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-md border border-rose-200 px-3 text-xs font-medium text-rose-700 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50">
+              <Trash2 className="h-3.5 w-3.5" />
+              Supprimer
+            </button>
+            <button type="button" onClick={onClose} className="h-8 cursor-pointer rounded-md border border-slate-200 px-3 text-xs font-medium text-slate-700 hover:bg-slate-50">Fermer</button>
+          </div>
         </div>
 
         <div className="space-y-3 p-4">
