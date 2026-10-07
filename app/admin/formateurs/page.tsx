@@ -12,7 +12,7 @@ import { applyEdit, PlanningEditError, savePlanningTime } from "@/lib/savePlanni
 import { defaultThemes, normalizeThemes } from "@/lib/planningThemes";
 import { mergedBlock, usePlanningActions } from "@/lib/usePlanningActions";
 import { timeRangeError } from "@/lib/planningMove";
-import { trainerProfileProgress } from "@/lib/trainerProfile";
+import { missingSummary, trainerProfileProgress } from "@/lib/trainerProfile";
 import { ADMIN_TRAINER_IDS } from "@/lib/adminAccess";
 import { TrainerHistory } from "@/components/admin/TrainerHistory";
 import { ActivityEditor } from "@/components/planning/ActivityEditor";
@@ -294,7 +294,8 @@ Cette action est irréversible.`;
               <td className="px-4 py-3 text-slate-600"><p>{trainer.email || "—"}</p><p className="text-xs">{trainer.phone || "—"}</p></td>
               <td className="px-4 py-3">{profile.complete
                 ? <span className="font-medium text-emerald-700">Complet</span>
-                : <span className="inline-flex items-center gap-1.5 font-medium text-amber-700"><AlertCircle size={14} />À compléter <span className="text-xs font-normal text-slate-500">({profile.informationCount}/{profile.informationTotal} infos · {profile.documentCount}/{profile.documentTotal} docs)</span></span>}</td>
+                : <span className="inline-flex items-center gap-1.5 font-medium text-amber-700"><AlertCircle size={14} />À compléter <span className="text-xs font-normal text-slate-500">({profile.informationCount}/{profile.informationTotal} infos · {profile.documentCount}/{profile.documentTotal} docs)</span></span>}
+                {profile.documentsToReview > 0 && <span className="mt-1 block w-fit rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-900">{profile.documentsToReview} document{profile.documentsToReview > 1 ? "s" : ""} à vérifier</span>}</td>
               <td className="px-3 py-3 text-slate-400"><ChevronRight size={18} /></td>
             </tr>;
           })}</tbody>
@@ -317,7 +318,7 @@ Cette action est irréversible.`;
           <button type="button" onClick={() => setSelectedTrainerId(null)} title="Fermer" aria-label="Fermer" className="grid h-9 w-9 cursor-pointer place-items-center rounded text-slate-500 hover:bg-slate-100"><X size={19} /></button>
         </header>
         <div className="space-y-7 p-5 sm:p-7">
-          {!trainerProfileProgress(selectedTrainer).complete && <div className="flex items-start gap-2 rounded border border-amber-300 bg-amber-50 px-3 py-2.5 text-sm text-amber-950"><AlertCircle size={17} className="mt-0.5 shrink-0" /><span>Dossier incomplet : {trainerProfileProgress(selectedTrainer).missingInformation} information{trainerProfileProgress(selectedTrainer).missingInformation > 1 ? "s" : ""} et {trainerProfileProgress(selectedTrainer).missingDocuments} document{trainerProfileProgress(selectedTrainer).missingDocuments > 1 ? "s" : ""} à ajouter. Cela ne bloque pas l’accès.</span></div>}
+          {!trainerProfileProgress(selectedTrainer).complete && <div className="flex items-start gap-2 rounded border border-amber-300 bg-amber-50 px-3 py-2.5 text-sm text-amber-950"><AlertCircle size={17} className="mt-0.5 shrink-0" /><span>Dossier incomplet : {missingSummary(trainerProfileProgress(selectedTrainer))}. Cela ne bloque pas l’accès.</span></div>}
           <div className="flex flex-wrap gap-2">
             {selectedTrainer.approvalStatus === "pending" && <><button type="button" disabled={busy} onClick={() => void setApproval(selectedTrainer, "approved")} className="inline-flex h-9 cursor-pointer items-center gap-2 rounded bg-emerald-800 px-3 text-sm font-semibold text-white"><BadgeCheck size={15} />Valider le compte</button><button type="button" disabled={busy} onClick={() => void setApproval(selectedTrainer, "rejected")} className="inline-flex h-9 cursor-pointer items-center gap-2 rounded border border-rose-200 px-3 text-sm text-rose-700"><ShieldX size={15} />Refuser</button></>}
             {selectedTrainer.approvalStatus === "rejected" && <button type="button" disabled={busy} onClick={() => void setApproval(selectedTrainer, "approved")} className="inline-flex h-9 cursor-pointer items-center gap-2 rounded bg-emerald-800 px-3 text-sm font-semibold text-white"><BadgeCheck size={15} />Valider le compte</button>}
@@ -351,7 +352,7 @@ Cette action est irréversible.`;
 
           <section><h3 className="text-sm font-semibold text-slate-900">Historique des formations</h3><TrainerHistory trainerId={selectedTrainer.id} formations={selectedTrainerFormations} /></section>
 
-          <section><h3 className="text-sm font-semibold text-slate-900">Documents</h3><div className="mt-3"><TrainerDocuments trainer={selectedTrainer} /></div><div className="mt-3 divide-y divide-slate-200 border-y border-slate-200">
+          <section><h3 className="text-sm font-semibold text-slate-900">Documents</h3><div className="mt-3"><TrainerDocuments trainer={selectedTrainer} reviewable /></div><div className="mt-3 divide-y divide-slate-200 border-y border-slate-200">
             {([["socialSecurity", "Numéro de sécurité sociale", selectedTrainer.hasSocialSecurityNumber ? "Fichier sécurisé" : ""]] as const).map(([key, label, fileName]) => <div key={key} className="flex min-h-12 items-center justify-between gap-3 py-2"><div className="flex min-w-0 items-center gap-2"><FileText size={17} className="shrink-0 text-slate-500" /><div className="min-w-0"><p className="text-sm font-medium">{label}</p><p className="truncate text-xs text-slate-500">{fileName || "Non ajouté"}</p></div></div>{documentLinks[key] ? <a href={documentLinks[key]} target="_blank" rel="noopener noreferrer" className="shrink-0 text-sm font-semibold text-emerald-800">Ouvrir</a> : documentsLoading ? <span className="text-xs text-slate-400">Chargement...</span> : null}</div>)}
           </div></section>
         </div>

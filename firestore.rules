@@ -37,14 +37,17 @@ service cloud.firestore {
       allow create: if signedIn()
         && request.auth.uid == userId
         && request.resource.data.accountUid == request.auth.uid
-        && request.resource.data.approvalStatus == 'pending';
+        && request.resource.data.approvalStatus == 'pending'
+        && !('documentReviews' in request.resource.data);
       allow read: if isAdmin() || (signedIn() && request.auth.uid == userId);
+      // Document reviews (validated / refused) belong to admins: trainers can't touch them on their own file.
       allow update: if isAdmin() || (
         signedIn()
         && request.auth.uid == userId
         && resource.data.approvalStatus == 'approved'
         && request.resource.data.approvalStatus == resource.data.approvalStatus
         && request.resource.data.accountUid == resource.data.accountUid
+        && request.resource.data.get('documentReviews', {}) == resource.data.get('documentReviews', {})
       );
       allow delete: if isAdmin();
     }

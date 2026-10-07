@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AlertCircle, BookOpen, CalendarDays, LogOut, ShieldCheck, UserRound } from "lucide-react";
 import { useTeamAuth } from "@/components/team/TeamAccess";
-import { trainerProfileProgress } from "@/lib/trainerProfile";
+import { missingSummary, trainerProfileProgress } from "@/lib/trainerProfile";
 
 export function TeamShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -27,7 +27,7 @@ export function TeamShell({ children }: { children: React.ReactNode }) {
         </nav>
       </div>
       {!progress.complete && <Link href="/equipe/profil" className="flex items-center justify-center gap-2 border-t border-[#792bb9]/15 bg-[#f5ef72] px-4 py-2 text-xs font-semibold text-[#1a1530] no-underline hover:bg-[#eee65b]">
-        <AlertCircle size={15} /><span>Dossier à compléter : {progress.missingInformation} information{progress.missingInformation > 1 ? "s" : ""} et {progress.missingDocuments} document{progress.missingDocuments > 1 ? "s" : ""} manquant{progress.missingDocuments > 1 ? "s" : ""}.</span>
+        <AlertCircle size={15} /><span>Dossier à compléter : {missingSummary(progress)}{progress.documentsRejected ? ` · ${progress.documentsRejected} document${progress.documentsRejected > 1 ? "s" : ""} refusé${progress.documentsRejected > 1 ? "s" : ""} à renvoyer` : ""}.</span>
       </Link>}
     </header>
     {children}

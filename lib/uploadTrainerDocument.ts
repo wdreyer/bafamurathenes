@@ -2,7 +2,7 @@
 
 import { arrayUnion, deleteField, doc, serverTimestamp, updateDoc } from "firebase/firestore";
 import { deleteObject, getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import { db, storage } from "@/lib/firebase";
+import { auth, db, storage } from "@/lib/firebase";
 import type { Trainer, TrainerDocument } from "@/lib/types";
 
 export const MAX_DOCUMENT_SIZE = 10 * 1024 * 1024;
@@ -34,6 +34,15 @@ export async function uploadTrainerDocuments(trainerId: string, items: { file: F
     return { id, label: label.trim(), fileName: file.name, path: location.fullPath, contentType: file.type, uploadedAt: new Date().toISOString() };
   }));
   await updateDoc(doc(db, "trainers", trainerId), { documents: arrayUnion(...added), updatedAt: serverTimestamp() });
+}
+
+/** Sets an admin's review of a document; "pending" removes it, so the document is to check again. */
+export async function reviewTrainerDocument(trainerId: string, documentId: string, status: "pending" | "validated" | "rejected", note = "") {
+  const review = status === "pending" ? deleteField() : {
+    status, ...(note.trim() ? { note: note.trim() } : {}),
+    reviewedAt: new Date().toISOString(), reviewedBy: auth.currentUser?.email || "",
+  };
+  await updateDoc(doc(db, "trainers", trainerId), { [`documentReviews.${documentId}`]: review, updatedAt: serverTimestamp() });
 }
 
 export function documentUrl(document: TrainerDocument) {

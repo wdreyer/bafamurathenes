@@ -47,8 +47,18 @@ export type Trainer = {
   identityDocumentName?: string;
   /** Diplomas and other files, each with the name given by the trainer. */
   documents?: TrainerDocument[];
+  /** Admin review of each document, by document id; a document without one is "to check". Trainers can't change it. */
+  documentReviews?: Record<string, DocumentReview>;
   profileComplete?: boolean;
   approvedAt?: Date;
+};
+
+export type DocumentReview = {
+  status: "validated" | "rejected";
+  /** Why a document was refused, shown to the trainer. */
+  note?: string;
+  reviewedAt?: string;
+  reviewedBy?: string;
 };
 
 export type TrainerDocument = {

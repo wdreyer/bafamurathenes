@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Eye, ExternalLink, FileText, Image as ImageIcon, LoaderCircle, Trash2, Upload, X } from "lucide-react";
-import { documentFileError, documentUrl, removeTrainerDocument, trainerDocumentsOf, uploadTrainerDocuments } from "@/lib/uploadTrainerDocument";
+import { Check, Eye, ExternalLink, FileText, Image as ImageIcon, LoaderCircle, RotateCcw, Trash2, Upload, X } from "lucide-react";
+import { documentFileError, documentUrl, removeTrainerDocument, reviewTrainerDocument, trainerDocumentsOf, uploadTrainerDocuments } from "@/lib/uploadTrainerDocument";
+import { documentStatus, type DocumentStatus } from "@/lib/trainerProfile";
 import type { Trainer, TrainerDocument } from "@/lib/types";
 
 const LABEL_SUGGESTIONS = ["Diplôme BAFA", "Diplôme BAFD", "PSC1", "Carte d’identité", "Permis de conduire", "CV"];
@@ -14,8 +15,17 @@ const isImage = (document: TrainerDocument) =>
 const isPdf = (document: TrainerDocument) =>
   document.contentType === "application/pdf" || /\.pdf$/i.test(document.fileName);
 
-/** Named documents of a trainer (diplomas first of all): name the document, then pick its file(s); viewable in place. */
-export function TrainerDocuments({ trainer, editable = true }: { trainer: Trainer; editable?: boolean }) {
+const STATUS_BADGES: Record<DocumentStatus, { label: string; className: string }> = {
+  pending: { label: "À vérifier", className: "bg-amber-100 text-amber-800" },
+  validated: { label: "Validé", className: "bg-emerald-100 text-emerald-800" },
+  rejected: { label: "Refusé", className: "bg-rose-100 text-rose-800" },
+};
+
+/**
+ * Named documents of a trainer (diplomas first of all): name the document, then pick its file(s); viewable in place.
+ * Everyone sees each document's review; `reviewable` (admins) adds the buttons to validate or refuse it.
+ */
+export function TrainerDocuments({ trainer, editable = true, reviewable = false }: { trainer: Trainer; editable?: boolean; reviewable?: boolean }) {
   const documents = trainerDocumentsOf(trainer);
   const [label, setLabel] = useState("");
   const [busy, setBusy] = useState(false);
@@ -54,16 +64,42 @@ export function TrainerDocuments({ trainer, editable = true }: { trainer: Traine
     finally { setBusy(false); }
   };
 
+  const review = async (document: TrainerDocument, status: DocumentStatus) => {
+    let note = "";
+    if (status === "rejected") {
+      const answer = window.prompt(`Pourquoi refuser « ${document.label} » ? (visible par la personne, facultatif)`, "");
+      if (answer === null) return;
+      note = answer;
+    }
+    setBusy(true); setError("");
+    try { await reviewTrainerDocument(trainer.id, document.id, status, note); }
+    catch { setError("Le statut du document n’a pas pu être enregistré."); }
+    finally { setBusy(false); }
+  };
+
   return <div>
     <div className="divide-y divide-slate-200 rounded-md border border-slate-200 bg-white">
-      {documents.map((document) => <div key={document.id} className="flex min-h-14 items-center gap-3 px-3 py-2">
+      {documents.map((document) => {
+        const status = documentStatus(trainer, document);
+        const note = trainer.documentReviews?.[document.id]?.note;
+        return <div key={document.id} className="flex min-h-14 flex-wrap items-center gap-3 px-3 py-2">
         {isImage(document) ? <ImageIcon size={18} className="shrink-0 text-slate-500" /> : <FileText size={18} className="shrink-0 text-slate-500" />}
-        <div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold text-slate-900">{document.label}</p><p className="truncate text-xs text-slate-500">{document.fileName}</p></div>
+        <div className="min-w-0 flex-1">
+          <p className="flex min-w-0 items-center gap-2"><span className="truncate text-sm font-semibold text-slate-900">{document.label}</span><span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase ${STATUS_BADGES[status].className}`}>{STATUS_BADGES[status].label}</span></p>
+          <p className="truncate text-xs text-slate-500">{document.fileName}</p>
+          {status === "rejected" && note && <p className="mt-0.5 text-xs text-rose-700">Motif : {note}</p>}
+        </div>
+        {reviewable && <span className="flex items-center gap-1">
+          {status !== "validated" && <button type="button" onClick={() => void review(document, "validated")} disabled={busy} className="inline-flex h-8 cursor-pointer items-center gap-1 rounded bg-emerald-700 px-2.5 text-xs font-semibold text-white hover:bg-emerald-800 disabled:opacity-50"><Check size={14} />Valider</button>}
+          {status !== "rejected" && <button type="button" onClick={() => void review(document, "rejected")} disabled={busy} className="inline-flex h-8 cursor-pointer items-center gap-1 rounded border border-rose-200 px-2.5 text-xs font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-50"><X size={14} />Refuser</button>}
+          {status !== "pending" && <button type="button" onClick={() => void review(document, "pending")} disabled={busy} title="Remettre « À vérifier »" aria-label={`Remettre ${document.label} à vérifier`} className="grid h-8 w-8 cursor-pointer place-items-center rounded text-slate-400 hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50"><RotateCcw size={14} /></button>}
+        </span>}
         <button type="button" onClick={() => void open(document)} disabled={Boolean(opening)} className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded border border-slate-300 px-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-wait">
           {opening === document.id ? <LoaderCircle size={14} className="animate-spin" /> : <Eye size={14} />}Voir
         </button>
         {editable && <button type="button" onClick={() => void remove(document)} disabled={busy} title="Supprimer" aria-label={`Supprimer ${document.label}`} className="grid h-8 w-8 cursor-pointer place-items-center rounded text-slate-400 hover:bg-rose-50 hover:text-rose-700"><Trash2 size={15} /></button>}
-      </div>)}
+      </div>;
+      })}
       {!documents.length && <p className="px-3 py-4 text-sm text-slate-500">Aucun document pour le moment.</p>}
     </div>
 
