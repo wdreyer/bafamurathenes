@@ -91,6 +91,8 @@ export type PlanActivity = {
   icon?: string;
   /** Edit window only, never saved: the days the time should cover (several days make one merged cell). */
   span?: { from: number; to: number };
+  /** Edit window only, never saved: the note as it was when the window opened, so a note written meanwhile by someone else is kept. */
+  noteAtOpen?: string;
 };
 
 /** Reusable planning without dates (J1 to J7/J9), managed by admins only. */

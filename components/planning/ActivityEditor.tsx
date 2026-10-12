@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo, useState, type ReactNode } from "react";
-import { BookOpen, Clock3, ExternalLink, NotebookText, Plus, Search, Save, Trash2, Unlink, X } from "lucide-react";
-import { catalogForFormationWithCustom, linkedCatalogId, type TrainingCatalogItem } from "@/lib/trainingCatalog";
+import { BookOpen, Clock3, ExternalLink, MessageSquareText, NotebookText, Plus, Search, Save, Trash2, Unlink, X } from "lucide-react";
+import { catalogForFormationWithCustom, catalogIdFromTitle, linkedCatalogId, type TrainingCatalogItem } from "@/lib/trainingCatalog";
 import { useTimeCategories } from "@/lib/useTimeCategories";
 import { TimeForm } from "@/components/guide/TimeForm";
 import { TimeSheetView } from "@/components/guide/TimeSheetView";
@@ -78,20 +78,23 @@ export function ActivityEditor({ activity, existing, dayCount, formationType, tr
   const changeSpan = (from: number, to: number) => onChange({ ...activity, day: from, span: { from, to } });
   const daySelect = "mt-1 block h-10 cursor-pointer rounded-md border border-slate-300 bg-white px-2 text-sm font-semibold text-slate-900";
 
-  // Importing a guide time fills the planning time and links it; the theme follows its title.
+  // Linking a guide sheet never touches the trainers' note. An untitled time also takes the sheet's title and theme.
   const chooseCatalogItem = (item: TrainingCatalogItem) => {
-    const { themeId: _themeId, ...base } = activity;
-    void _themeId;
-    onChange({ ...base, title: item.title, content: item.content || activity.content, color: item.color,
-      catalogId: item.id, catalogCategory: item.category, catalogScope: item.scope });
+    const link = { catalogId: item.id, catalogCategory: item.category, catalogScope: item.scope };
+    if (activity.title.trim()) onChange({ ...activity, ...link });
+    else {
+      const { themeId: _themeId, ...base } = activity;
+      void _themeId;
+      onChange({ ...base, ...link, title: item.title, color: item.color });
+    }
     setCatalogOpen(false);
   };
 
+  // Renaming a saved time keeps its guide sheet: a sheet recognised from the old title is pinned before the rename.
   const changeTitle = (title: string) => {
     if (title === activity.title) return;
-    const { catalogId: _catalogId, ...base } = activity;
-    void _catalogId;
-    onChange({ ...base, title });
+    const catalogId = activity.catalogId || (existing ? catalogIdFromTitle(activity.title) : undefined);
+    onChange({ ...activity, title, ...(catalogId ? { catalogId } : {}) });
   };
 
   return <div className="planning-controls fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-3" onMouseDown={(event) => { if (event.target === event.currentTarget) close(); }}>
@@ -100,7 +103,7 @@ export function ActivityEditor({ activity, existing, dayCount, formationType, tr
       {error && <p role="alert" className="mb-4 rounded border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">{error}</p>}
       {catalogError && <p role="alert" className="mb-4 rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">{catalogError}</p>}
 
-      {mergedDays && mergedDays.length > 1 && <p className="mb-4 rounded-lg border border-[#d8c9e6] bg-[#f8f3fb] px-3 py-2 text-sm text-[#552080]">Temps fusionné sur {mergedDays.length > 2 ? `J${mergedDays[0]} à J${mergedDays.at(-1)}` : `J${mergedDays[0]} et J${mergedDays[1]}`} : titre, horaires, contenu et animation s&apos;appliquent à tous ces jours. Change « Du » ou « Jusqu&apos;au » pour allonger ou raccourcir le bloc.</p>}
+      {mergedDays && mergedDays.length > 1 && <p className="mb-4 rounded-lg border border-[#d8c9e6] bg-[#f8f3fb] px-3 py-2 text-sm text-[#552080]">Temps fusionné sur {mergedDays.length > 2 ? `J${mergedDays[0]} à J${mergedDays.at(-1)}` : `J${mergedDays[0]} et J${mergedDays[1]}`} : titre, horaires, note et animation s&apos;appliquent à tous ces jours. Change « Du » ou « Jusqu&apos;au » pour allonger ou raccourcir le bloc.</p>}
       <form onSubmit={(event) => { event.preventDefault(); onSave(); }} className="space-y-4">
         <label className="block text-xs font-semibold text-slate-600">Titre<input required value={activity.title} onChange={(event) => changeTitle(event.target.value)} className="mt-1 h-10 w-full rounded border border-slate-300 px-3 text-sm font-normal text-slate-900" /></label>
 
@@ -145,7 +148,7 @@ export function ActivityEditor({ activity, existing, dayCount, formationType, tr
             {Array.from({ length: dayCount - spanFrom + 1 }, (_, index) => spanFrom + index).map((day) => <option key={day} value={day}>{day === spanFrom ? "Ce jour seulement" : `J${day}`}</option>)}</select></label>
           <TimeRangeFields start={activity.start} end={activity.end} onChange={(range) => onChange({ ...activity, ...range })} />
         </div>
-        <label className="block text-xs font-semibold text-slate-600">Contenu / consignes<textarea value={activity.content} onChange={(event) => onChange({ ...activity, content: event.target.value })} rows={3} className="mt-1 w-full rounded border border-slate-300 p-3 text-sm font-normal text-slate-900" /></label>
+        <label className="block text-xs font-semibold text-slate-600"><span className="inline-flex items-center gap-1.5"><MessageSquareText size={14} className="text-[#792bb9]" />Note des formateur·ices</span> <span className="font-normal text-slate-400">(partagée avec toute l&apos;équipe, propre à ce temps de ce planning)</span><textarea value={activity.content} onChange={(event) => onChange({ ...activity, content: event.target.value })} rows={3} className="mt-1 w-full rounded border border-slate-300 p-3 text-sm font-normal text-slate-900" /></label>
         <div><p className="mb-2 text-xs font-semibold text-slate-600">Thème</p><div className="flex flex-wrap gap-2" role="group" aria-label="Thème du temps">{themes.map((theme) => <button key={theme.id} type="button" onClick={() => onChange({ ...activity, themeId: theme.id, color: theme.color })} aria-pressed={selectedTheme.id === theme.id} className={`inline-flex min-h-9 items-center gap-2 rounded-md border px-2.5 py-1.5 text-xs font-medium ${selectedTheme.id === theme.id ? "border-slate-800 bg-slate-50 text-slate-950" : "border-slate-200 bg-white text-slate-600"}`}><span className={`h-3 w-3 shrink-0 rounded-full ${themeSwatch(theme.color)}`} />{theme.name}</button>)}</div></div>
         <div>
           <p className="mb-2 text-xs font-semibold text-slate-600">Icône</p>
@@ -168,7 +171,7 @@ export function ActivityEditor({ activity, existing, dayCount, formationType, tr
         <div className="flex items-center justify-between border-t border-slate-200 pt-4">{existing && onDelete && !quickActions ? <button type="button" disabled={busy} onClick={onDelete} className="inline-flex items-center gap-1 text-sm font-medium text-rose-700 disabled:opacity-50"><Trash2 size={15} />Supprimer</button> : <span />}<span className="flex items-center gap-3">{dirty && <button type="button" disabled={busy} onClick={onClose} className="cursor-pointer text-sm font-medium text-slate-500 hover:text-slate-800 hover:underline disabled:opacity-50">Fermer sans enregistrer</button>}<button type="submit" disabled={busy} className="inline-flex h-10 items-center gap-2 rounded-full bg-[#792bb9] px-4 text-sm font-semibold text-white disabled:opacity-50"><Save size={16} />Enregistrer</button></span></div>
       </form>
     </div>
-    {creatingTime && author && <TimeForm item={{ id: "", title: activity.title, content: activity.content, category: activity.catalogCategory || "animation", scope: activity.catalogScope || scope, color: activity.color }}
+    {creatingTime && author && <TimeForm item={{ id: "", title: activity.title, content: "", category: activity.catalogCategory || "animation", scope: activity.catalogScope || scope, color: activity.color }}
       mode={author.isAdmin ? "admin" : "trainer"} authorName={author.name} onSaved={(id) => onChange({ ...activity, catalogId: id })} onClose={() => setCreatingTime(false)} />}
     {sheetOpen && linked && <div className="fixed inset-0 z-[120] flex items-start justify-center overflow-y-auto bg-slate-950/50 p-3 sm:p-8" onMouseDown={(event) => { if (event.target === event.currentTarget) setSheetOpen(false); }}>
       <div role="dialog" aria-modal="true" aria-label={`Fiche : ${linked.title}`} className="relative w-full max-w-3xl">

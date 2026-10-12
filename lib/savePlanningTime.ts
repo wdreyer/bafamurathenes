@@ -3,6 +3,7 @@ import { db } from "@/lib/firebase";
 import { catalogIdFromTitle } from "@/lib/trainingCatalog";
 import { keepVersion, withVersion } from "@/lib/planHistory";
 import { mergedBlock } from "@/lib/usePlanningActions";
+import { keepOthersNote } from "@/lib/planningNotes";
 import type { FormationType, PlanActivity } from "@/lib/types";
 
 type SavePlanningTimeInput = {
@@ -30,8 +31,8 @@ function daysOf(saved: PlanActivity, original: PlanActivity | undefined, block: 
  * would overlap another time, nothing changes and `error` says which one is in the way.
  */
 export function applyEdit(saved: PlanActivity, activities: PlanActivity[]): { next: PlanActivity[]; error: string | null } {
-  const { span: _span, ...edited } = saved;
-  void _span;
+  const { span: _span, noteAtOpen: _noteAtOpen, ...edited } = saved;
+  void _span; void _noteAtOpen;
   const original = activities.find((item) => item.id === saved.id);
   const block = original ? mergedBlock(original, activities) : [];
   const blockIds = new Set(block.map((item) => item.id));
@@ -69,7 +70,7 @@ export async function savePlanningTime({ formationId, activities, activity, form
   await withVersion((keep) => runTransaction(db, async (transaction) => {
     // The edit applies to the plan as saved now, so a change someone else made meanwhile isn't overwritten.
     const current = ((await transaction.get(planRef)).data()?.activities || activities) as PlanActivity[];
-    const { next, error } = applyEdit(saved, current);
+    const { next, error } = applyEdit(keepOthersNote(saved, current), current);
     if (error) throw new PlanningEditError(error);
     if (keep) keepVersion(transaction, formationId, current, next);
     transaction.set(planRef, { formationId, activities: next, updatedAt: serverTimestamp() }, { merge: true });
@@ -79,7 +80,7 @@ export async function savePlanningTime({ formationId, activities, activity, form
         title: saved.title,
         category: saved.catalogCategory || "animation",
         scope: saved.catalogScope || (formationType === "formation_generale" ? "general" : "appro"),
-        content: saved.content.trim(),
+        content: "",
         color: saved.color,
         ...(saved.resourceId ? { resourceId: saved.resourceId } : {}),
         ...(proposer ? { status: "pending", proposedBy: proposer.uid, proposedByName: proposer.name } : {}),

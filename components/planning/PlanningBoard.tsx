@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type DragEvent, type FocusEvent, type MouseEvent } from "react";
 import { createPortal } from "react-dom";
-import { ChevronLeft, ChevronRight, History, NotebookText, Plus, Redo2, Settings2, Undo2, X } from "lucide-react";
+import { BookOpen, ChevronLeft, ChevronRight, History, MessageSquareText, NotebookText, Plus, Redo2, Settings2, Undo2, X } from "lucide-react";
 import { asTime, minuteOfDay } from "@/lib/planningMove";
 import { iconForActivity } from "@/lib/planningIcons";
 import { auth } from "@/lib/firebase";
@@ -71,12 +71,23 @@ const namesFor = (activity: PlanActivity, trainerNames?: Record<string, string>)
 const menuHandler = (onMenu: OpenMenu, target: (event: MouseEvent) => MenuTarget) =>
   onMenu ? (event: MouseEvent) => { event.preventDefault(); onMenu(target(event)); } : undefined;
 
-function ActivityCell({ info, activity, themes, trainerNames, prefs, disabled, onEdit, onHover, onMenu, onDragStart, onDragEnd, dragging = false, merged = false, dimmed = false }: {
+type CellMarksInfo = { note: boolean; sheet: boolean };
+
+const markClass = "grid h-4 w-4 place-items-center rounded-full bg-white/75 text-[#552080] shadow-sm";
+function CellMarks({ note, sheet }: CellMarksInfo) {
+  if (!note && !sheet) return null;
+  return <span className="pointer-events-auto absolute bottom-0.5 left-0.5 z-[1] flex gap-0.5">
+    {note && <span title="Note des formateur·ices — cliquer pour voir" aria-label="Note des formateur·ices" className={markClass}><MessageSquareText size={10} /></span>}
+    {sheet && <span title="Fiche du guide liée — cliquer pour voir" aria-label="Fiche du guide liée" className={markClass}><BookOpen size={10} /></span>}
+  </span>;
+}
+
+function ActivityCell({ marks, activity, themes, trainerNames, prefs, disabled, onEdit, onHover, onMenu, onDragStart, onDragEnd, dragging = false, merged = false, dimmed = false }: {
   activity: PlanActivity; themes: PlanTheme[]; trainerNames?: Record<string, string>; prefs: PlanningPrefs; disabled: boolean; onEdit?: Props["onEdit"];
   onHover: (text: string | null, x?: number, y?: number) => void; onMenu?: OpenMenu; onDragStart?: (activity: PlanActivity) => void; onDragEnd?: () => void;
   dragging?: boolean; merged?: boolean; dimmed?: boolean;
-  /** What the time holds beyond its title (consignes, linked guide sheet), shown as a small marker. */
-  info?: string;
+  /** What the time holds beyond its title (trainers' note, linked guide sheet), each shown as its own small marker. */
+  marks?: CellMarksInfo;
 }) {
   const contentRef = useRef<HTMLDivElement>(null);
   const theme = themeForActivity(activity, themes);
@@ -127,16 +138,16 @@ function ActivityCell({ info, activity, themes, trainerNames, prefs, disabled, o
   if (!onEdit) return <button type="button" aria-label={fullLabel} {...handlers}
     onClick={(event) => onHover(`${fullLabel}${activity.content ? `
 ${activity.content}` : ""}`, event.clientX, event.clientY)}
-    className={`${className} w-full cursor-pointer`}>{label}{info && !tiny && <span title={info} aria-label={info} className="pointer-events-auto absolute bottom-0.5 left-0.5 z-[1] grid h-4 w-4 place-items-center rounded-full bg-white/75 text-[#552080] shadow-sm"><NotebookText size={10} /></span>}</button>;
+    className={`${className} w-full cursor-pointer`}>{label}{marks && !tiny && <CellMarks {...marks} />}</button>;
   return <button type="button" disabled={disabled} onClick={() => onEdit(activity)} aria-label={fullLabel} {...handlers}
-    className={`${className} w-full ${canDrag ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"} hover:brightness-[1.04] hover:shadow-md disabled:cursor-wait`}>{label}{info && !tiny && <span title={info} aria-label={info} className="pointer-events-auto absolute bottom-0.5 left-0.5 z-[1] grid h-4 w-4 place-items-center rounded-full bg-white/75 text-[#552080] shadow-sm"><NotebookText size={10} /></span>}</button>;
+    className={`${className} w-full ${canDrag ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"} hover:brightness-[1.04] hover:shadow-md disabled:cursor-wait`}>{label}{marks && !tiny && <CellMarks {...marks} />}</button>;
 }
 
-function OverviewGrid({ days, dayCount, startDate, activities, themes, trainerNames, prefs, busy, isLit, onAdd, onEdit, onMenu, onMove, infoFor }: {
+function OverviewGrid({ days, dayCount, startDate, activities, themes, trainerNames, prefs, busy, isLit, onAdd, onEdit, onMenu, onMove, marksFor }: {
   days: number[]; dayCount: number; startDate: string; activities: PlanActivity[]; themes: PlanTheme[]; trainerNames?: Record<string, string>; prefs: PlanningPrefs;
   busy: boolean; isLit: (activity: PlanActivity) => boolean; onAdd?: Props["onAdd"]; onEdit?: Props["onEdit"]; onMenu?: OpenMenu;
   onMove?: (activity: PlanActivity, day: number, start: string) => void;
-  infoFor: (activity: PlanActivity) => string | undefined;
+  marksFor: (activity: PlanActivity) => CellMarksInfo;
 }) {
   const [hover, setHover] = useState<{ text: string; x: number; y: number } | null>(null);
   const [dragged, setDragged] = useState<PlanActivity | null>(null);
@@ -273,7 +284,7 @@ function OverviewGrid({ days, dayCount, startDate, activities, themes, trainerNa
             const [start, end] = key.split("|");
             return <div key={`${day}-${key}`} className={`z-[5] flex flex-col gap-[2px] ${scaled ? "p-px" : "p-[2px]"} ${dragLayerOff ? "pointer-events-none" : ""}`} style={{ gridColumn: dayIndex + 2, gridRow: `${rowOf(start)} / ${rowOf(end)}` }}>
               {group.map((activity) => <div key={activity.id} className="min-h-0 flex-1">
-                <ActivityCell info={infoFor(activity)} activity={activity} themes={themes} trainerNames={trainerNames} prefs={prefs} disabled={busy} onEdit={onEdit} onHover={onHover} onMenu={onMenu}
+                <ActivityCell marks={marksFor(activity)} activity={activity} themes={themes} trainerNames={trainerNames} prefs={prefs} disabled={busy} onEdit={onEdit} onHover={onHover} onMenu={onMenu}
                   onDragStart={onMove ? startDrag : undefined} onDragEnd={endDrag} dragging={dragged?.id === activity.id} dimmed={!isLit(activity)} />
               </div>)}
             </div>;
@@ -282,7 +293,7 @@ function OverviewGrid({ days, dayCount, startDate, activities, themes, trainerNa
 
         {runs.map((run) => <div key={`merge-${run.start}-${run.end}-${run.dayIndexStart}`} className={`relative z-[6] p-[2px] ${dragLayerOff ? "pointer-events-none" : ""}`}
           style={{ gridColumn: `${run.dayIndexStart + 2} / ${run.dayIndexStart + 2 + run.dayCount}`, gridRow: `${rowOf(run.start)} / ${rowOf(run.end)}` }}>
-          <ActivityCell info={infoFor(run.activity)} activity={run.activity} themes={themes} trainerNames={trainerNames} prefs={prefs} disabled={busy} onEdit={onEdit} onHover={onHover} onMenu={onMenu} merged dimmed={!isLit(run.activity)} />
+          <ActivityCell marks={marksFor(run.activity)} activity={run.activity} themes={themes} trainerNames={trainerNames} prefs={prefs} disabled={busy} onEdit={onEdit} onHover={onHover} onMenu={onMenu} merged dimmed={!isLit(run.activity)} />
         </div>)}
       </div>
     </div>
@@ -411,10 +422,7 @@ export function PlanningBoard({ activities, dayCount, startDate, themes = defaul
   const guideTimes = guideTimesFor(customTimes, auth.currentUser?.uid);
   const sheetFor = (activity: PlanActivity) => guideTimes.find((item) => item.id === linkedCatalogId(activity));
   const [sheet, setSheet] = useState<TrainingCatalogItem | null>(null);
-  const infoFor = (activity: PlanActivity) => {
-    const parts = [activity.content?.trim() ? "Consignes" : "", sheetFor(activity) ? "Fiche du guide" : ""].filter(Boolean);
-    return parts.length ? `${parts.join(" · ")} — cliquer pour voir` : undefined;
-  };
+  const marksFor = (activity: PlanActivity) => ({ note: Boolean(activity.content?.trim()), sheet: Boolean(sheetFor(activity)) });
 
   // Ctrl+Z / Ctrl+Y (or Ctrl+Shift+Z) undo and redo planning changes, except while typing in a field.
   useEffect(() => {
@@ -487,7 +495,7 @@ export function PlanningBoard({ activities, dayCount, startDate, themes = defaul
       </div>
 
       <div className="min-w-0 max-w-full">{view === "all"
-        ? <OverviewGrid days={days} dayCount={dayCount} startDate={startDate} activities={activities} themes={themes} trainerNames={trainerNames} prefs={prefs} busy={busy} isLit={isLit} onAdd={onAdd} onEdit={onEdit} onMenu={onMenu} onMove={actions?.move} infoFor={infoFor} />
+        ? <OverviewGrid days={days} dayCount={dayCount} startDate={startDate} activities={activities} themes={themes} trainerNames={trainerNames} prefs={prefs} busy={busy} isLit={isLit} onAdd={onAdd} onEdit={onEdit} onMenu={onMenu} onMove={actions?.move} marksFor={marksFor} />
         : <DayAgenda day={selectedDay} dayCount={dayCount} startDate={startDate} activities={activities} themes={themes} trainerNames={trainerNames} prefs={prefs} busy={busy} isLit={isLit}
           onChangeDay={(day) => setSelectedDay(Math.min(dayCount, Math.max(1, day)))} onEdit={onEdit} onAdd={onAdd} onMenu={onMenu} sheetFor={sheetFor} onOpenSheet={setSheet} />}</div>
       {actions && <p className="text-center text-[11px] text-slate-400">💡 Glisse un temps pour le déplacer · clic droit pour copier, coller, dupliquer ou fusionner.</p>}
