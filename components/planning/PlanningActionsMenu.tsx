@@ -11,6 +11,8 @@ export type MenuTarget =
   | { kind: "day"; day: number; x: number; y: number };
 
 const item = "flex w-full cursor-pointer items-center gap-2 rounded px-2.5 py-1.5 text-left text-[13px] text-slate-700 hover:bg-[#f0e8f8] hover:text-[#552080] disabled:cursor-not-allowed disabled:opacity-40";
+/** Same actions as small pills side by side, for the edit window. */
+const pill = "inline-flex cursor-pointer items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-700 hover:border-[#792bb9] hover:bg-[#f0e8f8] hover:text-[#552080] disabled:cursor-not-allowed disabled:opacity-40";
 
 function DayPicker({ label, dayCount, exclude, onPick }: { label: string; dayCount: number; exclude: number; onPick: (day: number) => void }) {
   return <div className="px-2.5 py-1.5">
@@ -33,19 +35,20 @@ export function ActivityQuickActions({ activity, activities, dayCount, actions, 
   const merged = block.length > 1;
   const firstDay = block[0].day;
   const lastDay = block[block.length - 1].day;
+  const button = compact ? item : pill;
   const buttons = <>
-    {onEdit && <button type="button" onClick={() => { onEdit(); onDone(); }} className={item}><Pencil size={14} />Modifier</button>}
-    <button type="button" onClick={() => { actions.copy(activity); onDone(); }} className={item}><Copy size={14} />Copier</button>
-    <button type="button" disabled={busy} onClick={() => setPicking((value) => !value)} aria-expanded={picking} className={item}><CopyPlus size={14} />Dupliquer vers…</button>
-    {firstDay > 1 && <button type="button" disabled={busy} onClick={() => { actions.mergeWithNeighbour(activity, -1); onDone(); }} title="Le texte de la case de droite est gardé" className={item}><ArrowLeftToLine size={14} />Fusionner avec J{firstDay - 1} (à gauche)</button>}
-    {lastDay < dayCount && <button type="button" disabled={busy} onClick={() => { actions.mergeWithNeighbour(activity, 1); onDone(); }} title="Le texte de la case de droite est gardé" className={item}><ArrowRightToLine size={14} />Fusionner avec J{lastDay + 1} (à droite)</button>}
+    {onEdit && <button type="button" onClick={() => { onEdit(); onDone(); }} className={button}><Pencil size={compact ? 14 : 13} />Modifier</button>}
+    <button type="button" onClick={() => { actions.copy(activity); onDone(); }} className={button}><Copy size={compact ? 14 : 13} />Copier</button>
+    <button type="button" disabled={busy} onClick={() => setPicking((value) => !value)} aria-expanded={picking} className={button}><CopyPlus size={compact ? 14 : 13} />Dupliquer vers…</button>
+    {firstDay > 1 && <button type="button" disabled={busy} onClick={() => { actions.mergeWithNeighbour(activity, -1); onDone(); }} title="Le texte de la case de droite est gardé" className={button}><ArrowLeftToLine size={compact ? 14 : 13} />Fusionner avec J{firstDay - 1} (à gauche)</button>}
+    {lastDay < dayCount && <button type="button" disabled={busy} onClick={() => { actions.mergeWithNeighbour(activity, 1); onDone(); }} title="Le texte de la case de droite est gardé" className={button}><ArrowRightToLine size={compact ? 14 : 13} />Fusionner avec J{lastDay + 1} (à droite)</button>}
     {merged
-      ? <button type="button" disabled={busy} onClick={() => { actions.setMerged(activity, false); onDone(); }} className={item}><Unlink size={14} />Séparer les {block.length} jours</button>
-      : run.length > 0 && <button type="button" disabled={busy} onClick={() => { actions.setMerged(activity, true); onDone(); }} className={item}><Link2 size={14} />Fusionner les {run.length} jours identiques</button>}
-    <button type="button" disabled={busy} onClick={() => { void actions.remove(activity); onDone(); }} className={`${item} text-rose-700 hover:bg-rose-50 hover:text-rose-800`}><Trash2 size={14} />Supprimer</button>
+      ? <button type="button" disabled={busy} onClick={() => { actions.setMerged(activity, false); onDone(); }} className={button}><Unlink size={compact ? 14 : 13} />Séparer les {block.length} jours</button>
+      : run.length > 0 && <button type="button" disabled={busy} onClick={() => { actions.setMerged(activity, true); onDone(); }} className={button}><Link2 size={compact ? 14 : 13} />Fusionner les {run.length} jours identiques</button>}
+    <button type="button" disabled={busy} onClick={() => { void actions.remove(activity); onDone(); }} className={`${button} text-rose-700 hover:bg-rose-50 hover:text-rose-800`}><Trash2 size={compact ? 14 : 13} />Supprimer</button>
   </>;
   return <div>
-    <div className={compact ? "" : "flex flex-wrap gap-1"}>{buttons}</div>
+    <div className={compact ? "" : "flex flex-wrap gap-1.5"}>{buttons}</div>
     {picking && <DayPicker label="Même horaire, le…" dayCount={dayCount} exclude={activity.day} onPick={(day) => actions.duplicateTo(activity, [day])} />}
   </div>;
 }
