@@ -65,6 +65,8 @@ export function ActivityEditor({ activity, existing, dayCount, formationType, tr
   const catalog = useMemo(() => catalogForFormationWithCustom(formationType, customTimes, viewerId), [formationType, customTimes, viewerId]);
   // Linked guide time: chosen by hand, or recognised from the title ("none" means unlinked on purpose).
   const linked = catalog.find((item) => item.id === linkedCatalogId(activity));
+  // Read-only here: the summary belongs to the guide sheet (its short sentence when no summary is written yet).
+  const linkedSummary = linked && (linked.summary?.trim() || linked.content?.trim());
   const matches = catalog.filter((item) => (category === "all" || item.category === category) &&
     `${item.title} ${item.content}`.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
       .includes(search.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim()));
@@ -76,7 +78,7 @@ export function ActivityEditor({ activity, existing, dayCount, formationType, tr
   const spanFrom = activity.span?.from ?? mergedDays?.[0] ?? activity.day;
   const spanTo = activity.span?.to ?? mergedDays?.at(-1) ?? activity.day;
   const changeSpan = (from: number, to: number) => onChange({ ...activity, day: from, span: { from, to } });
-  const daySelect = "mt-1 block h-10 cursor-pointer rounded-md border border-slate-300 bg-white px-2 text-sm font-semibold text-slate-900";
+  const daySelect = "mt-0.5 block h-9 cursor-pointer rounded-md border border-slate-300 bg-white px-1.5 text-sm font-semibold text-slate-900";
 
   // Linking a guide sheet never touches the trainers' note. An untitled time also takes the sheet's title and theme.
   const chooseCatalogItem = (item: TrainingCatalogItem) => {
@@ -98,29 +100,33 @@ export function ActivityEditor({ activity, existing, dayCount, formationType, tr
   };
 
   return <div className="planning-controls fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/50 p-3" onMouseDown={(event) => { if (event.target === event.currentTarget) close(); }}>
-    <div role="dialog" aria-modal="true" aria-label="Modifier un temps" className="max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-md bg-white p-4 shadow-xl sm:p-6">
-      <div className="mb-4 flex items-center justify-between gap-3"><div><p className="text-xs font-semibold uppercase text-[#792bb9]">Planning pédagogique</p><h2 className="mt-0.5 text-lg font-semibold">{existing ? "Modifier le temps" : "Ajouter un temps"}</h2></div><button type="button" onClick={close} title={dirty ? "Fermer et enregistrer" : "Fermer"} aria-label={dirty ? "Fermer et enregistrer" : "Fermer"} className="grid h-8 w-8 place-items-center rounded hover:bg-slate-100"><X size={19} /></button></div>
+    <div role="dialog" aria-modal="true" aria-label="Modifier un temps" className="max-h-[94vh] w-full max-w-2xl overflow-y-auto rounded-md bg-white p-4 shadow-xl sm:p-5">
+      <div className="mb-3 flex items-center justify-between gap-3"><div><p className="text-[11px] font-semibold uppercase text-[#792bb9]">Planning pédagogique</p><h2 className="text-base font-semibold">{existing ? "Modifier le temps" : "Ajouter un temps"}</h2></div><button type="button" onClick={close} title={dirty ? "Fermer et enregistrer" : "Fermer"} aria-label={dirty ? "Fermer et enregistrer" : "Fermer"} className="grid h-8 w-8 place-items-center rounded hover:bg-slate-100"><X size={19} /></button></div>
       {error && <p role="alert" className="mb-4 rounded border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">{error}</p>}
       {catalogError && <p role="alert" className="mb-4 rounded border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">{catalogError}</p>}
 
-      {mergedDays && mergedDays.length > 1 && <p className="mb-4 rounded-lg border border-[#d8c9e6] bg-[#f8f3fb] px-3 py-2 text-sm text-[#552080]">Temps fusionné sur {mergedDays.length > 2 ? `J${mergedDays[0]} à J${mergedDays.at(-1)}` : `J${mergedDays[0]} et J${mergedDays[1]}`} : titre, horaires, note et animation s&apos;appliquent à tous ces jours. Change « Du » ou « Jusqu&apos;au » pour allonger ou raccourcir le bloc.</p>}
-      <form onSubmit={(event) => { event.preventDefault(); onSave(); }} className="space-y-4">
-        <label className="block text-xs font-semibold text-slate-600">Titre<input required value={activity.title} onChange={(event) => changeTitle(event.target.value)} className="mt-1 h-10 w-full rounded border border-slate-300 px-3 text-sm font-normal text-slate-900" /></label>
+      {mergedDays && mergedDays.length > 1 && <p className="mb-3 rounded-lg border border-[#d8c9e6] bg-[#f8f3fb] px-3 py-1.5 text-xs text-[#552080]">Temps fusionné sur {mergedDays.length > 2 ? `J${mergedDays[0]} à J${mergedDays.at(-1)}` : `J${mergedDays[0]} et J${mergedDays[1]}`} : titre, horaires, note et animation s&apos;appliquent à tous ces jours. Change « Du » ou « Jusqu&apos;au » pour allonger ou raccourcir le bloc.</p>}
+      <form onSubmit={(event) => { event.preventDefault(); onSave(); }} className="space-y-3">
+        <label className="block text-xs font-semibold text-slate-600">Titre<input required value={activity.title} onChange={(event) => changeTitle(event.target.value)} className="mt-0.5 h-9 w-full rounded border border-slate-300 px-3 text-sm font-normal text-slate-900" /></label>
 
-        <div className="rounded-xl border border-[#e6d9f0] bg-[#fdfaff] p-3">
+        <div className="rounded-lg border border-[#e6d9f0] bg-[#fdfaff] px-2.5 py-1.5">
           <div className="flex flex-wrap items-center gap-2">
             <BookOpen size={16} className="shrink-0 text-[#792bb9]" />
             {linked ? <>
-              <span className="min-w-0 flex-1 text-sm"><span className="block text-[11px] font-semibold uppercase text-[#792bb9]">Temps du guide lié</span><span className="font-semibold text-[#1a1530]">{linked.title}</span>{linked.status === "pending" && <span className="ml-2 inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700"><Clock3 size={11} />en attente</span>}</span>
+              <span className="min-w-0 flex-1 text-sm"><span className="mr-1.5 text-[11px] font-semibold uppercase text-[#792bb9]">Fiche liée</span><span className="font-semibold text-[#1a1530]">{linked.title}</span>{linked.status === "pending" && <span className="ml-2 inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700"><Clock3 size={11} />en attente</span>}</span>
               <button type="button" onClick={() => setSheetOpen(true)} className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-full bg-[#792bb9] px-3 text-xs font-semibold text-white"><NotebookText size={13} />Voir le temps</button>
               <button type="button" onClick={() => setCatalogOpen((value) => !value)} className="h-8 cursor-pointer rounded-full border border-[#d8c9e6] bg-white px-3 text-xs font-semibold text-[#552080]">Changer</button>
               <button type="button" onClick={() => onChange({ ...activity, catalogId: "none" })} title="Délier du guide" aria-label="Délier du guide" className="grid h-8 w-8 cursor-pointer place-items-center rounded-full text-slate-400 hover:bg-white hover:text-rose-700"><Unlink size={14} /></button>
             </> : <>
-              <span className="min-w-0 flex-1 text-sm text-slate-600">Pas encore relié à un temps du guide.</span>
+              <span className="min-w-0 flex-1 text-xs text-slate-600">Aucune fiche du guide liée</span>
               <button type="button" onClick={() => setCatalogOpen((value) => !value)} aria-expanded={catalogOpen} className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-full bg-[#792bb9] px-3 text-xs font-semibold text-white"><Search size={13} />Importer un temps du guide</button>
               {author && <button type="button" onClick={() => setCreatingTime(true)} className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-full border border-[#d8c9e6] bg-white px-3 text-xs font-semibold text-[#552080]"><Plus size={13} />Créer sa fiche</button>}
             </>}
           </div>
+          {linkedSummary && <div className="mt-1.5 border-t border-[#e6d9f0] pt-1.5">
+            <p className="text-[11px] font-semibold uppercase text-[#792bb9]">Résumé <span className="font-normal normal-case text-slate-400">· modifiable dans le guide</span></p>
+            <p className="mt-0.5 whitespace-pre-line text-sm leading-5 text-[#1a1530]">{linkedSummary}</p>
+          </div>}
           {catalogOpen && <div className="mt-3 space-y-2 border-t border-[#e6d9f0] pt-3 text-xs">
             <div className="grid gap-2 sm:grid-cols-[180px_1fr]">
               <label className="text-xs font-medium text-slate-600">Rubrique<select value={category} onChange={(event) => setCategory(event.target.value )} className="mt-1 h-9 w-full rounded border border-slate-300 bg-white px-2 text-sm"><option value="all">Toutes les rubriques</option>{categories.map((item) => <option key={item.id} value={item.id}>{item.label}</option>)}</select></label>
@@ -142,18 +148,17 @@ export function ActivityEditor({ activity, existing, dayCount, formationType, tr
           <label className="text-xs font-semibold text-slate-700">Réutilisable pour<select value={activity.catalogScope || "both"} onChange={(event) => onChange({ ...activity, catalogScope: event.target.value as TrainingCatalogItem["scope"] })} className="mt-1 h-9 w-full rounded border border-slate-300 bg-white px-2 text-sm font-normal"><option value="both">Toutes les formations</option><option value="general">Formation générale</option><option value="appro">Approfondissement</option></select></label>
           <p className="text-xs text-[#552080] sm:col-span-2">{author?.isAdmin === false ? "Ce nouveau temps sera proposé au guide (validation par l'équipe admin)." : "Ce nouveau temps sera ajouté au guide et proposé dans les prochains plannings."}</p>
         </div>}
-        <div className="flex flex-wrap items-start gap-4">
-          <label className="text-xs font-semibold text-slate-600">{spanTo > spanFrom ? "Du" : "Jour"}<select value={spanFrom} onChange={(event) => { const from = Number(event.target.value); changeSpan(from, Math.max(from, spanTo === spanFrom ? from : spanTo)); }} className={daySelect}>{Array.from({ length: dayCount }, (_, index) => <option key={index} value={index + 1}>J{index + 1}</option>)}</select></label>
-          <label className="text-xs font-semibold text-slate-600">Jusqu&apos;au<select value={spanTo} onChange={(event) => changeSpan(spanFrom, Number(event.target.value))} title="Choisis un jour plus loin pour mettre ce temps sur plusieurs jours (une seule case fusionnée)" className={daySelect}>
-            {Array.from({ length: dayCount - spanFrom + 1 }, (_, index) => spanFrom + index).map((day) => <option key={day} value={day}>{day === spanFrom ? "Ce jour seulement" : `J${day}`}</option>)}</select></label>
-          <TimeRangeFields start={activity.start} end={activity.end} onChange={(range) => onChange({ ...activity, ...range })} />
-        </div>
-        <label className="block text-xs font-semibold text-slate-600"><span className="inline-flex items-center gap-1.5"><MessageSquareText size={14} className="text-[#792bb9]" />Note des formateur·ices</span> <span className="font-normal text-slate-400">(partagée avec toute l&apos;équipe, propre à ce temps de ce planning)</span><textarea value={activity.content} onChange={(event) => onChange({ ...activity, content: event.target.value })} rows={3} className="mt-1 w-full rounded border border-slate-300 p-3 text-sm font-normal text-slate-900" /></label>
-        <div><p className="mb-2 text-xs font-semibold text-slate-600">Thème</p><div className="flex flex-wrap gap-2" role="group" aria-label="Thème du temps">{themes.map((theme) => <button key={theme.id} type="button" onClick={() => onChange({ ...activity, themeId: theme.id, color: theme.color })} aria-pressed={selectedTheme.id === theme.id} className={`inline-flex min-h-9 items-center gap-2 rounded-md border px-2.5 py-1.5 text-xs font-medium ${selectedTheme.id === theme.id ? "border-slate-800 bg-slate-50 text-slate-950" : "border-slate-200 bg-white text-slate-600"}`}><span className={`h-3 w-3 shrink-0 rounded-full ${themeSwatch(theme.color)}`} />{theme.name}</button>)}</div></div>
+        <TimeRangeFields start={activity.start} end={activity.end} onChange={(range) => onChange({ ...activity, ...range })} before={<>
+          <label className="text-[11px] font-semibold text-slate-600">{spanTo > spanFrom ? "Du" : "Jour"}<select value={spanFrom} onChange={(event) => { const from = Number(event.target.value); changeSpan(from, Math.max(from, spanTo === spanFrom ? from : spanTo)); }} className={daySelect}>{Array.from({ length: dayCount }, (_, index) => <option key={index} value={index + 1}>J{index + 1}</option>)}</select></label>
+          <label className="text-[11px] font-semibold text-slate-600">Jusqu&apos;au<select value={spanTo} onChange={(event) => changeSpan(spanFrom, Number(event.target.value))} title="Choisis un jour plus loin pour mettre ce temps sur plusieurs jours (une seule case fusionnée)" className={daySelect}>
+            {Array.from({ length: dayCount - spanFrom + 1 }, (_, index) => spanFrom + index).map((day) => <option key={day} value={day}>{day === spanFrom ? "Ce jour seul" : `J${day}`}</option>)}</select></label>
+        </>} />
+        <label className="block text-xs font-semibold text-slate-600"><span className="inline-flex items-center gap-1.5"><MessageSquareText size={14} className="text-[#792bb9]" />Note des formateur·ices</span><textarea value={activity.content} onChange={(event) => onChange({ ...activity, content: event.target.value })} rows={8} className="mt-1 min-h-40 w-full resize-y rounded border border-slate-300 p-3 text-sm font-normal text-slate-900" /></label>
+        <div><p className="mb-1 text-xs font-semibold text-slate-600">Thème</p><div className="flex flex-wrap gap-2" role="group" aria-label="Thème du temps">{themes.map((theme) => <button key={theme.id} type="button" onClick={() => onChange({ ...activity, themeId: theme.id, color: theme.color })} aria-pressed={selectedTheme.id === theme.id} className={`inline-flex min-h-8 items-center gap-2 rounded-md border px-2.5 py-1 text-xs font-medium ${selectedTheme.id === theme.id ? "border-slate-800 bg-slate-50 text-slate-950" : "border-slate-200 bg-white text-slate-600"}`}><span className={`h-3 w-3 shrink-0 rounded-full ${themeSwatch(theme.color)}`} />{theme.name}</button>)}</div></div>
         <div>
-          <p className="mb-2 text-xs font-semibold text-slate-600">Icône</p>
+          <p className="mb-1 text-xs font-semibold text-slate-600">Icône</p>
           <div className="flex flex-wrap items-center gap-2">
-            <button type="button" onClick={() => setIconsOpen((value) => !value)} aria-expanded={iconsOpen} title="Choisir une icône" className="grid h-10 w-10 cursor-pointer place-items-center rounded-lg border border-[#d8c9e6] bg-[#fff8ec] text-xl hover:border-[#792bb9]">{shownIcon || <span className="text-xs text-slate-400">—</span>}</button>
+            <button type="button" onClick={() => setIconsOpen((value) => !value)} aria-expanded={iconsOpen} title="Choisir une icône" className="grid h-8 w-8 cursor-pointer place-items-center rounded-lg border border-[#d8c9e6] bg-[#fff8ec] text-lg hover:border-[#792bb9]">{shownIcon || <span className="text-xs text-slate-400">—</span>}</button>
             <button type="button" onClick={() => changeIcon()} aria-pressed={!activity.icon} className={iconChoice(!activity.icon)}>Auto</button>
             <button type="button" onClick={() => changeIcon(NO_ICON)} aria-pressed={activity.icon === NO_ICON} className={iconChoice(activity.icon === NO_ICON)}>Aucune</button>
             {!activity.icon && <span className="text-[11px] text-slate-400">Choisie d&apos;après le titre</span>}
@@ -166,9 +171,9 @@ export function ActivityEditor({ activity, existing, dayCount, formationType, tr
             </div>)}
           </div>}
         </div>
-        <div><p className="mb-2 text-xs font-semibold text-slate-600">Animation</p><div className="flex flex-wrap gap-2">{trainers.map((trainer) => <button key={trainer.id} type="button" onClick={() => onChange({ ...activity, trainerIds: (activity.trainerIds || []).includes(trainer.id) ? activity.trainerIds.filter((id) => id !== trainer.id) : [...(activity.trainerIds || []), trainer.id] })} aria-pressed={(activity.trainerIds || []).includes(trainer.id)} className={`rounded-full border px-3 py-1.5 text-xs font-medium ${(activity.trainerIds || []).includes(trainer.id) ? "border-[#792bb9] bg-[#f0e8f8] text-[#552080]" : "border-slate-300 bg-white text-slate-700"}`}>{trainer.name}</button>)}{!trainers.length && <p className="text-xs text-slate-500">Aucun·e formateur·ice affecté·e à cette session.</p>}</div></div>
+        <div><p className="mb-1 text-xs font-semibold text-slate-600">Animation</p><div className="flex flex-wrap gap-2">{trainers.map((trainer) => <button key={trainer.id} type="button" onClick={() => onChange({ ...activity, trainerIds: (activity.trainerIds || []).includes(trainer.id) ? activity.trainerIds.filter((id) => id !== trainer.id) : [...(activity.trainerIds || []), trainer.id] })} aria-pressed={(activity.trainerIds || []).includes(trainer.id)} className={`rounded-full border px-3 py-1 text-xs font-medium ${(activity.trainerIds || []).includes(trainer.id) ? "border-[#792bb9] bg-[#f0e8f8] text-[#552080]" : "border-slate-300 bg-white text-slate-700"}`}>{trainer.name}</button>)}{!trainers.length && <p className="text-xs text-slate-500">Aucun·e formateur·ice affecté·e à cette session.</p>}</div></div>
         {quickActions && <div className="border-t border-slate-200 pt-3"><p className="mb-1 text-xs font-semibold text-slate-600">Actions rapides</p>{quickActions}</div>}
-        <div className="flex items-center justify-between border-t border-slate-200 pt-4">{existing && onDelete && !quickActions ? <button type="button" disabled={busy} onClick={onDelete} className="inline-flex items-center gap-1 text-sm font-medium text-rose-700 disabled:opacity-50"><Trash2 size={15} />Supprimer</button> : <span />}<span className="flex items-center gap-3">{dirty && <button type="button" disabled={busy} onClick={onClose} className="cursor-pointer text-sm font-medium text-slate-500 hover:text-slate-800 hover:underline disabled:opacity-50">Fermer sans enregistrer</button>}<button type="submit" disabled={busy} className="inline-flex h-10 items-center gap-2 rounded-full bg-[#792bb9] px-4 text-sm font-semibold text-white disabled:opacity-50"><Save size={16} />Enregistrer</button></span></div>
+        <div className="flex items-center justify-between border-t border-slate-200 pt-3">{existing && onDelete && !quickActions ? <button type="button" disabled={busy} onClick={onDelete} className="inline-flex items-center gap-1 text-sm font-medium text-rose-700 disabled:opacity-50"><Trash2 size={15} />Supprimer</button> : <span />}<span className="flex items-center gap-3">{dirty && <button type="button" disabled={busy} onClick={onClose} className="cursor-pointer text-sm font-medium text-slate-500 hover:text-slate-800 hover:underline disabled:opacity-50">Fermer sans enregistrer</button>}<button type="submit" disabled={busy} className="inline-flex h-10 items-center gap-2 rounded-full bg-[#792bb9] px-4 text-sm font-semibold text-white disabled:opacity-50"><Save size={16} />Enregistrer</button></span></div>
       </form>
     </div>
     {creatingTime && author && <TimeForm item={{ id: "", title: activity.title, content: "", category: activity.catalogCategory || "animation", scope: activity.catalogScope || scope, color: activity.color }}
