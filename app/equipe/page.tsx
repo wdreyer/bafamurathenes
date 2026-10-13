@@ -16,11 +16,14 @@ import { TraineeRoster } from "@/components/planning/TraineeRoster";
 import { useTeamAuth } from "@/components/team/TeamAccess";
 import type { Formation, Inscription, PlanActivity, PlanTheme } from "@/lib/types";
 import { assignedNames, useTrainerProfiles } from "@/lib/trainerName";
+import { addTraineeColumn, moveTraineeColumn, removeTraineeColumn, renameTraineeColumn, saveTraineeValue as saveTraineeCell, traineeColumnsOf, type TraineeColumn, type TraineeValues } from "@/lib/traineeColumns";
 
 type FormationPlan = {
   formationId: string;
   activities: PlanActivity[];
   groupCount?: number;
+  traineeColumns?: TraineeColumn[];
+  traineeValues?: TraineeValues;
   themes?: PlanTheme[];
 };
 
@@ -159,6 +162,21 @@ export default function TeamPage() {
     } catch { setError("Impossible d'enregistrer la fiche du stagiaire."); return false; }
   };
 
+  const saveTraineeValue = async (inscriptionId: string, columnId: string, value: string) => {
+    if (!selectedFormationId || !registrations.some((item) => item.id === inscriptionId)) return false;
+    setError("");
+    try { await saveTraineeCell(selectedFormationId, inscriptionId, columnId, value); return true; }
+    catch { setError("Impossible d'enregistrer la case du stagiaire."); return false; }
+  };
+
+  const changeTraineeColumns = async (change: () => Promise<void>) => {
+    if (!selectedFormationId || busy) return;
+    setBusy(true); setError("");
+    try { await change(); }
+    catch { setError("Impossible de modifier les colonnes du tableau."); }
+    finally { setBusy(false); }
+  };
+
   return <main className="team-page min-h-screen text-slate-950">
     <div className="w-full px-3 pb-16 pt-5 sm:px-5 xl:px-6">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4 print:hidden"><h2 className="text-lg font-semibold">Planning & stagiaires</h2><button type="button" onClick={() => window.print()} title="Imprimer le planning en A4 paysage" className="inline-flex h-9 items-center gap-2 rounded-md border border-slate-300 bg-white px-3 text-sm hover:bg-slate-50"><Printer size={16} />Imprimer</button></div>
@@ -180,7 +198,10 @@ export default function TeamPage() {
         <div className={section === "planning" ? "pt-4" : "hidden print:block"}>
           <PlanningBoard key={formation.id} historyId={formation.id} activities={plan.activities} dayCount={dayCount} startDate={formation.startDate} formationTitle={formation.title} themes={themes} trainerNames={trainerNames} busy={busy} actions={planningActions} onEdit={(item) => { setError(""); setEditing({ ...item, trainerIds: item.trainerIds || [], noteAtOpen: item.content || "" }); }} onAdd={(day, start, end) => { setError(""); setEditing(emptyActivity(day, start, end)); }} onSaveThemes={saveThemes} />
         </div>
-        {section === "trainees" && <div className="print:hidden"><TraineeRoster key={selectedFormationId} inscriptions={registrations} loading={registrationsLoading} groupCount={groupCount} busy={busy} onChangeGroupCount={changeGroupCount} onSaveField={saveTraineeField} /></div>}
+        {section === "trainees" && <div className="print:hidden"><TraineeRoster key={selectedFormationId} inscriptions={registrations} loading={registrationsLoading} groupCount={groupCount} busy={busy} onChangeGroupCount={changeGroupCount} onSaveField={saveTraineeField}
+          columns={traineeColumnsOf(plan)} values={plan?.traineeValues || {}} onSaveValue={saveTraineeValue} onAddColumn={(name) => changeTraineeColumns(() => addTraineeColumn(selectedFormationId, name))}
+          onRenameColumn={(id, name) => changeTraineeColumns(() => renameTraineeColumn(selectedFormationId, id, name))} onMoveColumn={(id, offset) => changeTraineeColumns(() => moveTraineeColumn(selectedFormationId, id, offset))}
+          onRemoveColumn={(id) => changeTraineeColumns(() => removeTraineeColumn(selectedFormationId, id))} /></div>}
       </>}
     </div>
     {editing && formation && plan && <ActivityEditor mergedDays={(() => { const original = plan.activities.find((item) => item.id === editing.id); return original?.merged ? mergedBlock(original, plan.activities).map((item) => item.day) : undefined; })()} author={{ name: `${trainer.firstName} ${trainer.lastName}`.trim() || user.email || "Formateur·ice", isAdmin }} activity={editing} existing={plan.activities.some((item) => item.id === editing.id)} dayCount={dayCount} formationType={formation.type} trainers={trainers} themes={themes} busy={busy} error={error} onChange={setEditing} onSave={() => void saveEditing()} onClose={() => setEditing(null)}

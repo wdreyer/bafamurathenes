@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Minus, Plus } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight, Minus, Pencil, Plus, Trash2 } from "lucide-react";
+import type { TraineeColumn, TraineeValues } from "@/lib/traineeColumns";
 import type { Inscription } from "@/lib/types";
 
 type TrackingField = "starterNotes" | "participationNotes" | "trainerNotes";
@@ -14,53 +15,87 @@ type Props = {
   onChangeGroupCount: (count: number) => Promise<void>;
   onSaveField: (inscriptionId: string, patch: Partial<Pick<Inscription,
     "trainerNotes" | "traineeGroupNumber" | "starterNotes" | "participationNotes">>) => Promise<boolean>;
+  /** Columns the team added and named (stored with the session's planning). */
+  columns: TraineeColumn[];
+  values: TraineeValues;
+  onSaveValue: (inscriptionId: string, columnId: string, value: string) => Promise<boolean>;
+  onAddColumn: (name: string) => Promise<void>;
+  onRenameColumn: (id: string, name: string) => Promise<void>;
+  onMoveColumn: (id: string, offset: -1 | 1) => Promise<void>;
+  onRemoveColumn: (id: string) => Promise<void>;
 };
 
 const fullName = (inscription: Inscription) => `${inscription.firstName} ${inscription.lastName}`.trim();
 
-function TrackingInput({ inscriptionId, field, value, label, multiline = false, onSave }: {
-  inscriptionId: string;
-  field: TrackingField;
-  value?: string;
-  label: string;
-  multiline?: boolean;
-  onSave: Props["onSaveField"];
-}) {
+const FIXED_COLUMNS: { field: TrackingField; name: string }[] = [
+  { field: "starterNotes", name: "Starter" },
+  { field: "participationNotes", name: "Participation" },
+  { field: "trainerNotes", name: "Note libre" },
+];
+
+const cellBorder = "border border-slate-200";
+const headCell = `${cellBorder} bg-slate-50 px-2 py-1.5 text-left text-[11px] font-bold uppercase text-slate-500`;
+
+/**
+ * A spreadsheet-like cell: one line that grows with its text, saved when leaving it (Enter leaves, Shift+Enter adds a line).
+ * While someone types, a change arriving from a colleague doesn't replace their draft.
+ */
+function Cell({ value, label, onSave }: { value?: string; label: string; onSave: (value: string) => Promise<boolean> }) {
   const [draft, setDraft] = useState(value || "");
   const [saving, setSaving] = useState(false);
+  const focused = useRef(false);
 
-  useEffect(() => setDraft(value || ""), [value]);
+  useEffect(() => { if (!focused.current) setDraft(value || ""); }, [value]);
 
   const save = async () => {
+    focused.current = false;
     const next = draft.trim();
     if (next === (value || "")) return;
     setSaving(true);
-    try { await onSave(inscriptionId, { [field]: next }); }
+    try { await onSave(next); }
     finally { setSaving(false); }
   };
 
-  const shared = {
-    value: draft,
-    disabled: saving,
-    onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setDraft(event.target.value),
-    onBlur: () => void save(),
-    placeholder: "Ajouter...",
-    "aria-label": label,
-    className: "w-full rounded border border-slate-300 bg-white px-2.5 py-2 text-sm text-slate-900 outline-none transition focus:border-emerald-700 focus:ring-1 focus:ring-emerald-700 disabled:opacity-60",
-  };
-
-  return multiline
-    ? <textarea {...shared} rows={2} className={`${shared.className} min-h-10 resize-y`} />
-    : <input {...shared} type="text" className={`${shared.className} h-10`} />;
+  return <textarea value={draft} disabled={saving} rows={1} aria-label={label}
+    onFocus={() => { focused.current = true; }}
+    onChange={(event) => setDraft(event.target.value)}
+    onBlur={() => void save()}
+    onKeyDown={(event) => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); event.currentTarget.blur(); } }}
+    className="block max-h-40 min-h-8 w-full resize-none bg-transparent px-2 py-1.5 text-[13px] leading-5 text-slate-900 outline-none [field-sizing:content] focus:bg-emerald-50/60 focus:ring-2 focus:ring-inset focus:ring-emerald-700 disabled:opacity-60" />;
 }
 
-function TraineeRow({ inscription, number, groupCount, onSaveField }: {
-  inscription: Inscription;
-  number: number;
-  groupCount: number;
-  onSaveField: Props["onSaveField"];
+function ColumnHeader({ column, first, last, busy, onRename, onMove, onRemove }: {
+  column: TraineeColumn; first: boolean; last: boolean; busy: boolean;
+  onRename: Props["onRenameColumn"]; onMove: Props["onMoveColumn"]; onRemove: Props["onRemoveColumn"];
+}) {
+  const tool = "grid h-5 w-5 cursor-pointer place-items-center rounded text-slate-400 hover:bg-white hover:text-slate-800 disabled:cursor-not-allowed disabled:opacity-30";
+  const rename = () => {
+    const name = window.prompt("Nom de la colonne", column.name)?.trim();
+    if (name && name !== column.name) void onRename(column.id, name);
+  };
+  const remove = () => {
+    if (window.confirm(`Supprimer la colonne « ${column.name} » du tableau ?`)) void onRemove(column.id);
+  };
+  return <th className={`${headCell} group`}>
+    <div className="flex items-center gap-1">
+      <button type="button" onClick={rename} disabled={busy} title="Renommer" className="min-w-0 flex-1 cursor-pointer truncate text-left uppercase hover:text-slate-800">{column.name}</button>
+      <span className="flex shrink-0 opacity-0 transition group-hover:opacity-100 group-focus-within:opacity-100">
+        <button type="button" onClick={rename} disabled={busy} title="Renommer" aria-label={`Renommer ${column.name}`} className={tool}><Pencil size={11} /></button>
+        <button type="button" onClick={() => void onMove(column.id, -1)} disabled={busy || first} title="Déplacer à gauche" aria-label={`Déplacer ${column.name} à gauche`} className={tool}><ChevronLeft size={12} /></button>
+        <button type="button" onClick={() => void onMove(column.id, 1)} disabled={busy || last} title="Déplacer à droite" aria-label={`Déplacer ${column.name} à droite`} className={tool}><ChevronRight size={12} /></button>
+        <button type="button" onClick={remove} disabled={busy} title="Supprimer la colonne" aria-label={`Supprimer ${column.name}`} className={`${tool} hover:text-rose-700`}><Trash2 size={11} /></button>
+      </span>
+    </div>
+  </th>;
+}
+
+function TraineeRow({ inscription, number, groupCount, columns, values, onSaveField, onSaveValue }: {
+  inscription: Inscription; number: number; groupCount: number; columns: TraineeColumn[]; values?: Record<string, string>;
+  onSaveField: Props["onSaveField"]; onSaveValue: Props["onSaveValue"];
 }) {
   const [groupSaving, setGroupSaving] = useState(false);
+  const name = fullName(inscription) || "Sans nom";
+  const validated = inscription.validationStatus === "validated";
 
   const changeGroup = async (value: string) => {
     setGroupSaving(true);
@@ -68,44 +103,74 @@ function TraineeRow({ inscription, number, groupCount, onSaveField }: {
     finally { setGroupSaving(false); }
   };
 
-  return <div className="grid gap-3 border-b border-slate-200 px-3 py-3 last:border-b-0 lg:grid-cols-[minmax(190px,1.15fr)_140px_minmax(150px,1fr)_minmax(150px,1fr)_minmax(220px,1.4fr)] lg:items-start">
-    <div className="flex min-w-0 items-start gap-3">
-      <span className="w-6 shrink-0 pt-0.5 text-xs font-medium text-slate-400">{String(number).padStart(2, "0")}</span>
-      <div className="min-w-0">
-        <p className="font-medium text-slate-900">{fullName(inscription) || "Sans nom"}</p>
-        <p className="mt-0.5 text-xs text-slate-500">{inscription.validationStatus === "validated" ? "Inscription validée" : "En attente de validation"}</p>
-      </div>
-    </div>
-    <label className="text-xs font-semibold text-slate-600"><span className="lg:sr-only">Groupe d&apos;activité</span>
-      <select value={inscription.traineeGroupNumber || ""} disabled={groupSaving || groupCount === 0} onChange={(event) => void changeGroup(event.target.value)} className="mt-1 h-10 w-full cursor-pointer rounded border border-slate-300 bg-white px-2 text-sm font-normal text-slate-800 disabled:cursor-not-allowed disabled:opacity-50 lg:mt-0">
-        <option value="">Sans groupe</option>
+  return <tr className="align-top hover:bg-slate-50/60">
+    <th scope="row" className={`${cellBorder} sticky left-0 z-[1] bg-white px-2 py-1.5 text-left font-normal`}>
+      <span className="flex items-center gap-1.5">
+        <span className="w-5 shrink-0 text-[11px] text-slate-400">{String(number).padStart(2, "0")}</span>
+        <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${validated ? "bg-emerald-600" : "bg-amber-500"}`} title={validated ? "Inscription validée" : "En attente de validation"} aria-label={validated ? "Inscription validée" : "En attente de validation"} />
+        <span className="truncate text-[13px] font-medium text-slate-900" title={name}>{name}</span>
+      </span>
+    </th>
+    <td className={`${cellBorder} p-0`}>
+      <select value={inscription.traineeGroupNumber || ""} disabled={groupSaving || groupCount === 0} onChange={(event) => void changeGroup(event.target.value)} aria-label={`Groupe d'activité de ${name}`}
+        className="h-8 w-full cursor-pointer bg-transparent px-1.5 text-[13px] text-slate-800 outline-none focus:ring-2 focus:ring-inset focus:ring-emerald-700 disabled:cursor-not-allowed disabled:opacity-50">
+        <option value="">—</option>
         {Array.from({ length: groupCount }, (_, index) => <option key={index} value={index + 1}>Groupe {index + 1}</option>)}
       </select>
-    </label>
-    <label className="text-xs font-semibold text-slate-600"><span className="lg:sr-only">Starter</span><TrackingInput inscriptionId={inscription.id} field="starterNotes" value={inscription.starterNotes} label={`Starter de ${fullName(inscription)}`} onSave={onSaveField} /></label>
-    <label className="text-xs font-semibold text-slate-600"><span className="lg:sr-only">Participation</span><TrackingInput inscriptionId={inscription.id} field="participationNotes" value={inscription.participationNotes} label={`Participation de ${fullName(inscription)}`} onSave={onSaveField} /></label>
-    <label className="text-xs font-semibold text-slate-600"><span className="lg:sr-only">Note libre</span><TrackingInput inscriptionId={inscription.id} field="trainerNotes" value={inscription.trainerNotes} label={`Note libre de ${fullName(inscription)}`} multiline onSave={onSaveField} /></label>
-  </div>;
+    </td>
+    {FIXED_COLUMNS.map((column) => <td key={column.field} className={`${cellBorder} p-0`}>
+      <Cell value={inscription[column.field]} label={`${column.name} de ${name}`} onSave={(value) => onSaveField(inscription.id, { [column.field]: value })} />
+    </td>)}
+    {columns.map((column) => <td key={column.id} className={`${cellBorder} p-0`}>
+      <Cell value={values?.[column.id]} label={`${column.name} de ${name}`} onSave={(value) => onSaveValue(inscription.id, column.id, value)} />
+    </td>)}
+    <td className={`${cellBorder} bg-slate-50/50`} />
+  </tr>;
 }
 
-export function TraineeRoster({ inscriptions, loading, groupCount, busy, onChangeGroupCount, onSaveField }: Props) {
+export function TraineeRoster({ inscriptions, loading, groupCount, busy, onChangeGroupCount, onSaveField, columns, values, onSaveValue, onAddColumn, onRenameColumn, onMoveColumn, onRemoveColumn }: Props) {
   const trainees = useMemo(() => inscriptions.filter((inscription) => inscription.validationStatus !== "cancelled")
     .sort((a, b) => a.lastName.localeCompare(b.lastName, "fr") || a.firstName.localeCompare(b.firstName, "fr")), [inscriptions]);
+  const addColumn = () => {
+    const name = window.prompt("Nom de la nouvelle colonne")?.trim();
+    if (name) void onAddColumn(name);
+  };
 
   return <section className="mt-5 overflow-hidden rounded-md border border-slate-200 bg-white">
-    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3">
+    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-slate-50 px-4 py-2.5">
       <div><h2 className="text-base font-semibold text-slate-900">Stagiaires</h2><p className="text-xs text-slate-500">{trainees.length} inscrit{trainees.length > 1 ? "s" : ""}</p></div>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <span className="mr-1 text-xs font-semibold text-slate-600">Nombre de groupes : {groupCount}</span>
         <button type="button" disabled={busy || loading || groupCount === 0} onClick={() => void onChangeGroupCount(groupCount - 1)} title="Retirer un groupe" aria-label="Retirer un groupe" className="grid h-8 w-8 cursor-pointer place-items-center rounded-full border border-slate-300 bg-white hover:border-emerald-700 disabled:cursor-not-allowed disabled:opacity-40"><Minus size={15} /></button>
         <button type="button" disabled={busy || groupCount >= 8} onClick={() => void onChangeGroupCount(groupCount + 1)} title="Ajouter un groupe" aria-label="Ajouter un groupe" className="grid h-8 w-8 cursor-pointer place-items-center rounded-full border border-slate-300 bg-white hover:border-emerald-700 disabled:cursor-not-allowed disabled:opacity-40"><Plus size={15} /></button>
+        <button type="button" disabled={busy} onClick={addColumn} className="ml-2 inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-full border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 hover:border-emerald-700 disabled:cursor-not-allowed disabled:opacity-40"><Plus size={14} />Colonne</button>
       </div>
     </div>
-    {!loading && trainees.length > 0 && <div className="hidden grid-cols-[minmax(190px,1.15fr)_140px_minmax(150px,1fr)_minmax(150px,1fr)_minmax(220px,1.4fr)] gap-3 border-b border-slate-200 bg-white px-3 py-2 text-[11px] font-bold uppercase text-slate-500 lg:grid">
-      <span>Stagiaire</span><span>Groupe d&apos;activité</span><span>Starter</span><span>Participation</span><span>Note libre</span>
-    </div>}
     {loading ? <p className="px-4 py-8 text-sm text-slate-500">Chargement des inscriptions...</p>
-      : trainees.length ? trainees.map((inscription, index) => <TraineeRow key={inscription.id} inscription={inscription} number={index + 1} groupCount={groupCount} onSaveField={onSaveField} />)
-        : <p className="px-4 py-8 text-sm text-slate-500">Aucun inscrit pour cette formation.</p>}
+      : !trainees.length ? <p className="px-4 py-8 text-sm text-slate-500">Aucun inscrit pour cette formation.</p>
+        : <div className="overflow-x-auto">
+          <table className="w-max min-w-full table-fixed border-collapse">
+            <colgroup>
+              <col className="w-[190px]" /><col className="w-[100px]" />
+              {FIXED_COLUMNS.map((column) => <col key={column.field} className={column.field === "trainerNotes" ? "w-[200px]" : "w-[150px]"} />)}
+              {columns.map((column) => <col key={column.id} className="w-[160px]" />)}
+              <col className="w-[44px]" />
+            </colgroup>
+            <thead>
+              <tr>
+                <th scope="col" className={`${headCell} sticky left-0 z-[2]`}>Stagiaire</th>
+                <th scope="col" className={headCell}>Groupe</th>
+                {FIXED_COLUMNS.map((column) => <th key={column.field} scope="col" className={headCell}>{column.name}</th>)}
+                {columns.map((column, index) => <ColumnHeader key={column.id} column={column} first={index === 0} last={index === columns.length - 1} busy={busy}
+                  onRename={onRenameColumn} onMove={onMoveColumn} onRemove={onRemoveColumn} />)}
+                <th scope="col" className={`${headCell} p-0`}><button type="button" onClick={addColumn} disabled={busy} title="Ajouter une colonne" aria-label="Ajouter une colonne" className="grid h-8 w-full cursor-pointer place-items-center text-slate-500 hover:bg-white hover:text-emerald-800 disabled:opacity-40"><Plus size={15} /></button></th>
+              </tr>
+            </thead>
+            <tbody>
+              {trainees.map((inscription, index) => <TraineeRow key={inscription.id} inscription={inscription} number={index + 1} groupCount={groupCount}
+                columns={columns} values={values[inscription.id]} onSaveField={onSaveField} onSaveValue={onSaveValue} />)}
+            </tbody>
+          </table>
+        </div>}
   </section>;
 }
