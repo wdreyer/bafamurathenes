@@ -2,7 +2,7 @@
 
 import { useMemo, useState, type ReactNode } from "react";
 import { BookOpen, Clock3, ExternalLink, MessageSquareText, NotebookText, Plus, Search, Save, Trash2, Unlink, X } from "lucide-react";
-import { catalogForFormationWithCustom, catalogIdFromTitle, linkedCatalogId, type TrainingCatalogItem } from "@/lib/trainingCatalog";
+import { catalogForFormationWithCustom, catalogIdFromTitle, linkedCatalogId, planningTimesFor, type TrainingCatalogItem } from "@/lib/trainingCatalog";
 import { useTimeCategories } from "@/lib/useTimeCategories";
 import { TimeForm } from "@/components/guide/TimeForm";
 import { TimeSheetView } from "@/components/guide/TimeSheetView";
@@ -64,7 +64,8 @@ export function ActivityEditor({ activity, existing, dayCount, formationType, tr
   const iconChoice = (active: boolean) => `h-8 cursor-pointer rounded-md border px-2.5 text-xs font-medium ${active ? "border-[#792bb9] bg-[#f0e8f8] text-[#552080]" : "border-slate-200 bg-white text-slate-600 hover:border-[#792bb9]"}`;
   const catalog = useMemo(() => catalogForFormationWithCustom(formationType, customTimes, viewerId), [formationType, customTimes, viewerId]);
   // Linked guide time: chosen by hand, or recognised from the title ("none" means unlinked on purpose).
-  const linked = catalog.find((item) => item.id === linkedCatalogId(activity));
+  // A colleague's sheet still waiting for validation shows here too, though it can't be imported from the list yet.
+  const linked = useMemo(() => planningTimesFor(customTimes, viewerId), [customTimes, viewerId]).find((item) => item.id === linkedCatalogId(activity));
   // Read-only here: the summary belongs to the guide sheet (its short sentence when no summary is written yet).
   const linkedSummary = linked && (linked.summary?.trim() || linked.content?.trim());
   const matches = catalog.filter((item) => (category === "all" || item.category === category) &&

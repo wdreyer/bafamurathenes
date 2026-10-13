@@ -6,7 +6,7 @@ import { BookOpen, ChevronLeft, ChevronRight, History, MessageSquareText, Notebo
 import { asTime, minuteOfDay } from "@/lib/planningMove";
 import { iconForActivity } from "@/lib/planningIcons";
 import { auth } from "@/lib/firebase";
-import { guideTimesFor, linkedCatalogId, type TrainingCatalogItem } from "@/lib/trainingCatalog";
+import { linkedCatalogId, planningTimesFor, type TrainingCatalogItem } from "@/lib/trainingCatalog";
 import { useTrainingTimes } from "@/lib/useTrainingTimes";
 import { TimeSheetView } from "@/components/guide/TimeSheetView";
 import { defaultThemes, themeFill, themeForActivity, themeSurface, themeSwatch } from "@/lib/planningThemes";
@@ -419,7 +419,7 @@ export function PlanningBoard({ activities, dayCount, startDate, themes = defaul
   const [highlightTheme, setHighlightTheme] = useState<string | null>(null);
   const days = Array.from({ length: dayCount }, (_, index) => index + 1);
   const { times: customTimes } = useTrainingTimes();
-  const guideTimes = guideTimesFor(customTimes, auth.currentUser?.uid);
+  const guideTimes = planningTimesFor(customTimes, auth.currentUser?.uid);
   const sheetFor = (activity: PlanActivity) => guideTimes.find((item) => item.id === linkedCatalogId(activity));
   const [sheet, setSheet] = useState<TrainingCatalogItem | null>(null);
   const marksFor = (activity: PlanActivity) => ({ note: Boolean(activity.content?.trim()), sheet: Boolean(sheetFor(activity)) });

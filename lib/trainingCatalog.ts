@@ -245,6 +245,15 @@ export function guideTimesFor(customTimes: TrainingCatalogItem[], viewerId?: str
   return allCatalogTimes(customTimes, viewerId).filter((item) => (viewerId && item.proposedBy === viewerId) || !isTimeToComplete(item));
 }
 
+/**
+ * Sheets a planning shows for its linked times: the guide, plus colleagues' sheets still waiting for validation, so the
+ * whole team sees a time's sheet in the planning before it joins the guide. They stay out of the guide and the import list.
+ */
+export function planningTimesFor(customTimes: TrainingCatalogItem[], viewerId?: string) {
+  const othersPending = customTimes.filter((item) => item.status === "pending" && item.proposedBy !== viewerId && !item.hidden);
+  return [...guideTimesFor(customTimes, viewerId), ...othersPending];
+}
+
 export function catalogForFormationWithCustom(type: FormationType, customTimes: TrainingCatalogItem[], viewerId?: string) {
   const scope = type === "formation_generale" ? "general" : "appro";
   return guideTimesFor(customTimes, viewerId).filter((item) => item.scope === "both" || item.scope === scope);
