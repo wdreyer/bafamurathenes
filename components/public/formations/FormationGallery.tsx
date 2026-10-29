@@ -14,10 +14,9 @@ export type FormationGalleryPhoto = {
 type Props = {
   photos: FormationGalleryPhoto[];
   accentColor: string;
-  shadowColor: string;
 };
 
-export function FormationGallery({ photos, accentColor, shadowColor }: Props) {
+export function FormationGallery({ photos, accentColor }: Props) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const activePhoto = activeIndex === null ? null : photos[activeIndex];
   const activePosition = activeIndex === null ? 0 : activeIndex + 1;
@@ -63,7 +62,7 @@ export function FormationGallery({ photos, accentColor, shadowColor }: Props) {
             className="formation-gallery-item group"
             style={{
               borderColor: INK,
-              boxShadow: index === 0 ? `5px 5px 0 ${shadowColor}` : undefined,
+              boxShadow: index === 0 ? "0 1px 2px rgba(26,21,48,.04), 0 8px 24px rgba(26,21,48,.07)" : undefined,
             }}
             aria-label={`Agrandir la photo : ${photo.alt}`}
           >

@@ -20,7 +20,7 @@ function VioletBtn({ href, children, external }: { href: string; children: React
         gap: 6,
         background: VIOLET,
         color: CREAM,
-        border: `2px solid ${INK}`,
+        border: `1px solid ${INK}24`,
         borderRadius: 999,
         padding: "9px 16px",
         fontSize: 11,
@@ -38,7 +38,7 @@ function VioletBtn({ href, children, external }: { href: string; children: React
 
 function SoftCard({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ border: `2px solid ${INK}`, borderRadius: 18, background: PAPER, overflow: "hidden" }}>
+    <div style={{ border: `1px solid ${INK}24`, borderRadius: 18, background: PAPER, overflow: "hidden" }}>
       {children}
     </div>
   );
@@ -65,17 +65,17 @@ function MiniCarousel({ images, heightClass = "h-64 md:h-[420px]" }: { images: {
   const next = () => setI((v) => (v + 1) % images.length);
 
   return (
-    <div style={{ position: "relative", border: `2px solid ${INK}`, borderRadius: 18, overflow: "hidden" }}>
+    <div style={{ position: "relative", border: `1px solid ${INK}24`, borderRadius: 18, overflow: "hidden" }}>
       <div className={`relative w-full ${heightClass}`}>
         <Image src={images[i].src} alt={images[i].alt} fill className="object-cover" />
       </div>
       {hasMany && (
         <>
-          <button type="button" onClick={prev} aria-label="Photo précédente" style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", background: "rgba(255,255,255,0.88)", border: `1.5px solid ${INK}`, borderRadius: "50%", width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, cursor: "pointer", color: INK, fontWeight: 700 }}>‹</button>
-          <button type="button" onClick={next} aria-label="Photo suivante" style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "rgba(255,255,255,0.88)", border: `1.5px solid ${INK}`, borderRadius: "50%", width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, cursor: "pointer", color: INK, fontWeight: 700 }}>›</button>
+          <button type="button" onClick={prev} aria-label="Photo précédente" style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", background: "rgba(255,255,255,0.88)", border: `1px solid ${INK}24`, borderRadius: "50%", width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, cursor: "pointer", color: INK, fontWeight: 700 }}>‹</button>
+          <button type="button" onClick={next} aria-label="Photo suivante" style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "rgba(255,255,255,0.88)", border: `1px solid ${INK}24`, borderRadius: "50%", width: 36, height: 36, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, cursor: "pointer", color: INK, fontWeight: 700 }}>›</button>
         </>
       )}
-      <div style={{ position: "absolute", bottom: 12, left: 12, background: "rgba(255,255,255,0.88)", border: `1.5px solid ${INK}`, borderRadius: 999, padding: "5px 12px", fontSize: 11, fontWeight: 800, color: INK, display: "flex", alignItems: "center", gap: 8 }}>
+      <div style={{ position: "absolute", bottom: 12, left: 12, background: "rgba(255,255,255,0.88)", border: `1px solid ${INK}24`, borderRadius: 999, padding: "5px 12px", fontSize: 11, fontWeight: 800, color: INK, display: "flex", alignItems: "center", gap: 8 }}>
         <span style={{ width: 10, height: 10, borderRadius: "50%", background: VIOLET, display: "inline-block" }} />
         {i + 1}/{images.length}
       </div>
@@ -85,7 +85,7 @@ function MiniCarousel({ images, heightClass = "h-64 md:h-[420px]" }: { images: {
 
 function Photo({ src, alt, h = "h-64 md:h-[380px]", contain = false }: { src: string; alt: string; h?: string; contain?: boolean }) {
   return (
-    <div style={{ border: `2px solid ${INK}`, borderRadius: 18, overflow: "hidden" }}>
+    <div style={{ border: `1px solid ${INK}24`, borderRadius: 18, overflow: "hidden" }}>
       <div className={`relative w-full ${h}`}>
         <Image src={src} alt={alt} fill className={contain ? "object-contain" : "object-cover"} sizes="(min-width: 768px) 50vw, 100vw" />
       </div>
@@ -144,7 +144,7 @@ export default function LieuTransportTab() {
             </div>
           </div>
 
-          <div style={{ border: `2px solid ${INK}`, borderRadius: 18, overflow: "hidden", background: INK }}>
+          <div style={{ border: `1px solid ${INK}24`, borderRadius: 18, overflow: "hidden", background: INK }}>
             <video
               src="/optimized/videos/lieu-transport.mp4"
               poster="/optimized/PIX/2.webp"

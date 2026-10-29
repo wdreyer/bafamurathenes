@@ -42,7 +42,7 @@ export default function Header() {
   };
 
   return (
-    <header style={{ position: "sticky", top: 0, zIndex: 30, background: PAPER, borderBottom: `1.5px solid ${INK}` }}>
+    <header style={{ position: "sticky", top: 0, zIndex: 30, background: PAPER, borderBottom: `1px solid ${INK}24` }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", maxWidth: 1400, margin: "0 auto" }} className="px-4 py-3 md:px-12 md:py-4">
 
         {/* Logo */}
@@ -73,7 +73,7 @@ export default function Header() {
               <ChevronDown className="h-3 w-3 transition-transform duration-200 group-hover:rotate-180" aria-hidden="true" />
             </Link>
             <div className="pointer-events-none absolute left-0 top-full z-50 pt-2 w-56 origin-top-left scale-95 opacity-0 transition-all duration-150 group-hover:pointer-events-auto group-hover:scale-100 group-hover:opacity-100">
-              <div style={{ background: PAPER, border: `1.5px solid ${INK}`, borderRadius: 12, overflow: "hidden", boxShadow: `3px 3px 0 ${INK}22` }}>
+              <div style={{ background: PAPER, border: `1px solid ${INK}24`, borderRadius: 12, overflow: "hidden", boxShadow: "0 1px 2px rgba(26,21,48,.04), 0 8px 24px rgba(26,21,48,.07)" }}>
                 {infosPratiquesItems.map((item) => (
                   <Link
                     key={item.href}
@@ -95,7 +95,7 @@ export default function Header() {
               <ChevronDown className="h-3 w-3 transition-transform duration-200 group-hover:rotate-180" aria-hidden="true" />
             </Link>
             <div className="pointer-events-none absolute left-0 top-full z-50 pt-2 w-52 origin-top-left scale-95 opacity-0 transition-all duration-150 group-hover:pointer-events-auto group-hover:scale-100 group-hover:opacity-100">
-              <div style={{ background: PAPER, border: `1.5px solid ${INK}`, borderRadius: 12, overflow: "hidden", boxShadow: `3px 3px 0 ${INK}22` }}>
+              <div style={{ background: PAPER, border: `1px solid ${INK}24`, borderRadius: 12, overflow: "hidden", boxShadow: "0 1px 2px rgba(26,21,48,.04), 0 8px 24px rgba(26,21,48,.07)" }}>
                 {murathènesItems.map((item) => (
                   <Link
                     key={item.href}
@@ -114,7 +114,7 @@ export default function Header() {
             <button
               type="button"
               onClick={() => openLead("message")}
-              style={{ background: INK, color: CREAM, border: `2px solid ${INK}`, borderRadius: 999, padding: "10px 14px", fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 7, whiteSpace: "nowrap" }}
+              style={{ background: INK, color: CREAM, border: `1px solid ${INK}24`, borderRadius: 999, padding: "10px 14px", fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 7, whiteSpace: "nowrap" }}
               className="mura-header-action"
             >
               <MessageSquareText size={14} aria-hidden="true" />
@@ -122,7 +122,7 @@ export default function Header() {
             </button>
             <a
               href={`tel:${PHONE_TEL}`}
-              style={{ background: YELLOW, color: INK, border: `2px solid ${INK}`, borderRadius: 999, padding: "10px 14px", fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 7, whiteSpace: "nowrap", boxShadow: `2px 2px 0 ${INK}` }}
+              style={{ background: YELLOW, color: INK, border: `1px solid ${INK}24`, borderRadius: 999, padding: "10px 14px", fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 7, whiteSpace: "nowrap", boxShadow: "none" }}
               className="mura-header-action"
               aria-label={`Appeler Murathènes au ${PHONE_DISPLAY}`}
             >
@@ -198,11 +198,11 @@ export default function Header() {
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 8 }}>
-              <button type="button" onClick={() => openLead("message")} style={{ padding: "11px 12px", background: INK, color: CREAM, borderRadius: 999, border: `2px solid ${INK}`, textAlign: "center", fontSize: 11, fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
+              <button type="button" onClick={() => openLead("message")} style={{ padding: "11px 12px", background: INK, color: CREAM, borderRadius: 999, border: `1px solid ${INK}24`, textAlign: "center", fontSize: 11, fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
                 <MessageSquareText size={14} aria-hidden="true" />
                 Contact
               </button>
-              <a href={`tel:${PHONE_TEL}`} style={{ padding: "11px 12px", background: YELLOW, color: INK, borderRadius: 999, border: `2px solid ${INK}`, textAlign: "center", fontSize: 11, fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7, boxShadow: `2px 2px 0 ${INK}`, textDecoration: "none" }} aria-label={`Appeler Murathènes au ${PHONE_DISPLAY}`}>
+              <a href={`tel:${PHONE_TEL}`} style={{ padding: "11px 12px", background: YELLOW, color: INK, borderRadius: 999, border: `1px solid ${INK}24`, textAlign: "center", fontSize: 11, fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7, boxShadow: "none", textDecoration: "none" }} aria-label={`Appeler Murathènes au ${PHONE_DISPLAY}`}>
                 <PhoneCall size={14} aria-hidden="true" />
                 {PHONE_DISPLAY}
               </a>

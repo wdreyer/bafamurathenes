@@ -134,7 +134,7 @@ export default function FormationDetailFG(props: {
           backgroundSize: "cover",
           backgroundPosition: "center",
           color: CREAM,
-          borderBottom: `2px solid ${INK}`,
+          borderBottom: `1px solid ${INK}24`,
         }}
       >
         <div style={{ maxWidth: 1200, margin: "0 auto" }} className="formation-detail-hero-content px-6 py-12 md:px-12 md:py-16">
@@ -143,10 +143,10 @@ export default function FormationDetailFG(props: {
             {/* Left — date + CTA */}
             <div>
               <div style={{ display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap" }}>
-                <span style={{ background: CREAM, color: INK, padding: "5px 14px", borderRadius: 999, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, border: `2px solid ${INK}` }}>
+                <span style={{ background: CREAM, color: INK, padding: "5px 14px", borderRadius: 999, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, border: `1px solid ${INK}24` }}>
                   FORMATION GÉNÉRALE
                 </span>
-                <span style={{ background: YELLOW, color: INK, padding: "5px 14px", borderRadius: 999, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, border: `2px solid ${INK}` }}>
+                <span style={{ background: YELLOW, color: INK, padding: "5px 14px", borderRadius: 999, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, border: `1px solid ${INK}24` }}>
                   SESSION 2026
                 </span>
               </div>
@@ -167,27 +167,27 @@ export default function FormationDetailFG(props: {
                 <button
                   type="button"
                   onClick={() => document.getElementById("section-aides")?.scrollIntoView({ behavior: "smooth" })}
-                  style={{ background: CREAM, color: INK, border: `2px solid ${INK}`, borderRadius: 999, padding: "16px 26px", fontSize: 14, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}
+                  style={{ background: CREAM, color: INK, border: `1px solid ${INK}24`, borderRadius: 999, padding: "16px 26px", fontSize: 14, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}
                 >
                   Estimer mes aides
                 </button>
                 <button
                   type="button"
                   onClick={onOpenYapla}
-                  style={{ background: YELLOW, color: INK, border: `2px solid ${INK}`, borderRadius: 999, padding: "16px 26px", fontSize: 14, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer", boxShadow: `2px 2px 0 ${INK}` }}
+                  style={{ background: YELLOW, color: INK, border: `1px solid ${INK}24`, borderRadius: 999, padding: "16px 26px", fontSize: 14, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer", boxShadow: "none" }}
                 >
                   S&apos;inscrire directement →
                 </button>
                 <button
                   type="button"
                   onClick={() => document.getElementById("contenu-fg")?.scrollIntoView({ behavior: "smooth" })}
-                  style={{ background: CREAM, color: INK, border: `2px solid ${INK}`, borderRadius: 999, padding: "16px 26px", fontSize: 14, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}
+                  style={{ background: CREAM, color: INK, border: `1px solid ${INK}24`, borderRadius: 999, padding: "16px 26px", fontSize: 14, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer" }}
                 >
                   Voir le programme ↓
                 </button>
                 <a
                   href={`tel:${PHONE_TEL}`}
-                  style={{ background: CREAM, color: INK, border: `2px solid ${INK}`, borderRadius: 999, padding: "16px 26px", fontSize: 14, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer", textDecoration: "none" }}
+                  style={{ background: CREAM, color: INK, border: `1px solid ${INK}24`, borderRadius: 999, padding: "16px 26px", fontSize: 14, fontWeight: 700, letterSpacing: 0.5, textTransform: "uppercase", cursor: "pointer", textDecoration: "none" }}
                   aria-label={`Appeler Murathènes au ${PHONE_DISPLAY}`}
                 >
                   {PHONE_DISPLAY}
@@ -197,17 +197,17 @@ export default function FormationDetailFG(props: {
 
             {/* Right — photo collage */}
             <div className="relative hidden md:block" style={{ minHeight: 340 }}>
-              <div style={{ border: `3px solid ${INK}`, borderRadius: 10, boxShadow: `4px 4px 0 ${INK}`, transform: "rotate(1deg)", overflow: "hidden" }}>
+              <div style={{ border: `1px solid ${INK}24`, borderRadius: 10, boxShadow: "0 1px 2px rgba(26,21,48,.04), 0 8px 24px rgba(26,21,48,.07)", transform: "none", overflow: "hidden" }}>
                 <div style={{ position: "relative", width: "100%", aspectRatio: "4/3" }}>
                   <Image src="/optimized/FGAVRIL2026/IMG_8193.webp" alt="Formation BAFA Murathènes" fill sizes="(min-width: 768px) 50vw, 100vw" className="object-cover" priority />
                 </div>
               </div>
-              <div style={{ position: "absolute", bottom: -40, left: -30, width: 180, transform: "rotate(-3deg)", border: `3px solid ${INK}`, borderRadius: 8, boxShadow: `2px 2px 0 ${INK}`, overflow: "hidden" }}>
+              <div style={{ position: "absolute", bottom: -40, left: -30, width: 180, transform: "none", border: `1px solid ${INK}24`, borderRadius: 8, boxShadow: "none", overflow: "hidden" }}>
                 <div style={{ position: "relative", width: "100%", aspectRatio: "1/1" }}>
                   <Image src="/optimized/FGAVRIL2026/IMG_8308.webp" alt="Formation BAFA" fill sizes="180px" className="object-cover" />
                 </div>
               </div>
-              <div style={{ position: "absolute", top: -28, right: -20, width: 160, transform: "rotate(2.5deg)", border: `3px solid ${INK}`, borderRadius: 8, boxShadow: `2px 2px 0 ${INK}`, overflow: "hidden" }}>
+              <div style={{ position: "absolute", top: -28, right: -20, width: 160, transform: "none", border: `1px solid ${INK}24`, borderRadius: 8, boxShadow: "none", overflow: "hidden" }}>
                 <div style={{ position: "relative", width: "100%", aspectRatio: "1/1" }}>
                   <Image src="/optimized/FGAVRIL2026/IMG_8445.webp" alt="Formation BAFA" fill sizes="160px" className="object-cover" />
                 </div>
@@ -215,7 +215,7 @@ export default function FormationDetailFG(props: {
             </div>
 
             {/* Mobile photo */}
-            <div className="md:hidden" style={{ border: `3px solid ${INK}`, borderRadius: 10, overflow: "hidden" }}>
+            <div className="md:hidden" style={{ border: `1px solid ${INK}24`, borderRadius: 10, overflow: "hidden" }}>
               <div style={{ position: "relative", width: "100%", aspectRatio: "16/9" }}>
                 <Image src="/optimized/FGAVRIL2026/IMG_8193.webp" alt="Formation BAFA Murathènes" fill sizes="100vw" className="object-cover" />
               </div>
@@ -225,7 +225,7 @@ export default function FormationDetailFG(props: {
       </div>
 
       {/* ═══ CONTENT + SIDEBAR ═══ */}
-      <div id="contenu-fg" style={{ background: CREAM, borderBottom: `1.5px solid ${INK}` }}>
+      <div id="contenu-fg" style={{ background: CREAM, borderBottom: `1px solid ${INK}24` }}>
         <div style={{ maxWidth: 1200, margin: "0 auto" }} className="px-6 py-16 md:px-12 md:py-24">
           <div className="grid grid-cols-1 gap-12 md:grid-cols-[1.4fr_1fr] items-start">
 
@@ -270,7 +270,7 @@ export default function FormationDetailFG(props: {
 
             {/* Right — sticky yellow sidebar */}
             <div style={{ position: "sticky", top: 100, alignSelf: "flex-start" }}>
-              <div style={{ background: YELLOW, padding: 32, borderRadius: 24, border: `2px solid ${INK}`, boxShadow: `4px 4px 0 ${INK}` }}>
+              <div style={{ background: YELLOW, padding: 32, borderRadius: 24, border: `1px solid ${INK}24`, boxShadow: "0 1px 2px rgba(26,21,48,.04), 0 8px 24px rgba(26,21,48,.07)" }}>
                 <div className="mura-mono" style={{ fontSize: 11, letterSpacing: 2.5, fontWeight: 700, color: INK, marginBottom: 20 }}>📋 EN PRATIQUE</div>
 
                 {[
@@ -331,7 +331,7 @@ export default function FormationDetailFG(props: {
       </div>
 
       {/* ═══ PHOTOS + TÉMOIGNAGES ═══ */}
-      <section style={{ background: PAPER, borderBottom: `1.5px solid ${INK}` }}>
+      <section style={{ background: PAPER, borderBottom: `1px solid ${INK}24` }}>
         <div style={{ maxWidth: 1200, margin: "0 auto" }} className="px-6 py-16 md:px-12 md:py-20">
           <div className="grid grid-cols-1 gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:items-end">
             <div>
@@ -346,7 +346,7 @@ export default function FormationDetailFG(props: {
               </p>
             </div>
 
-            <FormationGallery photos={FG_GALLERY} accentColor={YELLOW} shadowColor={YELLOW} />
+            <FormationGallery photos={FG_GALLERY} accentColor={YELLOW} />
           </div>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3" style={{ marginTop: 34 }}>
@@ -354,7 +354,7 @@ export default function FormationDetailFG(props: {
               <article
                 key={`${item.author}-${index}`}
                 className="mura-interactive-card"
-                style={{ background: CREAM, border: `2px solid ${INK}`, borderRadius: 16, padding: 22, boxShadow: `4px 4px 0 ${INK}` }}
+                style={{ background: CREAM, border: `1px solid ${INK}24`, borderRadius: 16, padding: 22, boxShadow: "0 1px 2px rgba(26,21,48,.04), 0 8px 24px rgba(26,21,48,.07)" }}
               >
                 <p className="ed" style={{ margin: 0, fontSize: 17, lineHeight: 1.5, fontStyle: "italic", whiteSpace: "pre-line" }}>
                   “{item.quote}”
@@ -372,7 +372,7 @@ export default function FormationDetailFG(props: {
       </section>
 
       {/* ═══ ESTIMATION AIDES ═══ */}
-      <section style={{ background: CREAM, borderBottom: `1.5px solid ${INK}` }}>
+      <section style={{ background: CREAM, borderBottom: `1px solid ${INK}24` }}>
         <div style={{ maxWidth: 1200, margin: "0 auto" }} className="px-6 py-16 md:px-12">
           <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_1.1fr] items-start">
             <div>
@@ -397,7 +397,7 @@ export default function FormationDetailFG(props: {
                 </div>
               ))}
             </div>
-            <div id="section-aides" style={{ background: PAPER, border: `2px solid ${INK}`, borderRadius: 20, padding: "28px 28px 24px", boxShadow: `4px 4px 0 ${INK}` }}>
+            <div id="section-aides" style={{ background: PAPER, border: `1px solid ${INK}24`, borderRadius: 20, padding: "28px 28px 24px", boxShadow: "0 1px 2px rgba(26,21,48,.04), 0 8px 24px rgba(26,21,48,.07)" }}>
               <div className="mura-mono" style={{ fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", color: VIOLET, marginBottom: 18 }}>
                 Estimation gratuite
               </div>

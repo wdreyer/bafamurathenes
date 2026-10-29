@@ -43,7 +43,7 @@ function ProjectsCarousel({ items }: { items: Project[] }) {
     <div style={{ width: "100%" }}>
       {/* Mobile nav */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 16, marginBottom: 16 }} className="md:hidden">
-        <button type="button" onClick={scrollPrev} aria-label="Projet precedent" style={{ width: 40, height: 40, borderRadius: "50%", border: `2px solid ${INK}`, background: PAPER, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, color: INK }}>
+        <button type="button" onClick={scrollPrev} aria-label="Projet precedent" style={{ width: 40, height: 40, borderRadius: "50%", border: `1px solid ${INK}24`, background: PAPER, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, color: INK }}>
           ‹
         </button>
         <div style={{ display: "flex", gap: 6 }}>
@@ -51,13 +51,13 @@ function ProjectsCarousel({ items }: { items: Project[] }) {
             <div key={i} style={{ height: 6, borderRadius: 999, background: i === selected ? VIOLET : `${INK}33`, width: i === selected ? 24 : 6, transition: "all 0.3s" }} />
           ))}
         </div>
-        <button type="button" onClick={scrollNext} aria-label="Projet suivant" style={{ width: 40, height: 40, borderRadius: "50%", border: `2px solid ${INK}`, background: PAPER, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, color: INK }}>
+        <button type="button" onClick={scrollNext} aria-label="Projet suivant" style={{ width: 40, height: 40, borderRadius: "50%", border: `1px solid ${INK}24`, background: PAPER, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, color: INK }}>
           ›
         </button>
       </div>
 
       <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-        <button type="button" onClick={scrollPrev} aria-label="Projet precedent" style={{ width: 52, height: 52, borderRadius: "50%", border: `2px solid ${INK}`, background: PAPER, cursor: "pointer", display: "none", alignItems: "center", justifyContent: "center", fontSize: 24, color: INK, flexShrink: 0, boxShadow: `3px 3px 0 ${INK}` }} className="hidden md:flex">
+        <button type="button" onClick={scrollPrev} aria-label="Projet precedent" style={{ width: 52, height: 52, borderRadius: "50%", border: `1px solid ${INK}24`, background: PAPER, cursor: "pointer", display: "none", alignItems: "center", justifyContent: "center", fontSize: 24, color: INK, flexShrink: 0, boxShadow: "0 1px 2px rgba(26,21,48,.04), 0 8px 24px rgba(26,21,48,.07)" }} className="hidden md:flex">
           ‹
         </button>
 
@@ -78,15 +78,15 @@ function ProjectsCarousel({ items }: { items: Project[] }) {
                   }}
                   className="md:w-[920px]"
                 >
-                  <div className="grid grid-cols-1 lg:grid-cols-[1.18fr_0.82fr]" style={{ border: `2px solid ${INK}`, borderRadius: 22, overflow: "hidden", background: PAPER, boxShadow: active ? `6px 6px 0 ${VIOLET}` : `2px 2px 0 ${INK}44` }}>
+                  <div className="grid grid-cols-1 lg:grid-cols-[1.18fr_0.82fr]" style={{ border: `1px solid ${INK}24`, borderRadius: 22, overflow: "hidden", background: PAPER, boxShadow: active ? "0 1px 2px rgba(26,21,48,.04), 0 8px 24px rgba(26,21,48,.07)" : "none" }}>
                     <div style={{ position: "relative", minHeight: "clamp(340px, 45vw, 540px)", background: INK }}>
                       <Image src={p.image} alt={p.title} fill className="object-cover" />
                       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(26,21,48,.42), transparent 48%)" }} />
                       <div style={{ position: "absolute", bottom: 16, left: 16, right: 16, display: "flex", flexWrap: "wrap", gap: 8 }}>
-                        <div style={{ background: YELLOW, border: `2px solid ${INK}`, borderRadius: 999, padding: "8px 13px", boxShadow: `2px 2px 0 ${INK}` }}>
+                        <div style={{ background: YELLOW, border: `1px solid ${INK}24`, borderRadius: 999, padding: "8px 13px", boxShadow: "none" }}>
                           <p className="mura-mono" style={{ margin: 0, fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1.5, color: VIOLET }}>{p.datePlace}</p>
                         </div>
-                        <div style={{ background: "rgba(254,252,245,0.94)", border: `2px solid ${INK}`, borderRadius: 999, padding: "8px 13px", boxShadow: `2px 2px 0 ${INK}` }}>
+                        <div style={{ background: "rgba(254,252,245,0.94)", border: `1px solid ${INK}24`, borderRadius: 999, padding: "8px 13px", boxShadow: "none" }}>
                           <p className="mura-mono" style={{ margin: 0, fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1.2, color: INK, opacity: 0.78 }}>{p.theme}</p>
                         </div>
                       </div>
@@ -114,7 +114,7 @@ function ProjectsCarousel({ items }: { items: Project[] }) {
           </div>
         </div>
 
-        <button type="button" onClick={scrollNext} aria-label="Projet suivant" style={{ width: 52, height: 52, borderRadius: "50%", border: `2px solid ${INK}`, background: PAPER, cursor: "pointer", display: "none", alignItems: "center", justifyContent: "center", fontSize: 24, color: INK, flexShrink: 0, boxShadow: `3px 3px 0 ${INK}` }} className="hidden md:flex">
+        <button type="button" onClick={scrollNext} aria-label="Projet suivant" style={{ width: 52, height: 52, borderRadius: "50%", border: `1px solid ${INK}24`, background: PAPER, cursor: "pointer", display: "none", alignItems: "center", justifyContent: "center", fontSize: 24, color: INK, flexShrink: 0, boxShadow: "0 1px 2px rgba(26,21,48,.04), 0 8px 24px rgba(26,21,48,.07)" }} className="hidden md:flex">
           ›
         </button>
       </div>
@@ -137,7 +137,7 @@ function ProjectsCarousel({ items }: { items: Project[] }) {
                 background: INK,
                 padding: 0,
                 cursor: "pointer",
-                boxShadow: active ? `3px 3px 0 ${YELLOW}` : "none",
+                boxShadow: active ? "0 1px 2px rgba(26,21,48,.04), 0 8px 24px rgba(26,21,48,.07)" : "none",
               }}
             >
               <Image src={p.image} alt="" fill sizes="160px" className="object-cover" />

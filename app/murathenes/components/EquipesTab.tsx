@@ -34,7 +34,7 @@ function PersonCard({
   const headerFg = tone === "violet" ? YELLOW : VIOLET;
 
   return (
-    <article style={{ border: `2px solid ${INK}`, borderRadius: 22, overflow: "hidden", background: PAPER, boxShadow: `5px 5px 0 ${INK}` }}>
+    <article style={{ border: `1px solid ${INK}24`, borderRadius: 22, overflow: "hidden", background: PAPER, boxShadow: "0 1px 2px rgba(26,21,48,.04), 0 8px 24px rgba(26,21,48,.07)" }}>
       <div style={{ background: headerBg, color: headerFg, padding: "16px 22px" }}>
         <p className="mura-mono" style={{ margin: 0, fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: 2, opacity: 0.9 }}>{role}</p>
         <h4 className="ed" style={{ margin: "4px 0 0", fontSize: 24, fontWeight: 700, lineHeight: 1.1 }}>{name}</h4>
@@ -86,7 +86,7 @@ export default function EquipesTab() {
             <p style={{ margin: 0, fontSize: 15, lineHeight: 1.7, color: INK, opacity: 0.82 }}>
               Elles et ils ont une connaissance du terrain des mobilités, d&apos;une variété de publics et de types de séjours, et restent proches de l&apos;animation au quotidien.
             </p>
-            <div style={{ marginTop: 8, border: `2px solid ${INK}`, borderRadius: 16, background: "#f0e8f8", padding: "18px 20px" }}>
+            <div style={{ marginTop: 8, border: `1px solid ${INK}24`, borderRadius: 16, background: "#f0e8f8", padding: "18px 20px" }}>
               <p className="mura-mono" style={{ margin: "0 0 6px", fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: 2, color: VIOLET }}>Notre engagement</p>
               <p style={{ margin: 0, fontSize: 14, lineHeight: 1.65, color: INK, opacity: 0.85 }}>
                 Des équipes ancrées dans le terrain, une pédagogie active et collective, et une attention particulière portée aux publics accueillis, au groupe et à la vie de séjour.

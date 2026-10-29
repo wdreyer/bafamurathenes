@@ -38,7 +38,7 @@ export default function ProjetEducatifTab() {
             style={{
               background: lang === "fr" ? INK : PAPER,
               color: lang === "fr" ? YELLOW : INK,
-              border: `2px solid ${INK}`,
+              border: `1px solid ${INK}24`,
               borderRadius: 999,
               padding: "9px 18px",
               fontSize: 11,
@@ -46,7 +46,7 @@ export default function ProjetEducatifTab() {
               textTransform: "uppercase",
               letterSpacing: "0.12em",
               cursor: "pointer",
-              boxShadow: lang === "fr" ? `2px 2px 0 ${VIOLET}` : "none",
+              boxShadow: lang === "fr" ? "none" : "none",
             }}
           >
             Français
@@ -57,7 +57,7 @@ export default function ProjetEducatifTab() {
             style={{
               background: lang === "en" ? INK : PAPER,
               color: lang === "en" ? YELLOW : INK,
-              border: `2px solid ${INK}`,
+              border: `1px solid ${INK}24`,
               borderRadius: 999,
               padding: "9px 18px",
               fontSize: 11,
@@ -65,7 +65,7 @@ export default function ProjetEducatifTab() {
               textTransform: "uppercase",
               letterSpacing: "0.12em",
               cursor: "pointer",
-              boxShadow: lang === "en" ? `2px 2px 0 ${VIOLET}` : "none",
+              boxShadow: lang === "en" ? "none" : "none",
             }}
           >
             English
@@ -80,7 +80,7 @@ export default function ProjetEducatifTab() {
               gap: 6,
               background: VIOLET,
               color: YELLOW,
-              border: `2px solid ${INK}`,
+              border: `1px solid ${INK}24`,
               borderRadius: 999,
               padding: "9px 18px",
               fontSize: 11,
@@ -88,7 +88,7 @@ export default function ProjetEducatifTab() {
               textTransform: "uppercase",
               letterSpacing: "0.12em",
               textDecoration: "none",
-              boxShadow: `2px 2px 0 ${INK}`,
+              boxShadow: "none",
             }}
           >
             Ouvrir en plein écran <span>&#8599;</span>
@@ -98,7 +98,7 @@ export default function ProjetEducatifTab() {
 
       <div style={{ borderTop: `1.5px solid ${INK}18` }}>
         <div style={{ maxWidth: 1100, margin: "0 auto", padding: "24px 24px 48px" }} className="md:px-12">
-          <div style={{ border: `2px solid ${INK}`, borderRadius: 18, overflow: "hidden", boxShadow: `4px 4px 0 ${INK}` }}>
+          <div style={{ border: `1px solid ${INK}24`, borderRadius: 18, overflow: "hidden", boxShadow: "0 1px 2px rgba(26,21,48,.04), 0 8px 24px rgba(26,21,48,.07)" }}>
             <iframe title="Projet éducatif" src={pdf} style={{ display: "block", width: "100%", height: "75vh", border: "none" }} />
           </div>
         </div>

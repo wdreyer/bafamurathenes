@@ -35,10 +35,10 @@ function TrainingCard({
       style={{
         background: isFG ? VIOLET : YELLOW,
         color: isFG ? CREAM : INK,
-        border: `2px solid ${INK}`,
+        border: `1px solid ${INK}24`,
         borderRadius: 24,
         padding: 32,
-        boxShadow: isFG ? `6px 6px 0 ${INK}` : `6px 6px 0 ${VIOLET}`,
+        boxShadow: isFG ? "0 1px 2px rgba(26,21,48,.04), 0 8px 24px rgba(26,21,48,.07)" : "0 1px 2px rgba(26,21,48,.04), 0 8px 24px rgba(26,21,48,.07)",
         cursor: "pointer",
         textAlign: "left",
         width: "100%",

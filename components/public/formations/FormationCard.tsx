@@ -60,22 +60,22 @@ export function FormationCard({ formation }: { formation: Formation }) {
   return (
     <Link
       href={getFormationPublicHref(formation)}
-      className="group mura-interactive-card flex h-full flex-col justify-between rounded-[20px] border-2 p-5 text-sm no-underline"
+      className="group mura-interactive-card flex h-full flex-col justify-between rounded-[20px] border p-5 text-sm no-underline"
       style={{
         background: PAPER,
-        borderColor: INK,
+        borderColor: `${INK}24`,
         color: INK,
-        boxShadow: `4px 4px 0 ${INK}`,
+        boxShadow: "0 1px 2px rgba(26,21,48,.04), 0 8px 24px rgba(26,21,48,.07)",
       }}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 space-y-2">
           <div className="flex flex-wrap items-center gap-2">
             <div
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border-2"
+              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border"
               style={{
                 background: accent,
-                borderColor: INK,
+                borderColor: `${INK}24`,
                 color: isFG ? CREAM : INK,
               }}
             >
@@ -113,7 +113,7 @@ export function FormationCard({ formation }: { formation: Formation }) {
         </div>
 
         <div className="flex shrink-0 flex-col items-end gap-1 text-xs">
-          <span className="rounded-full border-2 px-3 py-1 font-extrabold whitespace-nowrap" style={{ background: INK, borderColor: INK, color: CREAM }}>
+          <span className="rounded-full border px-3 py-1 font-extrabold whitespace-nowrap" style={{ background: INK, borderColor: `${INK}24`, color: CREAM }}>
             {referencePrice && (
               <span className="mr-1 text-white/70 line-through">{referencePrice} €</span>
             )}

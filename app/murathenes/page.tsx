@@ -116,7 +116,7 @@ function MurathenesContent() {
         </div>
 
         {/* Onglets nav */}
-        <div style={{ background: CREAM, borderBottom: `1.5px solid ${INK}` }}>
+        <div style={{ background: CREAM, borderBottom: `1px solid ${INK}24` }}>
           <div style={{ maxWidth: 1100, margin: "0 auto", padding: "14px 24px" }} className="md:px-12">
             <nav className="flex flex-wrap gap-2">
               {tabs.map(([key, label, emoji]) => {
@@ -163,7 +163,7 @@ function MurathenesContent() {
       </section>
 
       {/* ═══ MANIFESTE ═══ */}
-      <section style={{ background: VIOLET, color: CREAM, padding: "80px 24px", borderBottom: `1.5px solid ${INK}`, position: "relative", overflow: "hidden" }} className="md:px-12">
+      <section style={{ background: VIOLET, color: CREAM, padding: "80px 24px", borderBottom: `1px solid ${INK}24`, position: "relative", overflow: "hidden" }} className="md:px-12">
         <div style={{ position: "relative", maxWidth: 1000, margin: "0 auto" }}>
           <div className="mura-mono" style={{ fontSize: 11, color: YELLOW, letterSpacing: 2.5, marginBottom: 28 }}>NOTRE PARTI PRIS</div>
           <p className="ed" style={{ fontSize: 52, fontWeight: 400, lineHeight: 1.1, letterSpacing: -1.5, margin: 0, fontStyle: "italic" }} >
@@ -180,14 +180,14 @@ function MurathenesContent() {
       </section>
 
       {/* ═══ STATS ═══ */}
-      <section style={{ background: CREAM, padding: "64px 24px", borderBottom: `1.5px solid ${INK}` }} className="md:px-12">
+      <section style={{ background: CREAM, padding: "64px 24px", borderBottom: `1px solid ${INK}24` }} className="md:px-12">
         <div style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 20 }} className="grid-cols-1 md:grid-cols-3">
           {[
             { num: "7 ans", label: "d’expérience BAFA", color: YELLOW },
             { num: "12+", label: "partenaires institutionnels", color: VIOLET },
             { num: "AURA", label: "projets en Auvergne-Rhône-Alpes", color: VIOLET },
           ].map((s, i) => (
-            <div key={i} style={{ background: PAPER, border: `2px solid ${INK}`, borderRadius: 24, padding: 32, textAlign: "center", boxShadow: `3px 3px 0 ${INK}` }}>
+            <div key={i} style={{ background: PAPER, border: `1px solid ${INK}24`, borderRadius: 24, padding: 32, textAlign: "center", boxShadow: "0 1px 2px rgba(26,21,48,.04), 0 8px 24px rgba(26,21,48,.07)" }}>
               <div className="ed" style={{ fontSize: 72, fontWeight: 600, fontStyle: "italic", color: s.color, lineHeight: 1, letterSpacing: -3 }}>{s.num}</div>
               <div className="mura-mono" style={{ fontSize: 11, color: INK, opacity: .7, letterSpacing: 1.5, marginTop: 10, textTransform: "uppercase" }}>{s.label}</div>
             </div>

@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState, type CSSProperties } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowRight,
   CalendarDays,
@@ -20,14 +20,11 @@ const INK = "#1a1530";
 const PAPER = "#fff8ec";
 const CREAM = "#fefcf5";
 const VIOLET = "#792BB9";
-const VIOLET_SOFT = "#f0e8f8";
-const YELLOW = "#F5EF72";
 // Printemps : lilas (violet), cerisier, bourgeon et jonquille (jaune).
 const BLOSSOM = "#FFB5D0";
 const BLOSSOM_SOFT = "#FFE6EF";
 const LEAF = "#9ED36A";
 const SPRING_SOFT = "#EEF7E6";
-const SPRING_SHADOWS = [BLOSSOM, LEAF, YELLOW];
 const PHONE_DISPLAY = "01 84 21 05 48";
 const PHONE_TEL = "0184210548";
 
@@ -128,70 +125,6 @@ const PEDAGOGY = [
     image: "/optimized/FGAVRIL2026/IMG_8212.webp",
   },
 ];
-
-const PETALS = [
-  { left: 4, size: 14, duration: 13, delay: -2, drift: 60, color: BLOSSOM },
-  { left: 12, size: 10, duration: 17, delay: -9, drift: -40, color: CREAM },
-  { left: 21, size: 16, duration: 15, delay: -5, drift: 80, color: BLOSSOM },
-  { left: 33, size: 11, duration: 19, delay: -13, drift: 50, color: BLOSSOM_SOFT },
-  { left: 44, size: 13, duration: 14, delay: -7, drift: -70, color: BLOSSOM },
-  { left: 52, size: 9, duration: 18, delay: -1, drift: 40, color: CREAM },
-  { left: 61, size: 15, duration: 16, delay: -11, drift: 90, color: BLOSSOM },
-  { left: 70, size: 12, duration: 20, delay: -4, drift: -50, color: BLOSSOM_SOFT },
-  { left: 79, size: 14, duration: 15, delay: -14, drift: 60, color: BLOSSOM },
-  { left: 87, size: 10, duration: 17, delay: -8, drift: -30, color: CREAM },
-  { left: 94, size: 13, duration: 14, delay: -3, drift: -60, color: BLOSSOM },
-];
-
-function SpringPetals({ fall, limit = PETALS.length }: { fall: string; limit?: number }) {
-  return (
-    <div className="spring-petals" aria-hidden="true" style={{ "--petal-fall": fall } as CSSProperties}>
-      {PETALS.slice(0, limit).map((petal) => (
-        <svg
-          key={petal.left}
-          className="spring-petal"
-          viewBox="0 0 20 20"
-          width={petal.size}
-          height={petal.size}
-          style={
-            {
-              left: `${petal.left}%`,
-              animationDuration: `${petal.duration}s`,
-              animationDelay: `${petal.delay}s`,
-              "--petal-drift": `${petal.drift}px`,
-            } as CSSProperties
-          }
-        >
-          <path d="M10 1C16 6 16 14 10 19C4 14 4 6 10 1Z" fill={petal.color} />
-          <path d="M10 4V16" stroke={INK} strokeOpacity={0.18} strokeWidth={1} />
-        </svg>
-      ))}
-    </div>
-  );
-}
-
-function SpringBloom({
-  size = 32,
-  petal = BLOSSOM,
-  heart = YELLOW,
-  className,
-  style,
-}: {
-  size?: number;
-  petal?: string;
-  heart?: string;
-  className?: string;
-  style?: CSSProperties;
-}) {
-  return (
-    <svg width={size} height={size} viewBox="0 0 40 40" aria-hidden="true" className={className} style={{ flex: "0 0 auto", ...style }}>
-      {[0, 72, 144, 216, 288].map((angle) => (
-        <ellipse key={angle} cx="20" cy="10.5" rx="6.2" ry="9" fill={petal} stroke={INK} strokeWidth="1.8" transform={`rotate(${angle} 20 20)`} />
-      ))}
-      <circle cx="20" cy="20" r="5.2" fill={heart} stroke={INK} strokeWidth="1.8" />
-    </svg>
-  );
-}
 
 const normalizeDate = (value: unknown): string => {
   if (!value) return "";
@@ -359,10 +292,9 @@ export default function HomePage() {
             position: "absolute",
             inset: 0,
             background:
-              "radial-gradient(circle at 92% 8%, rgba(255,181,208,.30) 0%, rgba(255,181,208,0) 38%), radial-gradient(circle at 8% 100%, rgba(158,211,106,.26) 0%, rgba(158,211,106,0) 42%), linear-gradient(90deg, rgba(26,21,48,.58) 0%, rgba(26,21,48,.34) 50%, rgba(26,21,48,.12) 100%), linear-gradient(180deg, rgba(26,21,48,.05) 0%, rgba(26,21,48,.48) 100%)",
+              "linear-gradient(90deg, rgba(26,21,48,.58) 0%, rgba(26,21,48,.34) 50%, rgba(26,21,48,.12) 100%), linear-gradient(180deg, rgba(26,21,48,.05) 0%, rgba(26,21,48,.48) 100%)",
           }}
         />
-        <SpringPetals fall="96svh" />
 
         <div
           className="grid grid-cols-1 gap-8 px-6 py-24 md:px-12 lg:grid-cols-[minmax(0,1fr)_420px] lg:py-32"
@@ -412,10 +344,6 @@ export default function HomePage() {
               <span className="ed block md:inline" style={{ color: BLOSSOM, fontStyle: "italic", fontWeight: 650 }}>
                 au <span style={{ whiteSpace: "nowrap" }}>
                   printemps.
-                  <SpringBloom
-                    className="spring-bloom-sway hidden md:inline-block"
-                    style={{ width: "0.42em", height: "0.42em", marginLeft: "0.08em", verticalAlign: "0.45em" }}
-                  />
                 </span>
               </span>
             </h1>
@@ -538,11 +466,11 @@ export default function HomePage() {
               maxWidth: "100%",
               minWidth: 0,
               boxSizing: "border-box",
-              border: `2px solid ${INK}`,
+              border: `1px solid ${INK}24`,
               borderRadius: 18,
               background: PAPER,
               color: INK,
-              boxShadow: `8px 8px 0 ${LEAF}`,
+              boxShadow: "0 1px 2px rgba(26,21,48,.04), 0 8px 24px rgba(26,21,48,.07)",
               overflow: "hidden",
             }}
           >
@@ -553,8 +481,7 @@ export default function HomePage() {
                 justifyContent: "space-between",
                 gap: 12,
                 padding: "20px 20px 16px",
-                borderBottom: `2px solid ${INK}`,
-                background: `linear-gradient(135deg, ${BLOSSOM_SOFT} 0%, ${PAPER} 55%, ${SPRING_SOFT} 100%)`,
+                borderBottom: `1px solid ${INK}24`,
               }}
             >
               <div>
@@ -565,7 +492,6 @@ export default function HomePage() {
                   Prochaines formations
                 </h2>
               </div>
-              <SpringBloom size={38} petal={VIOLET_SOFT} heart={LEAF} className="spring-bloom-sway" />
             </div>
 
             <div style={{ display: "grid" }}>
@@ -637,7 +563,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section style={{ background: INK, padding: "70px 24px", borderBottom: `2px solid ${INK}` }} className="md:px-12">
+      <section style={{ background: INK, padding: "70px 24px", borderBottom: `1px solid ${INK}24` }} className="md:px-12">
         <div style={{ maxWidth: 1280, margin: "0 auto" }}>
           <div style={{ marginBottom: 34 }}>
             <h2
@@ -658,17 +584,17 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3" style={{ gap: 22 }}>
-            {TESTIMONIALS.map((testimonial, index) => (
+            {TESTIMONIALS.map((testimonial) => (
               <article
                 key={`${testimonial.name}-${testimonial.photo}`}
                 className="home-testimonial-card mura-interactive-card"
                 style={{
                   overflow: "hidden",
-                  border: `2px solid ${INK}`,
+                  border: `1px solid ${INK}24`,
                   borderRadius: 18,
                   background: PAPER,
                   color: INK,
-                  boxShadow: `5px 5px 0 ${SPRING_SHADOWS[index % SPRING_SHADOWS.length]}`,
+                  boxShadow: "0 1px 2px rgba(26,21,48,.04), 0 8px 24px rgba(26,21,48,.07)",
                 }}
               >
                 <div style={{ position: "relative", width: "100%", aspectRatio: "4/3" }}>
@@ -691,7 +617,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section style={{ background: CREAM, padding: "64px 24px 76px", borderBottom: `2px solid ${INK}` }} className="md:px-12">
+      <section style={{ background: CREAM, padding: "64px 24px 76px", borderBottom: `1px solid ${INK}24` }} className="md:px-12">
         <div style={{ maxWidth: 1280, margin: "0 auto" }}>
           <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1fr)", gap: 22, marginBottom: 34 }} className="lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
             <div>
@@ -711,7 +637,7 @@ export default function HomePage() {
                   display: "inline-flex",
                   alignItems: "center",
                   gap: 8,
-                  border: `2px solid ${INK}`,
+                  border: `1px solid ${INK}24`,
                   borderRadius: 999,
                   background: PAPER,
                   color: INK,
@@ -731,7 +657,7 @@ export default function HomePage() {
                   display: "inline-flex",
                   alignItems: "center",
                   gap: 8,
-                  border: `2px solid ${INK}`,
+                  border: `1px solid ${INK}24`,
                   borderRadius: 999,
                   background: VIOLET,
                   color: CREAM,
@@ -763,12 +689,12 @@ export default function HomePage() {
                       gridTemplateColumns: "minmax(0,1fr) auto",
                       gap: 18,
                       alignItems: "center",
-                      border: `2px solid ${INK}`,
+                      border: `1px solid ${INK}24`,
                       borderRadius: 18,
                       background: featured ? VIOLET : PAPER,
                       color: featured ? CREAM : INK,
                       padding: "24px 22px",
-                      boxShadow: featured ? `6px 6px 0 ${LEAF}` : `5px 5px 0 ${INK}`,
+                      boxShadow: featured ? "0 1px 2px rgba(26,21,48,.04), 0 8px 24px rgba(26,21,48,.07)" : "0 1px 2px rgba(26,21,48,.04), 0 8px 24px rgba(26,21,48,.07)",
                     }}
                   >
                     <div>
@@ -882,7 +808,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section style={{ background: SPRING_SOFT, padding: "76px 24px", borderBottom: `2px solid ${INK}` }} className="md:px-12">
+      <section style={{ background: SPRING_SOFT, padding: "76px 24px", borderBottom: `1px solid ${INK}24` }} className="md:px-12">
         <div style={{ maxWidth: 1280, margin: "0 auto" }}>
           <div style={{ marginBottom: 34 }}>
             <div className="mura-mono" style={{ color: VIOLET, fontSize: 11, fontWeight: 800, textTransform: "uppercase" }}>
@@ -919,13 +845,13 @@ export default function HomePage() {
                 className="home-pedagogy-card mura-interactive-card"
                 style={{
                   overflow: "hidden",
-                  border: `2px solid ${INK}`,
+                  border: `1px solid ${INK}24`,
                   borderRadius: 18,
                   background: CREAM,
-                  boxShadow: `4px 4px 0 ${INK}`,
+                  boxShadow: "0 1px 2px rgba(26,21,48,.04), 0 8px 24px rgba(26,21,48,.07)",
                 }}
               >
-                <div style={{ position: "relative", width: "100%", aspectRatio: "4/3", borderBottom: `2px solid ${INK}` }}>
+                <div style={{ position: "relative", width: "100%", aspectRatio: "4/3", borderBottom: `1px solid ${INK}24` }}>
                   <Image src={item.image} alt={item.title} fill sizes="(min-width: 1024px) 25vw, (min-width: 768px) 50vw, 100vw" className="object-cover" />
                 </div>
                 <div style={{ padding: 20 }}>
@@ -948,7 +874,7 @@ export default function HomePage() {
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 8,
-                border: `2px solid ${INK}`,
+                border: `1px solid ${INK}24`,
                 borderRadius: 999,
                 background: INK,
                 color: CREAM,
@@ -970,15 +896,12 @@ export default function HomePage() {
         style={{
           position: "relative",
           overflow: "hidden",
-          background: `linear-gradient(160deg, ${BLOSSOM} 0%, ${BLOSSOM_SOFT} 58%, ${SPRING_SOFT} 100%)`,
+          background: BLOSSOM_SOFT,
           padding: "76px 24px",
-          borderBottom: `2px solid ${INK}`,
+          borderBottom: `1px solid ${INK}24`,
         }}
         className="md:px-12"
       >
-        <SpringPetals fall="560px" limit={7} />
-        <SpringBloom size={64} petal={CREAM} heart={YELLOW} className="spring-bloom-sway spring-cta-bloom spring-cta-bloom-left" />
-        <SpringBloom size={48} petal={VIOLET_SOFT} heart={LEAF} className="spring-bloom-sway spring-cta-bloom spring-cta-bloom-right" />
         <div
           style={{
             position: "relative",
@@ -1013,7 +936,7 @@ export default function HomePage() {
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 8,
-                border: `2px solid ${INK}`,
+                border: `1px solid ${INK}24`,
                 borderRadius: 999,
                 background: INK,
                 color: CREAM,
@@ -1034,7 +957,7 @@ export default function HomePage() {
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 8,
-                border: `2px solid ${INK}`,
+                border: `1px solid ${INK}24`,
                 borderRadius: 999,
                 background: CREAM,
                 color: INK,
@@ -1054,7 +977,7 @@ export default function HomePage() {
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 8,
-                border: `2px solid ${INK}`,
+                border: `1px solid ${INK}24`,
                 borderRadius: 999,
                 background: VIOLET,
                 color: CREAM,

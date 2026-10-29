@@ -63,7 +63,7 @@ export function ProgrammeModal({
       <div
         role="dialog"
         aria-modal="true"
-        className="relative flex max-h-[calc(100dvh-2rem)] w-full max-w-5xl flex-col overflow-hidden rounded-[20px] border-2 border-[#1a1530] bg-white shadow-2xl md:max-h-[calc(100dvh-4rem)]"
+        className="relative flex max-h-[calc(100dvh-2rem)] w-full max-w-5xl flex-col overflow-hidden rounded-[20px] border border-[#1a1530]/15 bg-white shadow-2xl md:max-h-[calc(100dvh-4rem)]"
       >
         <div
           className="relative px-5 py-5 text-center md:px-8 md:py-6"

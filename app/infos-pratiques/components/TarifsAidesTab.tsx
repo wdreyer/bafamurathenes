@@ -9,7 +9,6 @@ const PAPER = "#fff8ec";
 const CREAM = "#fefcf5";
 const VIOLET = "#792BB9";
 const VIOLET_SOFT = "#f0e8f8";
-const YELLOW = "#F5EF72";
 
 function openContactWidget() {
   if (typeof window === "undefined") return;
@@ -33,7 +32,7 @@ function VioletBtn({
     gap: 6,
     background: VIOLET,
     color: CREAM,
-    border: `2px solid ${INK}`,
+    border: `1px solid ${INK}24`,
     borderRadius: 999,
     padding: "9px 16px",
     fontSize: 11,
@@ -153,7 +152,7 @@ export default function TarifsAidesTab() {
             </p>
           </div>
 
-          <div style={{ border: `2px solid ${INK}`, borderRadius: 16, background: VIOLET_SOFT, padding: "16px 20px", width: "100%", justifySelf: "stretch" }}>
+          <div style={{ border: `1px solid ${INK}24`, borderRadius: 16, background: VIOLET_SOFT, padding: "16px 20px", width: "100%", justifySelf: "stretch" }}>
             <p className="mura-mono" style={{ margin: "0 0 6px", fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: 2, color: VIOLET }}>
               Besoin d&apos;un coup de main ?
             </p>
@@ -177,7 +176,7 @@ export default function TarifsAidesTab() {
               </p>
             </div>
 
-            <div style={{ border: `2px solid ${INK}`, borderRadius: 18, background: PAPER, padding: "22px 20px", boxShadow: `4px 4px 0 ${YELLOW}` }}>
+            <div style={{ border: `1px solid ${INK}24`, borderRadius: 18, background: PAPER, padding: "22px 20px", boxShadow: "0 1px 2px rgba(26,21,48,.04), 0 8px 24px rgba(26,21,48,.07)" }}>
               <p className="mura-mono" style={{ margin: "0 0 10px", fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: 2, color: VIOLET }}>
                 Aide nationale CAF
               </p>
@@ -198,7 +197,7 @@ export default function TarifsAidesTab() {
             En plus de l&apos;aide CAF nationale, tu peux souvent cumuler des aides locales (selon profil) : CAF du Cantal, Conseil départemental, MSA.
           </p>
           <div style={{ display: "grid", gap: 14 }} className="md:grid-cols-3">
-            <div style={{ border: `2px solid ${INK}`, borderRadius: 18, background: PAPER, padding: "20px 18px" }}>
+            <div style={{ border: `1px solid ${INK}24`, borderRadius: 18, background: PAPER, padding: "20px 18px" }}>
               <p className="mura-mono" style={{ margin: "0 0 10px", fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: 2, color: VIOLET }}>CAF du Cantal</p>
               <ul style={{ margin: "0 0 14px", padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 8 }}>
                 <li style={{ fontSize: 13, lineHeight: 1.6, color: INK, opacity: 0.8 }}>• Aide locale annoncée jusqu&apos;à <strong>400€</strong> (FG) et <strong>300€</strong> (étape 3 approfondissement), selon conditions.</li>
@@ -207,7 +206,7 @@ export default function TarifsAidesTab() {
               <VioletBtn href={cantalCafLink} external>Voir l&apos;aide CAF ↗</VioletBtn>
             </div>
 
-            <div style={{ border: `2px solid ${INK}`, borderRadius: 18, background: PAPER, padding: "20px 18px" }}>
+            <div style={{ border: `1px solid ${INK}24`, borderRadius: 18, background: PAPER, padding: "20px 18px" }}>
               <p className="mura-mono" style={{ margin: "0 0 10px", fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: 2, color: VIOLET }}>Conseil départemental</p>
               <ul style={{ margin: "0 0 14px", padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 8 }}>
                 <li style={{ fontSize: 13, lineHeight: 1.6, color: INK, opacity: 0.8 }}>• <strong>16 à 25 ans</strong> et domicilié fiscalement dans le Cantal.</li>
@@ -217,7 +216,7 @@ export default function TarifsAidesTab() {
               <VioletBtn href={cantalDeptPdf} external>Dossier (PDF) ↗</VioletBtn>
             </div>
 
-            <div style={{ border: `2px solid ${INK}`, borderRadius: 18, background: PAPER, padding: "20px 18px" }}>
+            <div style={{ border: `1px solid ${INK}24`, borderRadius: 18, background: PAPER, padding: "20px 18px" }}>
               <p className="mura-mono" style={{ margin: "0 0 10px", fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: 2, color: VIOLET }}>MSA Auvergne</p>
               <ul style={{ margin: "0 0 14px", padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 8 }}>
                 <li style={{ fontSize: 13, lineHeight: 1.6, color: INK, opacity: 0.8 }}>• Aide possible si tu dépends du régime MSA (assuré·e / ayant-droit).</li>
@@ -258,7 +257,7 @@ export default function TarifsAidesTab() {
                 Il existe souvent d&apos;autres aides : communes, intercos, missions locales, CE, associations, etc. Ça dépend énormément du territoire et parfois de l&apos;âge / quotient / régime CAF ou MSA.
               </p>
             </div>
-            <div style={{ border: `2px solid ${INK}`, borderRadius: 18, background: PAPER, padding: "20px 18px", boxShadow: `4px 4px 0 ${VIOLET}` }}>
+            <div style={{ border: `1px solid ${INK}24`, borderRadius: 18, background: PAPER, padding: "20px 18px", boxShadow: "0 1px 2px rgba(26,21,48,.04), 0 8px 24px rgba(26,21,48,.07)" }}>
               <p className="mura-mono" style={{ margin: "0 0 8px", fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: 2, color: VIOLET }}>Nous te guidons vite</p>
               <p style={{ margin: "0 0 14px", fontSize: 13, lineHeight: 1.65, color: INK, opacity: 0.8 }}>
                 Envoie-nous ton département + ta situation (CAF/MSA, étudiant·e, etc.) : nous te disons où chercher en priorité.
@@ -296,7 +295,7 @@ export default function TarifsAidesTab() {
               ))}
 
             </div>
-            <div style={{ background: CREAM, border: `2px solid ${INK}`, borderRadius: 20, padding: "28px 28px 24px", boxShadow: `4px 4px 0 ${INK}` }}>
+            <div style={{ background: CREAM, border: `1px solid ${INK}24`, borderRadius: 20, padding: "28px 28px 24px", boxShadow: "0 1px 2px rgba(26,21,48,.04), 0 8px 24px rgba(26,21,48,.07)" }}>
               <p className="mura-mono" style={{ margin: "0 0 18px", fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", color: VIOLET }}>
                 Estimation gratuite
               </p>

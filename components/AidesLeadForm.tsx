@@ -46,7 +46,7 @@ const inputStyle: React.CSSProperties = {
   fontFamily: "inherit",
   color: INK,
   background: CREAM,
-  border: `1.5px solid ${INK}`,
+  border: `1px solid ${INK}24`,
   borderRadius: 10,
   outline: "none",
   boxSizing: "border-box",
@@ -175,7 +175,7 @@ export default function AidesLeadForm({ theme = "light", source }: AidesLeadForm
     ...inputStyle,
     background: isDark ? "rgba(254,252,245,0.08)" : CREAM,
     color: isDark ? CREAM : INK,
-    border: isDark ? `1.5px solid rgba(254,252,245,0.3)` : `1.5px solid ${INK}`,
+    border: isDark ? `1.5px solid rgba(254,252,245,0.3)` : `1px solid ${INK}24`,
   };
 
   const adaptedLabel: React.CSSProperties = {
@@ -399,7 +399,7 @@ export function AidesLeadSection({
     <section
       style={{
         background: bg,
-        borderBottom: `1.5px solid ${INK}`,
+        borderBottom: `1px solid ${INK}24`,
         padding: "64px 24px",
       }}
       className="md:px-12"
@@ -508,7 +508,7 @@ export function AidesLeadSection({
               border: `2px solid ${isDark ? "rgba(254,252,245,0.15)" : INK}`,
               borderRadius: 20,
               padding: "28px 28px 24px",
-              boxShadow: isDark ? "none" : `4px 4px 0 ${INK}`,
+              boxShadow: isDark ? "none" : "0 1px 2px rgba(26,21,48,.04), 0 8px 24px rgba(26,21,48,.07)",
             }}
           >
             <div

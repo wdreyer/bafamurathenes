@@ -50,11 +50,11 @@ export default function ScrollHint() {
         "fixed z-[55]",
         "left-4 md:left-1/2 md:-translate-x-1/2",
         "bottom-6 md:bottom-7",
-        "rounded-full border-2 backdrop-blur",
+        "rounded-full border backdrop-blur",
         "px-3 py-2 shadow-sm",
-        "transition-opacity duration-200 hover:-translate-y-0.5",
+        "transition-opacity duration-200",
       ].join(" ")}
-      style={{ background: "#fff8ec", borderColor: "#1a1530", color: "#792BB9", boxShadow: "2px 2px 0 #1a1530" }}
+      style={{ background: "#fff8ec", borderColor: "#1a153024", color: "#792BB9", boxShadow: "none" }}
     >
       <span className="inline-flex items-center gap-2 cursor-pointer">
         <ChevronDown className="h-4 w-4 animate-bounce [animation-duration:1.2s] motion-reduce:animate-none" aria-hidden="true" />

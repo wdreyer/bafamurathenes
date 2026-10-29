@@ -15,7 +15,7 @@ export default function Footer() {
   };
 
   return (
-    <footer style={{ background: INK, color: CREAM, borderTop: `2px solid ${INK}` }}>
+    <footer style={{ background: INK, color: CREAM, borderTop: `1px solid ${INK}24` }}>
       <div style={{ maxWidth: 1100, margin: "0 auto" }} className="px-4 py-12 md:px-12 md:py-16">
         <div className="grid grid-cols-1 gap-10 md:grid-cols-3">
           <div>

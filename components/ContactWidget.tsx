@@ -207,12 +207,12 @@ export default function ContactWidget() {
           setStatus("idle");
           setOpen((value) => !value);
         }}
-        className="fixed bottom-5 right-5 z-50 inline-flex cursor-pointer items-center gap-3 rounded-full border-2 px-3 py-2 shadow-lg transition hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-[#792BB9]/40 md:px-4"
+        className="fixed bottom-5 right-5 z-50 inline-flex cursor-pointer items-center gap-3 rounded-full border px-3 py-2 shadow-lg transition focus:outline-none focus:ring-2 focus:ring-[#792BB9]/40 md:px-4"
         style={{
           background: INK,
           borderColor: YELLOW,
           color: CREAM,
-          boxShadow: `4px 4px 0 ${VIOLET}`,
+          boxShadow: "0 1px 2px rgba(26,21,48,.04), 0 8px 24px rgba(26,21,48,.07)",
         }}
         aria-haspopup="dialog"
         aria-expanded={open}
@@ -240,7 +240,7 @@ export default function ContactWidget() {
         role="dialog"
         aria-label="Contacter Murathènes"
         className={[
-          "fixed bottom-20 right-4 z-50 w-[420px] max-w-[calc(100vw-2rem)] overflow-visible rounded-2xl border-2 sm:right-5",
+          "fixed bottom-20 right-4 z-50 w-[420px] max-w-[calc(100vw-2rem)] overflow-visible rounded-2xl border sm:right-5",
           "transition-all duration-200 ease-out",
           open
             ? "pointer-events-auto translate-y-0 scale-100 opacity-100"
@@ -248,21 +248,21 @@ export default function ContactWidget() {
         ].join(" ")}
         style={{
           background: CREAM,
-          borderColor: INK,
+          borderColor: `${INK}24`,
           color: INK,
-          boxShadow: `8px 8px 0 ${VIOLET}`,
+          boxShadow: "0 1px 2px rgba(26,21,48,.04), 0 8px 24px rgba(26,21,48,.07)",
         }}
       >
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="absolute -right-3 -top-3 z-10 grid h-9 w-9 cursor-pointer place-items-center rounded-full border-2 border-[#1a1530] bg-[#F5EF72] text-[#1a1530] shadow-[2px_2px_0_#792BB9] transition hover:-translate-y-0.5"
+          className="absolute -right-3 -top-3 z-10 grid h-9 w-9 cursor-pointer place-items-center rounded-full border border-[#1a1530]/15 bg-[#F5EF72] text-[#1a1530] shadow-[2px_2px_0_#792BB9] transition"
           aria-label="Fermer"
         >
           <X size={17} strokeWidth={2.6} />
         </button>
 
-        <div className="border-b-2 border-[#1a1530] bg-[#fff8ec] px-5 py-4">
+        <div className="border-b-2 border-[#1a1530]/15 bg-[#fff8ec] px-5 py-4">
           <div>
             <p className="mura-mono text-[10px] font-bold uppercase tracking-[0.18em] text-[#792BB9]">
               Contact Murathènes
@@ -273,7 +273,7 @@ export default function ContactWidget() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 border-b-2 border-[#1a1530]">
+        <div className="grid grid-cols-2 border-b-2 border-[#1a1530]/15">
           <button
             type="button"
             onClick={() => switchMode("callback")}
@@ -281,7 +281,7 @@ export default function ContactWidget() {
             style={{
               background: mode === "callback" ? VIOLET : CREAM,
               color: mode === "callback" ? CREAM : INK,
-              borderRight: `2px solid ${INK}`,
+              borderRight: `1px solid ${INK}24`,
             }}
           >
             <PhoneCall size={16} />
@@ -303,7 +303,7 @@ export default function ContactWidget() {
 
         <form onSubmit={onSubmit} className="space-y-3 px-5 py-4">
           {mode === "callback" ? (
-            <div className="rounded-xl border-2 border-[#1a1530] bg-[#1a1530] px-4 py-3 text-[#fefcf5]">
+            <div className="rounded-xl border border-[#1a1530]/15 bg-[#1a1530] px-4 py-3 text-[#fefcf5]">
               <p className="mura-mono text-[10px] font-bold uppercase tracking-[0.18em] text-[#F5EF72]">
                 {PHONE_DISPLAY}
               </p>
@@ -312,14 +312,14 @@ export default function ContactWidget() {
               </p>
               <a
                 href={`tel:${PHONE_TEL}`}
-                className="mt-2 inline-flex items-center gap-2 rounded-full bg-[#F5EF72] px-3 py-2 text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#1a1530] no-underline transition hover:-translate-y-0.5"
+                className="mt-2 inline-flex items-center gap-2 rounded-full bg-[#F5EF72] px-3 py-2 text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#1a1530] no-underline transition"
               >
                 <PhoneCall size={14} />
                 Appeler
               </a>
             </div>
           ) : (
-            <div className="rounded-xl border-2 border-[#1a1530] bg-[#fff8ec] px-4 py-3">
+            <div className="rounded-xl border border-[#1a1530]/15 bg-[#fff8ec] px-4 py-3">
               <p className="mura-mono text-[10px] font-bold uppercase tracking-[0.18em] text-[#792BB9]">
                 Envoyer un message
               </p>
@@ -432,8 +432,8 @@ export default function ContactWidget() {
           <button
             type="submit"
             disabled={!canSend || status === "sending"}
-            className="inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-full border-2 px-4 py-2.5 text-sm font-bold uppercase tracking-[0.12em] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:translate-y-0"
-            style={{ background: YELLOW, borderColor: INK, color: INK }}
+            className="inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-full border px-4 py-2.5 text-sm font-bold uppercase tracking-[0.12em] transition disabled:cursor-not-allowed disabled:opacity-55 disabled:hover:translate-y-0"
+            style={{ background: YELLOW, borderColor: `${INK}24`, color: INK }}
           >
             {status === "sending"
               ? "Envoi..."
@@ -446,14 +446,14 @@ export default function ContactWidget() {
           <div className="grid grid-cols-1 gap-2 text-xs sm:grid-cols-2">
             <a
               href={`tel:${PHONE_TEL}`}
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-[#1a1530]/20 px-3 py-2 font-semibold text-[#1a1530] no-underline transition hover:border-[#1a1530]"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-[#1a1530]/20 px-3 py-2 font-semibold text-[#1a1530] no-underline transition hover:border-[#1a1530]/15"
             >
               <PhoneCall size={14} />
               {PHONE_DISPLAY}
             </a>
             <a
               href={`mailto:${EMAIL}`}
-              className="inline-flex items-center justify-center gap-2 rounded-full border border-[#1a1530]/20 px-3 py-2 font-semibold text-[#1a1530] no-underline transition hover:border-[#1a1530]"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-[#1a1530]/20 px-3 py-2 font-semibold text-[#1a1530] no-underline transition hover:border-[#1a1530]/15"
             >
               <Mail size={14} />
               Email

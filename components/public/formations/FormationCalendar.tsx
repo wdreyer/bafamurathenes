@@ -78,11 +78,11 @@ function FilterButton({
     <button
       type="button"
       onClick={onClick}
-      className="mura-pill cursor-pointer transition hover:-translate-y-0.5"
+      className="mura-pill cursor-pointer transition"
       style={{
         background: active ? VIOLET : CREAM,
         color: active ? CREAM : INK,
-        boxShadow: active ? `2px 2px 0 ${INK}` : "none",
+        boxShadow: active ? "none" : "none",
       }}
     >
       {children}
@@ -103,8 +103,8 @@ function MonthBadge({
     <div className="mura-card p-5">
       <div className="flex items-center gap-4 md:flex-col md:items-start">
         <span
-          className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border-2 md:h-14 md:w-14"
-          style={{ background: YELLOW, borderColor: INK, color: INK }}
+          className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border md:h-14 md:w-14"
+          style={{ background: YELLOW, borderColor: `${INK}24`, color: INK }}
         >
           <CalendarDays className="h-7 w-7" aria-hidden="true" />
         </span>
@@ -163,15 +163,21 @@ export function FormationCalendar() {
     return () => unsubscribe();
   }, []);
 
+  // Only sessions that haven't started yet are listed.
+  const upcoming = useMemo(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    return formations.filter((formation) => !formation.startDate || formation.startDate >= today);
+  }, [formations]);
+
   const typeFiltered = useMemo(() => {
-    if (filter === "all") return formations;
+    if (filter === "all") return upcoming;
     if (filter === "formation_generale") {
-      return formations.filter((formation) => formation.type === "formation_generale");
+      return upcoming.filter((formation) => formation.type === "formation_generale");
     }
-    return formations.filter(
+    return upcoming.filter(
       (formation) => formation.type === "approfondissement_sejour_etranger",
     );
-  }, [formations, filter]);
+  }, [upcoming, filter]);
 
   const monthOptions = useMemo(() => {
     const byKey = new Map<string, { key: string; label: string }>();
@@ -227,7 +233,7 @@ export function FormationCalendar() {
 
   return (
     <section className="mura-page pb-16">
-      <div style={{ background: PAPER, borderBottom: `2px solid ${INK}` }}>
+      <div style={{ background: PAPER, borderBottom: `1px solid ${INK}24` }}>
         <div className="mura-container py-12 md:py-16">
           <div className="grid gap-8 md:grid-cols-[1fr_360px] md:items-end">
             <div>
