@@ -121,7 +121,7 @@ export default function FormationDetailFG(props: {
         >
           ← FORMATIONS / FG
         </button>
-        <span className="hidden md:block">FORMATION GÉNÉRALE · SESSION 2026</span>
+        <span className="hidden md:block">FORMATION GÉNÉRALE · SESSION {year ?? "à venir"}</span>
       </div>
 
       {/* ═══ HERO ═══ */}

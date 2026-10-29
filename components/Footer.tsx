@@ -32,7 +32,7 @@ export default function Footer() {
               {[
                 { label: "Accueil", href: "/" },
                 { label: "Le BAFA", href: "/bafa" },
-                { label: "Nos formations 2026", href: "/formations" },
+                { label: "Nos formations 2027", href: "/formations" },
                 { label: "Infos pratiques", href: "/infos-pratiques" },
                 { label: "Qui sommes-nous ?", href: "/murathenes" },
               ].map((item) => (

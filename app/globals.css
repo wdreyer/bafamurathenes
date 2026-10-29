@@ -11,6 +11,9 @@
   --mura-violet: #792bb9;
   --mura-violet-soft: #f0e8f8;
   --mura-yellow: #f5ef72;
+  --mura-blossom: #ffb5d0;
+  --mura-blossom-soft: #ffe6ef;
+  --mura-leaf: #9ed36a;
   --mura-muted: #4a4359;
   --mura-border: rgba(26, 21, 48, 0.18);
 }
@@ -311,7 +314,7 @@ select:focus {
 }
 
 .home-hero-session-link:hover {
-  background: var(--mura-yellow) !important;
+  background: var(--mura-blossom-soft) !important;
   box-shadow: 5px 5px 0 var(--mura-violet) !important;
   transform: translate(-2px, -2px);
 }
@@ -326,6 +329,100 @@ select:focus {
 
 .home-hero-session-link:hover svg {
   transform: translateX(5px);
+}
+
+/* Printemps : pétales qui tombent et fleurs qui se balancent sur l'accueil */
+.spring-petals {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.spring-petal {
+  position: absolute;
+  top: -24px;
+  opacity: 0;
+  animation-name: spring-petal-fall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform, opacity;
+}
+
+@keyframes spring-petal-fall {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  10% {
+    opacity: 0.9;
+  }
+  50% {
+    transform: translate3d(calc(var(--petal-drift, 40px) * -0.6), calc(var(--petal-fall, 90vh) * 0.5), 0) rotate(200deg);
+  }
+  90% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(var(--petal-drift, 40px), var(--petal-fall, 90vh), 0) rotate(420deg);
+  }
+}
+
+.spring-bloom-sway {
+  transform-origin: 50% 50%;
+  animation: spring-bloom-sway 5.5s ease-in-out infinite;
+}
+
+@keyframes spring-bloom-sway {
+  0%,
+  100% {
+    transform: rotate(-10deg);
+  }
+  50% {
+    transform: rotate(12deg) scale(1.04);
+  }
+}
+
+.spring-cta-bloom {
+  position: absolute;
+  z-index: 0;
+}
+
+.spring-cta-bloom-left {
+  top: 28px;
+  left: max(16px, 8%);
+}
+
+.spring-cta-bloom-right {
+  right: max(16px, 9%);
+  bottom: 30px;
+  animation-delay: -2.4s;
+}
+
+@media (max-width: 640px) {
+  .spring-petal:nth-child(even) {
+    display: none;
+  }
+
+  .spring-cta-bloom-left {
+    top: 14px;
+  }
+
+  .spring-cta-bloom-right {
+    bottom: 14px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spring-petals {
+    display: none;
+  }
+
+  .spring-bloom-sway {
+    animation: none;
+  }
 }
 
 .formation-detail-hero {

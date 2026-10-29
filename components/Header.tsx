@@ -63,7 +63,7 @@ export default function Header() {
             Le BAFA
           </Link>
           <Link href="/formations" style={{ textDecoration: "none", whiteSpace: "nowrap" }} className="mura-header-link mura-header-link-featured">
-            Nos formations 2026
+            Nos formations 2027
           </Link>
 
           {/* Infos pratiques dropdown */}
@@ -156,7 +156,7 @@ export default function Header() {
             <Link href="/" onClick={closeMenu} style={{ padding: "10px 12px", color: INK, textDecoration: "none", borderRadius: 8 }} className="hover:bg-[#792BB9]/10">Accueil</Link>
             <Link href="/bafa" onClick={closeMenu} style={{ padding: "10px 12px", color: INK, textDecoration: "none", borderRadius: 8 }} className="hover:bg-[#792BB9]/10">Le BAFA</Link>
             <Link href="/formations" onClick={closeMenu} style={{ padding: "10px 14px", background: VIOLET, color: CREAM, borderRadius: 999, textDecoration: "none", display: "inline-block", marginBottom: 4 }}>
-              Nos formations 2026
+              Nos formations 2027
             </Link>
 
             {/* Infos pratiques */}

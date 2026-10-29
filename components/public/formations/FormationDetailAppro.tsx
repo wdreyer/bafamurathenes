@@ -127,7 +127,7 @@ export default function FormationDetailAppro(props: {
         >
           ← FORMATIONS / ÉTAPE 3
         </button>
-        <span className="hidden md:block">ÉTAPE 3 DU BAFA · APPROFONDISSEMENT 2026</span>
+        <span className="hidden md:block">ÉTAPE 3 DU BAFA · APPROFONDISSEMENT {year ?? ""}</span>
       </div>
 
       {/* ═══ HERO — yellow ═══ */}
@@ -210,7 +210,7 @@ export default function FormationDetailAppro(props: {
               <div style={{ background: CREAM, padding: 14, borderRadius: 12, border: `3px dashed ${INK}`, boxShadow: `4px 4px 0 ${INK}`, transform: "rotate(1deg)" }}>
                 <div className="mura-mono" style={{ fontSize: 10, color: INK, opacity: 0.6, letterSpacing: 1.5, marginBottom: 8, display: "flex", justifyContent: "space-between" }}>
                   <span>★ PASSEPORT MURATHÈNES</span>
-                  <span>FR · 2026</span>
+                  <span>FR · {year ?? "2027"}</span>
                 </div>
                 <div style={{ overflow: "hidden", borderRadius: 6 }}>
                   <div style={{ position: "relative", width: "100%", aspectRatio: "4/3" }}>
