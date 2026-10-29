@@ -329,22 +329,10 @@ export default function HomePage() {
               Printemps {nextYear} · Formations BAFA en AURA
             </div>
 
-            <h1
-              className="text-[64px] md:text-[112px]"
-              style={{
-                margin: 0,
-                maxWidth: 760,
-                color: CREAM,
-                fontWeight: 800,
-                lineHeight: 0.9,
-                letterSpacing: 0,
-              }}
-            >
-              Passez votre BAFA{" "}
-              <span className="ed block md:inline" style={{ color: BLOSSOM, fontStyle: "italic", fontWeight: 650 }}>
-                au <span style={{ whiteSpace: "nowrap" }}>
-                  printemps.
-                </span>
+            <h1 className="home-hero-title" style={{ margin: 0, color: CREAM }}>
+              Passez votre BAFA
+              <span className="ed home-hero-title-season" style={{ color: BLOSSOM }}>
+                au printemps.
               </span>
             </h1>
 
@@ -426,36 +414,8 @@ export default function HomePage() {
                 style={{ background: CREAM, color: INK, cursor: "pointer" }}
               >
                 <MessageSquareText size={17} strokeWidth={2.5} />
-                Remplir le formulaire
+                Une question ?
               </button>
-              <a
-                href={`tel:${PHONE_TEL}`}
-                className="mura-pill"
-                style={{ background: BLOSSOM, color: INK, cursor: "pointer" }}
-                aria-label={`Appeler Murathènes au ${PHONE_DISPLAY}`}
-              >
-                <PhoneCall size={17} strokeWidth={2.5} />
-                {PHONE_DISPLAY}
-              </a>
-            </div>
-
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginTop: 24 }}>
-              {["Éducation populaire", "Vie en collectivité", "Pédagogie émancipatrice"].map((tag) => (
-                <span
-                  key={tag}
-                  style={{
-                    border: `1.5px solid ${CREAM}`,
-                    borderRadius: 999,
-                    padding: "7px 14px",
-                    background: "rgba(255,255,255,.08)",
-                    color: CREAM,
-                    fontSize: 13,
-                    fontWeight: 700,
-                  }}
-                >
-                  {tag}
-                </span>
-              ))}
             </div>
           </div>
 

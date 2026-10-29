@@ -1,209 +1,223 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { ChevronDown, MessageSquareText, PhoneCall } from "lucide-react";
 
-const INK = "#1a1530";
-const PAPER = "#fff8ec";
-const CREAM = "#fefcf5";
-const VIOLET = "#792BB9";
-const YELLOW = "#F5EF72";
 const PHONE_DISPLAY = "01 84 21 05 48";
 const PHONE_TEL = "0184210548";
 
-const infosPratiquesItems = [
-  { label: "Programme", href: "/infos-pratiques?tab=programme", emoji: "📚" },
-  { label: "Inscription", href: "/infos-pratiques?tab=inscription", emoji: "✅" },
-  { label: "Tarifs & aides", href: "/infos-pratiques?tab=tarifs", emoji: "💶" },
-  { label: "Lieu & transport", href: "/infos-pratiques?tab=lieu", emoji: "📍" },
-  { label: "Guide d'arrivée", href: "/infos-pratiques?tab=infopack", emoji: "📦" },
-];
+type MenuItem = { label: string; href: string; description: string };
+type MenuKey = "infos" | "murathenes";
 
-const murathènesItems = [
-  { label: "L'association", href: "/murathenes?tab=association", emoji: "🫶" },
-  { label: "Projet éducatif", href: "/murathenes?tab=projet", emoji: "📄" },
-  { label: "Équipes", href: "/murathenes?tab=equipes", emoji: "👥" },
+const menus: Record<MenuKey, { label: string; base: string; items: MenuItem[] }> = {
+  infos: {
+    label: "Infos pratiques",
+    base: "/infos-pratiques",
+    items: [
+      { label: "Programme", href: "/infos-pratiques?tab=programme", description: "Le contenu jour par jour" },
+      { label: "Inscription", href: "/infos-pratiques?tab=inscription", description: "Les étapes pour s'inscrire" },
+      { label: "Tarifs & aides", href: "/infos-pratiques?tab=tarifs", description: "Prix et financements possibles" },
+      { label: "Lieu & transport", href: "/infos-pratiques?tab=lieu", description: "Le domaine de Gravières, dans le Cantal" },
+      { label: "Guide d'arrivée", href: "/infos-pratiques?tab=infopack", description: "Quoi apporter, comment ça se passe" },
+    ],
+  },
+  murathenes: {
+    label: "Qui sommes-nous ?",
+    base: "/murathenes",
+    items: [
+      { label: "L'association", href: "/murathenes?tab=association", description: "Notre histoire et nos projets" },
+      { label: "Projet éducatif", href: "/murathenes?tab=projet", description: "Nos valeurs et notre pédagogie" },
+      { label: "Équipes", href: "/murathenes?tab=equipes", description: "Les formateurs et formatrices" },
+    ],
+  },
+};
+
+const links = [
+  { label: "Le BAFA", href: "/bafa" },
+  { label: "Formations 2027", href: "/formations" },
 ];
 
 export default function Header() {
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
-  const [mobileInfosOpen, setMobileInfosOpen] = useState(false);
-  const [mobileMuratOpen, setMobileMuratOpen] = useState(false);
-  const closeMenu = () => {
+  const [openMenu, setOpenMenu] = useState<MenuKey | null>(null);
+  const [mobileSection, setMobileSection] = useState<MenuKey | null>(null);
+  const navRef = useRef<HTMLElement>(null);
+  const closeTimer = useRef<number | undefined>(undefined);
+  const hoverOpenedAt = useRef(0);
+
+  const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`);
+
+  const closeAll = () => {
     setIsOpen(false);
-    setMobileInfosOpen(false);
-    setMobileMuratOpen(false);
+    setOpenMenu(null);
+    setMobileSection(null);
   };
+
   const openLead = (mode: "message" | "callback") => {
-    closeMenu();
+    closeAll();
     window.dispatchEvent(new CustomEvent("contact-widget:open", { detail: { mode } }));
   };
 
-  return (
-    <header style={{ position: "sticky", top: 0, zIndex: 30, background: PAPER, borderBottom: `1px solid ${INK}24` }}>
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", maxWidth: 1400, margin: "0 auto" }} className="px-4 py-3 md:px-12 md:py-4">
+  // Close menus on navigation, outside click and Escape.
+  useEffect(() => {
+    window.setTimeout(closeAll, 0);
+  }, [pathname]);
 
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-3" onClick={closeMenu} style={{ textDecoration: "none" }}>
-          <Image src="/MT.png" alt="Logo BAFA Murathènes" width={50} height={50} className="h-10 w-auto md:h-11" />
-          <div style={{ lineHeight: 1 }}>
-            <div className="mura-mono" style={{ fontSize: 10, letterSpacing: 2, color: VIOLET, fontWeight: 600 }}>FORMATIONS BAFA</div>
-            <div style={{ fontSize: 19, fontWeight: 700, letterSpacing: -0.5, color: VIOLET, marginTop: 3, textTransform: "uppercase" }}>Murathènes</div>
-          </div>
+  useEffect(() => {
+    if (!openMenu) return;
+    const onPointerDown = (event: PointerEvent) => {
+      if (!navRef.current?.contains(event.target as Node)) setOpenMenu(null);
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpenMenu(null);
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [openMenu]);
+
+  const hoverOpen = (key: MenuKey, at: number) => {
+    window.clearTimeout(closeTimer.current);
+    if (openMenu !== key) hoverOpenedAt.current = at;
+    setOpenMenu(key);
+  };
+  // A mouse click right after the hover opened the menu must not close it again.
+  const toggleMenu = (key: MenuKey, at: number) => {
+    if (openMenu === key && at - hoverOpenedAt.current > 400) setOpenMenu(null);
+    else setOpenMenu(key);
+  };
+  const hoverClose = () => {
+    window.clearTimeout(closeTimer.current);
+    closeTimer.current = window.setTimeout(() => setOpenMenu(null), 160);
+  };
+
+  return (
+    <header className="mura-header">
+      <div className="mura-header-inner">
+        <Link href="/" className="mura-header-brand" onClick={closeAll} aria-label="Murathènes, retour à l'accueil">
+          <Image src="/MT.png" alt="" width={56} height={56} className="h-11 w-auto md:h-12" priority />
+          <span style={{ lineHeight: 1 }}>
+            <span className="mura-mono mura-header-kicker">Formations BAFA</span>
+            <span className="mura-header-name">Murathènes</span>
+          </span>
         </Link>
 
-        {/* Desktop nav */}
-        <nav className="mura-header-nav hidden lg:flex items-center" style={{ gap: 8, fontSize: 11, fontWeight: 800, letterSpacing: 0.9, textTransform: "uppercase", color: INK }}>
-          <Link href="/" style={{ textDecoration: "none", whiteSpace: "nowrap" }} className="mura-header-link">
-            Accueil
-          </Link>
-          <Link href="/bafa" style={{ textDecoration: "none", whiteSpace: "nowrap" }} className="mura-header-link">
-            Le BAFA
-          </Link>
-          <Link href="/formations" style={{ textDecoration: "none", whiteSpace: "nowrap" }} className="mura-header-link mura-header-link-featured">
-            Nos formations 2027
-          </Link>
-
-          {/* Infos pratiques dropdown */}
-          <div className="group relative">
-            <Link href="/infos-pratiques" style={{ textDecoration: "none", whiteSpace: "nowrap" }} className="mura-header-link">
-              Infos pratiques
-              <ChevronDown className="h-3 w-3 transition-transform duration-200 group-hover:rotate-180" aria-hidden="true" />
+        <nav ref={navRef} className="mura-header-nav" aria-label="Navigation principale">
+          {links.map((link) => (
+            <Link key={link.href} href={link.href} className="mura-nav-link" data-active={isActive(link.href) || undefined}>
+              {link.label}
             </Link>
-            <div className="pointer-events-none absolute left-0 top-full z-50 pt-2 w-56 origin-top-left scale-95 opacity-0 transition-all duration-150 group-hover:pointer-events-auto group-hover:scale-100 group-hover:opacity-100">
-              <div style={{ background: PAPER, border: `1px solid ${INK}24`, borderRadius: 12, overflow: "hidden", boxShadow: "0 1px 2px rgba(26,21,48,.04), 0 8px 24px rgba(26,21,48,.07)" }}>
-                {infosPratiquesItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 16px", color: INK, textDecoration: "none", fontSize: 11, fontWeight: 600, letterSpacing: 1.5 }}
-                    className="mura-dropdown-link"
-                  >
-                    <span>{item.emoji}</span>{item.label}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          </div>
+          ))}
 
-          {/* Qui sommes-nous dropdown */}
-          <div className="group relative">
-            <Link href="/murathenes" style={{ textDecoration: "none", whiteSpace: "nowrap" }} className="mura-header-link">
-              Qui sommes-nous ?
-              <ChevronDown className="h-3 w-3 transition-transform duration-200 group-hover:rotate-180" aria-hidden="true" />
-            </Link>
-            <div className="pointer-events-none absolute left-0 top-full z-50 pt-2 w-52 origin-top-left scale-95 opacity-0 transition-all duration-150 group-hover:pointer-events-auto group-hover:scale-100 group-hover:opacity-100">
-              <div style={{ background: PAPER, border: `1px solid ${INK}24`, borderRadius: 12, overflow: "hidden", boxShadow: "0 1px 2px rgba(26,21,48,.04), 0 8px 24px rgba(26,21,48,.07)" }}>
-                {murathènesItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 16px", color: INK, textDecoration: "none", fontSize: 11, fontWeight: 600, letterSpacing: 1.5 }}
-                    className="mura-dropdown-link"
-                  >
-                    <span>{item.emoji}</span>{item.label}
-                  </Link>
-                ))}
+          {(Object.keys(menus) as MenuKey[]).map((key) => {
+            const menu = menus[key];
+            const open = openMenu === key;
+            return (
+              <div key={key} className="mura-nav-dropdown" onMouseEnter={(event) => hoverOpen(key, event.timeStamp)} onMouseLeave={hoverClose}>
+                <button
+                  type="button"
+                  className="mura-nav-link"
+                  data-active={isActive(menu.base) || undefined}
+                  aria-expanded={open}
+                  aria-controls={`menu-${key}`}
+                  onClick={(event) => toggleMenu(key, event.timeStamp)}
+                >
+                  {menu.label}
+                  <ChevronDown size={16} strokeWidth={2.4} aria-hidden="true" className="mura-nav-chevron" />
+                </button>
+                <div id={`menu-${key}`} className="mura-nav-panel" data-open={open || undefined}>
+                  {menu.items.map((item) => (
+                    <Link key={item.href} href={item.href} className="mura-nav-item" onClick={() => setOpenMenu(null)} tabIndex={open ? 0 : -1}>
+                      <span className="mura-nav-item-label">{item.label}</span>
+                      <span className="mura-nav-item-desc">{item.description}</span>
+                    </Link>
+                  ))}
+                </div>
               </div>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => openLead("message")}
-              style={{ background: INK, color: CREAM, border: `1px solid ${INK}24`, borderRadius: 999, padding: "10px 14px", fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 7, whiteSpace: "nowrap" }}
-              className="mura-header-action"
-            >
-              <MessageSquareText size={14} aria-hidden="true" />
-              Contact
-            </button>
-            <a
-              href={`tel:${PHONE_TEL}`}
-              style={{ background: YELLOW, color: INK, border: `1px solid ${INK}24`, borderRadius: 999, padding: "10px 14px", fontSize: 11, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 7, whiteSpace: "nowrap", boxShadow: "none" }}
-              className="mura-header-action"
-              aria-label={`Appeler Murathènes au ${PHONE_DISPLAY}`}
-            >
-              <PhoneCall size={14} aria-hidden="true" />
-              {PHONE_DISPLAY}
-            </a>
-          </div>
+            );
+          })}
         </nav>
 
-        {/* Burger mobile */}
+        <div className="mura-header-actions">
+          <a href={`tel:${PHONE_TEL}`} className="mura-header-phone" aria-label={`Appeler Murathènes au ${PHONE_DISPLAY}`}>
+            <PhoneCall size={17} strokeWidth={2.2} aria-hidden="true" />
+            {PHONE_DISPLAY}
+          </a>
+          <button type="button" className="mura-header-cta" onClick={() => openLead("message")}>
+            <MessageSquareText size={17} strokeWidth={2.2} aria-hidden="true" />
+            Nous contacter
+          </button>
+        </div>
+
         <button
           type="button"
-          aria-label="Ouvrir le menu"
+          aria-label={isOpen ? "Fermer le menu" : "Ouvrir le menu"}
           aria-expanded={isOpen}
           onClick={() => setIsOpen((prev) => !prev)}
-          style={{ background: "transparent", border: `1.5px solid ${INK}44`, borderRadius: "50%", width: 36, height: 36, cursor: "pointer" }}
-          className="inline-flex items-center justify-center lg:hidden"
+          className="mura-header-burger"
         >
-          <span className="relative block h-4 w-4">
-            <span className={`absolute left-0 top-0 h-[2px] w-full rounded bg-[#1a1530] transition-transform duration-200 ${isOpen ? "translate-y-[6px] rotate-45" : ""}`} />
-            <span className={`absolute left-0 top-[6px] h-[2px] w-full rounded bg-[#1a1530] transition-opacity duration-200 ${isOpen ? "opacity-0" : "opacity-100"}`} />
-            <span className={`absolute left-0 top-[12px] h-[2px] w-full rounded bg-[#1a1530] transition-transform duration-200 ${isOpen ? "-translate-y-[6px] -rotate-45" : ""}`} />
+          <span className="relative block h-4 w-5">
+            <span className={`absolute left-0 top-0 h-[2px] w-full rounded bg-[#1a1530] transition-transform duration-200 ${isOpen ? "translate-y-[7px] rotate-45" : ""}`} />
+            <span className={`absolute left-0 top-[7px] h-[2px] w-full rounded bg-[#1a1530] transition-opacity duration-200 ${isOpen ? "opacity-0" : "opacity-100"}`} />
+            <span className={`absolute left-0 top-[14px] h-[2px] w-full rounded bg-[#1a1530] transition-transform duration-200 ${isOpen ? "-translate-y-[7px] -rotate-45" : ""}`} />
           </span>
         </button>
       </div>
 
-      {/* Mobile menu */}
       {isOpen && (
-        <div className="lg:hidden" style={{ borderTop: `1px dashed ${INK}33`, background: PAPER }}>
-          <nav style={{ display: "flex", flexDirection: "column", gap: 2, padding: "12px 16px", fontSize: 12, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase", color: INK }}>
-            <Link href="/" onClick={closeMenu} style={{ padding: "10px 12px", color: INK, textDecoration: "none", borderRadius: 8 }} className="hover:bg-[#792BB9]/10">Accueil</Link>
-            <Link href="/bafa" onClick={closeMenu} style={{ padding: "10px 12px", color: INK, textDecoration: "none", borderRadius: 8 }} className="hover:bg-[#792BB9]/10">Le BAFA</Link>
-            <Link href="/formations" onClick={closeMenu} style={{ padding: "10px 14px", background: VIOLET, color: CREAM, borderRadius: 999, textDecoration: "none", display: "inline-block", marginBottom: 4 }}>
-              Nos formations 2027
+        <div className="mura-mobile-menu">
+          <nav aria-label="Navigation mobile">
+            <Link href="/" onClick={closeAll} className="mura-mobile-link" data-active={pathname === "/" || undefined}>
+              Accueil
             </Link>
+            {links.map((link) => (
+              <Link key={link.href} href={link.href} onClick={closeAll} className="mura-mobile-link" data-active={isActive(link.href) || undefined}>
+                {link.label}
+              </Link>
+            ))}
 
-            {/* Infos pratiques */}
-            <div>
-              <div style={{ display: "flex", alignItems: "center" }}>
-                <Link href="/infos-pratiques" onClick={closeMenu} style={{ flex: 1, padding: "10px 12px", color: INK, textDecoration: "none" }}>Infos pratiques</Link>
-                <button type="button" onClick={() => setMobileInfosOpen((p) => !p)} style={{ background: "none", border: "none", cursor: "pointer", padding: 8, color: INK }}>
-                  <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${mobileInfosOpen ? "rotate-180" : ""}`} aria-hidden="true" />
-                </button>
-              </div>
-              {mobileInfosOpen && (
-                <div style={{ marginLeft: 16, borderLeft: `2px solid ${VIOLET}44`, paddingLeft: 12, marginBottom: 4 }}>
-                  {infosPratiquesItems.map((item) => (
-                    <Link key={item.href} href={item.href} onClick={closeMenu} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 12px", color: INK, textDecoration: "none", fontSize: 11, fontWeight: 600 }} className="hover:text-[#792BB9]">
-                      <span>{item.emoji}</span>{item.label}
-                    </Link>
-                  ))}
+            {(Object.keys(menus) as MenuKey[]).map((key) => {
+              const menu = menus[key];
+              const open = mobileSection === key;
+              return (
+                <div key={key}>
+                  <button
+                    type="button"
+                    className="mura-mobile-link"
+                    data-active={isActive(menu.base) || undefined}
+                    aria-expanded={open}
+                    onClick={() => setMobileSection(open ? null : key)}
+                  >
+                    {menu.label}
+                    <ChevronDown size={18} aria-hidden="true" style={{ transform: open ? "rotate(180deg)" : undefined, transition: "transform 160ms ease" }} />
+                  </button>
+                  {open && (
+                    <div className="mura-mobile-sub">
+                      {menu.items.map((item) => (
+                        <Link key={item.href} href={item.href} onClick={closeAll} className="mura-mobile-sublink">
+                          {item.label}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              );
+            })}
 
-            {/* Qui sommes-nous */}
-            <div>
-              <div style={{ display: "flex", alignItems: "center" }}>
-                <Link href="/murathenes" onClick={closeMenu} style={{ flex: 1, padding: "10px 12px", color: INK, textDecoration: "none" }}>Qui sommes-nous ?</Link>
-                <button type="button" onClick={() => setMobileMuratOpen((p) => !p)} style={{ background: "none", border: "none", cursor: "pointer", padding: 8, color: INK }}>
-                  <ChevronDown className={`h-3 w-3 transition-transform duration-200 ${mobileMuratOpen ? "rotate-180" : ""}`} aria-hidden="true" />
-                </button>
-              </div>
-              {mobileMuratOpen && (
-                <div style={{ marginLeft: 16, borderLeft: `2px solid ${VIOLET}44`, paddingLeft: 12, marginBottom: 4 }}>
-                  {murathènesItems.map((item) => (
-                    <Link key={item.href} href={item.href} onClick={closeMenu} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 12px", color: INK, textDecoration: "none", fontSize: 11, fontWeight: 600 }} className="hover:text-[#792BB9]">
-                      <span>{item.emoji}</span>{item.label}
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginTop: 8 }}>
-              <button type="button" onClick={() => openLead("message")} style={{ padding: "11px 12px", background: INK, color: CREAM, borderRadius: 999, border: `1px solid ${INK}24`, textAlign: "center", fontSize: 11, fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7 }}>
-                <MessageSquareText size={14} aria-hidden="true" />
-                Contact
+            <div className="mura-mobile-actions">
+              <button type="button" onClick={() => openLead("message")} className="mura-header-cta">
+                <MessageSquareText size={17} aria-hidden="true" />
+                Nous contacter
               </button>
-              <a href={`tel:${PHONE_TEL}`} style={{ padding: "11px 12px", background: YELLOW, color: INK, borderRadius: 999, border: `1px solid ${INK}24`, textAlign: "center", fontSize: 11, fontWeight: 800, letterSpacing: 1.2, textTransform: "uppercase", display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7, boxShadow: "none", textDecoration: "none" }} aria-label={`Appeler Murathènes au ${PHONE_DISPLAY}`}>
-                <PhoneCall size={14} aria-hidden="true" />
+              <a href={`tel:${PHONE_TEL}`} className="mura-header-phone mura-header-phone-block" aria-label={`Appeler Murathènes au ${PHONE_DISPLAY}`}>
+                <PhoneCall size={17} aria-hidden="true" />
                 {PHONE_DISPLAY}
               </a>
             </div>
