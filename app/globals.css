@@ -1482,134 +1482,36 @@ select:focus {
 
 /* ---------- Site en pause : écran noir ---------- */
 .site-paused {
-  position: relative;
   display: grid;
   flex: 1;
   min-height: 100svh;
   place-items: center;
-  overflow: hidden;
-  padding: 48px 20px;
+  padding: 24px;
   background: #000;
-  color: var(--mura-cream);
 }
 
-.site-paused-stage {
-  position: relative;
-  z-index: 2;
-  display: grid;
-  justify-items: center;
-  gap: 16px;
-  width: min(100%, 760px);
-  text-align: center;
-  animation: site-paused-enter 1.4s 0.3s ease-out both;
-}
-
-.site-paused-logo {
-  width: 56px;
-  height: auto;
-  filter: brightness(0) invert(1);
-  opacity: 0.85;
-}
-
-.site-paused-kicker {
+.site-paused-end {
   margin: 0;
-  color: var(--mura-blossom);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 4px;
-  text-transform: uppercase;
-}
-
-.site-paused-title {
-  margin: 0;
-  color: var(--mura-cream);
-  font-size: clamp(72px, 19vw, 168px);
-  font-weight: 800;
-  line-height: 0.9;
-  letter-spacing: -0.03em;
-}
-
-.site-paused-title .ed {
-  display: block;
-  margin-top: 18px;
-  color: var(--mura-yellow);
-  font-size: clamp(24px, 4.6vw, 40px);
+  color: #f5f2ea;
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-size: clamp(40px, 9vw, 96px);
   font-style: italic;
-  font-weight: 600;
-  letter-spacing: 0;
-  line-height: 1.15;
-  text-shadow: none;
+  font-weight: 200;
+  letter-spacing: 0.04em;
+  animation: site-paused-fade 2.4s ease-out both;
 }
 
-.site-paused-text {
-  max-width: 560px;
-  margin: 8px 0 0;
-  color: rgba(254, 252, 245, 0.78);
-  font-size: 17px;
-  line-height: 1.7;
-  white-space: pre-line;
-}
-
-.site-paused-sign {
-  margin: 0;
-  color: var(--mura-blossom);
-  font-size: 32px;
-}
-
-.site-paused-actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 10px;
-  margin-top: 10px;
-}
-
-.site-paused-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 46px;
-  padding: 0 20px;
-  border: 1px solid rgba(254, 252, 245, 0.28);
-  border-radius: 999px;
-  color: var(--mura-cream);
-  font-size: 15px;
-  font-weight: 700;
-  text-decoration: none;
-  transition: background-color 160ms ease, border-color 160ms ease;
-}
-
-.site-paused-btn:hover {
-  border-color: var(--mura-cream);
-  background: rgba(254, 252, 245, 0.08);
-}
-
-.site-paused-btn-primary {
-  border-color: var(--mura-yellow);
-  background: var(--mura-yellow);
-  color: var(--mura-ink);
-}
-
-.site-paused-btn-primary:hover {
-  border-color: var(--mura-cream);
-  background: var(--mura-cream);
-}
-
-
-@keyframes site-paused-enter {
+@keyframes site-paused-fade {
   from {
     opacity: 0;
-    transform: translateY(14px);
   }
   to {
     opacity: 1;
-    transform: none;
   }
 }
 
-
 @media (prefers-reduced-motion: reduce) {
-  .site-paused-stage {
+  .site-paused-end {
     animation: none;
   }
 }

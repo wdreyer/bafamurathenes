@@ -4,15 +4,13 @@ import { useEffect, useState } from "react";
 import { doc, onSnapshot, serverTimestamp, setDoc } from "firebase/firestore";
 import { ExternalLink, Pause, Play } from "lucide-react";
 import { auth, db } from "@/lib/firebase";
-import { pauseMessageOrDefault, SITE_SETTINGS_COLLECTION, SITE_SETTINGS_DOC } from "@/lib/sitePause";
+import { SITE_SETTINGS_COLLECTION, SITE_SETTINGS_DOC } from "@/lib/sitePause";
 
 const settingsRef = () => doc(db, SITE_SETTINGS_COLLECTION, SITE_SETTINGS_DOC);
 
-// Admin switch that puts the public site on a farewell ("Rideau.") page and back.
+// Admin switch that replaces the public site with a black "Fin…" screen, and back.
 export default function SitePauseCard() {
   const [paused, setPaused] = useState<boolean | null>(null);
-  const [savedMessage, setSavedMessage] = useState("");
-  const [message, setMessage] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
@@ -21,10 +19,8 @@ export default function SitePauseCard() {
       onSnapshot(
         settingsRef(),
         (snap) => {
-          const data = snap.data() as { paused?: boolean; message?: string } | undefined;
+          const data = snap.data() as { paused?: boolean } | undefined;
           setPaused(data?.paused === true);
-          setSavedMessage(data?.message ?? "");
-          setMessage((current) => current || pauseMessageOrDefault(data?.message));
         },
         () => {
           setPaused(false);
@@ -35,7 +31,7 @@ export default function SitePauseCard() {
   );
 
   const save = async (nextPaused: boolean) => {
-    if (nextPaused && !paused && !window.confirm("Mettre le site public en pause ? Les visiteurs verront uniquement la page d'adieu « Rideau. BAFA Murathènes tire sa révérence ».")) {
+    if (nextPaused && !paused && !window.confirm("Mettre le site public en pause ? Les visiteurs verront uniquement un écran noir avec « Fin… ».")) {
       return;
     }
     setSaving(true);
@@ -45,7 +41,6 @@ export default function SitePauseCard() {
         settingsRef(),
         {
           paused: nextPaused,
-          message: pauseMessageOrDefault(message),
           updatedAt: serverTimestamp(),
           updatedBy: auth.currentUser?.email ?? "",
         },
@@ -66,8 +61,6 @@ export default function SitePauseCard() {
     }
   };
 
-  const messageChanged = paused && pauseMessageOrDefault(message) !== pauseMessageOrDefault(savedMessage);
-
   return (
     <section
       className={`rounded-lg border p-4 ${paused ? "border-amber-300 bg-amber-50" : "border-slate-200 bg-white"}`}
@@ -82,8 +75,8 @@ export default function SitePauseCard() {
             </h2>
             <p className="text-xs text-slate-500">
               {paused
-                ? "Les visiteurs voient la page de pause. L'admin et l'espace formateurs restent accessibles."
-                : "Mettez le site en pause pour afficher un message d'attente à la place des pages publiques."}
+                ? "Les visiteurs voient un écran noir avec « Fin… ». L'admin et l'espace formateurs restent accessibles."
+                : "Mettez le site en pause pour remplacer les pages publiques par un écran noir « Fin… »."}
             </p>
           </div>
         </div>
@@ -121,25 +114,6 @@ export default function SitePauseCard() {
         </div>
       </div>
 
-      <details className="mt-3" open={paused === true}>
-        <summary className="cursor-pointer text-xs font-medium text-slate-600">Message affiché pendant la pause</summary>
-        <textarea
-          value={message}
-          onChange={(event) => setMessage(event.target.value)}
-          rows={3}
-          className="mt-2 w-full rounded-md border border-slate-200 bg-white p-2 text-sm"
-        />
-        {messageChanged && (
-          <button
-            type="button"
-            disabled={saving}
-            onClick={() => save(true)}
-            className="mt-2 inline-flex cursor-pointer rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold hover:bg-slate-50 disabled:opacity-60"
-          >
-            Mettre à jour le message
-          </button>
-        )}
-      </details>
 
       {error && <p className="mt-2 text-xs font-medium text-red-600">{error}</p>}
     </section>

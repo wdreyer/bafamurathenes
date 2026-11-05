@@ -18,7 +18,7 @@ export default function SiteChrome({ children, sitePause }: { children: React.Re
 
   // Admin and trainer spaces stay reachable while the public site is paused.
   if (sitePause.paused) {
-    return <SitePausedPage message={sitePause.message} />;
+    return <SitePausedPage />;
   }
 
   return (
