@@ -4,11 +4,11 @@ import { useEffect, useState } from "react";
 import { doc, onSnapshot, serverTimestamp, setDoc } from "firebase/firestore";
 import { ExternalLink, Pause, Play } from "lucide-react";
 import { auth, db } from "@/lib/firebase";
-import { DEFAULT_PAUSE_MESSAGE, SITE_SETTINGS_COLLECTION, SITE_SETTINGS_DOC } from "@/lib/sitePause";
+import { pauseMessageOrDefault, SITE_SETTINGS_COLLECTION, SITE_SETTINGS_DOC } from "@/lib/sitePause";
 
 const settingsRef = () => doc(db, SITE_SETTINGS_COLLECTION, SITE_SETTINGS_DOC);
 
-// Admin switch that puts the public site on a "BAFA Murathènes fait une pause" page and back.
+// Admin switch that puts the public site on a farewell ("Rideau.") page and back.
 export default function SitePauseCard() {
   const [paused, setPaused] = useState<boolean | null>(null);
   const [savedMessage, setSavedMessage] = useState("");
@@ -24,7 +24,7 @@ export default function SitePauseCard() {
           const data = snap.data() as { paused?: boolean; message?: string } | undefined;
           setPaused(data?.paused === true);
           setSavedMessage(data?.message ?? "");
-          setMessage((current) => current || data?.message || DEFAULT_PAUSE_MESSAGE);
+          setMessage((current) => current || pauseMessageOrDefault(data?.message));
         },
         () => {
           setPaused(false);
@@ -35,7 +35,7 @@ export default function SitePauseCard() {
   );
 
   const save = async (nextPaused: boolean) => {
-    if (nextPaused && !paused && !window.confirm("Mettre le site public en pause ? Les visiteurs verront uniquement la page « BAFA Murathènes fait une pause ».")) {
+    if (nextPaused && !paused && !window.confirm("Mettre le site public en pause ? Les visiteurs verront uniquement la page d'adieu « Rideau. BAFA Murathènes tire sa révérence ».")) {
       return;
     }
     setSaving(true);
@@ -45,7 +45,7 @@ export default function SitePauseCard() {
         settingsRef(),
         {
           paused: nextPaused,
-          message: message.trim() || DEFAULT_PAUSE_MESSAGE,
+          message: pauseMessageOrDefault(message),
           updatedAt: serverTimestamp(),
           updatedBy: auth.currentUser?.email ?? "",
         },
@@ -66,7 +66,7 @@ export default function SitePauseCard() {
     }
   };
 
-  const messageChanged = paused && message.trim() !== (savedMessage || DEFAULT_PAUSE_MESSAGE);
+  const messageChanged = paused && pauseMessageOrDefault(message) !== pauseMessageOrDefault(savedMessage);
 
   return (
     <section

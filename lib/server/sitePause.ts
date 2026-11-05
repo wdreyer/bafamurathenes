@@ -1,5 +1,5 @@
 import { getFirebaseApiKey } from "@/lib/firebaseApiKey";
-import { DEFAULT_PAUSE_MESSAGE, SITE_ONLINE, SITE_SETTINGS_COLLECTION, SITE_SETTINGS_DOC, type SitePause } from "@/lib/sitePause";
+import { pauseMessageOrDefault, SITE_ONLINE, SITE_SETTINGS_COLLECTION, SITE_SETTINGS_DOC, type SitePause } from "@/lib/sitePause";
 
 // Read through Firestore's REST API so the server needs no admin credentials.
 // Cached for 30 s; the admin switch purges the cache right after a change.
@@ -18,7 +18,7 @@ export async function getSitePause(): Promise<SitePause> {
       fields?: { paused?: { booleanValue?: boolean }; message?: { stringValue?: string } };
     };
     const paused = data.fields?.paused?.booleanValue === true;
-    const message = data.fields?.message?.stringValue?.trim() || DEFAULT_PAUSE_MESSAGE;
+    const message = pauseMessageOrDefault(data.fields?.message?.stringValue);
     return paused ? { paused, message } : SITE_ONLINE;
   } catch {
     return SITE_ONLINE;
