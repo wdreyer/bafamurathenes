@@ -4,6 +4,7 @@ import localFont from "next/font/local";
 import Script from "next/script";
 import "./globals.css";
 import SiteChrome from "@/components/SiteChrome";
+import { getSitePause } from "@/lib/server/sitePause";
 import { getSiteUrl } from "@/lib/siteUrl";
 
 // Fonts are self-hosted (latin, variable files in app/fonts) so builds never depend on Google Fonts:
@@ -117,11 +118,13 @@ export const metadata: Metadata = {
   manifest: "/manifest.webmanifest",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const sitePause = await getSitePause();
+
   const structuredData = [
     {
       "@context": "https://schema.org",
@@ -174,7 +177,7 @@ export default function RootLayout({
           {JSON.stringify(structuredData)}
         </Script>
 
-        <SiteChrome>{children}</SiteChrome>
+        <SiteChrome sitePause={sitePause}>{children}</SiteChrome>
       </body>
     </html>
   );

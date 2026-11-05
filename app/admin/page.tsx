@@ -16,6 +16,7 @@ import {
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { cleanFormationTitle } from "@/lib/formationTitles";
+import SitePauseCard from "@/components/admin/SitePauseCard";
 import type { Formation, Inscription, Prospect } from "@/lib/types";
 
 function euro(value: number) {
@@ -175,6 +176,8 @@ export default function AdminDashboardPage() {
             <QuickLink href="/admin/formateurs" label="Formateur·ices" icon={CalendarDays} />
           </div>
         </header>
+
+        <SitePauseCard />
 
         <section className="grid gap-3 md:grid-cols-4">
           <BigNumber label="Inscriptions validées" value={data.validated.length.toString()} detail={`${data.ongoing.length} en cours`} icon={CheckCircle2} />
