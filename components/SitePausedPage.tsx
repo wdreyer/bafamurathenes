@@ -5,13 +5,10 @@ const PHONE_DISPLAY = "01 84 21 05 48";
 const PHONE_TEL = "0184210548";
 const EMAIL = "bafa@murathenes.org";
 
-// Theatre-style farewell page shown while the public site is paused.
+// Plain black farewell page shown while the public site is paused.
 export default function SitePausedPage({ message }: { message: string }) {
   return (
     <main className="site-paused">
-      <div className="site-paused-curtain site-paused-curtain-left" aria-hidden="true" />
-      <div className="site-paused-curtain site-paused-curtain-right" aria-hidden="true" />
-      <div className="site-paused-spotlight" aria-hidden="true" />
 
       <div className="site-paused-stage">
         <Image src="/MT.png" alt="Logo Murathènes" width={64} height={64} className="site-paused-logo" priority />
