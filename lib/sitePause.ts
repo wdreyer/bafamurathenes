@@ -3,7 +3,7 @@ export const SITE_SETTINGS_COLLECTION = "siteSettings";
 export const SITE_SETTINGS_DOC = "public";
 
 export const DEFAULT_PAUSE_MESSAGE =
-  "On prépare la suite de nos formations BAFA. Le site revient très vite ! En attendant, on reste joignables par e-mail et par téléphone.";
+  "Les veillées se sont tues. Les grands jeux sont rangés. Le dernier chant résonne encore quelque part dans le Cantal…\nMurathènes se retire dans les coulisses, le temps de préparer la suite. Ce n'est pas un adieu : c'est un entracte.";
 
 export type SitePause = {
   paused: boolean;
